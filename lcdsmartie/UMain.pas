@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.24 $ $Date: 2004/12/03 19:49:58 $
+ *  $Revision: 1.25 $ $Date: 2004/12/09 00:06:11 $
  *****************************************************************************}
 
 interface
@@ -1385,10 +1385,15 @@ var
   counter: Integer;
   todo: Array[1..99] of String;
   temp1, temp2: String;
+  cKey: Char;
 
 begin
 
-  if (Lcd.readKey(key)) then form2.Edit17.text := key;
+  if (Lcd.readKey(cKey)) then
+  begin
+    form2.Edit17.text := cKey;
+    data.cLastKeyPressed := cKey;
+  end;
 
   if (form2 <> nil) and (form2.Visible = false) then
   begin
@@ -1896,6 +1901,10 @@ begin
       end;
     end;
   end;
+
+  // All actions have been processed using this key.
+  // Delete it so a repeated press is processed.
+  data.cLastKeyPressed := Chr(0);
 end;
 
 

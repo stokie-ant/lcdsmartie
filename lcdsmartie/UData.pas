@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.21 $ $Date: 2004/11/30 02:34:19 $
+ *  $Revision: 1.22 $ $Date: 2004/12/09 00:06:10 $
  *****************************************************************************}
 
 
@@ -126,6 +126,7 @@ type
     dllcancheck: Boolean;
     isconnected: Boolean;
     gotEmail: Boolean;
+    cLastKeyPressed: Char;
     function change(line: String; qstattemp: Integer = 1): String;
     procedure refres(Sender: TObject);
     procedure updateNetworkStats(Sender: TObject);
@@ -1363,7 +1364,7 @@ begin
     if decodeArgs(line, '$MObutton', maxArgs, args, prefix, postfix, numargs)
       then
     begin
-      if UMain.key = args[1] then spacecount := 1
+      if cLastKeyPressed = args[1] then spacecount := 1
       else spacecount := 0;
       line := prefix + intToStr(spacecount) + postfix;
     end;
