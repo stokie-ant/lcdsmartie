@@ -19,14 +19,14 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.28 $ $Date: 2004/12/14 13:14:08 $
+ *  $Revision: 1.29 $ $Date: 2004/12/15 20:06:06 $
  *****************************************************************************}
 
 interface
 
 uses Messages, IdHTTP, IdBaseComponent, IdComponent, IdTCPConnection,
   IdTCPClient, IdMessageClient, IdPOP3,  CoolTrayIcon, Menus,
-  WinampCtrl, ExtCtrls, Controls, StdCtrls, Buttons, Classes, Forms, parport,
+  WinampCtrl, ExtCtrls, Controls, StdCtrls, Buttons, Classes, Forms, 
   UConfig, ULCD, UData, xmldom, XMLIntf, msxmldom, XMLDoc;
 
 const
@@ -222,7 +222,6 @@ var
   config: TConfig;
   parameter1, parameter2, parameter3, parameter4 : String;
   Data: TData;
-  poort1: TParPort;
   frozen: Boolean;
   tempscreen: Integer;
   key: char;
@@ -1331,18 +1330,6 @@ begin
   except
   end;
 
-  if config.isHD then
-  begin
-    try
-      poort1.clear;
-    except
-    end;
-    try
-      poort1.Free;
-    except
-    end;
-  end;
-
   Data.Destroy;
   config.Destroy;
 end;
@@ -1496,8 +1483,8 @@ begin
         if (pos('GotoTheme(', sAction) <> 0) then
         begin
           try
-            iTemp := StrToInt(copy(sAction, pos('GotoTheme(', sAction) + 11,
-              pos(')', sAction)-pos('GotoTheme(', sAction)-11))-1;
+            iTemp := StrToInt(copy(sAction, pos('GotoTheme(', sAction) + 10,
+              pos(')', sAction)-pos('GotoTheme(', sAction)-10))-1;
             if (iTemp >= 0) and (iTemp < 10) then
               activetheme := iTemp;
           except
@@ -1509,8 +1496,8 @@ begin
         if (pos('GotoScreen(', sAction) <> 0) then
         begin
           try
-            iTemp := StrToInt(copy(sAction, pos('GotoScreen(', sAction) + 12,
-              pos(')', sAction)-pos('GotoScreen(', sAction)-12));
+            iTemp := StrToInt(copy(sAction, pos('GotoScreen(', sAction) + 11,
+              pos(')', sAction)-pos('GotoScreen(', sAction)-11));
             if (iTemp >= 1) and (iTemp <= 20) then
               ChangeScreen(iTemp);
           except
@@ -1551,15 +1538,15 @@ begin
 
         if pos('Wave[', sAction) <> 0 then
         begin
-          temp1 := copy(sAction, pos('Wave[', sAction) + 6, pos(']', sAction)
-            - pos('Wave[', sAction)-6);
+          temp1 := copy(sAction, pos('Wave[', sAction) + 5, pos(']', sAction)
+            - pos('Wave[', sAction)-5);
           playsound(Pchar(temp1), 0, SND_FILENAME);
         end;
 
         if pos('Exec[', sAction) <> 0 then
         begin
-          temp1 := copy(sAction, pos('Exec[', sAction) + 6, pos(']', sAction)
-            - pos('Exec[', sAction)-6);
+          temp1 := copy(sAction, pos('Exec[', sAction) + 5, pos(']', sAction)
+            - pos('Exec[', sAction)-5);
           shellexecute(0, 'open', PChar(temp1), '', '', SW_SHOW);
         end;
 
@@ -1800,9 +1787,7 @@ end;
 
 procedure TForm1.Timer11Timer(Sender: TObject);
 begin
-  poort1 := TParPort.Create($ + config.parallelPort, config.width,
-    config.height);                                                                //hex waarde v/d poort
-  Lcd := TLCD_HD.Create();
+  Lcd := TLCD_HD.CreateParallel($ + config.parallelPort, config.width, config.height);
   Lcd.setbacklight(true);
 
   customchar('1, 12, 18, 18, 12, 0, 0, 0, 0');

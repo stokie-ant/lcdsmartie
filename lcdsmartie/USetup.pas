@@ -19,7 +19,7 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.20 $ $Date: 2004/12/14 12:28:16 $
+ *  $Revision: 1.21 $ $Date: 2004/12/15 20:06:08 $
  *****************************************************************************}
 
 interface
@@ -267,7 +267,7 @@ var
 
 implementation
 
-uses Windows, ShellApi, graphics, sysutils, parport, UMain, UMOSetup,
+uses Windows, ShellApi, graphics, sysutils, UMain, UMOSetup,
   UCFSetup, UPara, UInteract, UConfig, Registry, ULCD_MO, StrUtils;
 
 {$R *.DFM}
