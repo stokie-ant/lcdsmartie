@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.32 $ $Date: 2004/12/17 16:09:09 $
+ *  $Revision: 1.33 $ $Date: 2004/12/23 21:45:09 $
  *****************************************************************************}
 
 interface
@@ -201,10 +201,13 @@ type
     activetheme: Integer; canscroll: Boolean;
     gpo: Array [1..8] of Boolean;
     customChars: Array [1..8, 0..7] of Byte;
+    customCharsChanged: Array [1..8] of Boolean;
     doesgpoflash: Boolean;
     gpoflash, whatgpo: Integer;
     flash: Integer;
     ResetContrast: Boolean;
+    flashdelay: Cardinal;
+    bNewScreen: Boolean;
     function doguess(line: Integer): Integer;
     procedure freeze();
     procedure doGPO(const ftemp1, ftemp2: Integer);
@@ -216,6 +219,7 @@ type
     procedure backlit(iOn: Integer = -1);
     function EscapeAmp(const sStr: string):String;
     function UnescapeAmp(const sStr: string): String;
+    procedure SendCustomChars;
   end;
 
 var
@@ -269,6 +273,18 @@ var
   y: Integer;
   ascreen: TScreenLine;
 begin
+
+  if timertransIntervaltemp <> 0 then
+  begin
+    timertrans.Interval := 0;
+    timertrans.Interval := timertransIntervaltemp;
+  end;
+  timer7.Interval := 0; // reset timer
+  timer7.Interval := config.screen[scr][1].showTime*1000 + timertransIntervaltemp;
+
+  if (activeScreen = scr) then
+    Exit;
+
   activeScreen := scr;
   ascreen := config.screen[activeScreen][1];
 
@@ -277,9 +293,6 @@ begin
     scrollPos[y] := 0; // Reset scroll postion.
     oldline[y] := UnescapeAmp(screenLcd[y].Caption);
   end;
-
-  if timertransIntervaltemp <> 0 then timertrans.Interval :=
-    timertransIntervaltemp;
 
   gotnewlines := false;
   TransCycle := 0;
@@ -293,11 +306,7 @@ begin
     gamesArray[4, y] := false;
   end;
 
-  timer7.Interval := ascreen.showTime*1000 + timertransIntervaltemp;
   timertransIntervaltemp := ascreen.interactionTime*100;
-
-
-
 
   transActietemp := transActietemp2;
   transActietemp2 := ascreen.interaction;
@@ -318,6 +327,9 @@ begin
     panel5.width := 33;
     Panel5.Caption := IntToStr(activetheme + 1) + ' | ' + IntToStr(activeScreen);
   end;
+
+  bNewScreen := True;
+
 end;
 
 function TForm1.doguess(line: Integer): Integer;
@@ -382,8 +394,23 @@ begin
 
   if (i <= 7) then
   begin
-    Lcd.customChar(character, waarde);
+    //Lcd.customChar(character, waarde);
+    customCharsChanged[character] := true;
     for i := 0 to 7 do customChars[character, i] := waarde[i];
+  end;
+end;
+
+procedure TForm1.SendCustomChars;
+var
+  i: Integer;
+begin
+  for i:= 1 to 8 do
+  begin
+    if (customCharsChanged[i]) then
+    begin
+      Lcd.customChar(i, customChars[i]);
+      customCharsChanged[i] := false;
+    end;
   end;
 end;
 
@@ -520,8 +547,6 @@ begin
   form1.WinampCtrl1.WinampLocation := config.winampLocation;
   file1 := config.distLog;
 
-  ChangeScreen(1);
-
   iNrLines := config.height;
 
   screenLcd[2].visible := false;
@@ -577,6 +602,7 @@ begin
       begin
         showmessage('Failed to open device: ' + E.Message);
         Lcd := TLCD.Create();
+
       end;
     end;
   end;
@@ -630,6 +656,8 @@ begin
     else timer11.interval := config.bootDriverDelay*1000;
     timer11.enabled := true;
   end;
+
+  ChangeScreen(1);
 
 end;
 
@@ -810,6 +838,7 @@ var
   scrollcount: Integer;
 
 begin
+  timer1.Interval := 0;
   timer1.Interval := config.refreshRate;
 
   // BUGBUG: Surely there's a better place for this parameter code
@@ -843,6 +872,15 @@ begin
 
   if ((gotnewlines = false) OR (timertrans.enabled = false))then
   begin
+    if (bNewScreen) and (gotnewlines) then
+    begin
+       bNewScreen := False;
+       customchar('1, 12, 18, 18, 12, 0, 0, 0, 0');
+       customchar('2, 31, 31, 31, 31, 31, 31, 31, 31');
+       customchar('3, 16, 16, 16, 16, 16, 16, 31, 16');
+       customchar('4, 28, 28, 28, 28, 28, 28, 31, 28');
+    end;
+
     Data.refres(self);
 
     if kleuren <> config.colorOption then
@@ -988,8 +1026,9 @@ begin
       parsedLine[counter] := line;
       newline[counter] := line;  // Used by screen change interaction.
     end;
+    if (not timertrans.enabled) then SendCustomChars();
     Data.ScreenEnd();
-    
+
     for h := 1 to 4 do
     begin
       // handle continuing on the next line (if req)
@@ -1092,6 +1131,7 @@ var
   counter: Integer;
 
 begin
+  timer1.Interval := 0;
   timer1.Interval := config.refreshRate;
 
   cooltrayicon1.IconVisible := False;
@@ -1144,6 +1184,7 @@ begin
   end;
 
   Data.UpdateHTTP;
+  timer2.Interval := 0;
   timer2.Interval := config.newsRefresh*1000*60;
 end;
 
@@ -1340,6 +1381,7 @@ end;
 procedure TForm1.Timer6Timer(Sender: TObject);
 begin
   Data.updateMBMStats(Sender);
+  timer6.Interval := 0;
   timer6.Interval := config.mbmRefresh*1000;
 end;
 
@@ -1396,6 +1438,7 @@ end;
 procedure TForm1.Timer8Timer(Sender: TObject);
 begin
   Data.updateGameStats;
+  timer8.Interval := 0;
   timer8.Interval := config.gameRefresh*60000;
 end;
 
@@ -1707,6 +1750,7 @@ end;
 procedure TForm1.Timer9Timer(Sender: TObject);
 //MAILS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 begin
+  timer9.Interval := 0;
   timer9.Interval := config.emailPeriod*60000;
   Data.UpdateEmail;
 end;
@@ -1719,6 +1763,7 @@ end;
 procedure TForm1.Timer10Timer(Sender: TObject);
 begin
   Data.updateNetworkStats(Sender);
+  timer10.Interval := 0;
   timer10.interval := 1000;
 end;
 
@@ -1912,6 +1957,7 @@ begin
   begin
     frozen := false;
     form1.timer7.enabled := true;
+    form1.timer7.interval := 0;
     form1.timer7.interval := 5;
     popupmenu1.Items[0].Items[1].Caption := 'Freeze';
     if pos('frozen', form1.caption) <> 0 then form1.caption :=
@@ -2179,6 +2225,7 @@ end;
 
 procedure TForm1.Timer13Timer(Sender: TObject);
 begin
+  timer13.Interval := 0;
   timer13.Interval := config.scrollPeriod;
   Data.dllcancheck := true;
 end;
@@ -2195,9 +2242,16 @@ end;
 
 procedure TForm1.Timer12Timer(Sender: TObject);
 begin
+  timer12.Interval := 0;
   timer12.Interval := config.scrollPeriod;
   canscroll := true;
-  canflash := true;
+  Inc(flashdelay);
+  if ((not doesflash) and (flashdelay >= 2)) or
+    (doesflash and (flashdelay >= 1)) then
+  begin
+    flashdelay := 0;
+    canflash := true;
+  end;
 end;
 
 procedure TForm1.WinAmpTimerCheck(Sender: TObject);
