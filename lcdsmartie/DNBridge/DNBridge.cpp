@@ -40,11 +40,12 @@ __declspec(dllexport) void __stdcall SmartieInit(void)
 	}
 }
 
-__declspec(dllexport) char * __stdcall BridgeInit(const char *param1, int *id) 
+__declspec(dllexport) char * __stdcall BridgeInit(const char *param1, int *id, int *minRefreshInterval) 
 {
 	String __gc *result = new String("");
 
 	*id = -1;
+	*minRefreshInterval = 0;
 
 	if (globals::numPlugins >= 100)
 		result = "Too many dot net plugins.";
@@ -87,6 +88,15 @@ __declspec(dllexport) char * __stdcall BridgeInit(const char *param1, int *id)
 							result = S"Class contains no Smartie methods!";
 						else
 						{
+							MethodInfo __gc *minRefresh = current->myType->GetMethod("GetMinRefreshInterval");
+							if (minRefresh)
+							{
+								Object __gc *noargs[] = new Object*[0];
+								Object __gc *o = minRefresh->Invoke(current->myObject, noargs);
+								*minRefreshInterval = *dynamic_cast<__box Int32*>(o);
+
+							}
+
 							globals::plugins[globals::numPlugins++]=current;
 							*id = globals::numPlugins;
 						}
@@ -116,7 +126,7 @@ __declspec(dllexport) char * __stdcall BridgeInit(const char *param1, int *id)
 	}
 	return buffer;
 }
- 
+
 
 __declspec(dllexport) char * __stdcall BridgeFunc(int iBridgeId, int iFunc, const char *param1, const char *param2)
 {
