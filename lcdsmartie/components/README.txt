@@ -14,12 +14,11 @@ WinampCtrl:
    Downloaded from: unknown [obtained from BasieP]
    License: unknown [obtained from BasieP]
 
-madCollection:
+madCollection (v2.1.5.0):
    Downloaded from: http://www.madexcept.com/
    License: from website: "madExcept may be freely used for
       non-commercial purpose only.", "madDisAsm may be freely
       used for non-commercial purpose only."
-   We use the madExcept (v2.7d) and madDisAsm (v2.1b) parts of
-   the package.
+   We use the madExcept parts of the package.
 
 
