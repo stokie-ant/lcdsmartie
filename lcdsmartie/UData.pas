@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.6 $ $Date: 2004/11/17 23:54:13 $
+ *  $Revision: 1.7 $ $Date: 2004/11/18 17:02:45 $
  *****************************************************************************}
 
 
@@ -142,7 +142,7 @@ type
       CPUUsageCount: Cardinal;
       CPUUsagePos: Cardinal;
       STCPUUsage: Cardinal;
-      lastCpuUpdate: LongWord;
+      lastCpuUpdate, lastSpdUpdate: LongWord;
       dataThread: TMyThread;
       koeregel,screenResolution:string;
       netadaptername: array[0..MAXNETSTATS-1] of String;
@@ -199,7 +199,6 @@ type
       procedure gameUpdate;
       procedure doDataThread;
       function ReadMBM5Data : Boolean;
-      function GetCpuSpeedRegistry(proc: Byte): string;
       function getRss(Url: String;var titles, descs: array of string; maxitems:Cardinal; maxfreq:Cardinal=0): Cardinal;
       function decodeArgs(str: String; funcName: String; maxargs: Cardinal;
          var args: array of String; var prefix: String; var postfix: String; var numArgs:Cardinal):Boolean;
@@ -301,9 +300,8 @@ begin
   lcdSmartieUpdate:=False;
   distributedlog:=config.distLog;
 
-  // Get CPU speed once:
-  STCPUSpeed:=GetCpuSpeedRegistry(0);
-  if (STCPUSpeed='') then STCPUSpeed:=cxCpu[0].Speed.Normalised.FormatMhz;
+  // Get CPU speed first time:
+  STCPUSpeed:=IntToStr(cxCpu[0].Speed.RawSpeed.AsNumber);
 
   doEmailUpdate:=True;
   doHTTPUpdate:=True;
@@ -1344,6 +1342,12 @@ begin
     if (CPUUsageCount>0) then STCPUUsage:=total div CPUUsageCount;
   end;
 
+  //Update CPU Speed (might change on clock-throttling systems
+  if (t - lastSpdUpdate > (ticksperseconde * 2)) then begin // Update every 2 s
+    lastSpdUpdate := t;
+    STCPUSpeed:=IntToStr(cxCpu[0].Speed.RawSpeed.AsNumber);
+  end;
+
 
   //time/uptime!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   t:=GetTickCount;
@@ -1432,27 +1436,6 @@ begin
     CloseHandle(myHandle);
   end else result := false;
 end;
-
-function TData.GetCpuSpeedRegistry(proc: Byte): string;
-var
-  Reg: TRegistry;
-begin
-  Reg := TRegistry.Create;
-  try
-    Reg.RootKey := HKEY_LOCAL_MACHINE;
-    if Reg.OpenKey('Hardware\Description\System\CentralProcessor\'+IntToStr(proc), False) then
-    begin
-      Result := IntToStr(Reg.ReadInteger('~MHz'));
-      Reg.CloseKey;
-    end else begin
-      Result := '';
-    end;
-  finally
-    Reg.Free;
-  end;
-end;
-
-
 
 procedure TData.updateNetworkStats(Sender: TObject);
 //NETWORKS STATS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
