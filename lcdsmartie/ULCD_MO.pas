@@ -244,6 +244,10 @@ begin
   usbPalm := INVALID_HANDLE_VALUE;
   bUsb := True;
 
+  // This is a hopeless attempt to get round the fact that the current
+  // USBPalmd.sys isn't multiprocessor or hyperthread-enabled safe.
+  SetThreadAffinityMask(GetCurrentThread(),1);
+
   // Check if hotsync is running
   if FindWindow('KittyHawk', Nil) <> 0 then
     raise Exception.Create('Detected Hotsync running - please terminate it and restart LCD Smartie.');
@@ -645,6 +649,10 @@ var
   buffer: Byte;
   ret: Cardinal;
 begin
+    // This is a hopeless attempt to get round the fact that the current
+    // USBPalmd.sys isn't multiprocessor or hyperthread-enabled safe.
+    SetThreadAffinityMask(GetCurrentThread(),1);
+
     While (not readThread.Terminated) do
     begin
       if (bConnected) then
