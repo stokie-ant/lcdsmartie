@@ -1593,16 +1593,6 @@ object Form2: TForm2
           ItemHeight = 13
           ParentFont = False
           TabOrder = 5
-          Items.Strings = (
-            'COM1'
-            'COM2'
-            'COM3'
-            'COM4'
-            'COM5'
-            'COM6'
-            'COM7'
-            'COM8'
-            'COM9')
         end
         object ComboBox5: TComboBox
           Left = 144
@@ -2075,6 +2065,21 @@ object Form2: TForm2
     Filter = 'Executables (*.exe)|*.exe|All Files (*.*)|*.*'
     InitialDir = 'C:\program files\winamp'
     Left = 540
+    Top = 384
+  end
+  object VaCommTest: TVaComm
+    Baudrate = br9600
+    FlowControl.OutCtsFlow = False
+    FlowControl.OutDsrFlow = False
+    FlowControl.ControlDtr = dtrDisabled
+    FlowControl.ControlRts = rtsDisabled
+    FlowControl.XonXoffOut = False
+    FlowControl.XonXoffIn = False
+    FlowControl.DsrSensitivity = False
+    FlowControl.TxContinueOnXoff = False
+    DeviceName = 'COM%d'
+    UpdateDCB = False
+    Left = 328
     Top = 384
   end
 end

@@ -19,17 +19,18 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.14 $ $Date: 2004/11/29 23:32:42 $
+ *  $Revision: 1.15 $ $Date: 2004/12/03 19:44:13 $
  *****************************************************************************}
 
 interface
 
 uses Dialogs, Grids, StdCtrls, Controls, Spin, Buttons, ComCtrls, Classes,
-  Forms;
+  Forms, VaClasses, VaComm;
 
 const
   UPKEY = 38;
   DOWNKEY = 40;
+  USBPALM = 'USB Palm';
 
 
 type
@@ -197,6 +198,7 @@ type
     SpinEdit9: TSpinEdit;
     Label59: TLabel;
     RadioButton4: TRadioButton;
+    VaCommTest: TVaComm;
     procedure Button2Click(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure ComboBox2Change(Sender: TObject);
@@ -257,10 +259,6 @@ type
     procedure LoadScreen(scr: Integer);
   end;
 
-  TStringObj = class(TObject)
-    str: String;
-  end;
-
 var
   Form2: TForm2;
   proxytemp2, proxytemp1: String;
@@ -269,25 +267,13 @@ var
 implementation
 
 uses Windows, ShellApi, graphics, sysutils, parport, UMain, UMOSetup,
-  UCFSetup, UPara, UInteract, UConfig, Registry, ULCD_MO;
+  UCFSetup, UPara, UInteract, UConfig, Registry, ULCD_MO, StrUtils, VaTypes;
 
 {$R *.DFM}
 
 // Cancel has been pressed.
 procedure TForm2.Button2Click(Sender: TObject);
-var
-  strobj: TStringObj;
-  i: Integer;
 begin
-
-  // delete usb items from COMport list and free them.
-  for i := combobox4.items.Count-1 downto 9 do
-  begin
-    strobj :=  ComboBox4.Items.Objects[i] as TStringObj;
-    ComboBox4.Items.Delete(i);
-    strobj.Free;
-  end;
-
 
   form1.timer1.enabled := true;
   form1.timer2.enabled := true;
@@ -314,25 +300,33 @@ end;
 procedure TForm2.FormShow(Sender: TObject);
 var
   i, blaat: Integer;
-  namesUsbPalms, deviceUsbPalms: Array [0..9] of String;
-  numUsbPalms: Integer;
-  usbSelection: Integer;
-  itemNum: Integer;
-  strobj: TStringObj;
-
+  iSelection: Integer;
+  sLookFor: String;
 begin
-  usbSelection := 0;
+  // Delete all entries in the Com Port list
+  for i:= combobox4.Items.Count-1 downto 0 do
+    combobox4.Items.Delete(i);
 
-  numUsbPalms := TLCD_MO.getUsbPalms(namesUsbPalms, deviceUsbPalms, 10);
-  for i := 0 to numUsbPalms-1 do
+  // Check for COM Ports 1-20.
+  for i:=1 to 20 do
   begin
-    strobj := TStringObj.Create;
-    strobj.str := deviceUsbPalms[i];
-    itemnum := ComboBox4.Items.AddObject(namesUsbPalms[i], strobj);
-    if (deviceUsbPalms[i] = config.UsbPalmDevice) then usbSelection :=
-      itemnum;
-  end;
+    vaCommTest.PortNum := i;
+    try
 
+      vaCommTest.Open;
+      comboBox4.Items.Add('COM'+IntToStr(i));
+      vaCommTest.Close;
+    except
+      on E: EVaCommError do
+      begin
+        // This is a truly ugly way to detect this...
+        if (pos('device not found', E.Message)=0) then
+          comboBox4.Items.Add('COM'+IntToStr(i));
+      end
+      else raise;
+    end;
+  end;
+  comboBox4.Items.Add(USBPALM);
 
   form1.timer2.enabled := false;
   form1.timer4.enabled := false;
@@ -436,15 +430,23 @@ begin
   end;
 
   // Set up the com port selection
-  if (config.isUsbPalm) then
+  if (config.isUsbPalm) then slookFor := USBPALM
+  else sLookFor := 'COM'+IntToStr(config.comPort);
+
+  iSelection := -1;
+  for i := 0 to combobox4.Items.Count-1 do
   begin
-    combobox4.ItemIndex := usbSelection;
-  end
-  else
-  begin
-    combobox4.ItemIndex := config.comPort-1;
+    if (sLookFor = combobox4.Items[i]) then
+      iSelection := i;
   end;
 
+  if (iSelection = -1) then
+  begin
+    showmessage(sLookFor + ' is no longer a valid COM Port option, please reselect.');
+    iSelection := 0;
+  end;
+
+  combobox4.ItemIndex := iSelection;
 
   combobox5.ItemIndex := config.baudrate;
   combobox2.itemindex := config.sizeOption-1;
@@ -2071,9 +2073,17 @@ procedure TForm2.Button7Click(Sender: TObject);
 var
   relood: Boolean;
   x: Integer;
+  sComPort: String;
 
 begin
   relood := false;
+
+  if (comboBox4.items[combobox4.itemIndex] = USBPALM)
+    and (not radiobutton2.checked) then
+  begin
+    showmessage('Matrix Orbital must be selected if USB Palm is selected.');
+    Exit;
+  end;
 
   for x := 0 to form2.StringGrid1.RowCount do
   begin
@@ -2101,15 +2111,15 @@ begin
   if (config.parallelPort <> StrToInt('$' + form6.edit1.text))
     then relood := true;
 
-  if (config.isUsbPalm) then
+  // Check if Com settings have changed.
+  sComPort := comboBox4.items[comboBox4.itemIndex];
+  if (config.isUsbPalm) <> (sComPort = USBPALM) then
   begin
-    if (combobox4.itemindex+1 <= 9) or ((config.UsbPalmDevice
-       <> (ComboBox4.Items.Objects[combobox4.ItemIndex] as TStringObj).str))
-       then relood := true;
+    relood := true;
   end
-  else
+  else if (MidStr(sComPort, 1, 3) = 'COM')
+      and (StrToInt(MidStr(sComPort, 4, length(sComPort)-3)) <> config.comPort) then
   begin
-    if config.comPort <> (combobox4.itemindex + 1) then
       relood := true;
   end;
 
@@ -2155,17 +2165,14 @@ begin
   config.mx3Usb := form3.checkbox1.checked;
   config.alwaysOnTop := checkbox2.checked;
 
-  config.comPort := combobox4.itemindex + 1;
-  if (config.comPort > 9) then
+  // Check if Com settings have changed.
+  sComPort := comboBox4.items[comboBox4.itemIndex];
+  config.isUsbPalm := (sComPort = USBPALM);
+  if (not config.isUsbPalm) then
   begin
-    config.isUsbPalm := True;
-    config.UsbPalmDevice := (ComboBox4.Items.Objects[combobox4.ItemIndex] as
-      TStringObj).str;
-  end
-  else
-  begin
-    config.isUsbPalm := False;
+    config.comPort := StrToInt( midstr(sComPort, 4, length(sComPort)-3));
   end;
+
   config.baudrate := combobox5.itemindex;
   config.pop[(combobox8.itemindex + 1) mod 10].server := edit11.text;
   config.pop[(combobox8.itemindex + 1) mod 10].user := edit12.text;
@@ -2207,6 +2214,13 @@ end;
 // ok has been pressed.
 procedure TForm2.Button1Click(Sender: TObject);
 begin
+  if (comboBox4.items[combobox4.itemIndex] = USBPALM)
+    and (not radiobutton2.checked) then
+  begin
+    showmessage('Matrix Orbital must be selected if USB Palm is selected.');
+    Exit;
+  end;
+
   // ok is the same as apply followed by cancel.
   button7.click();
 
