@@ -23,6 +23,13 @@ BUGS KNOWN
 
 Changes
 =======
+5.3Alpha1
+	- Fixed some Rss bugs also improved error reporting.
+	- Fixed bug in contrast fade.
+	- CPU speed is now live rather than fixed. [For speedstep, etc]
+	- Fixed $PageU% - was always 0.
+	- Fixed MO keypads.
+	- USB Palms can now send keys.
 5.3pAlpha4
 	- Supports very large pagefiles and memory.
 	- config.cfg/servers.cfg files replaced with config.ini file.
