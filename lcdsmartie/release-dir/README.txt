@@ -18,8 +18,9 @@ See: http://sourceforge.net/tracker/?func=browse&group_id=122330&atid=693136
 
 USB Palm users
 ==============
-In Alpha 5, the USB code has been rewritten. If you have any problems then
-email "usb <at> x5.me.uk" - stating your Palm make/model, and PalmOS version.
+In Alpha 5, the USB code has been completely rewritten. If you have any problems
+then email "usb <at> x5.me.uk" - stating your Palm make/model, PalmOS version
+and the usb.log file.
 
 Changes
 =======
