@@ -18,7 +18,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/Attic/Unit4.pas,v $
- *  $Revision: 1.2 $ $Date: 2004/10/25 22:52:48 $
+ *  $Revision: 1.3 $ $Date: 2004/10/29 19:08:35 $
  *****************************************************************************}
 unit Unit4;
 
@@ -85,7 +85,7 @@ end;
 procedure TForm4.Label2Click(Sender: TObject);
 
 begin
-  ShellExecute(0, Nil, pchar('http://backupteam.gamepoint.net/smartie/'), Nil, Nil, SW_NORMAL);
+  ShellExecute(0, Nil, pchar('http://lcdsmartie.sourceforge.net/'), Nil, Nil, SW_NORMAL);
 end;
 
 end.
