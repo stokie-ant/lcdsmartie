@@ -2,29 +2,18 @@
 Please see our website for instructions and the latest information:
 		http://lcdsmartie.sourceforge.net/
 
-**************************************************************************
-*   No further bug fixes are planned!
-*-------------------------------------------------------------------------
-* There will only be a few DAYS before we offically release 5.3.
-*
-* If you're suffering from a bug and haven't reported it yet because you
-* were hoping somebody else would report it - now is the time to report
-* it, otherwise it has no chance of being fixed in this release.
-*
-* If you have reported a bug and it's still not fixed then make sure it's
-* in the bug database! 
-*
-* [This excludes bugs with USB Palms as their support will always be
-* experimental.]
-*
-*************************************************************************
-
 BUGS KNOWN
 ==========
 See: http://sourceforge.net/tracker/?func=browse&group_id=122330&atid=693136
 
 Changes
 =======
+5.3 rc3
+	- Fixed possible problem in error reporting.
+	- Added missing actions/commands to UI.
+	- Allow easier editing of actions.
+	- Double clicking a command title, inserts the command.
+	- Add some more default RSS feeds.
 5.3 rc2
 	- Fixed bug when used with high refresh rates (scrolling and
 	  other things just stopped working!)
@@ -178,11 +167,6 @@ Changes
 	- added email last subject/from field.
 	- fixed Seti/fold support.
 	- added support for bug reports to be emailed.
-
-
-ALPHA/Beta Releases
-===================
-It is advised that you backup your data before trying these builds.
 
 
 FEEDBACK

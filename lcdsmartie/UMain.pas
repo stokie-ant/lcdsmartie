@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.53 $ $Date: 2005/01/27 22:11:17 $
+ *  $Revision: 1.54 $ $Date: 2005/01/28 20:35:23 $
  *****************************************************************************}
 
 interface
@@ -1714,40 +1714,43 @@ begin
       shellexecute(0, 'open', PChar(temp1), '', '', SW_SHOW);
     end;
 
-    if pos('WANextTrack', sAction) <> 0 then
-      Winampctrl1.Next;
-
-    if pos('WALastTrack', sAction) <> 0 then
-      Winampctrl1.Previous;
-
-    if pos('WAPlay', sAction) <> 0 then
-      Winampctrl1.Play;
-
-    if pos('WAStop', sAction) <> 0 then
-      Winampctrl1.Stop;
-
-    if pos('WAPause', sAction) <> 0 then
-      Winampctrl1.Pause;
-
-    if pos('WAShuffle', sAction) <> 0 then
-      Winampctrl1.ToggleShufflE;
-
-    if pos('WAVolDown', sAction) <> 0 then
+    if (pos('WA', sAction) <> 0) then
     begin
-      WinampCtrl1.VolumeDown;
-      WinampCtrl1.VolumeDown;
-      WinampCtrl1.VolumeDown;
-      WinampCtrl1.VolumeDown;
-      WinampCtrl1.VolumeDown;
-    end;
+      if pos('WANextTrack', sAction) <> 0 then
+        Winampctrl1.Next;
 
-    if pos('WAVolUp', sAction) <> 0 then
-    begin
-      WinampCtrl1.VolumeUp;
-      WinampCtrl1.VolumeUp;
-      WinampCtrl1.VolumeUp;
-      WinampCtrl1.VolumeUp;
-      WinampCtrl1.VolumeUp;
+      if pos('WALastTrack', sAction) <> 0 then
+        Winampctrl1.Previous;
+
+      if pos('WAPlay', sAction) <> 0 then
+        Winampctrl1.Play;
+
+      if pos('WAStop', sAction) <> 0 then
+        Winampctrl1.Stop;
+
+      if pos('WAPause', sAction) <> 0 then
+        Winampctrl1.Pause;
+
+      if pos('WAShuffle', sAction) <> 0 then
+        Winampctrl1.ToggleShufflE;
+
+      if pos('WAVolDown', sAction) <> 0 then
+      begin
+        WinampCtrl1.VolumeDown;
+        WinampCtrl1.VolumeDown;
+        WinampCtrl1.VolumeDown;
+        WinampCtrl1.VolumeDown;
+        WinampCtrl1.VolumeDown;
+      end;
+
+      if pos('WAVolUp', sAction) <> 0 then
+      begin
+        WinampCtrl1.VolumeUp;
+        WinampCtrl1.VolumeUp;
+        WinampCtrl1.VolumeUp;
+        WinampCtrl1.VolumeUp;
+        WinampCtrl1.VolumeUp;
+      end;
     end;
 
     if (pos('GPOFlash(', sAction) <> 0) and (config.isMO) then

@@ -19,7 +19,7 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.31 $ $Date: 2005/01/27 10:43:35 $
+ *  $Revision: 1.32 $ $Date: 2005/01/28 20:35:24 $
  *****************************************************************************}
 
 interface
@@ -255,6 +255,7 @@ type
     procedure Edit7KeyDown(Sender: TObject; var Key: Word; Shift:
       TShiftState);
     procedure StickyClick(Sender: TObject);
+    procedure StringGrid1Click(Sender: TObject);
   private
     setupbutton: Integer;
     combobox8temp: Integer;
@@ -1090,7 +1091,22 @@ begin
       10: Edit9.Text :=
 '$Rss(http://www.weatherclicks.com/xml/fort+lauderdale,t,2): $Rss(http://www.weatherclicks.com/xml/fort+lauderdale,d,2) | '
         ;
-
+      11: Edit9.Text :=
+'$Rss(http://news.bbc.co.uk/rss/newsonline_world_edition/business/rss091.xml,b)'
+        ;
+      12: Edit9.Text :=
+'$Rss(http://www.washingtonpost.com/wp-srv/business/rssheadlines.xml,b)'
+        ;
+      13: Edit9.Text := '$Rss(http://rss.news.yahoo.com/rss/entertainment,b)';
+      14: Edit9.Text := '$Rss(http://partners.userland.com/nytRss/health.xml,b)';
+      15: Edit9.Text := '$Rss(http://partners.userland.com/nytRss/sports.xml,b)';
+      16: Edit9.Text := '$Rss(http://www.securityfocus.com/rss/news.xml,b)';
+      17: Edit9.Text := '$Rss(http://volkskrant.nl/rss/economie.rss,b)';
+      18: Edit9.Text := '$Rss(http://www.vpro.nl/3voor12/rss/index.jsp?images=false,b)';
+      19: Edit9.Text := '$Rss(http://www.ad.nl/index.xml,b)';
+      20: Edit9.Text := '$Rss(http://www.atletiek.nl/rss.xml,b)';
+      21: Edit9.Text := '$Rss(http://www.rtl.fr/referencement/rtl.asp,b)';
+      22: Edit9.Text := '$Rss(http://www.tagesschau.de/xml/tagesschau-meldungen/,b)';
     end;
 
 {Stock Indexes
@@ -1164,7 +1180,8 @@ begin
       '$CustomChar(1, 31, 31, 31, 31, 31, 31, 31, 31)';
     if listbox1.itemindex = 17 then Edit9.Text :=
       '$Rss(URL,t|d|b,ITEM#,MAXFREQHRS)';
-
+    if listbox1.ItemIndex = 18 then Edit9.Text := '$Center(text here,15)';
+    if listbox1.ItemIndex = 19 then Edit9.Text := '$ScreenChanged';
     FocusToInputField();
 
   end;
@@ -1855,6 +1872,7 @@ begin
     begin
         iMaxUsedRow := x;
         config.actionsArray[x + 1, 1] := form2.StringGrid1.Cells[0, x];
+
         if form2.StringGrid1.Cells[1, x]='>' then
            config.actionsArray[x + 1, 2] := '0';
         if form2.StringGrid1.Cells[1, x]='<' then
@@ -1867,6 +1885,7 @@ begin
            config.actionsArray[x + 1, 2] := '4';
         if form2.StringGrid1.Cells[1, x]='<>' then
            config.actionsArray[x + 1, 2] := '5';
+
         config.actionsArray[x + 1, 3] := form2.StringGrid1.Cells[2, x];
         config.actionsArray[x + 1, 4] := form2.StringGrid1.Cells[4, x];
     end;
@@ -1983,11 +2002,11 @@ end;
 procedure TForm2.FormCreate(Sender: TObject);
 begin
   form2.StringGrid1.RowCount := 0;
-  form2.StringGrid1.ColWidths[0] := 104;
+  form2.StringGrid1.ColWidths[0] := 116;
   form2.StringGrid1.ColWidths[1] := 20;
   form2.StringGrid1.ColWidths[2] := 56;
   form2.StringGrid1.ColWidths[3] := 36;
-  form2.StringGrid1.ColWidths[4] := 144;
+  form2.StringGrid1.ColWidths[4] := 156;
 end;
 
 procedure TForm2.ListBox11Click(Sender: TObject);
@@ -2013,10 +2032,15 @@ begin
   if listbox11.itemindex = 18 then Edit18.Text := 'WAShuffle';
   if listbox11.itemindex = 19 then Edit18.Text := 'WAVolDown';
   if listbox11.itemindex = 20 then Edit18.Text := 'WAVolUp';
-  if listbox11.itemindex = 21 then Edit18.Text := 'GPO(4,1)';
-  if listbox11.itemindex = 22 then Edit18.Text := 'GPOToggle(4)';
-  if listbox11.itemindex = 23 then Edit18.Text := 'GPOFlash(4,5)';
-  if listbox11.itemindex = 24 then Edit18.Text := 'Fan(1,255)';
+  if listbox11.itemindex = 21 then Edit18.Text := 'EnableScreen(1)';
+  if listbox11.itemindex = 22 then Edit18.Text := 'DisableScreen(1)';
+  if listbox11.itemindex = 23 then Edit18.Text := '$dll(name.dll,2,param1,param2)';
+
+  if listbox11.itemindex = 24 then Edit18.Text := 'GPO(4,1)';
+  if listbox11.itemindex = 25 then Edit18.Text := 'GPOToggle(4)';
+  if listbox11.itemindex = 26 then Edit18.Text := 'GPOFlash(4,5)';
+  if listbox11.itemindex = 27 then Edit18.Text := 'Fan(1,255)';
+
 end;
 
 procedure TForm2.PageControl2Change(Sender: TObject);
@@ -2026,15 +2050,8 @@ begin
     setupbutton := 5;
     combobox9.ItemIndex := 0;
 
-    // BUGBUG: What is this code trying to do?
-    if (listbox11.Items.Count >= 21) then
-      listbox11.Items.Delete(21);
-    if (listbox11.Items.Count >= 21) then
-      listbox11.Items.Delete(21);
-    if (listbox11.Items.Count >= 21) then
-      listbox11.Items.Delete(21);
-    if (listbox11.Items.Count >= 21) then
-      listbox11.Items.Delete(21);
+    while (listbox11.Items.Count > 24) do
+      listbox11.Items.Delete(24);
 
     if (radiobutton2.Checked) then
     begin
@@ -2179,6 +2196,32 @@ end;
 procedure TForm2.StickyClick(Sender: TObject);
 begin
   SpinEdit2.enabled := not Sticky.checked;
+end;
+
+procedure TForm2.StringGrid1Click(Sender: TObject);
+var
+  selected: Integer;
+begin
+
+  selected := StringGrid1.Selection.Top;
+
+  edit16.text := form2.StringGrid1.Cells[0, selected];
+
+  if form2.StringGrid1.Cells[1, selected]='>' then
+    form2.combobox9.itemindex := 0
+  else if form2.StringGrid1.Cells[1, selected]='<' then
+    form2.combobox9.itemindex := 1
+  else if form2.StringGrid1.Cells[1, selected]='=' then
+    form2.combobox9.itemindex := 2
+  else if form2.StringGrid1.Cells[1, selected]='<=' then
+    form2.combobox9.itemindex := 3
+  else if form2.StringGrid1.Cells[1, selected]='>=' then
+    form2.combobox9.itemindex := 4
+  else if form2.StringGrid1.Cells[1, selected]='<>' then
+    form2.combobox9.itemindex := 5;
+
+  edit19.text := form2.StringGrid1.Cells[2, selected];
+  edit18.text := form2.StringGrid1.Cells[4, selected];
 end;
 
 end.

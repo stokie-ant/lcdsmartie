@@ -100,10 +100,16 @@ var
 begin
   if (uError <> 0) then
   begin
-    FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER or FORMAT_MESSAGE_FROM_SYSTEM,
-      nil, uError, 0, @psError, 0, nil );
-    sError := '#' + IntToStr(uError) + ': ' + PChar(psError);
-    LocalFree(Cardinal(psError));
+    if (FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER or FORMAT_MESSAGE_FROM_SYSTEM,
+      nil, uError, 0, @psError, 0, nil ) = 0) then psError := nil;
+
+    if (psError <> nil) then
+    begin
+      sError := '#' + IntToStr(uError) + ': ' + PChar(psError);
+      LocalFree(Cardinal(psError));
+    end
+    else
+      sError := '#' + IntToStr(uError);
     Result := sError;
   end
   else

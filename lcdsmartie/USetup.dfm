@@ -28,7 +28,7 @@ object Form2: TForm2
     Top = 0
     Width = 233
     Height = 409
-    ActivePage = TabSheet2
+    ActivePage = TabSheet6
     Font.Charset = ANSI_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
@@ -92,6 +92,7 @@ object Form2: TForm2
           'Current Status')
         TabOrder = 0
         OnClick = ListBox7Click
+        OnDblClick = Button3Click
       end
       object Edit15: TEdit
         Left = 8
@@ -166,6 +167,7 @@ object Form2: TForm2
           'Screen Resolution')
         TabOrder = 0
         OnClick = ListBox6Click
+        OnDblClick = Button3Click
       end
     end
     object TabSheet3: TTabSheet
@@ -249,6 +251,7 @@ object Form2: TForm2
           'Voltage name 10')
         TabOrder = 0
         OnClick = ListBox5Click
+        OnDblClick = Button3Click
       end
       object SpinEdit6: TSpinEdit
         Left = 120
@@ -393,6 +396,7 @@ object Form2: TForm2
           'number of frags for each player')
         TabOrder = 3
         OnClick = ListBox8Click
+        OnDblClick = Button3Click
       end
     end
     object TabSheet6: TTabSheet
@@ -414,7 +418,7 @@ object Form2: TForm2
         Items.Strings = (
           'BBC World News'
           'BBC UK News'
-          'Tweakers.net headlines (in dutch)'
+          'Tweakers.net headlines (Dutch)'
           'The Register headlines'
           'Slashdot'
           'Wired News'
@@ -422,9 +426,22 @@ object Form2: TForm2
           'The Monty Fool (all items)'
           'Latest LCD Smartie News'
           'Latest PalmOrb News'
-          'Lastest Weather: FL (US)')
+          'Latest Weather: FL (US)'
+          'BBC News business'
+          'The Washington Post business'
+          'Yahoo! entertainment'
+          'New York Times health'
+          'New York Times sports'
+          'SecurityFocus news'
+          'Volkskrant economie (Dutch)'
+          '3voor12 (Dutch)'
+          'Algemeen Dagblad (Dutch)'
+          'Atletiek nieuws (Dutch)'
+          'RTL (French)'
+          'Tagesschau (German)')
         TabOrder = 0
         OnClick = ListBox2Click
+        OnDblClick = Button3Click
       end
       object SpinEdit3: TSpinEdit
         Left = 120
@@ -480,6 +497,7 @@ object Form2: TForm2
           'completed more work then ...')
         TabOrder = 0
         OnClick = ListBox3Click
+        OnDblClick = Button3Click
       end
       object Edit1: TEdit
         Left = 0
@@ -523,6 +541,7 @@ object Form2: TForm2
           '')
         TabOrder = 1
         OnClick = ListBox10Click
+        OnDblClick = Button3Click
       end
     end
     object TabSheet4: TTabSheet
@@ -657,6 +676,7 @@ object Form2: TForm2
           'Email 10: Last From')
         TabOrder = 0
         OnClick = ListBox4Click
+        OnDblClick = Button3Click
       end
       object ComboBox8: TComboBox
         Left = 104
@@ -718,6 +738,7 @@ object Form2: TForm2
           'IP address')
         TabOrder = 0
         OnClick = ListBox9Click
+        OnDblClick = Button3Click
       end
     end
     object TabSheet7: TTabSheet
@@ -782,11 +803,14 @@ object Form2: TForm2
           '$Fill(10) places next text at pos 10'
           '$Flash(text here$)$'
           '$CustomChar(1,31,31,31,31,31,31,31,31)'
-          '$Rss(URL,t|d|b,ITEM#,MAXFREQHRS)')
+          '$Rss(URL,t|d|b,ITEM#,MAXFREQHRS)'
+          '$Center(text here,width)'
+          '$ScreenChanged')
         ParentFont = False
         ScrollWidth = 250
         TabOrder = 0
         OnClick = ListBox1Click
+        OnDblClick = Button3Click
       end
       object Edit14: TEdit
         Left = 8
@@ -862,6 +886,7 @@ object Form2: TForm2
           'Buttons')
         TabOrder = 0
         OnClick = ListBox12Click
+        OnDblClick = Button3Click
       end
       object Edit17: TEdit
         Left = 96
@@ -1970,8 +1995,8 @@ object Form2: TForm2
         Caption = 'Then'
       end
       object Label26: TLabel
-        Left = 376
-        Top = 0
+        Left = 397
+        Top = 1
         Width = 42
         Height = 13
         Caption = 'Output:'
@@ -1985,17 +2010,19 @@ object Form2: TForm2
       object StringGrid1: TStringGrid
         Left = 0
         Top = 0
-        Width = 369
+        Width = 393
         Height = 281
+        DefaultColWidth = 77
         DefaultRowHeight = 16
         FixedCols = 0
         RowCount = 1
         FixedRows = 0
         Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goRowSelect]
         TabOrder = 0
+        OnClick = StringGrid1Click
       end
       object ListBox11: TListBox
-        Left = 376
+        Left = 397
         Top = 16
         Width = 169
         Height = 329
@@ -2022,10 +2049,13 @@ object Form2: TForm2
           'Winamp Shuffle (toggle)'
           'Winamp volume down'
           'Winamp volume up'
+          'EnableScreen(1-20)'
+          'DisableScreen(1-20)'
+          '$dll(name.dll,2,param1,param2)'
           'GPO(1-8,0/1)  (0=off 1=on)'
           'GPOToggle(1-8)'
           'GPOFlash(1-8,2)  (nr. of times)'
-          '')
+          'Fan(1-3,0-255) (0-255=speed)')
         TabOrder = 1
         OnClick = ListBox11Click
       end
@@ -2056,13 +2086,13 @@ object Form2: TForm2
       object Edit18: TEdit
         Left = 272
         Top = 288
-        Width = 97
+        Width = 113
         Height = 21
         TabOrder = 4
         Text = 'Backlight(1)'
       end
       object Button8: TButton
-        Left = 296
+        Left = 312
         Top = 312
         Width = 75
         Height = 25
@@ -2071,7 +2101,7 @@ object Form2: TForm2
         OnClick = Button8Click
       end
       object Button9: TButton
-        Left = 216
+        Left = 232
         Top = 312
         Width = 75
         Height = 25
