@@ -26,6 +26,8 @@ Changes
 5.3Beta1
 	- Fixed screen timings, esp. when using GotoScreen action.
 	- Fixed bug: only one $Chr was processed per a line.
+	- Slowed down flashing.
+	- Added a surprise xmas screen.
 5.3Alpha7
 	- Fixed bug: action of GotoScreen(1) caused a crash.
 	- Fixed some bugs in the action code.
