@@ -19,7 +19,7 @@ unit UConfig;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UConfig.pas,v $
- *  $Revision: 1.1 $ $Date: 2004/11/05 13:16:21 $
+ *  $Revision: 1.2 $ $Date: 2004/11/11 22:48:33 $
  *****************************************************************************}
 
 interface
@@ -50,7 +50,7 @@ type
       P_width: Integer;
       P_height: Integer;
     public
-        pop: array [1..10] of TPopAccount;
+        pop: array [0..9] of TPopAccount;
         comPort: Integer;
         baudrate: Integer;
         refreshRate: Integer;
@@ -274,9 +274,9 @@ begin
   pop[9].user:=copy(configarray[96],pos('¿7', configarray[96])+2,pos('¿8', configarray[96])-pos('¿7', configarray[96])-2);
   pop[9].pword:=copy(configarray[97],pos('¿7', configarray[97])+2,pos('¿8', configarray[97])-pos('¿7', configarray[97])-2);
 
-  pop[10].server:=copy(configarray[95],pos('¿8', configarray[95])+2,pos('¿9', configarray[95])-pos('¿8', configarray[95])-2);
-  pop[10].user:=copy(configarray[96],pos('¿8', configarray[96])+2,pos('¿9', configarray[96])-pos('¿8', configarray[96])-2);
-  pop[10].pword:=copy(configarray[97],pos('¿8', configarray[97])+2,pos('¿9', configarray[97])-pos('¿8', configarray[97])-2);
+  pop[0].server:=copy(configarray[95],pos('¿8', configarray[95])+2,pos('¿9', configarray[95])-pos('¿8', configarray[95])-2);
+  pop[0].user:=copy(configarray[96],pos('¿8', configarray[96])+2,pos('¿9', configarray[96])-pos('¿8', configarray[96])-2);
+  pop[0].pword:=copy(configarray[97],pos('¿8', configarray[97])+2,pos('¿9', configarray[97])-pos('¿8', configarray[97])-2);
 
 
   result:=true;
@@ -377,10 +377,11 @@ begin
   tempuser:='';
   temppword:='';
   for y:= 1 to 10 do begin
-    tempserver:=tempserver + pop[y].server + '¿' + IntToStr(y-1);
-    tempuser:=tempuser + pop[y].user + '¿' + IntToStr(y-1);
-    temppword:=temppword + pop[y].pword + '¿' + IntToStr(y-1);
+    tempserver:=tempserver + pop[y mod 10].server + '¿' + IntToStr(y-1);
+    tempuser:=tempuser + pop[y mod 10].user + '¿' + IntToStr(y-1);
+    temppword:=temppword + pop[y mod 10].pword + '¿' + IntToStr(y-1);
   end;
+
   writeln(bestand, tempserver);
   writeln(bestand, tempuser);
   writeln(bestand, temppword);

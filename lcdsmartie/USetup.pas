@@ -19,7 +19,7 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.1 $ $Date: 2004/11/05 14:34:15 $
+ *  $Revision: 1.2 $ $Date: 2004/11/11 22:48:33 $
  *****************************************************************************}
 
 interface
@@ -351,7 +351,7 @@ begin
   combobox3.itemindex:=0;
   tempscreen:=0;
   LoadScreen( 1 );
-  welkescreen:=1;
+  UMain.activeScreen:=1;
 
   form2.spinEdit1.text:=IntToStr(config.refreshRate);
   form2.edit15.text:=config.winampLocation;
@@ -557,7 +557,7 @@ begin
 
   form2.visible:=false;
   form1.enabled:=true;
-  form1.refres(self);
+ // form1.refres(self);
   form1.BringToFront;
 end;
 
@@ -685,10 +685,7 @@ begin
 end;
 
 procedure TForm2.ComboBox3Change(Sender: TObject);
-  label opnieuwscreen;
-
 begin
-
   SaveScreen(tempscreen+1);
 
   setupscreen :=combobox3.itemindex +1;
@@ -696,13 +693,7 @@ begin
 
   LoadScreen(tempscreen+1);
 
-  welkescreen:=tempscreen+1;
-
-  scrollline1:=config.screen[welkescreen][1].noscroll;
-  scrollline2:=config.screen[welkescreen][2].noscroll;
-  scrollline3:=config.screen[welkescreen][3].noscroll;
-  scrollline4:=config.screen[welkescreen][4].noscroll;
-  scrollline5:=false;
+  UMain.activeScreen :=tempscreen+1;
 
   aantalscreensheenweer:=1;
 end;
@@ -1014,12 +1005,33 @@ var
 
 begin
   if listbox2.itemindex > -1 then begin
-    if listbox2.itemindex = 0 then Edit9.Text:='$CNN';
-    if listbox2.itemindex = 1 then Edit9.Text:='$Stocks';
+    case listbox2.itemindex of
+      0: Edit9.Text:='$Rss(http://news.bbc.co.uk/rss/newsonline_uk_edition/world/rss091.xml,b)';
+      1: Edit9.Text:='$Rss(http://news.bbc.co.uk/rss/newsonline_uk_edition/uk/rss091.xml,b)';
+      2: Edit9.Text:='$Rss(http://www.tweakers.net/feeds/mixed.xml,b)';
+      3: Edit9.Text:='$Rss(http://www.theregister.co.uk/headlines.rss,b)';
+      4: Edit9.Text:='$Rss(http://slashdot.org/index.rss,b)';
+      5: Edit9.Text:='$Rss(http://www.wired.com/news_drop/netcenter/netcenter.rdf,b)';
+      6: Edit9.Text:='$Rss(http://www.fool.com/xml/foolnews_rss091.xml,b,1)';
+      7: Edit9.Text:='$Rss(http://www.fool.com/xml/foolnews_rss091.xml,b)';
+      8: Edit9.Text:='$Rss(http://sourceforge.net/export/rss2_projnews.php?group_id=122330&rss_fulltext=1,b,1)';
+      9: Edit9.Text:='$Rss(http://sourceforge.net/export/rss2_projnews.php?group_id=2987&rss_fulltext=1,b,1)';
+      10: Edit9.Text:='$Rss(http://www.weatherclicks.com/xml/fort+lauderdale,t,2): $Rss(http://www.weatherclicks.com/xml/fort+lauderdale,d,2) | ';
+
+    end;
+
+{Stock Indexes
+Tom's Hardware headlines
+Tweakers.net headlines (in dutch)
+Weather (Holland)
+Weather.com(locationcode)
+
+   if listbox2.itemindex = 1 then Edit9.Text:='$Stocks';
     if listbox2.itemindex = 2 then Edit9.Text:='$TomsHW';
     if listbox2.itemindex = 3 then Edit9.Text:='$T.netHL';
     if listbox2.itemindex = 4 then Edit9.Text:='$DutchWeather';
     if listbox2.itemindex = 5 then Edit9.Text:='$Weather.com(CAXX0504)';
+    }
     if UMain.setupbutton=1 then begin
       tempint1:=edit5.SelStart;
       tempint2:=edit5.SelLength;
@@ -1095,6 +1107,7 @@ begin
     if listbox1.itemindex = 14 then Edit9.Text:='$Fill(10)';
     if listbox1.itemindex = 15 then Edit9.Text:='$Flash(insert text here$)$';
     if listbox1.itemindex = 16 then Edit9.Text:='$CustomChar(1,31,31,31,31,31,31,31,31)';
+    if listbox1.itemindex = 17 then Edit9.Text:='$Rss(URL,t|d|b,ITEM#,MAXFREQHRS)';
     if UMain.setupbutton=1 then begin
       tempint1:=edit5.SelStart;
       tempint2:=edit5.SelLength;

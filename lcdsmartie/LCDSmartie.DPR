@@ -23,7 +23,8 @@ uses
   ULCD in 'ULCD.pas',
   ULCD_MO in 'ULCD_MO.pas',
   ULCD_HD in 'ULCD_HD.pas',
-  ULCD_CF in 'ULCD_CF.pas';
+  ULCD_CF in 'ULCD_CF.pas',
+  UData in 'UData.pas';
 
 {$R *.RES}
 

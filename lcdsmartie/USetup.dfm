@@ -1,6 +1,6 @@
 object Form2: TForm2
-  Left = 229
-  Top = 118
+  Left = 69
+  Top = 149
   Anchors = []
   BiDiMode = bdLeftToRight
   BorderIcons = []
@@ -29,7 +29,7 @@ object Form2: TForm2
     Top = 0
     Width = 233
     Height = 409
-    ActivePage = TabSheet13
+    ActivePage = TabSheet7
     Font.Charset = ANSI_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
@@ -463,15 +463,20 @@ object Form2: TForm2
         Left = 0
         Top = 0
         Width = 185
-        Height = 185
+        Height = 289
         ItemHeight = 13
         Items.Strings = (
-          'CNN world news'
-          'Stock Indexes'
-          'Tom'#39's Hardware headlines'
+          'BBC World News'
+          'BBC UK News'
           'Tweakers.net headlines (in dutch)'
-          'Weather (Holland)'
-          'Weather.com(locationcode)')
+          'The Register headlines'
+          'Slashdot'
+          'Wired News'
+          'The Monty Fool (top item)'
+          'The Monty Fool (all items)'
+          'Latest LCD Smartie News'
+          'Latest PalmOrb News'
+          'Lastest Weather: FL (US)')
         TabOrder = 0
         OnClick = ListBox2Click
       end
@@ -494,10 +499,10 @@ object Form2: TForm2
       end
       object CheckBox15: TCheckBox
         Left = 8
-        Top = 192
+        Top = 296
         Width = 177
         Height = 17
-        Caption = 'Automaticly check for updates'
+        Caption = 'Check for LCD Smartie updates'
         TabOrder = 2
       end
     end
@@ -792,7 +797,8 @@ object Form2: TForm2
           '$Right(text here,$length)'
           '$Fill(10) places next text at pos 10'
           '$Flash(text here$)$'
-          '$CustomChar(1,31,31,31,31,31,31,31,31)')
+          '$CustomChar(1,31,31,31,31,31,31,31,31)'
+          '$Rss(URL,t|d|b,ITEM#,MAXFREQHRS)')
         TabOrder = 0
         OnClick = ListBox1Click
       end
@@ -1832,7 +1838,7 @@ object Form2: TForm2
         Font.Name = 'Tahoma'
         Font.Style = []
         MaxLength = 4
-        MaxValue = 1000
+        MaxValue = 50000
         MinValue = 20
         ParentFont = False
         TabOrder = 13

@@ -19,7 +19,7 @@ unit UInteract;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UInteract.pas,v $
- *  $Revision: 1.1 $ $Date: 2004/11/05 14:34:15 $
+ *  $Revision: 1.2 $ $Date: 2004/11/11 22:48:33 $
  *****************************************************************************}
 
 interface
@@ -54,16 +54,14 @@ uses SysUtils, USetup;
 {$R *.dfm}
 
 procedure TForm7.Button1Click(Sender: TObject);
-var
-  foo:integer;
-
 begin
   try
-    foo:=StrToInt(spinedit1.text);
+    // Using StrInt to ensure the text is a number - otherwise an exception will occur.
+    if StrToInt(spinedit1.text)=0 then SpinEdit1.Text:='1';
   except
     SpinEdit1.text:='1';
   end;
-  if SpinEdit1.Text='0' then SpinEdit1.Text:='1';
+
   if copy(SpinEdit1.Text,1,1) = '0' then Form7.SpinEdit1.Text:=copy(SpinEdit1.Text,2,1);
   form7.visible:=false;
   form2.enabled:=true;
