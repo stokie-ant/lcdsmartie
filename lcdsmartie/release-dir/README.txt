@@ -44,15 +44,23 @@ Changes
 =======
 5.3Beta3
 	- Remove the need to restart smartie when some settings are changed.
+	- Added options for auto starting with windows and hiding on startup.
 	- Fixed some scrolling bugs.
 	- Updated credits screen.
 	- Make some settings work instantly (such as the Crystalfontz 
 	  character set).
 	- Re-display the whole display after resuming.
 	- Fixed bug: Privileged instruction caused by dlportio on resume.
-	- Call "SmartieInit" at load time if a plugin supports it.
 	- Resize UI for 2 and 1 line high displays.
 	- Add more hints in the UI.
+	- Fix slow closedown.
+	- Allow old syntax of $File and $LogFile syntax (with quotes).
+	- Fixed bug in $LogFile: it wouldn't work with small files.
+	- Increased imported plugin functions to 20 (from 10).
+	- Call "SmartieInit" at load time if a plugin supports it.
+	  [excludes dotnet plugins - the default constructor will be called 
+	  instead]
+	- Support dotnet plugins; demo code for c++.net and vb.net available.
 5.3Beta2
 	- Fixed bug: $dll sometimes required the .dll extension, this was
 	  meant to be optional.

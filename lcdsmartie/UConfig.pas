@@ -19,7 +19,7 @@ unit UConfig;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UConfig.pas,v $
- *  $Revision: 1.27 $ $Date: 2005/01/05 21:56:39 $
+ *  $Revision: 1.28 $ $Date: 2005/01/07 15:19:33 $
  *****************************************************************************}
 
 interface
@@ -120,7 +120,6 @@ type
     property width: Integer read P_width;
     property height: Integer read P_height;
     constructor Create;
-    destructor Destroy; override;
   end;
 
 implementation
@@ -130,11 +129,6 @@ uses SysUtils, Forms, INIFiles, StrUtils;
 constructor TConfig.Create;
 begin
   iMinFadeContrast := 0;
-  inherited;
-end;
-
-destructor TConfig.Destroy;
-begin
   inherited;
 end;
 

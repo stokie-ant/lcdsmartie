@@ -140,7 +140,7 @@ begin
          + 'Please ensure PalmOrb is already running on your Palm.');
 
     // Set read/write time outs so LCD Smartie doesnt hang
-    timeouts.uiReadTimeout:=8000; // 8 seconds
+    timeouts.uiReadTimeout:=500; // 0.5 seconds
     timeouts.uiWriteTimeout:=1000;  // 1 second
 
     FNSetTimeouts(usbPalm, @timeouts);
@@ -379,11 +379,9 @@ begin
     if Assigned(readThread) then
     begin
       readThread.Terminate;
-      // wait for upto 5 seconds
+      // wait for upto 5 seconds, read timeout is set 0.5 seconds.
       if (readThread.exited.WaitFor(5000) = wrSignaled) then
-        readThread.Free()
-      else
-        readThread.Suspend();
+        readThread.Free();
     end;
 
     if (usbPalm <> INVALID_HANDLE_VALUE) then

@@ -19,6 +19,7 @@ type
     destructor Destroy;  override;
   end;
 
+  procedure AddPluginsToPath;
   procedure CreateShortcut(FileName,Args: string; uninstall: Boolean = False);
   function errMsg(uError: Cardinal): String;
   function decodeArgs(str: String; funcName: String; maxargs: Cardinal; var
@@ -28,7 +29,7 @@ type
 
 implementation
 
-uses Windows, SysUtils, Registry, ShlObj, ActiveX, ComObj;
+uses Windows, SysUtils, Registry, ShlObj, ActiveX, ComObj, Forms;
 
 constructor TMyThread.Create(myMethod: TThreadMethod);
 begin
@@ -178,6 +179,32 @@ begin
     end;
   finally
     R.Free;
+  end;
+end;
+
+procedure AddPluginsToPath;
+var
+  Reg: TRegistry;
+  sName: String;
+begin
+  try
+    Reg := TRegistry.Create;
+
+    sName := 'Software\Microsoft\Windows\CurrentVersion\App Paths\' +
+      extractfilename(application.exename);
+
+    try
+      Reg.RootKey := HKEY_LOCAL_MACHINE;
+      if Reg.OpenKey(sName, true) then
+      begin
+        Reg.WriteString('Path',
+          extractfilepath(application.exename)+'plugins');
+        Reg.CloseKey;
+      end;
+    finally
+      Reg.Free;
+    end;
+  except
   end;
 end;
 

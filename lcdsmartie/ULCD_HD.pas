@@ -19,7 +19,7 @@ unit ULCD_HD;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/Attic/ULCD_HD.pas,v $
- *  $Revision: 1.10 $ $Date: 2005/01/04 01:04:23 $
+ *  $Revision: 1.11 $ $Date: 2005/01/07 15:19:33 $
  *
  *  Based on code from the following (open-source) projects:
  *     WinAmp LCD Plugin
@@ -70,7 +70,7 @@ const
 
 type
   TDlPortWritePortUchar = procedure (Port: Integer; Data: Byte); stdcall;//  external 'dlportio.dll';
-  TDlPortReadPortUchar = function (Port: Integer): Byte stdcall;//  external 'dlportio.dll';
+  TDlPortReadPortUchar = function (Port: Integer): Byte; stdcall;//  external 'dlportio.dll';
 
   TControllers = (All, C1, C2);
 

@@ -46,7 +46,7 @@
 
 unit IpHlpApi;
 
-{$WEAKPACKAGEUNIT}
+//{$WEAKPACKAGEUNIT}
 
 {$HPPEMIT ''}
 {$HPPEMIT '#include "iphlpapi.h"'}

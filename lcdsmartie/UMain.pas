@@ -19,15 +19,14 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.44 $ $Date: 2005/01/05 21:56:39 $
+ *  $Revision: 1.45 $ $Date: 2005/01/07 15:19:33 $
  *****************************************************************************}
 
 interface
 
-uses Messages, IdHTTP, IdBaseComponent, IdComponent, IdTCPConnection,
-  IdTCPClient, IdMessageClient, IdPOP3,  CoolTrayIcon, Menus,
-  WinampCtrl, ExtCtrls, Controls, StdCtrls, Buttons, Classes, Forms, 
-  UConfig, ULCD, UData, xmldom, XMLIntf, msxmldom, XMLDoc;
+uses Messages, CoolTrayIcon, Menus,
+  WinampCtrl, ExtCtrls, Controls, StdCtrls, Buttons, Classes, Forms,
+  UConfig, ULCD, UData;
 
 const
   WM_ICONTRAY = WM_USER + 1;   // User-defined message
@@ -250,7 +249,7 @@ var
 
 implementation
 
-uses Registry, Windows, SysUtils, Graphics, Dialogs, ShellAPI, mmsystem,
+uses Windows, SysUtils, Graphics, Dialogs, ShellAPI, mmsystem,
   USetup, UCredits, ULCD_MO, ULCD_CF, ULCD_HD, ULCD_Test, ExtActns, UUtils;
 
 function TForm1.EscapeAmp(const sStr: string): String;
@@ -483,6 +482,7 @@ begin
 
   SetCurrentDir(extractfilepath(application.exename));
   CreateDirectory('cache', nil);
+  AddPluginsToPath();
 
   screenLcd[1] := @Panel1;
   screenLcd[2] := @Panel2;
@@ -1197,8 +1197,8 @@ end;
 
 procedure TForm1.FormShow(Sender: TObject);
 begin
-  timer1.Interval := 0;
-  timer1.Interval := config.refreshRate;
+  timer1.Interval := 0; // reset timer
+  timer1.Interval := 1; // make it short in case minimized has been selected.
 
   cooltrayicon1.IconVisible := False;
 end;
@@ -1431,35 +1431,40 @@ end;
 
 procedure TForm1.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
-  application.minimize;
-  coolTrayIcon1.HideMainForm;
-  cooltrayicon1.HideTaskbarIcon;
-  cooltrayicon1.enabled := False;
-  cooltrayicon1.IconVisible := False;
-  cooltrayicon1.Refresh;
+  //application.minimize;
+  //coolTrayIcon1.HideMainForm;
+  //cooltrayicon1.HideTaskbarIcon;
+  //cooltrayicon1.enabled := False;
+  //cooltrayicon1.IconVisible := False;
+  //cooltrayicon1.Refresh;
 
-  try
-    while timer1.enabled = true do timer1.enabled := false;
-    while timer2.enabled = true do timer2.enabled := false;
-    while timer3.enabled = true do timer3.enabled := false;
-    while timer4.enabled = true do timer4.enabled := false;
-    while timer5.enabled = true do timer5.enabled := false;
-    while timer6.enabled = true do timer6.enabled := false;
-    while timer7.enabled = true do timer7.enabled := false;
-    while timer8.enabled = true do timer8.enabled := false;
-    while timer9.enabled = true do timer9.enabled := false;
-    while timer10.enabled = true do timer10.enabled := false;
-    while timer11.enabled = true do timer11.enabled := false;
-    while timer12.enabled = true do timer12.enabled := false;
-    while timer13.enabled = true do timer13.enabled := false;
-    while timertrans.enabled = true do timertrans.enabled := false;
-  except
-  end;
+  while timer1.enabled = true do timer1.enabled := false;
+  while timer2.enabled = true do timer2.enabled := false;
+  while timer3.enabled = true do timer3.enabled := false;
+  while timer4.enabled = true do timer4.enabled := false;
+  while timer5.enabled = true do timer5.enabled := false;
+  while timer6.enabled = true do timer6.enabled := false;
+  while timer7.enabled = true do timer7.enabled := false;
+  while timer8.enabled = true do timer8.enabled := false;
+  while timer9.enabled = true do timer9.enabled := false;
+  while timer10.enabled = true do timer10.enabled := false;
+  while timer11.enabled = true do timer11.enabled := false;
+  while timer12.enabled = true do timer12.enabled := false;
+  while timer13.enabled = true do timer13.enabled := false;
+  while timertrans.enabled = true do timertrans.enabled := false;
 
   FiniLCD();
 
-  if (Data <> nil) then Data.Destroy;
-  if (config <> nil) then config.Destroy;
+  if (Data <> nil) then
+  begin
+    if (Data.CanExit()) then
+    begin
+      Data.Free();
+      Data := nil;
+    end;  // otherwise just leak it.
+  end;
+  if (Data = nil) and (config <> nil) then
+    config.Free();
 end;
 
 procedure TForm1.Timer8Timer(Sender: TObject);

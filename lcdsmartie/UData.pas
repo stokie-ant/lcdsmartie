@@ -19,14 +19,14 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.36 $ $Date: 2005/01/05 15:32:41 $
+ *  $Revision: 1.37 $ $Date: 2005/01/07 15:19:33 $
  *****************************************************************************}
 
 
 interface
 
 uses Classes, System2, xmldom, XMLIntf, SysUtils, xercesxmldom, XMLDoc,
-  msxmldom, ComCtrls, ComObj, UUtils;
+  msxmldom, ComCtrls, ComObj, UUtils, IdHTTP, SyncObjs, IdPOP3;
 
 const
   ticksperseconde = 1000;
@@ -41,6 +41,8 @@ const
   maxArgs = 10;
 
 type
+  EExiting = Class(Exception);
+
   TBusType = (btISA, btSMBus, btVIA686ABus, btDirectIO);
   TSMBType = (smtSMBIntel, smtSMBAMD, smtSMBALi, smtSMBNForce, smtSMBSIS);
   TSensorType = (stUnknown, stTemperature, stVoltage, stFan, stMhz,
@@ -105,12 +107,15 @@ type
     maxfreq: Cardinal;                        // hours - 0 means no restriction
   end;
 
-  TMyProc = function(param1: pchar; param2: pchar): Pchar stdcall;
+  PHttp = ^TIdHttp;
+  PPop3 = ^TIdPop3;
+
+  TMyProc = function(param1: pchar; param2: pchar): Pchar; stdcall;
 
   TDll = Record
     sName: String;
     hDll: HMODULE;
-    functions: Array [1..10] of TMyProc;
+    functions: Array [1..20] of TMyProc;
   end;
 
   TData = Class(TObject)
@@ -136,6 +141,7 @@ type
     procedure UpdateEmail;
     constructor Create;
     destructor Destroy; override;
+    function CanExit: Boolean;
   private
     bNewScreenEvent: Boolean;
     dlls: Array of TDll;
@@ -194,6 +200,9 @@ type
       foldRank, foldWU: String;
     rss: Array of TRss;
     rssEntries: Cardinal;
+    httpCs: TCriticalSection;
+    httpCopy: PHttp;   // so we can cancel the request. Guarded by httpCs
+    pop3Copy: PPop3;   // so we can cancel the request. Guarded by httpCs
     procedure emailUpdate;
     procedure fetchHTTPUpdates;
     procedure httpUpdate;
@@ -213,6 +222,7 @@ type
     procedure RequiredParameters(uiArgs: Cardinal; uiMinArgs: Cardinal; uiMaxArgs: Cardinal = 0);
     procedure ProcessPlugin(var line: String; qstattemp: Integer;
       bCacheResults: Boolean);
+    procedure LoadPlugin(sDllName: String; bDotNet: Boolean = false);
   end;
 
 function stripspaces(FString: String): String;
@@ -221,12 +231,11 @@ function stripspaces(FString: String): String;
 
 implementation
 
-uses cxCpu40, adCpuUsage, UMain, Windows, Forms, Registry, IpHlpApi,
+uses cxCpu40, adCpuUsage, UMain, Windows, Forms, IpHlpApi,
   IpIfConst, IpRtrMib, WinSock, Dialogs, Buttons, Graphics, ShellAPI,
-  mmsystem, ExtActns, Messages, IdHTTP, IdBaseComponent, IdComponent,
-  IdTCPConnection, IdTCPClient, IdMessageClient, IdPOP3, IdMessage, Menus,
-  ExtCtrls, Controls, StdCtrls, StrUtils, ActiveX, IdUri, DateUtils, IdGlobal,
-  SyncObjs;
+  mmsystem, ExtActns, Messages, IdBaseComponent, IdComponent,
+  IdTCPConnection, IdTCPClient, IdMessageClient, IdMessage, Menus,
+  ExtCtrls, Controls, StdCtrls, StrUtils, ActiveX, IdUri, DateUtils, IdGlobal;
 
 procedure TData.NewScreen(bYes: Boolean);
 begin
@@ -280,8 +289,15 @@ begin
 end;
 
 constructor TData.Create;
+var
+  status: Integer;
+  WSAData: TWSADATA;
 begin
   inherited;
+
+  status := WSAStartup(MAKEWORD(2,0), WSAData);
+  if status <> 0 then
+     raise Exception.Create('WSAStartup failed');
 
   CPUUsagePos := 1;
   isconnected := false;
@@ -302,6 +318,8 @@ begin
   doGameUpdate := True;
   doCpuUpdate := True;
 
+  httpCs := TCriticalSection.Create();
+
   // Start data collection thread
   dataThread := TMyThread.Create(self.doDataThread);
   dataThread.Resume;
@@ -310,38 +328,73 @@ begin
   cpuThread.Resume;
 end;
 
-destructor TData.Destroy;
+function TData.CanExit: Boolean;
 var
   uiDll: Cardinal;
 begin
+
   if (Assigned(dataThread)) then
-  begin
     dataThread.Terminate;
-    // wait upto 30 seconds for it to exit - may be blocked in net calls
-    if (dataThread.exited.WaitFor(30*1000) = wrSignaled) then
-      dataThread.Free()
-    else
-      dataThread.Suspend();
-  end;
 
   if (Assigned(cpuThread)) then
   begin
     cpuThread.Terminate;
-    // wait upto 5 seconds for it to exit
-    if (cpuThread.exited.WaitFor(5*1000) = wrSignaled) then
-      cpuThread.Free()
-    else
-      cpuThread.Suspend();
+    cpuThread.WaitFor();
+    cpuThread.Free();
   end;
 
   for uiDll:=1 to uiTotalDlls do
-  try
-    if (dlls[uiDll-1].hDll <> 0) then
-      FreeLibrary(dlls[uiDll-1].hDll);
+  begin
+    try
+      if (dlls[uiDll-1].hDll <> 0) then
+        FreeLibrary(dlls[uiDll-1].hDll);
+    except
+    end;
     dlls[uiDll-1].hDll := 0;
-  except
   end;
   uiTotalDlls := 0;
+
+
+  // Cancel outstanding http/pop3 requests
+  if (Assigned(httpCs)) then
+  begin
+    httpCs.Enter();
+    try
+      try
+        if (httpCopy <> nil) then
+          httpCopy^.DisconnectSocket();
+        if (pop3Copy <> nil) then
+          pop3Copy^.DisconnectSocket();
+      except
+      end;
+    finally
+      httpCs.Leave();
+    end;
+  end;
+
+
+  Result := True;
+  { code not needed - yet as the above method of cancelling seems to work
+  if (Assigned(dataThread)) then
+  begin
+    Wait for 30 seconds and then just give up.
+    if (dataThread.Exited.WaitFor(30000) <> wrSignaled) then
+      Result := False;
+  end; }
+end;
+
+destructor TData.Destroy;
+begin
+
+  if (Assigned(dataThread)) then
+  begin
+    dataThread.WaitFor();
+    dataThread.Free();
+
+    if Assigned(httpCs) then httpCs.Free;
+  end;
+
+  WSACleanup();
 
   inherited;
 end;
@@ -979,12 +1032,92 @@ begin
   Result := line;
 end;
 
+procedure TData.LoadPlugin(sDllName: String; bDotNet: Boolean = false);
+var
+  uiDll: Cardinal;
+  i: Integer;
+  initFunc:  procedure; stdcall;
+  bridgeInitFunc:  procedure(dll: String); stdcall;
+  bFound: Boolean;
+  sLibraryPath: String;
+begin
+  bFound := false;
+
+  uiDll := uiTotalDlls;
+
+  Inc(uiTotalDlls);
+  SetLength(dlls, uiTotalDlls);
+  dlls[uiDll].sName := sDllName;
+
+  if (bDotNet) then
+    sLibraryPath := 'Bridge.dll'
+  else
+    sLibraryPath := 'plugins\' + sDllName;
+
+  dlls[uiDll].hDll := LoadLibrary(pchar(extractfilepath(application.exename) +
+    sLibraryPath));
+
+  if (dlls[uiDll].hDll <> 0) then
+  begin
+    initFunc := getprocaddress(dlls[uiDll].hDll, PChar('SmartieInit'));
+    if (not Assigned(initFunc)) then
+      initFunc := getprocaddress(dlls[uiDll].hDll, PChar('_SmartieInit@0'));
+
+    if (Assigned(initFunc)) then
+    begin
+      bFound := True;
+      try
+        initFunc();
+      except
+        on E: Exception do
+          showmessage('Plugin '+sDllName+' had an exception during Init: '
+            + E.Message);
+      end;
+    end;
+
+    if (bDotNet) then
+    begin
+      bridgeInitFunc := getprocaddress(dlls[uiDll].hDll, PChar('_BridgeInit@4'));
+      if (not Assigned(bridgeInitFunc)) then
+        showmessage('Could not init bridge')
+      else
+      begin
+        bFound := True;
+        try
+          bridgeInitFunc(dlls[uiDll].sName);
+        except
+          on E: Exception do
+            showmessage('Bridge Init for '+dlls[uiDll].sName+' had an exception: '
+              + E.Message);
+        end;
+      end;
+    end;
+
+    for i:= 1 to 20 do
+    begin
+      @dlls[uiDll].functions[i] := getprocaddress(dlls[uiDll].hDll,
+        PChar('function' + IntToStr(i)));
+      if (@dlls[uiDll].functions[i] = nil) then
+        @dlls[uiDll].functions[i] := getprocaddress(dlls[uiDll].hDll,
+          PChar('_function' + IntToStr(i)+'@8'));
+      if (@dlls[uiDll].functions[i] <> nil) then
+        bFound := True;
+    end;
+
+    if (not bFound) and (not bDotNet) then
+    begin
+      if (dlls[uiDll].hDll <> 0) then FreeLibrary(dlls[uiDll].hDll);
+      dlls[uiDll].hDll := 0;
+      Dec(uiTotalDlls);
+      LoadPlugin(dlls[uiDll].sName, true);
+    end;
+  end;
+end;
+
 function TData.CallPlugin(sDllName: String; iFunc: Integer;
                     sParam1: String; sParam2:String) : String;
 var
   uiDll: Cardinal;
-  i: Integer;
-  initFunc:  procedure stdcall;
 begin
   // check if we have seen this dll before
   if (Pos('.DLL', UpperCase(sDllName)) = 0) then
@@ -997,53 +1130,12 @@ begin
 
   if (uiDll >= uiTotalDlls) then
   begin // we havent seen this one before - load it
-    Inc(uiTotalDlls);
-    SetLength(dlls, uiTotalDlls);
-    dlls[uiDll].sName := sDllName;
-
-    dlls[uiDll].hDll := LoadLibrary(pchar(extractfilepath(application.exename) +
-      'plugins\' + sDllName));
-
-    //dlls[uiDll].hDll := LoadLibrary(pchar(
-    //    'c:\Documents and Settings\Administrator\My Documents\Visual Studio Projects\perf\Debug\perf.dll'));
-    //dlls[uiDll].hDll := LoadLibrary(pchar(
-    //    'c:\Documents and Settings\Administrator\My Documents\Visual Studio Projects\bignum\Debug\bignum.dll'));
-    //dlls[uiDll].hDll := LoadLibrary(pchar(
-    //    'c:\Documents and Settings\Administrator\My Documents\Visual Studio Projects\menu\Debug\menu.dll'));
-   //dlls[uiDll].hDll := LoadLibrary(pchar(
-    //    'c:\Documents and Settings\Administrator\Desktop\bridge\Bridge\Common\Bridge.dll'));
-
-    if (dlls[uiDll].hDll <> 0) then
-    begin
-      initFunc := getprocaddress(dlls[uiDll].hDll, PChar('SmartieInit'));
-      if (not Assigned(initFunc)) then
-        initFunc := getprocaddress(dlls[uiDll].hDll, PChar('_SmartieInit@0'));
-
-      if (Assigned(initFunc)) then
-      begin
-        try
-          initFunc();
-        except
-          on E: Exception do
-            showmessage('Plugin '+sDllName+' had an exception during Init: '
-              + E.Message);
-        end;
-      end;
-
-      for i:= 1 to 10 do
-      begin
-        @dlls[uiDll].functions[i] := getprocaddress(dlls[uiDll].hDll,
-          PChar('function' + IntToStr(i)));
-        if (@dlls[uiDll].functions[i] = nil) then
-          @dlls[uiDll].functions[i] := getprocaddress(dlls[uiDll].hDll,
-            PChar('_function' + IntToStr(i)+'@8'));
-      end;
-    end;
+    LoadPlugin(sDllName);
   end;
 
   if (dlls[uiDll].hDll <> 0) then
   begin
-    if (iFunc >= 0) and (iFunc <= 9) then
+    if (iFunc >= 0) and (iFunc <= 20) then
     begin
       if (iFunc = 0) then iFunc := 10;
 
@@ -1063,7 +1155,7 @@ begin
       Result := '[Dll: out of range]';
   end
   else
-    Result := '[Dll: Cant load dll: ' + CleanString(ErrMsg(GetLastError)) + ']';
+    Result := '[Dll: Can not load plugin]';
 end;
 
 
@@ -1137,10 +1229,10 @@ var
   mem: Int64;
   jj: Cardinal;
   found: Boolean;
-
+  iBytesToRead: Integer;
 begin
   try
-  
+
     ProcessPlugin(line, qstattemp, bCacheResults);
 
     hdcounter := 0;
@@ -1149,10 +1241,15 @@ begin
     begin
       try
         hdcounter := hdcounter + 1;
-        if hdcounter > 4 then line := StringReplace(line, '$LogFile("',
+        if hdcounter > 4 then line := StringReplace(line, '$LogFile(',
           'error', []);
 
         sFileloc := args[1];
+        if (sFileloc[1] = '"') and (sFileloc[Length(sFileLoc)] = '"') then
+          sFileloc := copy(sFileloc, 2, Length(sFileloc)-2);
+
+        if (not FileExists(sFileloc)) then
+          raise Exception.Create('No such file');
 
         RequiredParameters(numargs, 2, 2);
         iFileline := StrToInt(args[2]);
@@ -1160,21 +1257,22 @@ begin
         if iFileline > 3 then iFileline := 3;
         if iFileline < 0 then iFileline := 0;
 
-        SetLength(spaceline, 1024);
+        FileStream := TFileStream.Create(sFileloc, fmOpenRead or fmShareDenyNone);
+        iBytesToRead := 1024;
+        if (FileStream.Size < iBytesToRead) then
+          iBytesToRead := FileStream.Size;
+        SetLength(spaceline, iBytesToRead);
 
-        //****BUGBUG: This will cause an exception if there are less than 1024
-        // bytes in the file.
-        FileStream := TFileStream.Create(sFileloc, fmOpenRead or
-          fmShareDenyNone);
-        FileStream.Seek(-1 * 1024, soFromEnd);
-        FileStream.ReadBuffer(spaceline[1], 1024);
+        FileStream.Seek(-1 * iBytesToRead, soFromEnd);
+        FileStream.ReadBuffer(spaceline[1], iBytesToRead);
         FileStream.Free;
 
         Lines := TStringList.Create;
         Lines.Text := spaceline;
-        spaceline := stripspaces(lines[lines.count - 1 - iFileline]);
-        spaceline := copy(spaceline, pos('] ', spaceline) + 3,
-          length(spaceline));
+        spaceline := stripspaces(lines[lines.count - iFileline]);
+        if (pos('] ', spaceline) <> 0) then
+          spaceline := copy(spaceline, pos('] ', spaceline) + 2, length(spaceline));
+
         for i := 0 to 7 do spaceline := StringReplace(spaceline, chr(i), '',
           [rfReplaceAll]);
         Lines.Free;
@@ -1188,11 +1286,14 @@ begin
     while decodeArgs(line, '$File', maxArgs, args, prefix, postfix, numargs) do
     begin
       sFileloc := args[1];
+      if (sFileloc[1] = '"') and (sFileloc[Length(sFileLoc)] = '"') then
+        sFileloc := copy(sFileloc, 2, Length(sFileloc)-2);
 
       try
         RequiredParameters(numargs, 2, 2);
         iFileline := StrToInt(args[2]);
-
+        if (not FileExists(sFileloc)) then
+          raise Exception.Create('No such file');
         assignfile(fFile3, sFileloc);
         reset(fFile3);
         for counter3 := 1 to iFileline do readln(fFile3, line3);
@@ -1983,9 +2084,7 @@ var
   MibRow: TMibIfRow;
   phoste: PHostEnt;
   Buffer: Array [0..100] of char;
-  WSAData: TWSADATA;
   maxEntries: Cardinal;
-  status: Integer;
 
 begin
   network := 0;
@@ -2001,24 +2100,11 @@ begin
 
   if network = 1 then
   begin
-    status := WSAStartup($0101, WSAData);
-    if status <> 0 then
-    begin
-      ipaddress := '[WSAStartup Failed: ';
-      case status of
-        WSASYSNOTREADY: ipaddress := ipaddress + ' WSASYSNOTREADY]';
-        WSAVERNOTSUPPORTED: ipaddress := ipaddress + ' WSAVERNOTSUPPORTED]';
-        WSAEPROCLIM: ipaddress := ipaddress + ' WSAPROCLIM]';
-        WSAEFAULT: ipaddress := ipaddress + ' WSAEFAULT]';
-        else ipaddress := ipaddress + ' Unknown]';
-      end;
-      exit;
-    end;
+
     GetHostName(Buffer, Sizeof(Buffer));
     phoste := GetHostByName(buffer);
     if phoste = nil then ipaddress := '127.0.0.1'
     else ipaddress := StrPas(inet_ntoa(PInAddr(phoste^.h_addr_list^)^));
-    WSACleanup;
 
     Size := 0;
     if GetIfTable(nil, Size, True) <> ERROR_INSUFFICIENT_BUFFER then Exit;
@@ -2313,21 +2399,40 @@ begin
           HTTP.ProxyParams.ProxyServer := config.httpProxy;
           HTTP.ProxyParams.ProxyPort := config.httpProxyPort;
         end;
+        HTTP.ReadTimeout := 30000;  // 30 seconds
+
+        if (dataThread.Terminated) then raise EExiting.Create('');
+
+        httpCs.Enter();
+        httpCopy := @HTTP;
+        httpCs.Leave();
         sl.Text := HTTP.Get(Url);
+        // the get call can block for a long time so check if smartie is exiting
+        if (dataThread.Terminated) then raise EExiting.Create('');
+
         sl.savetofile(Filename);
       end;
     finally
+      httpCs.Enter();
+      httpCopy := nil;
+      httpCs.Leave();
+
       sl.Free;
       HTTP.Free;
     end;
   except
     on E: EIdHTTPProtocolException do
     begin
+      if (dataThread.Terminated) then raise EExiting.Create('');
       if (E.ReplyErrorCode <> 304) then   // 304=Not Modified.
         raise;
     end;
 
-    else raise;
+    else
+    begin
+      if (dataThread.Terminated) then raise EExiting.Create('');
+      raise;
+    end;
   end;
 
   // Even if we fail to download - give the filename so they can use the old data.
@@ -2356,6 +2461,7 @@ begin
   // the application is stopped and started quickly.
   if (maxfreq = 0) then maxfreq := config.newsRefresh;
   RssFileName := getUrl(Url, maxfreq);
+  if (dataThread.Terminated) then raise EExiting.Create('');
 
   // Parse the Xml data
   if FileExists(RssFilename) then
@@ -2432,6 +2538,7 @@ begin
     FileName := getUrl(
       'http://setiathome2.ssl.berkeley.edu/fcgi-bin/fcgi?cmd=user_xml&email='
       + config.setiEmail, 12*60);
+    if (dataThread.Terminated) then raise EExiting.Create('');
 
     // Parse the Xml data
     if FileExists(Filename) then
@@ -2460,6 +2567,7 @@ begin
         FloatToStr(100-StrToFloat(ANode.ChildNodes['top_rankpct'].Text));
     end;
   except
+    on EExiting do raise;
     on E: Exception do
     begin
       setiNumResults := '[Seti: ' + E.Message + ']';
@@ -2517,15 +2625,22 @@ procedure TData.doDataThread;
 begin
   coinitialize(nil);
 
-  while (not dataThread.Terminated) do
-  begin
-    if (not dataThread.Terminated) and (doHTTPUpdate) then httpUpdate;
-    if (not dataThread.Terminated) and (doEmailUpdate) then emailUpdate;
-    if (not dataThread.Terminated) and (doGameUpdate) then gameUpdate;
-    if (not dataThread.Terminated) then sleep(1000);
+  try
+    try
+      while (not dataThread.Terminated) do
+      begin
+        if (not dataThread.Terminated) and (doHTTPUpdate) then httpUpdate;
+        if (not dataThread.Terminated) and (doEmailUpdate) then emailUpdate;
+        if (not dataThread.Terminated) and (doGameUpdate) then gameUpdate;
+        if (not dataThread.Terminated) then sleep(1000);
+      end;
+    finally
+      CoUninitialize;
+    end;
+  except
+    on E: EExiting do Exit;
+    else raise;
   end;
-
-  CoUninitialize;
 end;
 
 
@@ -2554,7 +2669,7 @@ begin
           screenline) <> 0) or (pos('$Half-life', screenline) <> 0)) then
         begin
 
-          if (dataThread.Terminated) then Exit;
+          if (dataThread.Terminated) then raise EExiting.Create('');
 
           if pos('$Half-life', screenline) <> 0 then srvr := '-hls';
           if pos('$QuakeII', screenline) <> 0 then srvr := '-q2s';
@@ -2634,6 +2749,7 @@ begin
           end;
         end;
       except
+        on EExiting do raise;
         on E: Exception do
         begin
           qstatreg1[z, y] := '[Exception: ' + E.Message + ']';
@@ -2701,7 +2817,7 @@ begin
             begin
               try
                 rss[myRssCount].maxfreq := StrToInt(args[4]) * 60
-              except 
+              except
               end;
             end;
 
@@ -2757,7 +2873,7 @@ begin
     begin
       if (rss[counter].url <> '') then
       begin
-        if (dataThread.Terminated) then Exit;
+        if (dataThread.Terminated) then raise EExiting.Create('');
 
         try
           rss[counter].items := getRss(rss[counter].url, rss[counter].title,
@@ -2773,12 +2889,13 @@ begin
             whole := whole + rss[counter].title[counter2] + ':' +
               rss[counter].desc[counter2] + ' | ';
 
-            if (dataThread.Terminated) then Exit;
+            if (dataThread.Terminated) then raise EExiting.Create('');
           end;
           rss[counter].whole := whole;
           rss[counter].title[0] := titles;
           rss[counter].desc[0] := descs;
         except
+          on EExiting do raise;
           on E: Exception do
           begin
             rss[counter].items := 0;
@@ -2791,19 +2908,19 @@ begin
     end;
   end;
 
-
   if (DoNewsUpdate[6]) then
   begin
     DoNewsUpdate[6] := False;
     if (config.checkUpdates) then
     begin
-      if (dataThread.Terminated) then Exit;
+      if (dataThread.Terminated) then raise EExiting.Create('');
       try
         sFilename := getUrl('http://lcdsmartie.sourceforge.net/version.txt',
           96*60);
         versionline := FileToString(sFilename);
       except
-        versionline := '';
+        on E: EExiting do raise;
+        else versionline := '';
       end;
       versionline := StringReplace(versionline, chr(10), '',
         [rfReplaceAll]);
@@ -2825,14 +2942,14 @@ begin
   if DoNewsUpdate[7] then
   begin
     DoNewsUpdate[7] := False;
-    if (dataThread.Terminated) then Exit;
+    if (dataThread.Terminated) then raise EExiting.Create('');
     doSeti();
   end;
 
   if DoNewsUpdate[9] then
   begin
     DoNewsUpdate[9] := False;
-    if (dataThread.Terminated) then Exit;
+    if (dataThread.Terminated) then raise EExiting.Create('');
 
     try
       sFilename := getUrl(
@@ -2876,6 +2993,7 @@ begin
       foldWU := stripspaces(stripHtml(tempstr2));
 
     except
+      on EExiting do raise;
       on E: Exception do
       begin
         if newsAttempts[9]<4 then
@@ -2939,7 +3057,7 @@ begin
   begin
     if mailz[y] = 1 then
     begin
-      if (dataThread.Terminated) then Exit;
+      if (dataThread.Terminated) then raise EExiting.Create('');
       try
         if config.pop[y].server <> '' then
         begin
@@ -2947,12 +3065,17 @@ begin
           msg := TIdMessage.Create(nil);
           pop3.host := config.pop[y].server;
           pop3.MaxLineAction := maSplit;
-          pop3.ReadTimeout := 10000;   //10 seconds
+          pop3.ReadTimeout := 15000;   //15 seconds
           pop3.username := config.pop[y].user;
           pop3.Password := config.pop[y].pword;
 
           try
+            httpCs.Enter();
+            pop3Copy := @pop3;
+            httpCs.Leave();
+            if (dataThread.Terminated) then raise EExiting.Create('');
             pop3.Connect(30000);   // 30 seconds
+            if (dataThread.Terminated) then raise EExiting.Create('');
 
             mail[y].messages := pop3.CheckMessages;
 
@@ -2969,6 +3092,9 @@ begin
             end;
 
           finally
+            httpCs.Enter();
+            pop3Copy := nil;
+            httpCs.Leave();
             pop3.Disconnect;
             pop3.Free;
             msg.Free;
@@ -2979,6 +3105,7 @@ begin
         end;
 
       except
+        on EExiting do raise;
         on E: Exception do
         begin
           mail[y].messages := 0;
