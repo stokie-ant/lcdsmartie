@@ -27,24 +27,63 @@ __declspec(dllexport) void __stdcall SmartieInit(void)
     __crt_dll_initialize();
 }
 
-__declspec(dllexport) void __stdcall BridgeInit(const char *param1) 
+__declspec(dllexport) char * __stdcall BridgeInit(const char *param1) 
 {
-	String __gc *managed_param1 = new String(param1);    
-	String __gc *loadPath = managed_param1->Concat(S"plugins\\", managed_param1);
-	String __gc *classtype;
-	classtype = managed_param1->Substring(0, managed_param1->LastIndexOf(S"."));
-	classtype = classtype->Concat(classtype, S".LCDSmartie");
+	String __gc *result = new String("");
 
-	globals::myAssembly = Assembly::LoadFrom( loadPath );
-	globals::myType = globals::myAssembly->GetType(classtype);
-	globals::myObject = Activator::CreateInstance(globals::myType);
-	globals::myMethods = new MethodInfo*[20];
-
-	for (int iFunc=1; iFunc<=20; iFunc++) 
+	try
 	{
-		String __gc *function = String::Concat(S"function", iFunc.ToString());
-		globals::myMethods[iFunc-1] = globals::myType->GetMethod(function);
+		String __gc *managed_param1 = new String(param1);    
+		String __gc *loadPath = managed_param1->Concat(S"plugins\\", managed_param1);
+		String __gc *classtype = managed_param1;
+		if (classtype->LastIndexOf(S".") != -1)
+			classtype = managed_param1->Substring(0, classtype->LastIndexOf(S"."));
+		classtype = classtype->Concat(classtype, S".LCDSmartie");
+
+		globals::myAssembly = Assembly::LoadFrom( loadPath );
+		if (globals::myAssembly)
+		{
+			globals::myType = globals::myAssembly->GetType(classtype);
+			if (globals::myType)
+			{
+				globals::myObject = Activator::CreateInstance(globals::myType);
+
+				if (globals::myObject)
+				{
+					globals::myMethods = new MethodInfo*[20];
+					bool found = false;
+
+					for (int iFunc=1; iFunc<=20; iFunc++) 
+					{
+						String __gc *function = String::Concat(S"function", iFunc.ToString());
+						globals::myMethods[iFunc-1] = globals::myType->GetMethod(function);
+						if (globals::myMethods[iFunc-1])
+							found = true;
+					}
+					
+					if (!found)
+						result = S"Class contains no Smartie methods!";
+				}
+				else result = S"Failed to create an instance";
+			}
+			else result = String::Concat(S"Plugin does not contain a type of ", classtype);
+		}
+		else result = String::Concat(S"Failed to load ", loadPath);
+	} catch (Exception *e) {
+		String __gc *err = new String("[Exception: ");
+		result = String::Concat(err, e->Message, S"]");
 	}
+
+	static char buffer[1024];
+	buffer[0] = 0;
+	if (result != "")
+	{
+		char tmp __gc[] = System::Text::Encoding::UTF8->GetBytes(result->ToCharArray());
+		char __pin *value = &tmp[0];
+			
+		strncpy(buffer, value, 1024);
+	}
+	return buffer;
 }
  
 
@@ -75,11 +114,15 @@ char *callit(int iFunc, const char *param1, const char *param2)
 		result = err->Concat(err, e->Message, S"]");
 	}
 
-	char tmp __gc[] = System::Text::Encoding::UTF8->GetBytes(result->ToCharArray());
-	char __pin *value = &tmp[0];
-	
 	static char buffer[1024];
-	strncpy(buffer, value, 1024);
+	buffer[0] = 0;
+	if (result != "")
+	{
+		char tmp __gc[] = System::Text::Encoding::UTF8->GetBytes(result->ToCharArray());
+		char __pin *value = &tmp[0];
+	
+		strncpy(buffer, value, 1024);
+	}
 	return buffer;
 }
 
