@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.9 $ $Date: 2004/11/17 15:05:28 $
+ *  $Revision: 1.10 $ $Date: 2004/11/18 00:17:14 $
  *****************************************************************************}
 
 interface
@@ -399,6 +399,7 @@ begin
   parameter4:=lowercase(paramstr(4));
   aantalscreensheenweer:=1;
 
+
 //register
   try
     assignfile(initfile, extractfilepath(application.exename)+'images\colors.cfg');
@@ -677,6 +678,31 @@ var
 begin
   timer1.Interval:=config.refreshRate;
 
+  // BUGBUG: Surely there's a better place for this parameter code
+  // BUT it can't go in FormCreate or FormShow because it either
+  // doesn't work (FormCreate) or causes an exception (FormShow).
+  if (parameter1= '-hide') or (parameter2= '-hide') or (parameter3= '-hide') or (parameter4= '-hide') then begin
+    if parameter1 = '-hide' then parameter1:= '';
+    if parameter2 = '-hide' then parameter2:= '';
+    if parameter3 = '-hide' then parameter3:= '';
+    if parameter4 = '-hide' then parameter4:= '';
+    application.minimize;
+    hide;
+  end;
+
+  if (parameter1= '-totalhide') or (parameter2= '-totalhide') or (parameter3= '-totalhide') or (parameter4= '-totalhide') then begin
+    if parameter1 = '-totalhide' then parameter1:= '';
+    if parameter2 = '-totalhide' then parameter2:= '';
+    if parameter3 = '-totalhide' then parameter3:= '';
+    if parameter4 = '-totalhide' then parameter4:= '';
+    application.minimize;
+    hide;
+    cooltrayicon1.HideTaskbarIcon;
+    cooltrayicon1.enabled:=False;
+    cooltrayicon1.IconVisible:=False;
+    cooltrayicon1.Refresh;
+  end;
+
   if ((gotnewlines=false) OR (timertrans.enabled=false))then begin
     Data.refres(self);
 
@@ -871,27 +897,6 @@ var
 
 begin
   timer1.Interval:=config.refreshRate;
-
-
-  if (parameter1= '-hide') or (parameter2= '-hide') or (parameter3= '-hide') or (parameter4= '-hide') then begin
-    if parameter1 = '-hide' then parameter1:= '';
-    if parameter2 = '-hide' then parameter2:= '';
-    if parameter3 = '-hide' then parameter3:= '';
-    if parameter4 = '-hide' then parameter4:= '';
-    application.minimize;
-    hide;
-  end;
-
-  if (parameter1= '-totalhide') or (parameter2= '-totalhide') or (parameter3= '-totalhide') or (parameter4= '-totalhide') then begin
-    if parameter1 = '-totalhide' then parameter1:= '';
-    if parameter2 = '-totalhide' then parameter2:= '';
-    if parameter3 = '-totalhide' then parameter3:= '';
-    if parameter4 = '-totalhide' then parameter4:= '';
-    cooltrayicon1.Destroy;
-    application.minimize;
-    hide;
-  end;
-
 
 
   if config.height<>aantregelsoud then begin
