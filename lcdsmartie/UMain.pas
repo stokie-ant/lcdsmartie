@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.29 $ $Date: 2004/12/15 20:06:06 $
+ *  $Revision: 1.30 $ $Date: 2004/12/15 21:22:27 $
  *****************************************************************************}
 
 interface
@@ -905,6 +905,7 @@ begin
       end;
     end;
 
+    Data.ScreenStart();
     for counter := 1 to config.height do
     begin
       //Application.ProcessMessages;
@@ -926,6 +927,8 @@ begin
       parsedLine[counter] := line;
       newline[counter] := line;  // Used by screen change interaction.
     end;
+    Data.ScreenEnd();
+    
     for h := 1 to 4 do
     begin
       // handle continuing on the next line (if req)

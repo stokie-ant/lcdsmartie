@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.23 $ $Date: 2004/12/09 01:08:51 $
+ *  $Revision: 1.24 $ $Date: 2004/12/15 21:22:27 $
  *****************************************************************************}
 
 
@@ -127,6 +127,8 @@ type
     isconnected: Boolean;
     gotEmail: Boolean;
     cLastKeyPressed: Char;
+    procedure ScreenStart;
+    procedure ScreenEnd;
     function change(line: String; qstattemp: Integer = 1): String;
     procedure refres(Sender: TObject);
     procedure updateNetworkStats(Sender: TObject);
@@ -137,6 +139,10 @@ type
     constructor Create;
     destructor Destroy; override;
   private
+    totaldlls: Integer;
+    dllsArray: Array[0..40] of String;
+    sOpenedLibrary: String;
+    hOpenedLibrary: Cardinal;
     doHTTPUpdate, doGameUpdate, doEmailUpdate: Boolean; STUsername,
       STComputername, STCPUType, STCPUSpeed: String;
     STPageFree, STPageTotal: Int64;
@@ -176,15 +182,7 @@ type
     qstatreg1: Array[1..20, 1..4] of String;
     qstatreg2: Array[1..20, 1..4] of String;
     qstatreg3: Array[1..20, 1..4] of String;
-    dllsArray: Array[0..40] of String;
-    totaldlls: Integer; templib: String;
     STHDBar: String;
-    hlib: Cardinal;
-    nlib: Integer;
-    plib: String;
-    tlib: String;
-    function1, function2, function3, function4, function5, function6, function7,
-      function8, function9, function10: TmyProc;
     distributedlog: String;
     srvr: String;
     System1: Tsystem;
@@ -228,7 +226,18 @@ uses cxCpu40, adCpuUsage, UMain, Windows, Forms, Registry, IpHlpApi,
   IpIfConst, IpRtrMib, WinSock, Dialogs, Buttons, Graphics, ShellAPI,
   mmsystem, ExtActns, Messages, IdHTTP, IdBaseComponent, IdComponent,
   IdTCPConnection, IdTCPClient, IdMessageClient, IdPOP3, IdMessage, Menus,
-  ExtCtrls, Controls, StdCtrls, StrUtils, ActiveX, IdUri, DateUtils, IdGlobal;
+  ExtCtrls, Controls, StdCtrls, StrUtils, ActiveX, IdUri, DateUtils, IdGlobal,
+  UUtils;
+
+procedure TData.ScreenStart;
+begin
+  totaldlls := 0;
+end;
+
+procedure TData.ScreenEnd;
+begin
+  dllcancheck := false;
+end;
 
 procedure TData.RequiredParameters(uiArgs: Cardinal; uiMinArgs: Cardinal; uiMaxArgs: Cardinal = 0);
 begin
@@ -328,6 +337,7 @@ constructor TData.Create;
 begin
   inherited;
 
+  hOpenedLibrary := INVALID_HANDLE_VALUE;
   CPUUsagePos := 1;
   isconnected := false;
   totaldlls := 0;
@@ -1016,6 +1026,10 @@ var
   mem: Int64;
   jj: Cardinal;
   found: Boolean;
+  nlib: Integer;
+  plib: String;
+  tlib: String;
+  dllFunction: TmyProc;
 
 begin
   try
@@ -1413,85 +1427,47 @@ begin
         try
           RequiredParameters(numargs, 4, 4);
           tempst := args[1];
-          if templib <> tempst then hlib :=
-            LoadLibrary(pchar(extractfilepath(application.exename) +
-            'plugins\' + tempst));
-          templib := tempst;
+          if (tempst <> sOpenedLibrary)
+            or (hOpenedLibrary = INVALID_HANDLE_VALUE) then
+          begin
+            if (hOpenedLibrary <> INVALID_HANDLE_VALUE) then
+              CloseHandle(hOpenedLibrary);
+            hOpenedLibrary := LoadLibrary(pchar(extractfilepath(application.exename) +
+              'plugins\' + tempst));
+            sOpenedLibrary := tempst;
+          end;
 
-          nlib := StrToInt(args[2]);
-          plib := args[3];
-          tlib := args[4];
+          if (hOpenedLibrary <> INVALID_HANDLE_VALUE) then
+          begin
+            nlib := StrToInt(args[2]);
+            plib := args[3];
+            tlib := args[4];
 
-          if nlib = 1 then
+            if (nlib >= 0) and (nlib <= 9) then
+            begin
+              if (nlib = 0) then nlib := 10;
+
+              @dllFunction := getprocaddress(hOpenedLibrary,
+                PChar('function' + IntToStr(nlib)));
+              if @dllFunction <> nil then
+                dllsArray[totaldlls] := dllFunction(pchar(plib), pchar(tlib))
+              else
+                dllsArray[totaldlls] := '[Function not found]';
+            end;
+          end
+          else
           begin
-            @function1 := getprocaddress(hlib, 'function1');
-            if @function1 <> nil then dllsArray[totaldlls] :=
-              function1(pchar(plib), pchar(tlib));
-          end;
-          if nlib = 2 then
-          begin
-            @function2 := getprocaddress(hlib, 'function2');
-            if @function2 <> nil then dllsArray[totaldlls] :=
-              function2(pchar(plib), pchar(tlib));
-          end;
-          if nlib = 3 then
-          begin
-            @function3 := getprocaddress(hlib, 'function3');
-            if @function3 <> nil then dllsArray[totaldlls] :=
-              function3(pchar(plib), pchar(tlib));
-          end;
-          if nlib = 4 then
-          begin
-            @function4 := getprocaddress(hlib, 'function4');
-            if @function4 <> nil then dllsArray[totaldlls] :=
-              function4(pchar(plib), pchar(tlib));
-          end;
-          if nlib = 5 then
-          begin
-            @function5 := getprocaddress(hlib, 'function5');
-            if @function5 <> nil then dllsArray[totaldlls] :=
-              function5(pchar(plib), pchar(tlib));
-          end;
-          if nlib = 6 then
-          begin
-            @function6 := getprocaddress(hlib, 'function6');
-            if @function6 <> nil then dllsArray[totaldlls] :=
-              function6(pchar(plib), pchar(tlib));
-          end;
-          if nlib = 7 then
-          begin
-            @function7 := getprocaddress(hlib, 'function7');
-            if @function7 <> nil then dllsArray[totaldlls] :=
-              function7(pchar(plib), pchar(tlib));
-          end;
-          if nlib = 8 then
-          begin
-            @function8 := getprocaddress(hlib, 'function8');
-            if @function8 <> nil then dllsArray[totaldlls] :=
-              function8(pchar(plib), pchar(tlib));
-          end;
-          if nlib = 9 then
-          begin
-            @function9 := getprocaddress(hlib, 'function9');
-            if @function9 <> nil then dllsArray[totaldlls] :=
-              function9(pchar(plib), pchar(tlib));
-          end;
-          if nlib = 0 then
-          begin
-            @function10 := getprocaddress(hlib, 'function10');
-            if @function10 <> nil then dllsArray[totaldlls] :=
-              function10(pchar(plib), pchar(tlib));
+            dllsArray[totaldlls] := '[Cant load dll: '
+              + CleanString(ErrMsg(GetLastError)) + ']';
           end;
           line := prefix + dllsArray[totaldlls] + postfix;
         except
-          on E: Exception do line := prefix + '[dll: '
-            + CleanString(E.Message) + ']' + postfix;
+          on E: Exception do
+            dllsArray[totaldlls] := '[dll: ' + CleanString(E.Message) + ']';
         end;
-      end
-      else
-      begin
-        line := prefix + dllsArray[totaldlls] + postfix;
       end;
+
+      line := prefix + dllsArray[totaldlls] + postfix;
     end;
 
     while decodeArgs(line, '$Count', maxArgs, args, prefix, postfix, numargs)
@@ -1845,9 +1821,6 @@ begin
   // remove the trailing space
   uptimeregs := MidStr(uptimeregs, 1, Length(uptimeregs)-1);
 
-
-  totaldlls := 0;
-  dllcancheck := false;
   distributedlog := config.distLog;
 
 //except
