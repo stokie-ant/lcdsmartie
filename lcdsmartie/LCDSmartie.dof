@@ -125,14 +125,14 @@ Locale=1033
 CodePage=1252
 [Version Info Keys]
 CompanyName=SourceForge.net
-FileDescription=
+FileDescription=Controls your LCD/VFD display!
 FileVersion=5.3.1.16
 InternalName=LCD Smartie
 LegalCopyright=GPL
 LegalTrademarks=
 OriginalFilename=Smartie.exe
 ProductName=LCD Smartie
-ProductVersion=5
+ProductVersion=5.3
 [Excluded Packages]
 C:\Program Files\Borland\Delphi7\Projects\Bpl\WinampCtrl7.bpl=Runtime package for WinampCtrl
 [HistoryLists\hlConditionals]
