@@ -19,7 +19,7 @@ unit UConfig;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UConfig.pas,v $
- *  $Revision: 1.28 $ $Date: 2005/01/07 15:19:33 $
+ *  $Revision: 1.29 $ $Date: 2005/01/11 17:15:33 $
  *****************************************************************************}
 
 interface
@@ -64,6 +64,7 @@ type
     P_width: Integer;
     P_height: Integer;
     uiActionsLoaded: Cardinal;
+    sFileName: String;
     function loadINI: Boolean;
     function loadCCFG: Boolean;
     function loadACFG: Boolean;
@@ -119,17 +120,18 @@ type
     property sizeOption: Integer read P_sizeOption write setSizeOption;
     property width: Integer read P_width;
     property height: Integer read P_height;
-    constructor Create;
+    constructor Create(filename: String);
   end;
 
 implementation
 
 uses SysUtils, Forms, INIFiles, StrUtils;
 
-constructor TConfig.Create;
+constructor TConfig.Create(filename: String);
 begin
+  sFileName := filename;
   iMinFadeContrast := 0;
-  inherited;
+  inherited Create();
 end;
 
 
@@ -450,7 +452,7 @@ function TConfig.load: Boolean;
 var
   bResult1, bResult2: Boolean;
 begin
-  if (FileExists(ExtractFilePath(Application.EXEName) + 'config.ini')) or (not
+  if (FileExists(ExtractFilePath(Application.EXEName) + sFileName)) or (not
     FileExists(ExtractFilePath(Application.EXEName) + 'config.cfg')) then
   begin
     bResult1 := loadINI;
@@ -490,7 +492,7 @@ begin
     // We can't use the faster TMemINIFile - because it leaves quoted strings
     // with their quotes...
     initfile := TINIFile.Create(ExtractFilePath(Application.EXEName) +
-      'config.ini');
+      sFileName);
   except
     result := false;
     Exit;
@@ -698,7 +700,7 @@ var
   sPrefix: String;
 begin
   initfile := TMemINIFile.Create(ExtractFilePath(Application.EXEName) +
-    'config.ini');
+    sFileName);
 
   initfile.WriteString('Versions', 'ConfigFileFormat',
     sMyConfigFileFormatVersion);

@@ -54,6 +54,9 @@ Changes
 	- Resized UI for 2 and 1 line high displays.
 	- Added more hints in the UI.
 	- Fixed slow closedown.
+	- Added a -config command line option, to enable different configs
+	  to be used.
+	- Added a $Center command.
 	- Allow old syntax of $File and $LogFile syntax (with quotes).
 	- Fixed bug in $LogFile: it wouldn't work with small files.
 	- Increased imported plugin functions to 20 (from 10).

@@ -19,6 +19,7 @@ type
     destructor Destroy;  override;
   end;
 
+  Function CenterText(sLine: String; iWidth: Integer): String;
   procedure AddPluginsToPath;
   procedure CreateShortcut(FileName,Args: string; uninstall: Boolean = False);
   function errMsg(uError: Cardinal): String;
@@ -29,7 +30,7 @@ type
 
 implementation
 
-uses Windows, SysUtils, Registry, ShlObj, ActiveX, ComObj, Forms;
+uses Windows, SysUtils, Registry, ShlObj, ActiveX, ComObj, Forms, StrUtils;
 
 constructor TMyThread.Create(myMethod: TThreadMethod);
 begin
@@ -208,6 +209,20 @@ begin
   end;
 end;
 
+Function CenterText(sLine: String; iWidth: Integer): String;
+var
+  sSpace: String;
+begin
+  if (length(sLine) < iWidth) then
+  begin
+    sSpace := DupeString(' ', iWidth - length(sLine) );
+    Insert(sLine, sSpace, (Length(sSpace) div 2)+1);
+
+    result := sSpace;
+  end
+  else
+    result := sLine;
+end;
 
 end.
 

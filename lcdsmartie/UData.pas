@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.38 $ $Date: 2005/01/09 23:27:41 $
+ *  $Revision: 1.39 $ $Date: 2005/01/11 17:15:33 $
  *****************************************************************************}
 
 
@@ -1828,6 +1828,22 @@ begin
           + CleanString(E.Message) + ']', []);
       end;
     end;
+
+    while decodeArgs(line, '$Center', maxArgs, args, prefix, postfix, numargs)
+      do
+    begin
+      try
+        RequiredParameters(numargs, 1, 2);
+        if (numargs = 1) then spacecount := config.width
+        else spacecount := StrToInt(args[2]);
+
+        line := prefix + CenterText(args[1], spacecount) + postfix;
+      except
+        on E: Exception do line := prefix + '[Center: '
+          + CleanString(E.Message) + ']' + postfix;
+      end;
+    end;
+
 
     while pos('$Right(', line) <> 0 do
     begin

@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.46 $ $Date: 2005/01/07 19:44:01 $
+ *  $Revision: 1.47 $ $Date: 2005/01/11 17:15:33 $
  *****************************************************************************}
 
 interface
@@ -478,6 +478,7 @@ var
   initfile: textfile;
   i: Integer;
   parameter: String;
+  configFile: String;
 
 begin
   Randomize;
@@ -557,23 +558,31 @@ begin
     end;
   end;
 
-  config := TConfig.Create();
+  configFile := 'config.ini';
+  changeShow := ShowMainForm;
+  i := 1;
+  while (i <= ParamCount) do
+  begin
+    parameter :=  lowercase(ParamStr(i));
+
+    if (parameter = '-hide') then
+      changeShow := HideMainForm
+    else if (parameter = '-totalhide') then
+      changeShow := TotalHideMainForm
+    else if (parameter = '-config') then
+    begin
+      Inc(i);
+      configFile := ParamStr(i);  // will give '' if out of range
+    end;
+    Inc(i);
+  end;
+
+  config := TConfig.Create(configFile);
 
   if (config.load() = false) then
   begin
     showmessage('Fatal Error:  Failed to load configuration');
     application.Terminate;
-  end;
-
-  changeShow := ShowMainForm;
-  for i:=1 to 4 do
-  begin
-    parameter :=  lowercase(paramstr(i));
-
-    if (parameter = '-hide') then
-      changeShow := HideMainForm
-    else if (parameter = '-totalhide') then
-      changeShow := TotalHideMainForm;
   end;
 
   if (config.bHideOnStartup) then
@@ -1095,15 +1104,7 @@ begin
 
       // Center the line if requested.
       if config.screen[activeScreen][counter].center then
-      begin
-        if length(line) < config.width-1 then
-        begin
-          for h := 1 to round((config.width - length(line))/2 - 0.4) do
-          begin
-            line := ' ' + line + ' ';
-          end;
-        end;
-      end;
+        line := CenterText(line, config.width);
 
       parsedLine[counter] := line;
       newline[counter] := line;  // Used by screen change interaction.
