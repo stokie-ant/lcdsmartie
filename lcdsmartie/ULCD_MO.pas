@@ -2,9 +2,23 @@ unit ULCD_MO;
 
 interface
 
-uses ULCD;
+uses ULCD, Classes, SyncObjs, SysUtils, Windows;
+
+const
+  readBufferSize=100;
 
 type
+  TThreadMethod = procedure of object;
+
+  TMyThread = class(TTHREAD)
+  public
+    constructor Create(myMethod: TThreadMethod);
+  private
+    method: TThreadMethod;
+  published
+    procedure execute; override;
+  end;
+
   TLCD_MO = class(TLCD)
   public
     procedure customChar(character: Integer; data: Array of Byte); override;
@@ -20,54 +34,76 @@ type
     constructor CreateUsb(device: String);
     destructor Destroy; override;
   private
-    Usb: Boolean; input, output: Cardinal;
+    bConnected: Boolean;
+    bUsb: Boolean; input, output: Cardinal; // for Usb
+    eStopReadThread: THandle;            // for Usb
+    csRead: TCriticalSection;           // for Usb
+    readThread: TMyThread;              // for Usb
+    readBuffer: array [0..readBufferSize-1] of Byte; // for Usb
+    uInPos, uOutPos: Cardinal;          // for Usb
+    procedure doReadThread;             // for Usb
     procedure writeDevice(str: String); overload;
     procedure writeDevice(byte: Byte); overload;
-    function readDevice(var char: Char): Boolean;
+    function readDevice(var chr: Char): Boolean;
+    function errMsg(uError: Cardinal): String;
   end;
 
 implementation
 
-uses UMain, SysUtils, Windows;
+uses UMain;
+
+constructor TMyThread.Create(myMethod: TThreadMethod);
+begin
+  method:=myMethod;
+  inherited Create(true);   // Create suspended.
+end;
+
+procedure TMyThread.Execute;
+begin
+    method();
+end;
+
+function TLCD_MO.errMsg(uError: Cardinal): String;
+var
+  psError: pointer;
+  sError: String;
+begin
+  FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER or FORMAT_MESSAGE_FROM_SYSTEM,
+    nil, uError, 0, @psError, 0, nil );
+  sError := '#' + IntToStr(uError) + ': ' + PChar(psError);
+  LocalFree(Cardinal(psError));
+  Result := sError;
+end;
 
 constructor TLCD_MO.CreateUsb(device: String);
 var
   symName: String;
-  error: String;
-  errorp: pointer;
-  lastErr: Cardinal;
 begin
-  Usb := True;
+  bUsb := True;
 
   symName := StringReplace(device, '\??\', '\\.\', []);
   //'\\.\USB#Vid_054c&Pid_0066#6&673a0bd&0&4#{a5dcbf10-6530-11d2-901f-00c04fb951ed}';
 
   input := CreateFile (PChar(symName + '\PIPE02'), GENERIC_READ,
-    FILE_SHARE_READ, nil, OPEN_EXISTING, 0, 0);
-
+    FILE_SHARE_READ, nil, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, 0);
   if (input = INVALID_HANDLE_VALUE) then
-  begin
-    lastErr := GetLastError();
-    FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER or
-      FORMAT_MESSAGE_FROM_SYSTEM, nil, lastErr, 0, @errorp, 0, nil );
-    error :=  'USB Palm: #' + IntToStr(lastErr) + ':' + PChar(errorp);
-    // need to free errorp...
-
-    raise exception.Create(error)
-  end;
+    raise exception.Create('Failed to open USB Palm for reading: '
+        + errMsg(GetLastError));
 
   output := CreateFile (PChar(symName + '\PIPE03'), GENERIC_WRITE,
     FILE_SHARE_WRITE, nil, OPEN_EXISTING, 0, 0);
   if (output = INVALID_HANDLE_VALUE) then
-  begin
-    lastErr := GetLastError();
-    FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER or
-      FORMAT_MESSAGE_FROM_SYSTEM, nil, lastErr, 0, @errorp, 0, nil );
-    error :=  'USBPalm: #' + IntToStr(lastErr) + ':' + PChar(errorp);
-    // need to free errorp...
+    raise exception.Create('Failed to open USB Palm for writing: '
+        + errMsg(GetLastError));
 
-    raise exception.Create(error)
-  end;
+  // CriticalSection to protect read buffer
+  csRead := TCriticalSection.Create;
+  // event to wait up read Thread so we can exit it.
+  eStopReadThread := CreateEvent(nil, True, False, nil);
+
+  // read thread
+  readThread:= TMyThread.Create(self.doReadThread);
+  readThread.Resume;
 
   Create;
 end;
@@ -76,6 +112,8 @@ constructor TLCD_MO.Create;
 var
   g: Integer;
 begin
+  bConnected := True;
+
   for g := 1 to 8 do
   begin
     setGPO(g, false);
@@ -96,8 +134,8 @@ begin
   writeDevice($0FE);     //auto line wrap off
   writeDevice('D');
 
-  writeDevice($0FE);     //keypad polling on
-  writeDevice('O');
+  writeDevice($0FE);   //auto transmit keys
+  writeDevice($041);
 
   writeDevice($0FE);     //auto repeat off
   writeDevice('`');
@@ -111,20 +149,34 @@ destructor TLCD_MO.Destroy;
 var
   g: Integer;
 begin
-  setbacklight(false);
 
-  for g := 1 to 8 do
+  if (bConnected) then
   begin
-    setGPO(g, false);
+    setbacklight(false);
+
+    for g := 1 to 8 do
+    begin
+      setGPO(g, false);
+    end;
+
+    writeDevice($0FE);  //clear screen
+    writeDevice('X');
   end;
 
-  writeDevice($0FE);  //clear screen
-  writeDevice('X');
-
-  if (Usb) then
+  if (bUsb) then
   begin
-    CloseHandle(output);
-    CloseHandle(input);
+    if Assigned(readThread) then begin
+      SetEvent(eStopReadThread);
+
+      readThread.Terminate;
+      readThread.WaitFor;
+      readThread.Destroy;
+
+      CloseHandle(output);
+      CloseHandle(input);
+      CloseHandle(eStopReadThread);
+    end;
+    if Assigned(csRead) then csRead.Free;
   end;
 
   inherited;
@@ -259,34 +311,22 @@ end;
 procedure TLCD_MO.writeDevice(str: String);
 var
   bytesWritten: Cardinal;
-  {error: String;
-  errorp: pointer;
-  lastErr: Cardinal;}
 begin
-  if not Usb then
+  if not bUsb then
   begin
+
     Form1.VaComm1.WriteText(str);
+
   end
   else
   begin
-    if (not WriteFile(output, str[1], length(str), bytesWritten, nil)) or
-      (bytesWritten <> Cardinal(length(str))) then
-    begin
-      {lastErr := GetLastError();
-      FormatMessage(
-            FORMAT_MESSAGE_ALLOCATE_BUFFER or FORMAT_MESSAGE_FROM_SYSTEM, 
-            nil, 
-            lastErr, 
-            0, 
-            @errorp, 
-            0, 
-            nil
-        );
-      error :=  'failed to write (wrote: ' + IntToStr(bytesWritten) + 'bytes): #' + IntToStr(lastErr) + ':' + PChar(errorp);
-      // need to free errorp...
 
-      raise exception.Create(error)    }
+    if (not WriteFile(output, str[1], length(str), bytesWritten, nil))
+        or (bytesWritten <> Cardinal(length(str))) then
+    begin
+      raise Exception.Create('Write USB Palm failed: ' + errMsg(GetLastError));
     end;
+
   end;
 
 end;
@@ -294,57 +334,146 @@ end;
 procedure TLCD_MO.writeDevice(byte: Byte);
 var
   bytesWritten: Cardinal;
-  {error: String;
-  errorp: pointer;
-  lastErr: Cardinal; }
 begin
 
-  if not Usb then
+  if not bUsb then
   begin
+
     Form1.VaComm1.WriteChar(Chr(byte));
+
   end
   else
   begin
-    if (not WriteFile(output, byte, 1, bytesWritten, nil)) or (bytesWritten <>
-      1) then
-    begin
-      {lastErr := GetLastError();
-      FormatMessage(
-            FORMAT_MESSAGE_ALLOCATE_BUFFER or FORMAT_MESSAGE_FROM_SYSTEM, 
-            nil, 
-            lastErr, 
-            0, 
-            @errorp, 
-            0, 
-            nil
-        );
-      error :=  'failed to write (wrote: ' + IntToStr(bytesWritten) + 'bytes): #' + IntToStr(lastErr) + ':' + PChar(errorp);
-      // need to free errorp...
 
-      raise exception.Create(error)  }
+    if (not WriteFile(output, byte, 1, bytesWritten, nil))
+        or (bytesWritten <> 1) then
+    begin
+      raise Exception.Create('Write USB Palm failed: ' + errMsg(GetLastError));
     end;
+
   end;
 end;
 
-function TLCD_MO.readDevice(var char: Char): Boolean;
+function TLCD_MO.readDevice(var chr: Char): Boolean;
 var
   gotdata: Boolean;
 begin
   gotdata := False;
-  if Usb then
+  if bUsb then
   begin
-    // do nothing for the moment.
+      csRead.Enter;
+      try
+        if (uInPos<>uOutPos) then
+        begin
+          // There's data waiting
+          chr:=Char(readBuffer[uOutPos]);
+          Inc(uOutPos);
+          if (uOutPos>=ReadBufferSize) then uOutPos:=0;
+          gotdata:=True;
+        end;
+      finally
+        csRead.Leave;
+      end;
   end
   else
   begin
-    if form1.VaComm1.ReadBufUsed > 0 then
+
+    if form1.VaComm1.ReadBufUsed>0 then
     begin
-      if (form1.VaComm1.ReadChar(char)) then gotdata := true;
+      if (form1.VaComm1.ReadChar(chr)) then gotdata:=true;
     end;
+
   end;
 
   Result := gotdata;
 end;
+
+procedure TLCD_MO.doReadThread;
+var
+  bytesRead, bytesWritten: Cardinal;
+  buffer: Array [1..2] of Byte;
+  overlap: OVERLAPPED;
+  event: THandle;
+  handles: TWOHandleArray;
+  res: DWORD;
+
+begin
+  event := CreateEvent(nil, True, False, nil);
+
+  handles[0] := eStopReadThread;
+  handles[1] := event;
+
+  try
+    While (not readThread.Terminated) do
+    begin
+      overlap.Offset := 0;
+      overlap.OffsetHigh := 0;
+      overlap.hEvent := event;
+
+      bytesRead := 0;
+      if (not ReadFile(input, buffer[1], 1, bytesRead, @overlap)) then
+      begin
+        if (GetLastError = ERROR_IO_PENDING) then
+        begin
+          // We will wait for the read to finish or until we have to exit.
+          res := WaitForMultipleObjects(2, @handles, False, INFINITE);
+
+          if (res = WAIT_OBJECT_0) or (readThread.Terminated) then Exit
+          else if (res = WAIT_OBJECT_0+1) then
+          begin
+            // The read has finished.
+            if not GetOverlappedResult(input, overlap, bytesRead, False) then
+              raise Exception.create('GetOverlappedResult failed: '+errMsg(GetLastError));
+          end
+          else
+          begin
+            raise Exception.create('Unexpected return from WaitForMultipleObjects: ' + errMsg(res));
+          end;
+
+        end
+        else
+        begin
+            raise Exception.create('Reading USB Palm failed: '+errMsg(GetLastError));
+        end;
+      end;
+
+      if (bytesRead>0) then
+      begin
+        // We finally have our data!
+        csRead.Enter;
+        try
+          if (((uInPos+1) mod ReadBufferSize) = uOutPos) then
+            raise Exception.Create('Read buffer is full');
+          readBuffer[uInPos] := buffer[1];
+          Inc(uInPos);
+          if (uInPos >= ReadBufferSize) then uInPos := 0;
+        finally
+          csRead.Leave;
+        end;
+      end;
+
+      // When the Palm is switched off then we get bytesRead=0 and
+      // WaitForMultipleObjects doesn't block - this causes a busy
+      // loop, hence the ugly sleep.
+      // [We could exit the thread instead, but when the palm is switched
+      // back on everything works again - so it's a shame to break that].
+      if (bytesRead<=0) then Sleep(10);
+    end;
+  finally
+
+    // This is ugly but all other attempts to cancel the outstanding read request
+    // failed - I'm assuming the Palm USB driver doesn't support cancelling.
+    // So instead we send the palm a command that causes it to send a byte.
+    // (we're asking for it's version).
+    buffer[1]:=254;
+    buffer[2]:=54;
+    WriteFile(output, buffer[1], 2, bytesWritten, nil);
+
+    CancelIO(input);
+    CloseHandle(event);
+  end;
+end;
+
 
 
 end.
