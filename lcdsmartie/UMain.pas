@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.33 $ $Date: 2004/12/23 21:45:09 $
+ *  $Revision: 1.34 $ $Date: 2004/12/30 16:47:48 $
  *****************************************************************************}
 
 interface
@@ -259,12 +259,21 @@ const
   PBT_APMRESUMESUSPEND = 7;
   PBT_APMRESUMESTANDBY = 8;
   PBT_APMRESUMEAUTOMATIC = $012;
+var
+  x: Integer;
 begin
   if (M.WParam = PBT_APMRESUMEAUTOMATIC) or (M.WParam = PBT_APMRESUMECRITICAL)
     or (M.WParam = PBT_APMRESUMESTANDBY) or (M.WParam = PBT_APMRESUMESUSPEND)
     then
   begin
     if Assigned(Lcd) then Lcd.powerResume;
+
+    // Wipe the virtual display
+    for x := 1 to config.height do
+    begin
+      screenLcd[x].Caption := '';
+    end;
+
   end;
 end;
 
