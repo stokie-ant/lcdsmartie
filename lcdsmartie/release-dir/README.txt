@@ -3,9 +3,6 @@
 Please see our website for instructions and the latest information:
 		http://lcdsmartie.sourceforge.net/
 
-USB Palm users please visit: 
-  http://sourceforge.net/forum/forum.php?thread_id=1184430&forum_id=416971
-
 Alpha builds
 ============
 These builds are believed to be stable but the developer(s) do not have access
@@ -13,7 +10,7 @@ to all supported LCD types and/or use all the features of LCD Smartie.
 
 Increased error checking has been compiled in this build - so this build may
 'fail' where the problem would have gone unnoticed in previous builds. By
-reporting these bugs will increased LCD Smartie's stability.
+reporting these bugs you will increase LCD Smartie's stability.
 
 BUGS KNOWN
 ==========
@@ -22,6 +19,13 @@ See: http://sourceforge.net/tracker/?func=browse&group_id=122330&atid=693136
 
 Changes
 =======
+5.3Alpha4
+	- Fixed bug [1073921] Exception: Range Check (Rss)
+	- Removed limit on the number of Rss feeds.
+	- Fixed unwanted scrolling on Crystalfontz displays.
+	- Fixed bug: duplicated USB Palm entries in COMport list.
+	- Fixed bug: [1073684] Exception: Range check error (cpuspeed)
+	- Fixed bug: [1073925] PalmOS4.0+ USB Palm support broken
 5.3Alpha3
 	- Actions moved from action.cfg to config.ini.
 	- Fixed bug where some Crystalfontz display weren't working.
