@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.27 $ $Date: 2004/12/19 01:34:46 $
+ *  $Revision: 1.28 $ $Date: 2004/12/22 22:01:20 $
  *****************************************************************************}
 
 
@@ -262,7 +262,9 @@ function TData.decodeArgs(str: String; funcName: String; maxargs: Cardinal;
   numArgs: Cardinal): Boolean;
 var
   posFuncStart, posArgsStart, posArgsEnd, posComma, posComma2: Integer;
+  posTemp: Integer;
   tempStr: String;
+  uiLevel: Cardinal;
 begin
   Result := true;
   numArgs := 0;
@@ -271,7 +273,21 @@ begin
   if (posFuncStart <> 0) then
   begin
     posArgsStart := posFuncStart + length(funcName);
-    posArgsEnd := PosEx(')', str, posArgsStart + 1);
+
+    // find end of function and cope with nested brackets
+    posTemp := posArgsStart + 1;
+    uiLevel := 1;
+    repeat
+      case (str[posTemp]) of
+      '(': Inc(uiLevel);
+      ')': Dec(uiLevel);
+      end;
+      Inc(posTemp);
+    until (uiLevel = 0) or (posTemp > Length(str));
+    if (uiLevel = 0) then
+      posArgsEnd := posTemp-1
+    else
+      posArgsEnd := 0;
 
     if (posArgsStart <> 0) and (posArgsEnd <> 0) then
     begin
@@ -1442,6 +1458,9 @@ begin
           dlls[uiDll].sName := args[1];
           dlls[uiDll].hDll := LoadLibrary(pchar(extractfilepath(application.exename) +
               'plugins\' + args[1]));
+          //dlls[uiDll].hDll := LoadLibrary(pchar(
+          //    'c:\Documents and Settings\Administrator\My Documents\Visual Studio Projects\perf\Debug\perf.dll'));
+
 
           if (dlls[uiDll].hDll <> INVALID_HANDLE_VALUE) then
           begin
@@ -1449,6 +1468,9 @@ begin
             begin
               @dlls[uiDll].functions[i] := getprocaddress(dlls[uiDll].hDll,
                 PChar('function' + IntToStr(i)));
+              if (@dlls[uiDll].functions[i] = nil) then
+                  @dlls[uiDll].functions[i] := getprocaddress(dlls[uiDll].hDll,
+                    PChar('_function' + IntToStr(i)+'@8'));
             end;
           end;
         end;
