@@ -27,6 +27,7 @@ Changes
 	- Supports very large pagefiles and memory.
 	- config.cfg/servers.cfg files replaced with config.ini file.
 	  [actions.cfg is yet to be converted.]
+	- fixed range error when selecting email account #10.
 5.3pAlpha3
 	- Added experimental USB Palm support (when used with PalmOrb)
 	  [Serial Palm Support already existed.]
