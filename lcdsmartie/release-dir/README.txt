@@ -33,6 +33,10 @@ Changes
 	- Added new variable $ScreenChanged for use in actions.
 	  [Added so plugins can detect screen changes]
 	- Added new two new actions 'DisableScreen(n)' and 'EnableScreen(n)'.
+	- Bug fix, plugin code was using scroll interval rather than the dll
+	  check interval.
+	- Bug fix: random custom chars at startup.
+	- Improved scroll/flash smoothness.
 5.3Beta1
 	- Fixed screen timings, esp. when using GotoScreen action.
 	- Fixed bug: only one $Chr was processed per a line.
