@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.56 $ $Date: 2005/01/29 02:11:16 $
+ *  $Revision: 1.57 $ $Date: 2005/01/29 02:37:43 $
  *****************************************************************************}
 
 interface
@@ -769,6 +769,8 @@ begin
 
   if (maxTransCycles = 0) then Exit;
   if (TransCycle > maxTransCycles) then Exit;
+
+  if (TransCycle > maxTransCycles / 2) then SendCustomChars();
 
   for x := 1 to config.height do
   begin
