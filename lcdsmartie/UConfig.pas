@@ -19,7 +19,7 @@ unit UConfig;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UConfig.pas,v $
- *  $Revision: 1.24 $ $Date: 2005/01/02 21:37:36 $
+ *  $Revision: 1.25 $ $Date: 2005/01/02 23:08:05 $
  *****************************************************************************}
 
 interface
@@ -569,7 +569,7 @@ begin
   distLog := initfile.ReadString('General Settings', 'DistLog',
     'C:\repllog.txt');
   emailPeriod := initfile.ReadInteger('General Settings', 'EmailPeriod', 10);
-  dllPeriod := initfile.ReadInteger('General Settings', 'DLLPeriod', 75);
+  dllPeriod := initfile.ReadInteger('General Settings', 'DLLPeriod', 250);
   scrollPeriod := initfile.ReadInteger('General Settings', 'ScrollPeriod',
     200);
 
