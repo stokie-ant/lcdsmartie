@@ -27,6 +27,7 @@ Changes
 	- Re-display the whole display after resuming.
 	- Fixed bug: Privileged instruction caused by dlportio on resume.
 	- Call "SmartieInit" at load time if a plugin supports it.
+	- Resize UI for 2 and 1 line high displays.
 5.3Beta2
 	- Fixed bug: $dll sometimes required the .dll extension, this was
 	  meant to be optional.

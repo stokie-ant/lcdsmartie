@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.41 $ $Date: 2005/01/04 20:12:50 $
+ *  $Revision: 1.42 $ $Date: 2005/01/04 22:38:35 $
  *****************************************************************************}
 
 interface
@@ -186,10 +186,10 @@ type
   private
     screenLcd: Array[1..4] of ^TPanel;
     canflash: Boolean;
-    iNrLines, foo2: Integer;
+    iSavedHeight, iSavedWidth: Integer;
+    iSavedColorMode: Integer;
     didAction: Array [1..99] of Boolean;
     file1: String;
-    kleuren: Integer;
     parsedLine: Array[1..4] of String;
     scrollPos: Array[1..4] of Integer;
     line2scroll: Integer;
@@ -227,6 +227,8 @@ type
     procedure ProcessAction(bDoAction: Boolean; sAction: String);
     procedure InitLCD();
     procedure FiniLCD();
+    procedure ResizeHeight;
+    procedure ResizeWidth;
   end;
 
 var
@@ -281,7 +283,7 @@ var
 begin
   for y := 1 to 4 do
   begin
-    scrollPos[y] := 0; // Reset scroll postion.
+    scrollPos[y] := 1; // Reset scroll postion.
   end;
 end;
 
@@ -317,7 +319,6 @@ begin
 
   gotnewlines := false;
   TransCycle := 0;
-  foo2 := 0;
 
   for y := 1 to 40 do
   begin
@@ -336,18 +337,10 @@ begin
   if transActietemp2 = 0 then timertransIntervaltemp := 1;
 
   if (config.width = 40) then
-  begin
-    panel5.left := 115;
-    panel5.width := 130;
     Panel5.Caption := 'Theme: ' + IntToStr(activetheme + 1) + ' Screen: ' +
-      IntToStr(activeScreen);
-  end
+      IntToStr(activeScreen)
   else
-  begin
-    panel5.left := 87;
-    panel5.width := 33;
     Panel5.Caption := IntToStr(activetheme + 1) + ' | ' + IntToStr(activeScreen);
-  end;
 
   bNewScreen := True;
   data.NewScreen(True);
@@ -571,37 +564,6 @@ begin
   form1.WinampCtrl1.WinampLocation := config.winampLocation;
   file1 := config.distLog;
 
-  iNrLines := config.height;
-
-  screenLcd[2].visible := false;
-  screenLcd[3].visible := false;
-  screenLcd[4].visible := false;
-  image4.enabled := false;
-  image5.enabled := false;
-  image6.enabled := false;
-  image8.enabled := false;
-  image9.enabled := false;
-  image10.enabled := false;
-  if config.height > 1 then
-  begin
-    screenLcd[2].visible := true;
-    image4.enabled := true;
-    image8.enabled := true;
-  end;
-  if config.height > 2 then
-  begin
-    screenLcd[3].visible := true;
-    image5.enabled := true;
-    image9.enabled := true;
-  end;
-  if config.height > 3 then
-  begin
-    screenLcd[4].visible := true;
-    image6.enabled := true;
-    image10.enabled := true;
-  end;
-
-  kleuren := config.colorOption;
   backlight := 1;
   kleur();
 
@@ -890,6 +852,105 @@ begin
             end;
 end;
 
+procedure TForm1.ResizeHeight;
+var
+  iDelta: Integer;
+begin
+  screenLcd[2].visible := false;
+  screenLcd[3].visible := false;
+  screenLcd[4].visible := false;
+  image4.visible := false;
+  image5.visible := false;
+  image6.visible := false;
+  image8.visible := false;
+  image9.visible := false;
+  image10.visible := false;
+
+  if config.height > 1 then
+  begin
+    screenLcd[2].visible := true;
+    image4.Visible := true;
+    image8.Visible := true;
+  end;
+  if config.height > 2 then
+  begin
+    screenLcd[3].visible := true;
+    image5.Visible := true;
+    image9.Visible := true;
+  end;
+  if config.height > 3 then
+  begin
+    screenLcd[4].visible := true;
+    image6.Visible := true;
+    image10.Visible := true;
+  end;
+
+  iDelta := 16 * (4-config.height);
+
+  image16.Top := 69 - iDelta;
+  image13.Top := 64 - iDelta;
+  image15.Top := 64 - iDelta;
+  panel5.Top := 72 - iDelta;
+  image14.Top := 64 - iDelta;
+  image17.Top := 69 - iDelta;
+  image1.Top := 64 - iDelta;
+  form1.ClientHeight := 90 - iDelta;
+
+  image11.Height := 64 - iDelta;
+  image12.Height := 64 - iDelta;
+  image11.Stretch := (config.height <> 4);
+  image12.Stretch := (config.height <> 4);
+end;
+
+procedure TForm1.ResizeWidth;
+var
+  h: Integer;
+  iDelta: Integer;
+  iTempWidth: Integer;
+begin
+
+  iTempWidth := config.width;
+  if (iTempWidth < 20) then iTempWidth := 20;
+
+  iDelta := 321 - ((321 * iTempWidth) div 40);
+
+{  if (config.width = 40) then
+    iDelta := 0
+  else if (config.width = 24) then
+    iDelta := 128
+  else
+    iDelta := 158;}
+
+  form1.Width := 389 - iDelta;
+  image1.left := 356 - iDelta;
+  image11.left := 368 - iDelta;
+  image7.left := 352 - iDelta;
+  image8.left := 352 - iDelta;
+  image9.left := 352 - iDelta;
+  image10.left := 352 - iDelta;
+  image14.left := 266 - iDelta;
+  image17.left := 323 - iDelta;
+  for h := 1 to 4 do
+  begin
+    screenLcd[h].width := 321 - iDelta;
+  end;
+  image15.width := 220 - iDelta;
+
+
+  if (config.width = 40) then
+  begin
+    panel5.left := 115;
+    panel5.width := 130;
+    Panel5.Caption := 'Theme: ' + IntToStr(activetheme + 1) + ' Screen: ' +
+      IntToStr(activeScreen)
+  end
+  else
+  begin
+    panel5.left := (87 * iTempWidth) div 20;
+    panel5.width := 33;
+    Panel5.Caption := IntToStr(activetheme + 1) + ' | ' + IntToStr(activeScreen);
+  end;
+end;
 
 procedure TForm1.Timer1Timer(Sender: TObject);
 var
@@ -941,9 +1002,9 @@ begin
        customchar('4, 28, 28, 28, 28, 28, 28, 31, 28');
     end;
 
-    if kleuren <> config.colorOption then
+    if iSavedColorMode <> config.colorOption then
     begin
-      kleuren := config.colorOption;
+      iSavedColorMode := config.colorOption;
       kleur();
     end;
 
@@ -957,91 +1018,16 @@ begin
       form1.formStyle := fsNormal;
     end;
 
-
-    if (config.width = 40) then
+    if (config.width <> iSavedWidth) then
     begin
-      form1.Width := 389;
-      image1.left := 356;
-      image11.left := 368;
-      image7.left := 352;
-      image8.left := 352;
-      image9.left := 352;
-      image10.left := 352;
-      image14.left := 266;
-      image17.left := 323;
-      for h := 1 to 4 do
-      begin
-        screenLcd[h].width := 321;
-      end;
-      image15.width := 220;
-    end
-    else
-      if (config.width = 24) then
-      begin
-        form1.Width := 261;
-        image1.left := 228;
-        image11.left := 240;
-        image7.left := 224;
-        image8.left := 224;
-        image9.left := 224;
-        image10.left := 224;
-        image14.left := 140;
-        image17.left := 197;
-        for h := 1 to 4 do
-        begin
-          screenLcd[h].width := 193;
-        end;
-        image15.width := 70;
-      end
-      else
-      begin
-        form1.Width := 231;
-        image1.left := 198;
-        image11.left := 210;
-        image7.left := 194;
-        image8.left := 194;
-        image9.left := 194;
-        image10.left := 194;
-        for h := 1 to 4 do
-        begin
-          screenLcd[h].width := 162;
-        end;
-        image14.left := 108;
-        image17.left := 165;
-        image15.width := 20;
-      end;
+      iSavedWidth := config.width;
+      ResizeWidth();
+    end;
 
-
-    if config.height <> iNrLines then
+    if config.height <> iSavedHeight then
     begin
-      iNrLines := config.height;
-      screenLcd[2].visible := false;
-      screenLcd[3].visible := false;
-      screenLcd[4].visible := false;
-      image4.visible := false;
-      image5.visible := false;
-      image6.visible := false;
-      image8.visible := false;
-      image9.visible := false;
-      image10.visible := false;
-      if config.height > 1 then
-      begin
-        screenLcd[2].visible := true;
-        image4.Visible := true;
-        image8.Visible := true;
-      end;
-      if config.height > 2 then
-      begin
-        screenLcd[3].visible := true;
-        image5.Visible := true;
-        image9.Visible := true;
-      end;
-      if config.height > 3 then
-      begin
-        screenLcd[4].visible := true;
-        image6.Visible := true;
-        image10.Visible := true;
-      end;
+      iSavedHeight := config.height;
+      ResizeHeight();
     end;
 
     if (canflash) then
@@ -1178,26 +1164,11 @@ begin
 end;
 
 procedure TForm1.FormShow(Sender: TObject);
-var
-  counter: Integer;
-
 begin
   timer1.Interval := 0;
   timer1.Interval := config.refreshRate;
 
   cooltrayicon1.IconVisible := False;
-
-  if config.height <> iNrLines then
-  begin
-    iNrLines := config.height;
-    // only show used lines on the screen lcd.
-    for counter := 1 to 4 do
-    begin
-      screenLcd[counter].visible := (counter <= config.height);
-    end;
-  end;
-
-
 end;
 
 procedure TForm1.Timer2Timer(Sender: TObject);
@@ -1225,7 +1196,7 @@ procedure TForm1.kleur;
 begin
   if backlight = 1 then
   begin
-    if kleuren = 0 then
+    if config.colorOption = 0 then
     begin
       screenLcd[1].color := $0001FFA8;
       screenLcd[2].color := $0001FFA8;
@@ -1237,62 +1208,58 @@ begin
       screenLcd[3].Font.Color := clBlack;
       screenLcd[4].Font.Color := clBlack;
     end
-    else
-      if kleuren = 1 then
-      begin
-        screenLcd[1].color := $00FDF103;
-        screenLcd[2].color := $00FDF103;
-        screenLcd[3].color := $00FDF103;
-        screenLcd[4].color := $00FDF103;
-        form1.Color := $00FDF103;
-        screenLcd[1].Font.Color := clBlack;
-        screenLcd[2].Font.Color := clBlack;
-        screenLcd[3].Font.Color := clBlack;
-        screenLcd[4].Font.Color := clBlack;
-      end
-      else
-        if kleuren = 2 then
-        begin
-          screenLcd[1].color := clyellow;
-          screenLcd[2].color := clyellow;
-          screenLcd[3].color := clyellow;
-          screenLcd[4].color := clyellow;
-          form1.Color := clyellow;
-          screenLcd[1].Font.Color := clBlack;
-          screenLcd[2].Font.Color := clBlack;
-          screenLcd[3].Font.Color := clBlack;
-          screenLcd[4].Font.Color := clBlack;
-        end
-        else
-          if kleuren = 3 then
-          begin
-            screenLcd[1].color := clwhite;
-            screenLcd[2].color := clwhite;
-            screenLcd[3].color := clwhite;
-            screenLcd[4].color := clwhite;
-            form1.Color := clwhite;
-            screenLcd[1].Font.Color := clBlack;
-            screenLcd[2].Font.Color := clBlack;
-            screenLcd[3].Font.Color := clBlack;
-            screenLcd[4].Font.Color := clBlack;
-          end
-          else
-            if kleuren = 4 then
-            begin
-              screenLcd[1].color := backgroundcoloron;
-              screenLcd[2].color := backgroundcoloron;
-              screenLcd[3].color := backgroundcoloron;
-              screenLcd[4].color := backgroundcoloron;
-              form1.Color := backgroundcoloron;
-              screenLcd[1].Font.Color := forgroundcoloron;
-              screenLcd[2].Font.Color := forgroundcoloron;
-              screenLcd[3].Font.Color := forgroundcoloron;
-              screenLcd[4].Font.Color := forgroundcoloron;
-            end;
+    else if config.colorOption = 1 then
+    begin
+      screenLcd[1].color := $00FDF103;
+      screenLcd[2].color := $00FDF103;
+      screenLcd[3].color := $00FDF103;
+      screenLcd[4].color := $00FDF103;
+      form1.Color := $00FDF103;
+      screenLcd[1].Font.Color := clBlack;
+      screenLcd[2].Font.Color := clBlack;
+      screenLcd[3].Font.Color := clBlack;
+      screenLcd[4].Font.Color := clBlack;
+    end
+    else if config.colorOption = 2 then
+    begin
+      screenLcd[1].color := clyellow;
+      screenLcd[2].color := clyellow;
+      screenLcd[3].color := clyellow;
+      screenLcd[4].color := clyellow;
+      form1.Color := clyellow;
+      screenLcd[1].Font.Color := clBlack;
+      screenLcd[2].Font.Color := clBlack;
+      screenLcd[3].Font.Color := clBlack;
+      screenLcd[4].Font.Color := clBlack;
+    end
+    else if config.colorOption = 3 then
+    begin
+      screenLcd[1].color := clwhite;
+      screenLcd[2].color := clwhite;
+      screenLcd[3].color := clwhite;
+      screenLcd[4].color := clwhite;
+      form1.Color := clwhite;
+      screenLcd[1].Font.Color := clBlack;
+      screenLcd[2].Font.Color := clBlack;
+      screenLcd[3].Font.Color := clBlack;
+      screenLcd[4].Font.Color := clBlack;
+    end
+    else if config.colorOption = 4 then
+    begin
+      screenLcd[1].color := backgroundcoloron;
+      screenLcd[2].color := backgroundcoloron;
+      screenLcd[3].color := backgroundcoloron;
+      screenLcd[4].color := backgroundcoloron;
+      form1.Color := backgroundcoloron;
+      screenLcd[1].Font.Color := forgroundcoloron;
+      screenLcd[2].Font.Color := forgroundcoloron;
+      screenLcd[3].Font.Color := forgroundcoloron;
+      screenLcd[4].Font.Color := forgroundcoloron;
+    end;
   end
   else
   begin
-    if kleuren = 0 then
+    if config.colorOption = 0 then
     begin
       screenLcd[1].color := clgreen;
       screenLcd[2].color := clgreen;
@@ -1304,58 +1271,54 @@ begin
       screenLcd[3].Font.Color := clBlack;
       screenLcd[4].Font.Color := clBlack;
     end
-    else
-      if kleuren = 1 then
-      begin
-        screenLcd[1].color := $00C00000;
-        screenLcd[2].color := $00C00000;
-        screenLcd[3].color := $00C00000;
-        screenLcd[4].color := $00C00000;
-        form1.Color := $00C00000;
-        screenLcd[1].Font.Color := clWhite;
-        screenLcd[2].Font.Color := clWhite;
-        screenLcd[3].Font.Color := clWhite;
-        screenLcd[4].Font.Color := clWhite;
-      end
-      else
-        if kleuren = 2 then
-        begin
-          screenLcd[1].color := clOlive;
-          screenLcd[2].color := clOlive;
-          screenLcd[3].color := clOlive;
-          screenLcd[4].color := clOlive;
-          form1.Color := clOlive;
-          screenLcd[1].Font.Color := clBlack;
-          screenLcd[2].Font.Color := clBlack;
-          screenLcd[3].Font.Color := clBlack;
-          screenLcd[4].Font.Color := clBlack;
-        end
-        else
-          if kleuren = 3 then
-          begin
-            screenLcd[1].color := clsilver;
-            screenLcd[2].color := clsilver;
-            screenLcd[3].color := clsilver;
-            screenLcd[4].color := clsilver;
-            form1.Color := clsilver;
-            screenLcd[1].Font.Color := clBlack;
-            screenLcd[2].Font.Color := clBlack;
-            screenLcd[3].Font.Color := clBlack;
-            screenLcd[4].Font.Color := clBlack;
-          end
-          else
-            if kleuren = 4 then
-            begin
-              screenLcd[1].color := backgroundcoloroff;
-              screenLcd[2].color := backgroundcoloroff;
-              screenLcd[3].color := backgroundcoloroff;
-              screenLcd[4].color := backgroundcoloroff;
-              form1.Color := backgroundcoloroff;
-              screenLcd[1].Font.Color := forgroundcoloroff;
-              screenLcd[2].Font.Color := forgroundcoloroff;
-              screenLcd[3].Font.Color := forgroundcoloroff;
-              screenLcd[4].Font.Color := forgroundcoloroff;
-            end;
+    else if config.colorOption = 1 then
+    begin
+      screenLcd[1].color := $00C00000;
+      screenLcd[2].color := $00C00000;
+      screenLcd[3].color := $00C00000;
+      screenLcd[4].color := $00C00000;
+      form1.Color := $00C00000;
+      screenLcd[1].Font.Color := clWhite;
+      screenLcd[2].Font.Color := clWhite;
+      screenLcd[3].Font.Color := clWhite;
+      screenLcd[4].Font.Color := clWhite;
+    end
+    else if config.colorOption = 2 then
+    begin
+      screenLcd[1].color := clOlive;
+      screenLcd[2].color := clOlive;
+      screenLcd[3].color := clOlive;
+      screenLcd[4].color := clOlive;
+      form1.Color := clOlive;
+      screenLcd[1].Font.Color := clBlack;
+      screenLcd[2].Font.Color := clBlack;
+      screenLcd[3].Font.Color := clBlack;
+      screenLcd[4].Font.Color := clBlack;
+    end
+    else if config.colorOption = 3 then
+    begin
+      screenLcd[1].color := clsilver;
+      screenLcd[2].color := clsilver;
+      screenLcd[3].color := clsilver;
+      screenLcd[4].color := clsilver;
+      form1.Color := clsilver;
+      screenLcd[1].Font.Color := clBlack;
+      screenLcd[2].Font.Color := clBlack;
+      screenLcd[3].Font.Color := clBlack;
+      screenLcd[4].Font.Color := clBlack;
+    end
+    else if config.colorOption = 4 then
+    begin
+      screenLcd[1].color := backgroundcoloroff;
+      screenLcd[2].color := backgroundcoloroff;
+      screenLcd[3].color := backgroundcoloroff;
+      screenLcd[4].color := backgroundcoloroff;
+      form1.Color := backgroundcoloroff;
+      screenLcd[1].Font.Color := forgroundcoloroff;
+      screenLcd[2].Font.Color := forgroundcoloroff;
+      screenLcd[3].Font.Color := forgroundcoloroff;
+      screenLcd[4].Font.Color := forgroundcoloroff;
+    end;
   end;
 end;
 
