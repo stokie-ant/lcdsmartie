@@ -18,7 +18,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/SYSTEM2.PAS,v $
- *  $Revision: 1.4 $ $Date: 2004/11/16 21:44:21 $
+ *  $Revision: 1.5 $ $Date: 2004/11/17 20:37:41 $
  *****************************************************************************}
 unit System2;
 
@@ -31,19 +31,21 @@ type
 
   TSystem = class(TComponent)
   private
-     function getTotalPhysMemory:DWORD;
-     function getAvailPhysMemory:DWORD;
-     function getTotalPageFile:DWORD;
-     function getAvailPageFile:DWORD;
+     function getIsWin2kXP:Boolean;
+     function getTotalPhysMemory:Int64;
+     function getAvailPhysMemory:Int64;
+     function getTotalPageFile:Int64;
+     function getAvailPageFile:Int64;
      function getUsername:string;
      function getComputername:string;
   public
      constructor create(Aowner:TComponent);override;
   published
-     property totalPhysmemory:DWORD read gettotalphysmemory;
-     property AvailPhysmemory:DWORD read getavailphysmemory;
-     property totalPageFile:DWORD read gettotalPageFile;
-     property AvailPageFile:DWORD read getAvailPageFile;
+     property bIsWin2kXP:Boolean read getIsWin2kXP;
+     property totalPhysmemory:Int64 read gettotalphysmemory;
+     property AvailPhysmemory:Int64 read getavailphysmemory;
+     property totalPageFile:Int64 read gettotalPageFile;
+     property AvailPageFile:Int64 read getAvailPageFile;
      property Username:string read getUsername;
      property Computername:string read getComputername;
      function diskindrive(lw:char;statusanzeige:boolean):boolean;
@@ -62,38 +64,141 @@ begin
  inherited;
 end;
 
+type
+  PMemoryStatusEx = ^TMemoryStatusEx;
+  LPMEMORYSTATUSEX = PMemoryStatusEx;
+  {$EXTERNALSYM LPMEMORYSTATUSEX}
+  _MEMORYSTATUSEX = packed record
+    dwLength        : DWORD;
+    dwMemoryLoad    : DWORD;
+    ullTotalPhys    : Int64;
+    ullAvailPhys    : Int64;
+    ullTotalPageFile: Int64;
+    ullAvailPageFile: Int64;
+    ullTotalVirtual : Int64;
+    ullAvailVirtual : Int64;
+    ullAvailExtenededVirtual : Int64;
+  end;
+  {$EXTERNALSYM _MEMORYSTATUSEX}
+  TMemoryStatusEx = _MEMORYSTATUSEX;
+  MEMORYSTATUSEX = _MEMORYSTATUSEX;
+  {$EXTERNALSYM MEMORYSTATUSEX}
 
+//---
 
-function tsystem.gettotalphysmemory:DWORD;
+function GlobalMemoryStatusEx(var lpBuffer: TMemoryStatusEx): BOOL; stdcall;
+type
+  TFNGlobalMemoryStatusEx = function(var msx: TMemoryStatusEx): BOOL; stdcall;
 var
-memory:TMEMORYSTATUS;
+  FNGlobalMemoryStatusEx: TFNGlobalMemoryStatusEx;
 begin
-     globalmemorystatus(memory);
+  lpBuffer.dwLength:=SizeOf(TMemoryStatusEx);
+
+  FNGlobalMemoryStatusEx := TFNGlobalMemoryStatusEx(
+    GetProcAddress(GetModuleHandle(kernel32), 'GlobalMemoryStatusEx'));
+  if not Assigned(FNGlobalMemoryStatusEx) then
+  begin
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    Result := False;
+  end
+  else
+  begin
+    Result := FNGlobalMemoryStatusEx(lpBuffer);
+  end;
+end;
+
+function TSystem.getIsWin2kXP:Boolean;
+var
+oviVersionInfo: TOSVERSIONINFO;
+begin
+ oviVersionInfo.dwOSVersionInfoSize := SizeOf(oviVersionInfo);
+ if not GetVersionEx(oviVersionInfo) then
+   raise Exception.Create('Can''t get the Windows version');
+ if (oviVersionInfo.dwPlatformId = VER_PLATFORM_WIN32_NT) and
+   (oviVersionInfo.dwMajorVersion >= 5) then
+      getIsWin2kXP := true
+ else
+      getIsWin2kXP := false;
+end;
+
+function TSystem.gettotalphysmemory:Int64;
+var
+memory:TMemoryStatus;
+memoryEx:TMemoryStatusEx;
+begin
+  if getIsWin2kXP then begin
+     memoryEx.dwLength := sizeof(TMemoryStatusEx);
+     if GlobalMemoryStatusEx(memoryEx) then
+       gettotalphysmemory:=memoryEx.ulltotalphys
+     else
+       gettotalphysmemory:=0;
+   end
+   else
+   begin
+     memory.dwLength := sizeof(TMemoryStatus);
+     GlobalMemoryStatus(memory);
      gettotalphysmemory:=memory.dwtotalphys;
+   end;
 end;
 
-function tsystem.getavailphysmemory:DWORD;
+function TSystem.getavailphysmemory:Int64;
 var
-memory:TMEMORYSTATUS;
+memory:TMemoryStatus;
+memoryEx:TMemoryStatusEx;
 begin
-     globalmemorystatus(memory);
+   if getIsWin2kXP then begin
+     memoryEx.dwLength := sizeof(TMemoryStatusEx);
+     if GlobalMemoryStatusEx(memoryEx) then
+       getavailphysmemory:=memoryEx.ullavailphys
+     else
+       getavailphysmemory:=0;
+   end
+   else
+   begin
+     memory.dwLength := sizeof(TMemoryStatus);
+     GlobalMemoryStatus(memory);
      getavailphysmemory:=memory.dwavailphys;
+   end;
 end;
 
-function tsystem.gettotalpagefile:DWORD;
+function TSystem.gettotalpagefile:Int64;
 var
-memory:TMEMORYSTATUS;
+memory:TMemoryStatus;
+memoryEx:TMemoryStatusEx;
 begin
-     globalmemorystatus(memory);
+   if getIsWin2kXP then begin
+     memoryEx.dwLength := sizeof(TMemoryStatusEx);
+     if GlobalMemoryStatusEx(memoryEx) then
+       gettotalpagefile:=memoryEx.ulltotalpagefile
+     else
+       gettotalpagefile:=0;
+   end
+   else
+   begin
+     memory.dwLength := sizeof(TMemoryStatus);
+     GlobalMemoryStatus(memory);
      gettotalpagefile:=memory.dwtotalpagefile;
+   end;
 end;
 
-function tsystem.getavailpagefile:DWORD;
+function TSystem.getavailpagefile:Int64;
 var
-memory:TMEMORYSTATUS;
+memory:TMemoryStatus;
+memoryEx:TMemoryStatusEx;
 begin
-     globalmemorystatus(memory);
+   if getIsWin2kXP then begin
+     memoryEx.dwLength := sizeof(TMemoryStatusEx);
+     if GlobalMemoryStatusEx(memoryEx) then
+       getavailpagefile:=memoryEx.ullavailpagefile
+     else
+       getavailpagefile:=0;
+   end
+   else
+   begin
+     memory.dwLength := sizeof(TMemoryStatus);
+     GlobalMemoryStatus(memory);
      getavailpagefile:=memory.dwavailpagefile;
+   end;
 end;
 
 function tsystem.getusername:string;

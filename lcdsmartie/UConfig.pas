@@ -19,7 +19,7 @@ unit UConfig;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UConfig.pas,v $
- *  $Revision: 1.7 $ $Date: 2004/11/17 13:04:52 $
+ *  $Revision: 1.8 $ $Date: 2004/11/17 20:37:41 $
  *****************************************************************************}
 
 interface
@@ -52,7 +52,7 @@ type
       function loadINI: Boolean;
       function loadCFG: Boolean;
       procedure saveINI;
-      {Procedure saveCFG;}
+      Procedure saveCFG;
       procedure setSizeOption(con: Integer);
     public
         isUsbPalm: Boolean;
@@ -102,7 +102,7 @@ type
 implementation
 
 uses
-  SysUtils, Forms, INIFiles;
+  SysUtils, Forms, INIFiles, StrUtils;
 
 constructor TConfig.Create;
 begin
@@ -299,7 +299,6 @@ begin
   result:=true;
 end;
 
-{
 procedure TConfig.saveCFG;
 var
   bestand: textfile;
@@ -433,7 +432,7 @@ begin
     try closefile(bestand); except end;
   end;
 end;
-}
+
 
 function TConfig.load: Boolean;
 begin
@@ -451,7 +450,8 @@ end;
 procedure TConfig.save;
 begin
   saveINI;
-  //saveCFG;
+  if FileExists(ExtractFilePath(Application.EXEName) + 'config.cfg') then
+    saveCFG;
 end;
 
 
@@ -459,7 +459,7 @@ function TConfig.loadINI: Boolean;
 var
   initfile:TINIFile;
   x, y:Integer;
-  sScreenLine, sPOPAccount, sGameLine: String;
+  sScreen, sLine, sPOPAccount, sGameLine: String;
 begin
 
   try
@@ -470,34 +470,34 @@ begin
   end;
 
   baudrate := initfile.ReadInteger('Communication Settings', 'Baudrate', 8);
-  comPort := initfile.ReadInteger('Communication Settings', 'COM Port', 1);
-  UsbPalmDevice:=initfile.ReadString('Communication Settings', 'USB Palm Device', '');
+  comPort := initfile.ReadInteger('Communication Settings', 'COMPort', 1);
+  UsbPalmDevice:=initfile.ReadString('Communication Settings', 'USBPalmDevice', '');
   if (UsbPalmDevice<>'') then isUsbPalm:=True
   else isUsbPalm:=False;
 
-  refreshRate := initfile.ReadInteger('General Settings', 'Refresh Rate', 75);
-  winampLocation := initfile.ReadString('General Settings', 'WinAmp Location', 'C:\Program Files\Winamp\winamp.exe');
+  refreshRate := initfile.ReadInteger('General Settings', 'RefreshRate', 75);
+  winampLocation := initfile.ReadString('General Settings', 'WinAmpLocation', 'C:\Program Files\Winamp\winamp.exe');
 
-  bootDriverDelay:=initfile.ReadInteger('General Settings', 'Boot Driver Delay', 3);
-  setiEmail:=initfile.ReadString('General Settings', 'SETI E-mail', 'test@test.com');
+  bootDriverDelay:=initfile.ReadInteger('General Settings', 'BootDriverDelay', 3);
+  setiEmail:=initfile.ReadString('General Settings', 'SETIEmail', 'test@test.com');
 
   for x:= 1 to 20 do
   begin
-    sScreenLine := 'Screen ' + Format('%.2u', [x]);
-    screen[x][1].enabled:=initfile.ReadBool(sScreenLine, 'Enabled', false);
-    screen[x][1].theme:=initFile.ReadInteger(sScreenLine, 'Theme', 1)-1;
-    screen[x][1].showTime:=initFile.ReadInteger(sScreenLine, 'Show Time', 10);
-    screen[x][1].skip:=initFile.ReadInteger(sScreenLine, 'Skip', 1);
-    screen[x][1].interactionTime:=initFile.ReadInteger(sScreenLine, 'Interaction Time', 7);
-    screen[x][1].interaction:=initFile.ReadInteger(sScreenLine, 'Interaction', 1);
+    sScreen := 'Screen ' + Format('%.2u', [x]);
+    screen[x][1].enabled:=initfile.ReadBool(sScreen, 'Enabled', false);
+    screen[x][1].theme:=initFile.ReadInteger(sScreen, 'Theme', 1)-1;
+    screen[x][1].showTime:=initFile.ReadInteger(sScreen, 'ShowTime', 10);
+    screen[x][1].skip:=initFile.ReadInteger(sScreen, 'Skip', 1);
+    screen[x][1].interactionTime:=initFile.ReadInteger(sScreen, 'InteractionTime', 7);
+    screen[x][1].interaction:=initFile.ReadInteger(sScreen, 'Interaction', 1);
 
     for y:= 1 to 4 do
     begin
-      sScreenLine := 'Screen ' + Format('%.2u', [x]) + ' Line ' + Format('%.2u', [y]);
-      screen[x][y].noscroll:=initFile.ReadBool(sScreenLine, 'No Scroll', false);
-      screen[x][y].contNextLine:=initFile.ReadBool(sScreenLine, 'Continue Next Line', false);
-      screen[x][y].center:=initFile.ReadBool(sScreenLine, 'Center', false);
-      screen[x][y].text:=initFile.ReadString(sScreenLine, 'Text', '');
+      sLine := Format('%.2u', [y]);
+      screen[x][y].text:=initFile.ReadString(sScreen, 'Text' + sLine, '');
+      screen[x][y].noscroll:=initFile.ReadBool(sScreen, 'NoScroll' + sLine, true);
+      screen[x][y].contNextLine:=initFile.ReadBool(sScreen, 'ContinueNextLine' + sLine, false);
+      screen[x][y].center:=initFile.ReadBool(sScreen, 'Center' + sLine, false);
     end;
 
     // BUGBUG: Remove me - once the data organisation is corrected.
@@ -513,26 +513,24 @@ begin
     end;
   end;
 
-
-
-  distLog:=initfile.ReadString('General Settings', 'Dist Log', 'C:\koelog.txt');
-  emailPeriod:=initfile.ReadInteger('General Settings', 'E-mail Period', 10);
-  dllPeriod:=initfile.ReadInteger('General Settings', 'DLL Period', 75);
-  scrollPeriod:=initfile.ReadInteger('General Settings', 'Scroll Period', 200);
-  parallelPort:=initfile.ReadInteger('Communication Settings', 'Paralell Port', 888);
+  distLog:=initfile.ReadString('General Settings', 'DistLog', 'C:\koelog.txt');
+  emailPeriod:=initfile.ReadInteger('General Settings', 'EmailPeriod', 10);
+  dllPeriod:=initfile.ReadInteger('General Settings', 'DLLPeriod', 75);
+  scrollPeriod:=initfile.ReadInteger('General Settings', 'ScrollPeriod', 200);
+  parallelPort:=initfile.ReadInteger('Communication Settings', 'ParallelPort', 888);
 
   mx3Usb:=initFile.ReadBool('Communication Settings', 'MX3USB', false);
 
-  alwaysOnTop:=initFile.ReadBool('General Settings', 'Always on Top', false);
+  alwaysOnTop:=initFile.ReadBool('General Settings', 'AlwaysOnTop', false);
 
-  httpProxy:=initFile.ReadString('Communication Settings', 'HTTP Proxy', '');
-  httpProxyPort:=initFile.ReadInteger('Communication Settings', 'HTTP Proxy Port', 0);
+  httpProxy:=initFile.ReadString('Communication Settings', 'HTTPProxy', '');
+  httpProxyPort:=initFile.ReadInteger('Communication Settings', 'HTTPProxyPort', 0);
 
   isMO:=false;
   isCF:=false;
   isHD:=false;
   isHD2:=false;
-  case initFile.ReadInteger('General Settings', 'LCD Type', 0) of
+  case initFile.ReadInteger('General Settings', 'LCDType', 0) of
     1: isHD:=true;
     2: isMO:=true;
     3: isCF:=true;
@@ -544,28 +542,31 @@ begin
   contrast:=initFile.ReadInteger('General Settings', 'Contrast', 88);
   brightness:=initFile.ReadInteger('General Settings', 'Brightness', 26);
 
-  CF_contrast:=initFile.ReadInteger('General Settings', 'CF Contrast', 66);
-  CF_brightness:=initFile.ReadInteger('General Settings', 'CF Brightness', 61);
+  CF_contrast:=initFile.ReadInteger('General Settings', 'CFContrast', 66);
+  CF_brightness:=initFile.ReadInteger('General Settings', 'CFBrightness', 61);
 
-  newsRefresh:=initFile.ReadInteger('General Settings', 'News Refresh', 120);
-  randomScreens:=initFile.ReadBool('General Settings', 'Random Screens', false);
+  newsRefresh:=initFile.ReadInteger('General Settings', 'NewsRefresh', 120);
+  randomScreens:=initFile.ReadBool('General Settings', 'RandomScreens', false);
 
-  foldUsername:=initFile.ReadString('General Settings', 'Fold Username', 'Test');
-  gameRefresh:=initFile.ReadInteger('General Settings', 'Game Refresh', 1);
+  foldUsername:=initFile.ReadString('General Settings', 'FoldUsername', 'Test');
+  gameRefresh:=initFile.ReadInteger('General Settings', 'GameRefresh', 1);
 
-  mbmRefresh:=initFile.ReadInteger('General Settings', 'MBM Refresh', 30);
-  checkUpdates:=initFile.ReadBool('General Settings', 'Check Updates', true);
+  mbmRefresh:=initFile.ReadInteger('General Settings', 'MBMRefresh', 30);
+  checkUpdates:=initFile.ReadBool('General Settings', 'CheckUpdates', true);
 
-  colorOption:=initFile.ReadInteger('General Settings', 'Color Option', 4);
+  colorOption:=initFile.ReadInteger('General Settings', 'ColorOption', 4);
 
   // Pop accounts
   for x:= 0 to 9 do
   begin
-    sPOPAccount:='POP Account ' + Format('%.2u', [x]);
-    pop[x].server:=initFile.ReadString(sPOPAccount, 'Server', '');
-    pop[x].user:=initFile.ReadString(sPOPAccount, 'User', '');
-    pop[x].pword:=initFile.ReadString(sPOPAccount, 'Password', '');
+    sPOPAccount:=Format('%.2u', [x]);
+    pop[x].server:=initFile.ReadString('POP Accounts', 'Server' + sPOPAccount, '');
+    pop[x].user:=initFile.ReadString('POP Accounts', 'User' + sPOPAccount, '');
+    pop[x].user:=MidStr(pop[x].user, 2, Length(pop[x].user) - 2);  // To Remove Enclosing Quotes
+    pop[x].pword:=initFile.ReadString('POP Accounts', 'Password' + sPOPAccount, '');
+    pop[x].pword:=MidStr(pop[x].pword, 2, Length(pop[x].pword) - 2); // To Remove Enclosing Quotes
   end;
+
 
   // Load Game server list.
   for x:= 1 to 20 do
@@ -586,87 +587,103 @@ end;
 procedure TConfig.saveINI;
 var
   initfile : TINIFile;
-  sScreenLine, sPOPAccount, sGameLine: String;
+  sScreen, sLine, sPOPAccount, sGameLine: String;
   x, y: Integer;
 
 begin
   initfile := TINIFile.Create(ExtractFilePath(Application.EXEName) + 'config.ini');
 
   initfile.WriteInteger('Communication Settings', 'Baudrate', baudrate);
-  initfile.WriteInteger('Communication Settings', 'COM Port', comPort);
-  if (isUsbPalm) then initfile.WriteString('Communication Settings', 'USB Palm Device', UsbPalmDevice)
-  else initfile.WriteString('Communication Settings', 'USB Palm Device', '');
+  initfile.WriteInteger('Communication Settings', 'COMPort', comPort);
+  if (isUsbPalm) then initfile.WriteString('Communication Settings', 'USBPalmDevice', UsbPalmDevice)
+  else initfile.WriteString('Communication Settings', 'USBPalmDevice', '');
 
-  initfile.WriteInteger('General Settings', 'Refresh Rate', refreshRate);
-  initfile.WriteString('General Settings', 'WinAmp Location', winampLocation);
+  initfile.WriteInteger('General Settings', 'RefreshRate', refreshRate);
+  initfile.WriteString('General Settings', 'WinAmpLocation', winampLocation);
 
-  initfile.WriteInteger('General Settings', 'Boot Driver Delay', bootDriverDelay);
-  initfile.WriteString('General Settings', 'SETI E-mail', setiEmail);
+  initfile.WriteInteger('General Settings', 'BootDriverDelay', bootDriverDelay);
+  initfile.WriteString('General Settings', 'SETIEmail', setiEmail);
 
   for x:= 1 to 20 do
   begin
-    sScreenLine := 'Screen ' + Format('%.2u', [x]);
-    initfile.WriteBool(sScreenLine, 'Enabled', screen[x][1].enabled);
-    initFile.WriteInteger(sScreenLine, 'Theme', screen[x][1].theme+1);
-    initFile.WriteInteger(sScreenLine, 'Show Time', screen[x][1].showTime);
-    initFile.WriteInteger(sScreenLine, 'Skip', screen[x][1].skip);
-    initFile.WriteInteger(sScreenLine, 'Interaction Time', screen[x][1].interactionTime);
-    initFile.WriteInteger(sScreenLine, 'Interaction', screen[x][1].interaction);
+    sScreen := 'Screen ' + Format('%.2u', [x]);
+    initfile.WriteBool(sScreen, 'Enabled', screen[x][1].enabled);
+    initFile.WriteInteger(sScreen, 'Theme', screen[x][1].theme+1);
+    initFile.WriteInteger(sScreen, 'ShowTime', screen[x][1].showTime);
+    initFile.WriteInteger(sScreen, 'Skip', screen[x][1].skip);
+    initFile.WriteInteger(sScreen, 'InteractionTime', screen[x][1].interactionTime);
+    initFile.WriteInteger(sScreen, 'Interaction', screen[x][1].interaction);
 
     for y:= 1 to 4 do
     begin
-      sScreenLine := 'Screen ' + Format('%.2u', [x]) + ' Line ' + Format('%.2u', [y]);
-      initFile.WriteBool(sScreenLine, 'No Scroll', screen[x][y].noscroll);
-      initFile.WriteBool(sScreenLine, 'Continue Next Line', screen[x][y].contNextLine);
-      initFile.WriteBool(sScreenLine, 'Center', screen[x][y].center);
-      initFile.WriteString(sScreenLine, 'Text', '"'+screen[x][y].text+'"');
+      sLine := Format('%.2u', [y]);
+      initFile.WriteString(sScreen, 'Text' + sLine, '"'+screen[x][y].text+'"');
     end;
+
+    for y:= 1 to 4 do
+    begin
+      sLine := Format('%.2u', [y]);
+      initFile.WriteBool(sScreen, 'NoScroll' + sLine, screen[x][y].noscroll);
+    end;
+
+    for y:= 1 to 4 do
+    begin
+      sLine := Format('%.2u', [y]);
+      initFile.WriteBool(sScreen, 'ContinueNextLine' + sLine, screen[x][y].contNextLine);
+    end;
+
+    for y:= 1 to 4 do
+    begin
+      sLine := Format('%.2u', [y]);
+      initFile.WriteBool(sScreen, 'Center' + sLine, screen[x][y].center);
+    end;
+
   end;
 
-  initfile.WriteString('General Settings', 'Dist Log', distLog);
-  initfile.WriteInteger('General Settings', 'E-mail Period', emailPeriod);
-  initfile.WriteInteger('General Settings', 'DLL Period', dllPeriod);
-  initfile.WriteInteger('General Settings', 'Scroll Period', scrollPeriod);
-  initfile.WriteInteger('Communication Settings', 'Paralell Port', parallelPort);
+  initfile.WriteString('General Settings', 'DistLog', distLog);
+  initfile.WriteInteger('General Settings', 'EmailPeriod', emailPeriod);
+  initfile.WriteInteger('General Settings', 'DLLPeriod', dllPeriod);
+  initfile.WriteInteger('General Settings', 'ScrollPeriod', scrollPeriod);
+  initfile.WriteInteger('Communication Settings', 'ParallelPort', parallelPort);
 
   initFile.WriteBool('Communication Settings', 'MX3USB', mx3Usb);
 
-  initFile.WriteBool('General Settings', 'Always on Top', alwaysOnTop);
+  initFile.WriteBool('General Settings', 'AlwaysOnTop', alwaysOnTop);
 
-  initFile.WriteString('Communication Settings', 'HTTP Proxy', httpProxy);
-  initFile.WriteInteger('Communication Settings', 'HTTP Proxy Port', httpProxyPort);
+  initFile.WriteString('Communication Settings', 'HTTPProxy', httpProxy);
+  initFile.WriteInteger('Communication Settings', 'HTTPProxyPort', httpProxyPort);
 
-  if isHD then initFile.WriteInteger('General Settings', 'LCD Type', 1);
-  if isMO then initFile.WriteInteger('General Settings', 'LCD Type', 2);
-  if isCF then initFile.WriteInteger('General Settings', 'LCD Type', 3);
-  if isHD2 then initFile.WriteInteger('General Settings', 'LCD Type', 4);
+  if isHD then initFile.WriteInteger('General Settings', 'LCDType', 1);
+  if isMO then initFile.WriteInteger('General Settings', 'LCDType', 2);
+  if isCF then initFile.WriteInteger('General Settings', 'LCDType', 3);
+  if isHD2 then initFile.WriteInteger('General Settings', 'LCDType', 4);
 
   initFile.WriteInteger('General Settings', 'Size', sizeOption);
 
   initFile.WriteInteger('General Settings', 'Contrast', contrast);
   initFile.WriteInteger('General Settings', 'Brightness', brightness);
 
-  initFile.WriteInteger('General Settings', 'CF Contrast', CF_contrast);
-  initFile.WriteInteger('General Settings', 'CF Brightness', CF_brightness);
+  initFile.WriteInteger('General Settings', 'CFContrast', CF_contrast);
+  initFile.WriteInteger('General Settings', 'CFBrightness', CF_brightness);
 
-  initFile.WriteInteger('General Settings', 'News Refresh', newsRefresh);
-  initFile.WriteBool('General Settings', 'Random Screens', randomScreens);
+  initFile.WriteInteger('General Settings', 'NewsRefresh', newsRefresh);
+  initFile.WriteBool('General Settings', 'RandomScreens', randomScreens);
 
-  initFile.WriteString('General Settings', 'Fold Username', foldUsername);
-  initFile.WriteInteger('General Settings', 'Game Refresh', gameRefresh);
+  initFile.WriteString('General Settings', 'FoldUsername', foldUsername);
+  initFile.WriteInteger('General Settings', 'GameRefresh', gameRefresh);
 
-  initFile.WriteInteger('General Settings', 'MBM Refresh', mbmRefresh);
-  initFile.WriteBool('General Settings', 'Check Updates', checkUpdates);
+  initFile.WriteInteger('General Settings', 'MBMRefresh', mbmRefresh);
+  initFile.WriteBool('General Settings', 'CheckUpdates', checkUpdates);
 
-  initFile.WriteInteger('General Settings', 'Color Option', colorOption);
+  initFile.WriteInteger('General Settings', 'ColorOption', colorOption);
 
   // Pop accounts
   for x:= 0 to 9 do
   begin
-    sPOPAccount:='POP Account ' + Format('%.2u', [x]);
-    initFile.WriteString(sPOPAccount, 'Server', pop[x].server);
-    initFile.WriteString(sPOPAccount, 'User', pop[x].user);
-    initFile.WriteString(sPOPAccount, 'Password', pop[x].pword);
+    sPOPAccount:=Format('%.2u', [x]);
+    initFile.WriteString('POP Accounts', 'Server' + sPOPAccount, pop[x].server);
+    initFile.WriteString('POP Accounts', 'User' + sPOPAccount, '"'+pop[x].user+'"');
+    initFile.WriteString('POP Accounts', 'Password' + sPOPAccount, '"'+pop[x].pword+'"');
   end;
 
   for x:= 1 to 20 do

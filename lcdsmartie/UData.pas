@@ -19,13 +19,13 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.4 $ $Date: 2004/11/17 11:42:46 $
+ *  $Revision: 1.5 $ $Date: 2004/11/17 20:37:41 $
  *****************************************************************************}
 
 
 interface
 
-uses Classes, System2, System2Ex, xmldom, XMLIntf, SysUtils, xercesxmldom, XMLDoc,
+uses Classes, System2, xmldom, XMLIntf, SysUtils, xercesxmldom, XMLDoc,
  msxmldom, ComCtrls, ComObj;
 
 const
@@ -183,7 +183,6 @@ type
       distributedlog: String;
       srvr:string;
       System1:Tsystem;
-      System1Ex:TsystemEx;
       qstatreg4: array[1..20,1..4] of string;
       DoNewsUpdate: Array [1..9] of Boolean;
       newsAttempts: Array [1..9] of Byte;
@@ -1534,7 +1533,6 @@ var
   regel:string;
   z, y: Integer;
   screenline: String;
-  oviVersionInfo: TOSVERSIONINFO;
 
 begin
 
@@ -1555,30 +1553,13 @@ begin
     end;
   end;
 
-oviVersionInfo.dwOSVersionInfoSize := SizeOf(oviVersionInfo);
+STComputername:=system1.Computername;
+STUsername:=system1.Username;
 
-if not GetVersionEx(oviVersionInfo) then
- raise Exception.Create('Can''t get the Windows version');
-
-if (oviVersionInfo.dwPlatformId = VER_PLATFORM_WIN32_NT) and
-   (oviVersionInfo.dwMajorVersion >= 5) then begin
-  STComputername:=system1Ex.Computername;
-  STUsername:=system1Ex.Username;
-
-  STMemfree:=system1Ex.availPhysmemory div (1024*1024);
-  STMemTotal:=system1Ex.totalPhysmemory div (1024*1024);
-  STPageTotal:=system1Ex.totalPageFile div (1024*1024);
-  STPageFree:=system1Ex.AvailPageFile div (1024*1024);
-end else begin
-  STComputername:=system1.Computername;
-  STUsername:=system1.Username;
-
-  STMemfree:=system1.availPhysmemory div (1024 * 1024);
-  STMemTotal:=system1.totalPhysmemory div (1024 * 1024);
-  STPageTotal:=system1.totalPageFile div (1024 * 1024);
-  STPageFree:=system1.AvailPageFile div (1024 * 1024);
-end;   
-
+STMemfree:=system1.availPhysmemory div (1024 * 1024);
+STMemTotal:=system1.totalPhysmemory div (1024 * 1024);
+STPageTotal:=system1.totalPageFile div (1024 * 1024);
+STPageFree:=system1.AvailPageFile div (1024 * 1024);
 
 // HD space!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 if hd=1 then begin
@@ -2219,34 +2200,38 @@ begin
     if mailz[y]=1 then begin
       if (dataThread.Terminated) then Exit;
       try
-          pop3:=TIdPOP3.Create(nil);
-          msg:=TIdMessage.Create(nil);
-        try
-          pop3.MaxLineAction  := maSplit;
-          pop3.ReadTimeout := 10000; //10 seconds
-          pop3.host:=config.pop[y].server;
-          pop3.username:=config.pop[y].user;
-          pop3.Password:=config.pop[y].pword;
+          if config.pop[y].server <> '' then begin
+            pop3:=TIdPOP3.Create(nil);
+            msg:=TIdMessage.Create(nil);
+            pop3.host:=config.pop[y].server;
+            pop3.MaxLineAction  := maSplit;
+            pop3.ReadTimeout := 10000; //10 seconds
+            pop3.username:=config.pop[y].user;
+            pop3.Password:=config.pop[y].pword;
 
-          pop3.Connect(30000); // 30 seconds
+            try
+              pop3.Connect(30000); // 30 seconds
 
-          mail[y].messages :=pop3.CheckMessages;
+              mail[y].messages :=pop3.CheckMessages;
 
-          if (mail[y].messages>0) and (pop3.RetrieveHeader(mail[y].messages,msg)) then begin
-            mail[y].lastSubject:=msg.Subject;
-            mail[y].lastFrom:=msg.From.Name;
-          end else begin
-            mail[y].lastSubject:='[none]';
-            mail[y].lastFrom:='[none]';
+              if (mail[y].messages>0) and (pop3.RetrieveHeader(mail[y].messages,msg)) then begin
+                mail[y].lastSubject:=msg.Subject;
+                mail[y].lastFrom:=msg.From.Name;
+              end else begin
+                mail[y].lastSubject:='[none]';
+                mail[y].lastFrom:='[none]';
+              end;
+
+            finally
+              pop3.Disconnect;
+              pop3.Free;
+              msg.Free;
+            end;
+
+            if (mail[y].messages>0) then myGotEmail:= true;
+
           end;
 
-        finally
-          pop3.Disconnect;
-          pop3.Free;
-          msg.Free;
-        end;
-
-        if (mail[y].messages>0) then myGotEmail:= true;
       except
         on E: Exception do begin
           mail[y].messages:=0;
