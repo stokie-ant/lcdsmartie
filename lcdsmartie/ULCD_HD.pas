@@ -19,7 +19,7 @@ unit ULCD_HD;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/Attic/ULCD_HD.pas,v $
- *  $Revision: 1.8 $ $Date: 2004/12/23 21:46:03 $
+ *  $Revision: 1.9 $ $Date: 2005/01/02 21:22:15 $
  *
  *  Based on code from the following (open-source) projects:
  *     WinAmp LCD Plugin
@@ -261,7 +261,8 @@ var
   i: Byte;
 begin
     writectrl(All, SetCGRamAddr + ((character-1) * 8));
-    for i := 0 to 7 do writedata(All, data[i]);
+    for i := 0 to 7 do
+      writedata(All, data[i]);
 
     {
     // for 2nd controller
@@ -338,7 +339,7 @@ begin
   CtrlOut(enableLines or portControl);
   UsecDelay(uiDelayBus);
   CtrlOut(portControl);
-
+  UsecDelay(uiDelayShort);
   {
   CtrlOut(3 or backlight);  // 3/11 RS=0, R/W=0, E=0,         0000 0011
   DataOut(x);
@@ -377,6 +378,7 @@ begin
   CtrlOut(enableLines or portControl);
   UsecDelay(uiDelayBus);
   CtrlOut(portControl);
+  UsecDelay(uiDelayShort);
 
 {
   CtrlOut(7 or backlight);     //7 + 8   B111 === B100  RS | backlight
