@@ -3,7 +3,7 @@ object Form1: TForm1
   Top = 61
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsToolWindow
-  Caption = 'LCD Smartie 5.3 Beta 3'
+  Caption = 'LCD Smartie 5.3 Beta 4'
   ClientHeight = 90
   ClientWidth = 225
   Color = clBtnFace
