@@ -19,7 +19,7 @@ unit UConfig;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UConfig.pas,v $
- *  $Revision: 1.6 $ $Date: 2004/11/17 12:41:36 $
+ *  $Revision: 1.7 $ $Date: 2004/11/17 13:04:52 $
  *****************************************************************************}
 
 interface
@@ -437,7 +437,8 @@ end;
 
 function TConfig.load: Boolean;
 begin
-  if FileExists(ExtractFilePath(Application.EXEName) + 'config.ini') then
+  if (FileExists(ExtractFilePath(Application.EXEName) + 'config.ini'))
+    or (not FileExists(ExtractFilePath(Application.EXEName) + 'config.cfg')) then
   begin
     result := loadINI;
   end
@@ -484,7 +485,7 @@ begin
   begin
     sScreenLine := 'Screen ' + Format('%.2u', [x]);
     screen[x][1].enabled:=initfile.ReadBool(sScreenLine, 'Enabled', false);
-    screen[x][1].theme:=initFile.ReadInteger(sScreenLine, 'Theme', 1);
+    screen[x][1].theme:=initFile.ReadInteger(sScreenLine, 'Theme', 1)-1;
     screen[x][1].showTime:=initFile.ReadInteger(sScreenLine, 'Show Time', 10);
     screen[x][1].skip:=initFile.ReadInteger(sScreenLine, 'Skip', 1);
     screen[x][1].interactionTime:=initFile.ReadInteger(sScreenLine, 'Interaction Time', 7);
@@ -606,7 +607,7 @@ begin
   begin
     sScreenLine := 'Screen ' + Format('%.2u', [x]);
     initfile.WriteBool(sScreenLine, 'Enabled', screen[x][1].enabled);
-    initFile.WriteInteger(sScreenLine, 'Theme', screen[x][1].theme);
+    initFile.WriteInteger(sScreenLine, 'Theme', screen[x][1].theme+1);
     initFile.WriteInteger(sScreenLine, 'Show Time', screen[x][1].showTime);
     initFile.WriteInteger(sScreenLine, 'Skip', screen[x][1].skip);
     initFile.WriteInteger(sScreenLine, 'Interaction Time', screen[x][1].interactionTime);
