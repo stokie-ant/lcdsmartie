@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.57 $ $Date: 2005/01/29 02:37:43 $
+ *  $Revision: 1.58 $ $Date: 2005/01/29 10:54:13 $
  *****************************************************************************}
 
 interface
@@ -224,6 +224,7 @@ type
     backlight: Integer;
     data: TData;
     aantalscreensheenweer: Integer;
+    iLastRandomTranCycle: Integer;
     procedure kleur();
     function doguess(line: Integer): Integer;
     procedure freeze();
@@ -329,6 +330,7 @@ begin
   gotnewlines := false;
   TransStart := GetTickCount();
   TransCycle := 0;
+  iLastRandomTranCycle := 0;
 
   for y := 1 to 40 do
   begin
@@ -855,7 +857,7 @@ begin
                 '                                        ', 1, config.width);
             end;
 
-            for x := round((config.width/maxTransCycles)*(TransCycle-1)) to
+            for x := iLastRandomTranCycle to
               round((config.width/maxTransCycles)*TransCycle)-1 do
             begin
               for line := 1 to 4 do
@@ -866,6 +868,7 @@ begin
                   1, config.width-gokje);
               end;
             end;
+            iLastRandomTranCycle := round((config.width/maxTransCycles)*TransCycle);
             for x := 1 to 4 do
             begin
               screenLcd[x].caption := EscapeAmp(gokreg[x]);
