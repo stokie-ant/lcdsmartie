@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.46 $ $Date: 2005/01/22 23:36:18 $
+ *  $Revision: 1.47 $ $Date: 2005/01/22 23:49:01 $
  *****************************************************************************}
 
 
@@ -156,6 +156,7 @@ type
     cache_lastFindPlugin: String;
     uiScreenStartTime: Cardinal; // time that new start refresh started (used by plugin cache code)
     bNewScreenEvent: Boolean;
+    bNewScreen: Boolean;
     dlls: Array of TDll;
     uiTotalDlls: Cardinal;
     sDllResults: array of string;
@@ -253,6 +254,8 @@ uses cxCpu40, adCpuUsage, UMain, Windows, Forms, IpHlpApi,
 procedure TData.NewScreen(bYes: Boolean);
 begin
   bNewScreenEvent := bYes;
+  if (bYes) then
+    bNewScreen := true;
 end;
 
 procedure TData.ScreenStart;
@@ -263,7 +266,7 @@ end;
 
 procedure TData.ScreenEnd;
 begin
- // nothing here yet...
+  bNewScreen := false;
 end;
 
 procedure TData.RequiredParameters(uiArgs: Cardinal; uiMinArgs: Cardinal; uiMaxArgs: Cardinal = 0);
@@ -1269,14 +1272,14 @@ begin
       RequiredParameters(numargs, 4, 4);
 
       uiPlugin := FindPlugin(args[0]);
-      if (bCacheResults) then
+      if (bCacheResults) and (not bNewScreen) then
       begin
-        if (dlls[uiPlugin].uiMinRefreshInterval < config.dllPeriod) then
+        if (dlls[uiPlugin].uiMinRefreshInterval < Cardinal(config.dllPeriod)) then
           uiMinRefresh := config.dllPeriod
         else
           uiMinRefresh := dlls[uiPlugin].uiMinRefreshInterval;
 
-        if (abs(uiScreenStartTime - dlls[uiPlugin].uiLastRefreshed)
+        if (Cardinal(abs(uiScreenStartTime - dlls[uiPlugin].uiLastRefreshed))
             > uiMinRefresh)
           or (uiScreenStartTime = dlls[uiPlugin].uiLastRefreshed) then
         begin
@@ -1288,7 +1291,7 @@ begin
           bCallPlugin := False;
       end
       else
-        bCallPlugin := True;
+        bCallPlugin := True; // always call, if new screen or not to be cached.
 
       if (bCallPlugin) then
       begin
