@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.12 $ $Date: 2004/11/19 19:55:19 $
+ *  $Revision: 1.13 $ $Date: 2004/11/19 22:34:24 $
  *****************************************************************************}
 
 interface
@@ -319,12 +319,12 @@ var
   i: Integer;
 
 begin
-  character := StrToInt(copy(fline, 1, pos(', ', fline)-1));
-  fline := copy(fline, pos(', ', fline) + 1, length(fline));
+  character := StrToInt(copy(fline, 1, pos(',', fline)-1));
+  fline := copy(fline, pos(',', fline) + 1, length(fline));
   for i := 0 to 6 do
   begin
-    waarde[i] := StrToInt(copy(fline, 1, pos(', ', fline)-1));
-    fline := copy(fline, pos(', ', fline) + 1, length(fline));
+    waarde[i] := StrToInt(copy(fline, 1, pos(',', fline)-1));
+    fline := copy(fline, pos(',', fline) + 1, length(fline));
   end;
   waarde[7] := StrToInt(copy(fline, 1, length(fline)));
 
@@ -1833,9 +1833,9 @@ begin
           begin
             try
               temp1 := copy(todo[counter], pos('(', todo[counter]) + 1,
-                pos(', ', todo[counter])-pos('(', todo[counter])-1);
-              temp2 := copy(todo[counter], pos(', ', todo[counter]) + 1,
-                pos(')', todo[counter])-pos(', ', todo[counter])-1);
+                pos(',', todo[counter])-pos('(', todo[counter])-1);
+              temp2 := copy(todo[counter], pos(',', todo[counter]) + 1,
+                pos(')', todo[counter])-pos(',', todo[counter])-1);
               if (temp2 = '1') or (temp2 = '0') then doGPO(StrToInt(temp1),
                 StrToInt(temp2));
             except
@@ -1852,9 +1852,9 @@ begin
           begin
             try
               temp1 := copy(todo[counter], pos('(', todo[counter]) + 1,
-                pos(', ', todo[counter])-pos('(', todo[counter])-1);
-              temp2 := copy(todo[counter], pos(', ', todo[counter]) + 1,
-                pos(')', todo[counter])-pos(', ', todo[counter])-1);
+                pos(',', todo[counter])-pos('(', todo[counter])-1);
+              temp2 := copy(todo[counter], pos(',', todo[counter]) + 1,
+                pos(')', todo[counter])-pos(',', todo[counter])-1);
               if temp2='1' then temp2 := '0'
               else temp2 := '1';
               if (temp2 = '1') or (temp2 = '0') then doGPO(StrToInt(temp1),
@@ -1873,9 +1873,9 @@ begin
           begin
             try
               whatgpo := StrToInt(copy(todo[counter], pos('(', todo[counter]) +
-                1, pos(', ', todo[counter])-pos('(', todo[counter])-1));
-              temp2 := copy(todo[counter], pos(', ', todo[counter]) + 1,
-                pos(')', todo[counter])-pos(', ', todo[counter])-1);
+                1, pos(',', todo[counter])-pos('(', todo[counter])-1));
+              temp2 := copy(todo[counter], pos(',', todo[counter]) + 1,
+                pos(')', todo[counter])-pos(',', todo[counter])-1);
               gpoflash := StrToInt(temp2)*2;
             except
             end;
@@ -1909,10 +1909,10 @@ begin
         begin
           try
             didMOFan[counter] := true;
-            temp1 := copy(todo[counter], pos('(', todo[counter]) + 1, pos(', ',
+            temp1 := copy(todo[counter], pos('(', todo[counter]) + 1, pos(',',
               todo[counter])-pos('(', todo[counter])-1);
-            temp2 := copy(todo[counter], pos(', ', todo[counter]) + 1, pos(')',
-              todo[counter])-pos(', ', todo[counter])-1);
+            temp2 := copy(todo[counter], pos(',', todo[counter]) + 1, pos(')',
+              todo[counter])-pos(',', todo[counter])-1);
 
             Lcd.setFan(StrToInt(temp1), StrToInt(temp2));
 
@@ -2164,7 +2164,7 @@ begin
     frozen := true;
     freeze();
   end;
-  if upcase(key)=', ' then speedbutton1.click();
+  if upcase(key)=',' then speedbutton1.click();
   if upcase(key)='.' then speedbutton10.click();
   if (upcase(key)='?') or (upcase(key)='/') then
   begin
