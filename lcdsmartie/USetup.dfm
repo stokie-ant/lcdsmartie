@@ -29,7 +29,7 @@ object Form2: TForm2
     Top = 0
     Width = 233
     Height = 409
-    ActivePage = TabSheet7
+    ActivePage = TabSheet6
     Font.Charset = ANSI_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
@@ -170,7 +170,7 @@ object Form2: TForm2
       end
     end
     object TabSheet3: TTabSheet
-      Caption = 'MBM 5.1'
+      Caption = 'MBM'
       ImageIndex = 2
       ParentShowHint = False
       ShowHint = True
@@ -746,13 +746,13 @@ object Form2: TForm2
           'Errors down (adapterNr)'
           'Errors up (adapterNr)'
           'Total Errors (adapterNr)'
-          'Unicast Packages down (adapterNr)'
-          'Unicast Packages up (adapterNr)'
-          'Total Uni. Packages (adapterNr)'
-          'Non-Uni. Packages down (adapterNr)'
-          'Non-Uni. Packages up (adapterNr)'
-          'Total Non-Uni. Packages (adapterNr)'
-          'Total nr of Packages (adapterNr)'
+          'Unicast Packets down (adapterNr)'
+          'Unicast Packets up (adapterNr)'
+          'Total Uni. Packets (adapterNr)'
+          'Non-Uni. Packets down (adapterNr)'
+          'Non-Uni. Packets up (adapterNr)'
+          'Total Non-Uni. Packets (adapterNr)'
+          'Total nr of Packets (adapterNr)'
           'Discards down (adapterNr)'
           'Discards up (adapterNr)'
           'Total Discards (adapterNr)'

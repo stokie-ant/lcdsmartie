@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.19 $ $Date: 2004/11/24 14:50:53 $
+ *  $Revision: 1.20 $ $Date: 2004/11/24 16:15:44 $
  *****************************************************************************}
 
 interface
@@ -2021,7 +2021,7 @@ opnieuwscreen:
   if (config.width = 40) then
   begin
     panel5.left := 135;
-    panel5.width := 100;
+    panel5.width := 110;
     Panel5.Caption := 'Theme: ' + IntToStr(activetheme + 1) + ' Screen: ' +
       IntToStr(tmpScreen) + '  ';
   end
