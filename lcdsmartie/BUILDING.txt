@@ -30,7 +30,7 @@ from http://www.madexcept.com/]
 
 Setting up the environment
 ==========================
-Copy all the files (but not the subdirectories) from release-dir to the top
+Copy all the files (but not the CVS subdirectory!) from release-dir to the top
 level directory - these are required for running the build.
 
 
@@ -40,7 +40,10 @@ Creating a release
 [This should be handled by a script or something - but is manual for the
 moment]
 - Copy the files (but not the subdirectories) from the images directory, into
-  an images directory.
+  an images subdirectory of releases-dir.
 - Copy the whole of the plugins directory into the release directory.
-[To be continued]
+- Copy qstat.exe and dlportio.dll to the releases-dir.
+- Copy a freshly built LCDSmartie.exe to the releases-dir.
+- Update the README.txt.
+- zip it all up.
 
