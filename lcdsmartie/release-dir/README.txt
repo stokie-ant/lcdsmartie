@@ -28,6 +28,8 @@ Changes
 	- config.cfg/servers.cfg files replaced with config.ini file.
 	  [actions.cfg is yet to be converted.]
 	- fixed range error when selecting email account #10.
+	- fixed -hide and -totalhide options.
+	- support all network devices not just ethernet.
 5.3pAlpha3
 	- Added experimental USB Palm support (when used with PalmOrb)
 	  [Serial Palm Support already existed.]
