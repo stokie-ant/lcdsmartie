@@ -34,7 +34,7 @@ uses
 begin
   Application.Initialize;
   Application.Title := 'LCD Smartie';
-  Application.HelpFile := 'README.HTM';
+  Application.HelpFile := 'README.txt';
   Application.CreateForm(TForm1, Form1);
   Application.CreateForm(TForm2, Form2);
   Application.CreateForm(TForm4, Form4);

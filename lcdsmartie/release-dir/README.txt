@@ -3,14 +3,38 @@
 Please see our website for instructions and the latest information:
 		http://lcdsmartie.sourceforge.net/
 
+***************************************
+*   No further bug fixes are planned!
+*---------------------------------------
+* There will only be a few more releases
+* before we offically release 5.3.
+*
+* If you're suffering from a bug and
+* haven't reported it yet because you
+* were hoping somebody else would 
+* report it - now is the time to report
+* it, otherwise it won't get fixed
+* in this release.
+*
+* If you have reported a bug and it's   
+* still not fixed then report it again! 
+*
+* [This excludes bugs with USB Palms as
+* their support will always be experimental.]
+*
+****************************************
+* Help the project! Design screens for
+* use in the default config, I'm looking
+* for screens that don't use any plugins,
+* and those that use any/all plugins.
+* I'm also interested in screens for
+* different screen sizes.
+****************************************
+
 Beta builds
 ===========
 These builds are believed to be stable but the developer(s) do not have access
 to all supported LCD types and/or use all the features of LCD Smartie.
-
-Increased error checking has been compiled in this build - so this build may
-'fail' where the problem would have gone unnoticed in previous builds. By
-reporting these bugs you will increase LCD Smartie's stability.
 
 BUGS KNOWN
 ==========
@@ -28,6 +52,7 @@ Changes
 	- Fixed bug: Privileged instruction caused by dlportio on resume.
 	- Call "SmartieInit" at load time if a plugin supports it.
 	- Resize UI for 2 and 1 line high displays.
+	- Add more hints in the UI.
 5.3Beta2
 	- Fixed bug: $dll sometimes required the .dll extension, this was
 	  meant to be optional.

@@ -1,7 +1,7 @@
 object Form2: TForm2
-  Left = 69
-  Top = 70
-  ActiveControl = SpinEdit2
+  Left = 124
+  Top = 112
+  ActiveControl = CheckBox3
   Anchors = []
   BiDiMode = bdLeftToRight
   BorderIcons = []
@@ -982,7 +982,12 @@ object Form2: TForm2
     Top = 368
     Width = 59
     Height = 25
+    Hint = 
+      'Insert the above chosen variable into the currently active scree' +
+      'n line.'
     Caption = '&Insert -->'
+    ParentShowHint = False
+    ShowHint = True
     TabOrder = 2
     OnClick = Button3Click
   end
@@ -1204,30 +1209,42 @@ object Form2: TForm2
         end
         object CheckBox3: TCheckBox
           Left = 432
-          Top = 72
+          Top = 80
           Width = 25
           Height = 17
+          Hint = 'Don'#39't scroll this line.'
+          ParentShowHint = False
+          ShowHint = True
           TabOrder = 0
         end
         object CheckBox4: TCheckBox
           Left = 432
-          Top = 96
+          Top = 104
           Width = 25
           Height = 17
+          Hint = 'Don'#39't scroll this line.'
+          ParentShowHint = False
+          ShowHint = True
           TabOrder = 1
         end
         object CheckBox5: TCheckBox
           Left = 432
-          Top = 120
+          Top = 128
           Width = 25
           Height = 17
+          Hint = 'Don'#39't scroll this line.'
+          ParentShowHint = False
+          ShowHint = True
           TabOrder = 2
         end
         object CheckBox6: TCheckBox
           Left = 432
-          Top = 144
+          Top = 152
           Width = 25
           Height = 17
+          Hint = 'Don'#39't scroll this line.'
+          ParentShowHint = False
+          ShowHint = True
           TabOrder = 3
         end
         object GroupBox4: TGroupBox
@@ -1239,25 +1256,34 @@ object Form2: TForm2
         end
         object CheckBox7: TCheckBox
           Left = 480
-          Top = 72
+          Top = 80
           Width = 17
           Height = 17
+          Hint = 'Continue text that doesn'#39't fit on line 1 onto line 2.'
+          ParentShowHint = False
+          ShowHint = True
           TabOrder = 4
           OnClick = CheckBox7Click
         end
         object CheckBox8: TCheckBox
           Left = 480
-          Top = 96
+          Top = 104
           Width = 17
           Height = 17
+          Hint = 'Continue text that doesn'#39't fit on line 2 onto line 3.'
+          ParentShowHint = False
+          ShowHint = True
           TabOrder = 5
           OnClick = CheckBox8Click
         end
         object CheckBox9: TCheckBox
           Left = 480
-          Top = 120
+          Top = 128
           Width = 17
           Height = 17
+          Hint = 'Continue text that doesn'#39't fit on line 3 onto line 4.'
+          ParentShowHint = False
+          ShowHint = True
           TabOrder = 6
           OnClick = CheckBox9Click
         end
@@ -1270,30 +1296,42 @@ object Form2: TForm2
         end
         object CheckBox10: TCheckBox
           Left = 528
-          Top = 72
+          Top = 80
           Width = 17
           Height = 17
+          Hint = 'Center the text in this line (if it'#39's shorter than a full line).'
+          ParentShowHint = False
+          ShowHint = True
           TabOrder = 9
         end
         object CheckBox11: TCheckBox
           Left = 528
-          Top = 96
+          Top = 104
           Width = 17
           Height = 17
+          Hint = 'Center the text in this line (if it'#39's shorter than a full line).'
+          ParentShowHint = False
+          ShowHint = True
           TabOrder = 10
         end
         object CheckBox12: TCheckBox
           Left = 528
-          Top = 120
+          Top = 128
           Width = 17
           Height = 17
+          Hint = 'Center the text in this line (if it'#39's shorter than a full line).'
+          ParentShowHint = False
+          ShowHint = True
           TabOrder = 11
         end
         object CheckBox13: TCheckBox
           Left = 528
-          Top = 144
+          Top = 152
           Width = 17
           Height = 17
+          Hint = 'Center the text in this line (if it'#39's shorter than a full line).'
+          ParentShowHint = False
+          ShowHint = True
           TabOrder = 12
         end
         object GroupBox6: TGroupBox
@@ -1325,6 +1363,7 @@ object Form2: TForm2
           Top = 16
           Width = 83
           Height = 25
+          Hint = 'Choose an effect to display when changing from this screen.'
           Caption = 'Interactions'
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
@@ -1332,6 +1371,8 @@ object Form2: TForm2
           Font.Name = 'Tahoma'
           Font.Style = []
           ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
           TabOrder = 15
           OnClick = Button10Click
         end
@@ -1450,12 +1491,15 @@ object Form2: TForm2
           Top = 88
           Width = 145
           Height = 21
+          Hint = 'Web proxy for web access (such as for Rss feeds).'
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
           Font.Height = -11
           Font.Name = 'Tahoma'
           Font.Style = []
           ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
           TabOrder = 0
         end
         object Edit4: TEdit
@@ -1463,6 +1507,7 @@ object Form2: TForm2
           Top = 112
           Width = 81
           Height = 21
+          Hint = 'Web proxy port for web access (such as for Rss feeds).'
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
           Font.Height = -11
@@ -1470,6 +1515,8 @@ object Form2: TForm2
           Font.Style = []
           MaxLength = 5
           ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
           TabOrder = 1
           Text = '0'
         end
@@ -1478,6 +1525,7 @@ object Form2: TForm2
           Top = 64
           Width = 113
           Height = 21
+          Hint = 'The colors used in the virtual display.'
           Style = csDropDownList
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
@@ -1486,6 +1534,8 @@ object Form2: TForm2
           Font.Style = []
           ItemHeight = 13
           ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
           TabOrder = 2
           Items.Strings = (
             'Green'
@@ -1520,6 +1570,7 @@ object Form2: TForm2
         Top = 48
         Width = 113
         Height = 21
+        Hint = 'The size of your display in characters (lines X width). '
         Style = csDropDownList
         Font.Charset = ANSI_CHARSET
         Font.Color = clWindowText
@@ -1528,6 +1579,8 @@ object Form2: TForm2
         Font.Style = []
         ItemHeight = 13
         ParentFont = False
+        ParentShowHint = False
+        ShowHint = True
         TabOrder = 3
         OnChange = ComboBox2Change
         Items.Strings = (
@@ -1588,6 +1641,9 @@ object Form2: TForm2
           Top = 16
           Width = 113
           Height = 17
+          Hint = 
+            'Select if your display is HD44780 compatiable display connected ' +
+            'to the parallel port..'
           Caption = 'HD44780 (Parallel)'
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
@@ -1595,6 +1651,8 @@ object Form2: TForm2
           Font.Name = 'Tahoma'
           Font.Style = []
           ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
           TabOrder = 0
           OnClick = RadioButton1Click
         end
@@ -1603,6 +1661,7 @@ object Form2: TForm2
           Top = 48
           Width = 145
           Height = 17
+          Hint = 'Select if your display is a serial/Usb Matrix Orbital display.'
           Caption = 'Matrix Orbital (Serial)'
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
@@ -1610,6 +1669,8 @@ object Form2: TForm2
           Font.Name = 'Tahoma'
           Font.Style = []
           ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
           TabOrder = 1
           OnClick = RadioButton2Click
         end
@@ -1618,6 +1679,9 @@ object Form2: TForm2
           Top = 104
           Width = 105
           Height = 21
+          Hint = 
+            'The serial port (or for usb devices, the virtual serial port) th' +
+            'at your display is attached to.'
           Style = csDropDownList
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
@@ -1626,6 +1690,8 @@ object Form2: TForm2
           Font.Style = []
           ItemHeight = 13
           ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
           TabOrder = 5
         end
         object ComboBox5: TComboBox
@@ -1633,6 +1699,9 @@ object Form2: TForm2
           Top = 128
           Width = 105
           Height = 21
+          Hint = 
+            'The serial speed of your display - please refer to your displays' +
+            ' documentation.'
           Style = csDropDownList
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
@@ -1641,6 +1710,8 @@ object Form2: TForm2
           Font.Style = []
           ItemHeight = 13
           ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
           TabOrder = 6
           Items.Strings = (
             '110 bps'
@@ -1664,6 +1735,7 @@ object Form2: TForm2
           Top = 48
           Width = 113
           Height = 17
+          Hint = 'Set Matrix Orbital display specific settings.'
           Caption = '&Matrix-Orbital settings'
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
@@ -1671,6 +1743,8 @@ object Form2: TForm2
           Font.Name = 'Tahoma'
           Font.Style = []
           ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
           TabOrder = 2
           OnClick = Button4Click
         end
@@ -1679,13 +1753,16 @@ object Form2: TForm2
           Top = 80
           Width = 121
           Height = 17
-          Caption = 'Crystalfontz (serial)'
+          Hint = 'Select if your display is a serial/usb Crystalfontz display.'
+          Caption = 'Crystalfontz (Serial)'
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
           Font.Height = -11
           Font.Name = 'Tahoma'
           Font.Style = []
           ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
           TabOrder = 3
           OnClick = RadioButton3Click
         end
@@ -1694,6 +1771,7 @@ object Form2: TForm2
           Top = 80
           Width = 113
           Height = 17
+          Hint = 'Set Crystalfontz display specific settings.'
           Caption = '&Crystalfontz settings'
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
@@ -1701,6 +1779,8 @@ object Form2: TForm2
           Font.Name = 'Tahoma'
           Font.Style = []
           ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
           TabOrder = 4
           OnClick = Button5Click
         end
@@ -1709,6 +1789,7 @@ object Form2: TForm2
           Top = 16
           Width = 113
           Height = 17
+          Hint = 'Set HD44780 compatible display specific settings.'
           Caption = '&HD44780 settings'
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
@@ -1716,6 +1797,8 @@ object Form2: TForm2
           Font.Name = 'Tahoma'
           Font.Style = []
           ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
           TabOrder = 7
           OnClick = Button6Click
         end
@@ -1725,6 +1808,7 @@ object Form2: TForm2
         Top = 184
         Width = 81
         Height = 21
+        Hint = 'Selects the current screen for editing'
         Style = csDropDownList
         DropDownCount = 10
         Font.Charset = ANSI_CHARSET
@@ -1734,6 +1818,8 @@ object Form2: TForm2
         Font.Style = []
         ItemHeight = 13
         ParentFont = False
+        ParentShowHint = False
+        ShowHint = True
         TabOrder = 5
         OnChange = ComboBox3Change
         Items.Strings = (
@@ -1763,6 +1849,7 @@ object Form2: TForm2
         Top = 188
         Width = 65
         Height = 17
+        Hint = 'Show this screen automatically'
         Caption = 'Enabled'
         Font.Charset = ANSI_CHARSET
         Font.Color = clWindowText
@@ -1770,6 +1857,8 @@ object Form2: TForm2
         Font.Name = 'Tahoma'
         Font.Style = []
         ParentFont = False
+        ParentShowHint = False
+        ShowHint = True
         TabOrder = 6
       end
       object SpinEdit2: TSpinEdit
@@ -1777,6 +1866,9 @@ object Form2: TForm2
         Top = 215
         Width = 41
         Height = 22
+        Hint = 
+          'How long the screen should be shown for before moving to the nex' +
+          't.'
         Font.Charset = ANSI_CHARSET
         Font.Color = clWindowText
         Font.Height = -11
@@ -1786,12 +1878,14 @@ object Form2: TForm2
         MaxValue = 99
         MinValue = 1
         ParentFont = False
+        ParentShowHint = False
+        ShowHint = True
         TabOrder = 7
         Value = 3
       end
       object Edit5: TEdit
         Left = 8
-        Top = 246
+        Top = 245
         Width = 417
         Height = 23
         TabStop = False
@@ -1864,8 +1958,13 @@ object Form2: TForm2
         Top = 216
         Width = 129
         Height = 21
+        Hint = 
+          'Skip this screen for automatic selection if the condition is tru' +
+          'e.'
         Style = csDropDownList
         ItemHeight = 13
+        ParentShowHint = False
+        ShowHint = True
         TabOrder = 12
         Items.Strings = (
           'Don'#39't skip'
@@ -2049,6 +2148,9 @@ object Form2: TForm2
     Top = 384
     Width = 113
     Height = 17
+    Hint = 
+      'Rather than automatically selecting in sequence, chose them rand' +
+      'omly.'
     Caption = '&Randomize screens'
     Font.Charset = ANSI_CHARSET
     Font.Color = clWindowText
@@ -2056,6 +2158,8 @@ object Form2: TForm2
     Font.Name = 'Tahoma'
     Font.Style = []
     ParentFont = False
+    ParentShowHint = False
+    ShowHint = True
     TabOrder = 7
   end
   object CheckBox2: TCheckBox
