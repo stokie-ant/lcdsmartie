@@ -1,6 +1,6 @@
 object Form5: TForm5
-  Left = 787
-  Top = 125
+  Left = 515
+  Top = 32
   BorderIcons = []
   BorderStyle = bsToolWindow
   Caption = 'Crystalfontz settings'

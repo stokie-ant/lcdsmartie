@@ -1,6 +1,6 @@
 object Form6: TForm6
-  Left = 783
-  Top = 188
+  Left = 530
+  Top = 13
   BorderIcons = []
   BorderStyle = bsToolWindow
   Caption = 'HD44780 Settings'

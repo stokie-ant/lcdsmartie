@@ -1,6 +1,6 @@
 object Form2: TForm2
-  Left = 210
-  Top = 249
+  Left = 44
+  Top = 33
   Anchors = []
   BiDiMode = bdLeftToRight
   BorderIcons = []
@@ -17,7 +17,6 @@ object Form2: TForm2
   KeyPreview = True
   OldCreateOrder = False
   ParentBiDiMode = False
-  Position = poDefault
   OnClose = FormClose
   OnCreate = FormCreate
   OnKeyPress = FormKeyPress

@@ -1,6 +1,6 @@
 object Form3: TForm3
-  Left = 533
-  Top = 184
+  Left = 536
+  Top = 38
   BorderIcons = []
   BorderStyle = bsToolWindow
   Caption = 'Matrix Orbital settings'

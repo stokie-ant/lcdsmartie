@@ -1,6 +1,6 @@
 object Form7: TForm7
-  Left = 523
-  Top = 163
+  Left = 449
+  Top = 102
   BorderIcons = []
   BorderStyle = bsToolWindow
   Caption = 'Interaction config'
