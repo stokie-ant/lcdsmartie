@@ -417,12 +417,18 @@ begin
 
   {================ map characters onto displays character set =============}
 
+  // The full block character can be mapped to the normal character set
+  // but is currently custom defined so users can remap it.
+  // Ideally we will need to know the difference betwen a normal full block
+  // and a full block used in the graph.
+
   // Now handle all simple byte to byte mappings
   for i:= 1 to Length(str) do
   begin
     // Custom characters - these mapping exists only to be compatible with older
     // smartie releases.
     case Ord(str[i]) of
+      Ord('ž') {158}: str[i]:=Chr(1);
       131: str[i]:=Chr(2);
       132: str[i]:=Chr(3);
       133: str[i]:=Chr(4);
@@ -436,13 +442,9 @@ begin
     begin
       case Ord(str[i]) of
         Ord('^') {94}: str[i]:= Chr(29);
-        Ord('ž') {158}: str[i]:= Chr(31);
+        //Ord('ž') {158}: str[i]:= Chr(31); // needs to be redefinable
       end;
     end;
-
-      // custom chars
-      //Ord('°') {176}: str[i]:=Chr(0);
-      //Ord('ž') {158}: str[i]:=Chr(1);
 
     // v1 cgrom
     if (config.iCF_cgrom = 1) then
@@ -451,7 +453,7 @@ begin
            '\' and '~' are not ascii mapped, but also don't appear in the cgrom...
        }
        if (str[i] = '°') {176} then str[i] := Chr(0); // custom char
-       if (str[i] = 'ž') then str[i] := Chr(255);
+       //if (str[i] = 'ž') then str[i] := Chr(255); // needs to be redefinable
     end
     else
     begin
@@ -482,7 +484,7 @@ begin
   if (not bPackets) and (config.iCF_cgrom = 2) then
   begin
     str := StringReplace(str, '^', #30+#1+#29, [rfReplaceAll]);
-    str := StringReplace(str, Chr(158) {ž}, #30+#1+#31, [rfReplaceAll]);
+    //str := StringReplace(str, Chr(158) {ž}, #30+#1+#31, [rfReplaceAll]);
     assert(Pos('^', str)=0);
     assert(Pos(Chr(158), str)=0);
   end;
