@@ -18,7 +18,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/Attic/Unit1.pas,v $
- *  $Revision: 1.2 $ $Date: 2004/10/25 22:52:48 $
+ *  $Revision: 1.3 $ $Date: 2004/10/29 19:03:57 $
  *****************************************************************************}
  
 
@@ -31,7 +31,7 @@ uses
   cxCpu2kCyrix, cxCpu2kIDT, cxCpu2kNexGen, cxCpu2kUMC, cxCpu2kRise,
   Registry, Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
   ExtCtrls, StdCtrls, WinampCtrl, system2, CoolTrayIcon,
-  ImgList, Menus, Psock, NMHttp, Buttons, adCpuUsage, parport,ShellAPI,
+  ImgList, Menus, Buttons, adCpuUsage, parport,ShellAPI,
   VaClasses, VaComm, IpExport, IpHlpApi, IpTypes, IpIfConst, IpRtrMib,
   IdBaseComponent, IdComponent, IdTCPConnection, IdTCPClient, IdHTTP,
   OleCtrls, isp3, AppEvnts, IdMessageClient, IdPOP3, IdAntiFreezeBase,
@@ -4799,7 +4799,7 @@ begin
     DoNewsUpdate6:=0;
     try
       Application.ProcessMessages;
-      versionregel:=Form1.IDHTTP6.Get('http://backupteam.gamepoint.net/smartie/version.txt');
+      versionregel:=Form1.IDHTTP6.Get('http://lcdsmartie.sourceforge.net/version.txt');
       Application.ProcessMessages;
     except
       versionregel:='';
@@ -4819,7 +4819,7 @@ begin
       Form1.timer8.enabled:=false;
       Form1.timer9.enabled:=false;
       if MessageDlg('A new version of LCD Smartie is detected. '+chr(13)+copy(versionregel,8,62)+chr(13)+'Go to download page?', mtConfirmation, [mbYes, mbNo], 0) = mrYes then begin
-        ShellExecute(0, Nil, pchar('http://backupteam.gamepoint.nl/smartie/'), Nil, Nil, SW_NORMAL);
+        ShellExecute(0, Nil, pchar('http://lcdsmartie.sourceforge.net/'), Nil, Nil, SW_NORMAL);
         Form1.close;
       end else begin
         Form1.timer1.enabled:=true;

@@ -1,5 +1,5 @@
 [FileVersion]
-Version=6.0
+Version=7.0
 [Compiler]
 A=8
 B=0
@@ -30,6 +30,55 @@ Z=1
 ShowHints=1
 ShowWarnings=1
 UnitAliases=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
+NamespacePrefix=
+SymbolDeprecated=1
+SymbolLibrary=1
+SymbolPlatform=1
+UnitLibrary=1
+UnitPlatform=1
+UnitDeprecated=1
+HResultCompat=1
+HidingMember=1
+HiddenVirtual=1
+Garbage=1
+BoundsError=1
+ZeroNilCompat=1
+StringConstTruncated=1
+ForLoopVarVarPar=1
+TypedConstVarPar=1
+AsgToTypedConst=1
+CaseLabelRange=1
+ForVariable=1
+ConstructingAbstract=1
+ComparisonFalse=1
+ComparisonTrue=1
+ComparingSignedUnsigned=1
+CombiningSignedUnsigned=1
+UnsupportedConstruct=1
+FileOpen=1
+FileOpenUnitSrc=1
+BadGlobalSymbol=1
+DuplicateConstructorDestructor=1
+InvalidDirective=1
+PackageNoLink=1
+PackageThreadVar=1
+ImplicitImport=1
+HPPEMITIgnored=1
+NoRetVal=1
+UseBeforeDef=1
+ForLoopVarUndef=1
+UnitNameMismatch=1
+NoCFGFileFound=1
+MessageDirective=1
+ImplicitVariants=1
+UnicodeToLocale=1
+LocaleToUnicode=1
+ImagebaseMultiple=1
+SuspiciousTypecast=1
+PrivatePropAccessor=1
+UnsafeType=1
+UnsafeCode=1
+UnsafeCast=1
 [Linker]
 MapFile=0
 OutputObjs=0
@@ -45,8 +94,8 @@ OutputDir=
 UnitOutputDir=
 PackageDLLOutputDir=
 PackageDCPOutputDir=
-SearchPath=
-Packages=VCL50;VCLX50;VCLSMP50;VCLDB50;VCLADO50;ibevnt50;VCLBDE50;VCLDBX50;QRPT50;TEEUI50;TEEDB50;TEE50;DSS50;TEEQR50;VCLIB50;VCLMID50;VCLIE50;INETDB50;INET50;NMFAST50;WEBMID50;dclocx50;dclaxserver50;WinampPlayer;TLCDctrl;INDY50
+SearchPath=components\CoolTrayIcon;components\TMSAsync32\d7;components\WinampCtrl
+Packages=VCL50;VCLX50;VCLSMP50;VCLDB50;VCLADO50;ibevnt50;VCLBDE50;VCLDBX50;QRPT50;TEEUI50;TEEDB50;TEE50;DSS50;TEEQR50;VCLIB50;VCLMID50;VCLIE50;INETDB50;INET50;NMFAST50;WEBMID50;dclocx50;dclaxserver50;WinampPlayer;TLCDctrl;INDY50;vcl;rtl;vclactnband
 Conditionals=
 DebugSourceDirs=
 UsePackages=0
@@ -56,6 +105,10 @@ HostApplication=
 Launcher=
 UseLauncher=0
 DebugCWD=
+[Language]
+ActiveLang=
+ProjectLang=
+RootDir=
 [Version Info]
 IncludeVerInfo=1
 AutoIncBuild=0
@@ -82,18 +135,10 @@ ProductName=LCD Smartie
 ProductVersion=5
 Comments=It r0x
 [Excluded Packages]
-c:\program files\borland\delphi6\Bin\dclnet60.bpl=Borland Internet Components
-c:\program files\borland\delphi6\Bin\DBWEBXPRT.BPL=Borland Web Wizard Package
-c:\program files\borland\delphi6\Bin\DCLNMF60.bpl=NetMasters Fastnet Tools
-c:\program files\borland\delphi6\Bin\dclwbm60.bpl=Borland InternetExpress Components
-c:\program files\borland\delphi6\Bin\dclie60.bpl=Internet Explorer Components
-c:\program files\borland\delphi6\Bin\dclwebsnap60.bpl=Borland WebSnap Components
-c:\program files\borland\delphi6\Bin\dclsoap60.bpl=Borland Soap Components
-c:\program files\borland\delphi6\Bin\dclocx60.bpl=Borland Sample Imported ActiveX Controls
-c:\program files\borland\delphi6\Bin\dclite60.bpl=Borland Integrated Translation Environment
-c:\program files\borland\delphi6\Bin\dcldbx60.bpl=Borland dbExpress Components
-c:\program files\borland\delphi6\Bin\dcldbxcds60.bpl=Borland Local DBX ClientDataset Components
-c:\program files\borland\delphi6\Bin\idl2paswizardpkg.bpl=Borland IDL2PAS wizard package
+C:\Program Files\Borland\Delphi7\Projects\Bpl\WinampCtrl7.bpl=Runtime package for WinampCtrl
 [HistoryLists\hlUnitAliases]
 Count=1
 Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
+[HistoryLists\hlSearchPath]
+Count=1
+Item0=components\CoolTrayIcon;components\TMSAsync32\d7;components\WinampCtrl
