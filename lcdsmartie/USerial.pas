@@ -4,12 +4,9 @@ interface
 
 uses Windows;
 
-const
-  RTS_ENABLE = 1;
-  DTR_ENABLE = 2;
-
 type
-  TSerialFlags = set of Byte;
+  TSerialFlag = (RTS_ENABLE, DTR_ENABLE, TWO_STOPBITS, EVEN_PARITY, ODD_PARITY);
+  TSerialFlags = set of TSerialFlag;
 
   TSerial = class(TObject)
     public
@@ -106,8 +103,18 @@ begin
 
   ourDCB.BaudRate := uiBaud;
 	ourDCB.ByteSize := 8;
-	ourDCB.Parity := NOPARITY;
-	ourDCB.StopBits := ONESTOPBIT;
+
+  if (ODD_PARITY in flags) then
+  	ourDCB.Parity := ODDPARITY
+  else if (EVEN_PARITY in flags) then
+  	ourDCB.Parity := EVENPARITY
+  else
+   	ourDCB.Parity := NOPARITY;
+
+  if (TWO_STOPBITS in flags) then
+  	ourDCB.StopBits := TWOSTOPBITS
+  else
+  	ourDCB.StopBits := ONESTOPBIT;
 
   if (not SetCommState(hSerial, ourDCB)) then
      raise Exception.create('Failed to set CommState for COM'+IntToStr(uPort)+': '
@@ -127,6 +134,11 @@ begin
 	if (not SetCommTimeouts(hSerial, ourTimeouts)) then
     raise Exception.create('Failed to set CommTimeouts for COM'+IntToStr(uPort)+': '
       + errMsg(GetLastError));
+
+  // Give serial device enough time to boot.
+  // [Some devices are powered by the RTS/DTR lines and would have just been
+  // powered up and are now booting.]
+  Sleep(500);
 end;
 
 function TSerial.Read(buffer: pointer; uiSize: Cardinal): Cardinal;
@@ -174,7 +186,8 @@ end;
 
 procedure TSerial.Write(const str: String);
 begin
-  Write(@str[1], Length(str));
+  if (Length(str)>0) then
+    Write(@str[1], Length(str));
 end;
 
 end.

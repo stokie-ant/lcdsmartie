@@ -19,7 +19,7 @@ unit UConfig;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UConfig.pas,v $
- *  $Revision: 1.25 $ $Date: 2005/01/02 23:08:05 $
+ *  $Revision: 1.26 $ $Date: 2005/01/03 16:08:28 $
  *****************************************************************************}
 
 interface
@@ -49,6 +49,15 @@ type
     pword: String;
   end;
 
+  TTestDriverSettings = Record
+    iStopBits: Integer;  // 1 or 2
+    iParity: Integer; // 0 = none, 1 = odd, 2 = even
+    sInit: String;
+    sFini: String;
+    sGotoLine1, sGotoLine2, sGotoLine3, sGotoLine4: String;
+    sCharMap: String;
+  end;
+
   TConfig = class(TObject)
   private
     P_sizeOption: Integer;
@@ -61,6 +70,7 @@ type
     procedure saveINI;
     procedure setSizeOption(con: Integer);
   public
+    testDriver: TTestDriverSettings;
     isUsbPalm: Boolean;
     gameServer: Array[1..20, 1..4] of String;
     pop: Array [0..9] of TPopAccount;
@@ -90,6 +100,7 @@ type
     isCF: Boolean;
     isHD: Boolean;
     isHD2: Boolean;   // not used.
+    isTestDriver: Boolean;
     checkUpdates: Boolean;
     distLog: String;
     screen: Array[1..20] of Array[1..4] of TScreenLine;
@@ -583,12 +594,30 @@ begin
   isCF := false;
   isHD := false;
   isHD2 := false;
+  isTestDriver := false;
   case initFile.ReadInteger('General Settings', 'LCDType', 0) of
     1: isHD := true;
     2: isMO := true;
     3: isCF := true;
     4: isHD2 := true;
+    5: isTestDriver := true;
   end;
+
+  // Readonly settings - not set at all.
+  if (isTestDriver) then
+  begin
+    testDriver.iStopBits := initFile.ReadInteger('Test Driver', 'StopBits', 1);
+    testDriver.iParity := initFile.ReadInteger('Test Driver', 'Parity', 0);
+    testDriver.sInit := initFile.ReadString('Test Driver', 'Init', '');
+    testDriver.sFini := initFile.ReadString('Test Driver', 'Fini', '');
+    testDriver.sGotoLine1 := initFile.ReadString('Test Driver', 'GotoLine1', '');
+    testDriver.sGotoLine2 := initFile.ReadString('Test Driver', 'GotoLine2', '');
+    testDriver.sGotoLine3 := initFile.ReadString('Test Driver', 'GotoLine3', '');
+    testDriver.sGotoLine4 := initFile.ReadString('Test Driver', 'GotoLine4', '');
+    testDriver.sCharMap := initFile.ReadString('Test Driver', 'CharMap', '');
+  end;
+
+
 
   setSizeOption(initFile.ReadInteger('General Settings', 'Size', 11));
 
@@ -751,10 +780,11 @@ begin
   initFile.WriteInteger('Communication Settings', 'HTTPProxyPort',
     httpProxyPort);
 
-  if isHD then initFile.WriteInteger('General Settings', 'LCDType', 1);
-  if isMO then initFile.WriteInteger('General Settings', 'LCDType', 2);
-  if isCF then initFile.WriteInteger('General Settings', 'LCDType', 3);
-  if isHD2 then initFile.WriteInteger('General Settings', 'LCDType', 4);
+  if isHD then initFile.WriteInteger('General Settings', 'LCDType', 1)
+  else if isMO then initFile.WriteInteger('General Settings', 'LCDType', 2)
+  else if isCF then initFile.WriteInteger('General Settings', 'LCDType', 3)
+  else if isHD2 then initFile.WriteInteger('General Settings', 'LCDType', 4)
+  else if isTestDriver then initFile.WriteInteger('General Settings', 'LCDType', 5);
 
   initFile.WriteInteger('General Settings', 'Size', sizeOption);
 

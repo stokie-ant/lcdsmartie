@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.38 $ $Date: 2005/01/02 23:19:05 $
+ *  $Revision: 1.39 $ $Date: 2005/01/03 16:08:28 $
  *****************************************************************************}
 
 interface
@@ -242,7 +242,7 @@ var
 implementation
 
 uses Registry, Windows, SysUtils, Graphics, Dialogs, ShellAPI, mmsystem,
-  USetup, UCredits, ULCD_MO, ULCD_CF, ULCD_HD, ExtActns, UUtils;
+  USetup, UCredits, ULCD_MO, ULCD_CF, ULCD_HD, ULCD_Test, ExtActns, UUtils;
 
 function TForm1.EscapeAmp(const sStr: string): String;
 begin
@@ -607,7 +607,7 @@ begin
   if form1.top + form1.height > screen.desktopheight then form1.top :=
     screen.desktopheight-form1.height;
 
-  if (config.isMO) or (config.isCF) then
+  if (config.isMO) or (config.isCF) or (config.isTestDriver) then
   begin
     try
       if (config.isMO) and (config.isUsbPalm) then
@@ -620,7 +620,9 @@ begin
         if (config.isCF) then
           Lcd := TLCD_CF.CreateSerial(config.comPort, baudRates[config.baudrate])
         else if (config.isMO) then
-          Lcd := TLCD_MO.CreateSerial(config.comPort, baudRates[config.baudrate]);
+          Lcd := TLCD_MO.CreateSerial(config.comPort, baudRates[config.baudrate])
+        else if (config.isTestDriver) then
+          Lcd := TLCD_Test.CreateSerial(config.comPort, baudRates[config.baudrate]);
       end;
     except
       on E: Exception do
@@ -632,7 +634,7 @@ begin
     end;
   end;
 
-  if not (config.isCF or config.isMO or config.isHD) then
+  if not (config.isCF or config.isMO or config.isHD or config.isTestDriver) then
     Lcd := TLCD.Create();
 
   if (config.isMO) or (config.isCF) then
