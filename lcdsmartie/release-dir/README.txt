@@ -5,7 +5,7 @@ Please see our website for instructions and the latest information:
 **************************************************************************
 *   No further bug fixes are planned!
 *-------------------------------------------------------------------------
-* There will only be a few more releases before we offically release 5.3.
+* There will only be a few DAYS before we offically release 5.3.
 *
 * If you're suffering from a bug and haven't reported it yet because you
 * were hoping somebody else would report it - now is the time to report
