@@ -19,7 +19,7 @@ unit UConfig;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UConfig.pas,v $
- *  $Revision: 1.26 $ $Date: 2005/01/03 16:08:28 $
+ *  $Revision: 1.27 $ $Date: 2005/01/05 21:56:39 $
  *****************************************************************************}
 
 interface
@@ -70,6 +70,8 @@ type
     procedure saveINI;
     procedure setSizeOption(con: Integer);
   public
+    bHideOnStartup: Boolean;
+    bAutoStart, bAutoStartHide: Boolean;
     testDriver: TTestDriverSettings;
     isUsbPalm: Boolean;
     gameServer: Array[1..20, 1..4] of String;
@@ -643,6 +645,10 @@ begin
   checkUpdates := initFile.ReadBool('General Settings', 'CheckUpdates', true);
 
   colorOption := initFile.ReadInteger('General Settings', 'ColorOption', 4);
+  bHideOnStartup := initFile.ReadBool('General Settings', 'HideOnStartup', false);
+  bAutoStart := initFile.ReadBool('General Settings', 'AutoStart', false);
+  bAutoStartHide := initFile.ReadBool('General Settings', 'AutoStartHidden', false);
+
 
   // Pop accounts
   for x := 0 to 9 do
@@ -806,6 +812,9 @@ begin
   initFile.WriteBool('General Settings', 'CheckUpdates', checkUpdates);
 
   initFile.WriteInteger('General Settings', 'ColorOption', colorOption);
+  initFile.WriteBool('General Settings', 'HideOnStartup', bHideOnStartup);
+  initFile.WriteBool('General Settings', 'AutoStart', bAutoStart);
+  initFile.WriteBool('General Settings', 'AutoStartHidden', bAutoStartHide);
 
   // Pop accounts
   for x := 0 to 9 do

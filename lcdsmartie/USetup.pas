@@ -19,7 +19,7 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.25 $ $Date: 2005/01/04 20:13:05 $
+ *  $Revision: 1.26 $ $Date: 2005/01/05 21:56:40 $
  *****************************************************************************}
 
 interface
@@ -200,6 +200,13 @@ type
     RadioButton4: TRadioButton;
     Label28: TLabel;
     Sticky: TCheckBox;
+    TabSheet14: TTabSheet;
+    GroupBox7: TGroupBox;
+    NoAutoStart: TRadioButton;
+    AutoStart: TRadioButton;
+    AutoStartHide: TRadioButton;
+    GroupBox8: TGroupBox;
+    HideOnStartup: TCheckBox;
     procedure Button2Click(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure ComboBox2Change(Sender: TObject);
@@ -388,6 +395,10 @@ begin
 
   checkbox2.checked := config.alwaysOnTop;
   form3.checkbox1.checked := config.mx3Usb;
+  HideOnStartup.Checked := config.bHideOnStartup;
+  NoAutoStart.Checked := True;
+  AutoStart.Checked := config.bAutoStart;
+  AutoStartHide.Checked := config.bAutoStartHide;
 
   proxytemp1 := config.httpProxy;
   edit3.text := config.httpProxy;
@@ -1910,6 +1921,11 @@ begin
   config.parallelPort := StrToInt('$' + form6.edit1.text);
   config.mx3Usb := form3.checkbox1.checked;
   config.alwaysOnTop := checkbox2.checked;
+  config.bHideOnStartup := HideOnStartup.Checked;
+  config.bAutoStart := AutoStart.checked;
+  config.bAutoStartHide := AutoStartHide.checked;
+
+  form1.SetupAutoStart();
 
   // Check if Com settings have changed.
   sComPort := comboBox4.items[comboBox4.itemIndex];

@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.43 $ $Date: 2005/01/05 15:32:58 $
+ *  $Revision: 1.44 $ $Date: 2005/01/05 21:56:39 $
  *****************************************************************************}
 
 interface
@@ -183,7 +183,9 @@ type
     procedure customchar(fline: String);
     procedure ReInitLCD();
     procedure ResetScrollPositions;
+    procedure SetupAutoStart;
   private
+    bHide, bTotalHide: Boolean;
     screenLcd: Array[1..4] of ^TPanel;
     canflash: Boolean;
     iSavedHeight, iSavedWidth: Integer;
@@ -237,7 +239,6 @@ var
   Form1: TForm1;
   backlight: Integer;
   config: TConfig;
-  parameter1, parameter2, parameter3, parameter4 : String;
   Data: TData;
   frozen: Boolean;
   tempscreen: Integer;
@@ -472,6 +473,8 @@ procedure TForm1.FormCreate(Sender: TObject);
 var
   line: String;
   initfile: textfile;
+  i: Integer;
+  parameter: String;
 
 begin
   Randomize;
@@ -520,10 +523,7 @@ begin
   end;
   form1.color := $00BFBFBF;
 
-  parameter1 := lowercase(paramstr(1));
-  parameter2 := lowercase(paramstr(2));
-  parameter3 := lowercase(paramstr(3));
-  parameter4 := lowercase(paramstr(4));
+
   aantalscreensheenweer := 1;
 
 
@@ -561,6 +561,24 @@ begin
     application.Terminate;
   end;
 
+  bHide := False;
+  bTotalHide := False;
+  for i:=1 to 4 do
+  begin
+    parameter :=  lowercase(paramstr(i));
+
+    if (parameter = '-hide') then
+      bHide := True
+    else if (parameter = '-totalhide') then
+      bTotalHide := True;
+  end;
+
+  if (config.bHideOnStartup) then
+    bHide := True;
+
+  // delete/create startup shortcut as required.
+  SetupAutoStart();
+
   Data := TData.Create();
 
   form1.WinampCtrl1.WinampLocation := config.winampLocation;
@@ -582,6 +600,21 @@ begin
   ChangeScreen(1);
 
 end;
+
+procedure TForm1.SetupAutoStart;
+var
+  sParameters: String;
+  bDelete: Boolean;
+begin
+  sParameters := '';
+  if (config.bAutoStartHide) then
+    sParameters := '-hide';
+
+  bDelete := not (config.bAutoStart or config.bAutoStartHide);
+
+  CreateShortcut(application.exename, sParameters, bDelete);
+end;
+
 
 procedure TForm1.FiniLCD();
 begin
@@ -970,27 +1003,18 @@ begin
   timer1.Interval := 0;
   timer1.Interval := config.refreshRate;
 
-  // BUGBUG: Surely there's a better place for this parameter code
-  // BUT it can't go in FormCreate or FormShow because it either
+  // This code can't go in FormCreate or FormShow because it either
   // doesn't work (FormCreate) or causes an exception (FormShow).
-  if (parameter1= '-hide') or (parameter2= '-hide') or (parameter3= '-hide')
-    or (parameter4= '-hide') then
+  if (bHide) then
   begin
-    if parameter1 = '-hide' then parameter1 :=  '';
-    if parameter2 = '-hide' then parameter2 :=  '';
-    if parameter3 = '-hide' then parameter3 :=  '';
-    if parameter4 = '-hide' then parameter4 :=  '';
+    bHide := False;
     application.minimize;
     coolTrayIcon1.HideMainForm;
   end;
 
-  if (parameter1= '-totalhide') or (parameter2= '-totalhide') or (parameter3=
-    '-totalhide') or (parameter4= '-totalhide') then
+  if (bTotalHide) then
   begin
-    if parameter1 = '-totalhide' then parameter1 :=  '';
-    if parameter2 = '-totalhide' then parameter2 :=  '';
-    if parameter3 = '-totalhide' then parameter3 :=  '';
-    if parameter4 = '-totalhide' then parameter4 :=  '';
+    bTotalHide := False;
     application.minimize;
     coolTrayIcon1.HideMainForm;
     cooltrayicon1.HideTaskbarIcon;

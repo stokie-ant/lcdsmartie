@@ -19,6 +19,7 @@ type
     destructor Destroy;  override;
   end;
 
+  procedure CreateShortcut(FileName,Args: string; uninstall: Boolean = False);
   function errMsg(uError: Cardinal): String;
   function decodeArgs(str: String; funcName: String; maxargs: Cardinal; var
       args: Array of String; var prefix: String; var postfix: String; var
@@ -27,8 +28,7 @@ type
 
 implementation
 
-uses Windows, SysUtils;
-
+uses Windows, SysUtils, Registry, ShlObj, ActiveX, ComObj;
 
 constructor TMyThread.Create(myMethod: TThreadMethod);
 begin
@@ -141,6 +141,44 @@ begin
   end
   else Result := false;
 
+end;
+
+
+
+
+// ** This code was posted on http://www.experts-exchange.com by 'inthe'
+// ** which was based on code by 'madshi'.
+procedure CreateShortcut(FileName,Args: string; uninstall: Boolean = False);
+var
+  LPUnknown : IUnknown;
+  pShlLnk : IShellLink;
+  pszFileName : IPersistFile;
+  Dir : string;
+  FullPath : WideString;
+  R : TRegIniFile;
+begin
+  LPUnknown := CreateComObject(CLSID_ShellLink);
+  pShlLnk := LPUnknown as IShellLink;
+  pszFileName := LPUnknown as IPersistFile;
+  pShlLnk.SetPath(PChar(FileName));
+  pShlLnk.SetArguments(PChar(Args));
+  pShlLnk.SetDescription(PChar('Automatically created by LCD Smartie'));
+  pShlLnk.SetWorkingDirectory(PChar(ExtractFilePath(FileName)));
+
+  R := TRegIniFile.Create('Software\MicroSoft\Windows\CurrentVersion\Explorer');
+  try
+    Dir := R.ReadString('Shell Folders', 'Startup', '');
+    if Dir <> '' then
+    begin
+      FullPath := Dir + '\LCD Smartie.lnk';
+      if uninstall then
+        DeleteFile(FullPath)
+      else
+        pszFileName.Save(PWChar(FullPath), False);
+    end;
+  finally
+    R.Free;
+  end;
 end;
 
 

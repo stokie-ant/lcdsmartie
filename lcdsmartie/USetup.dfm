@@ -1,7 +1,6 @@
 object Form2: TForm2
-  Left = 35
-  Top = 181
-  ActiveControl = CheckBox3
+  Left = 24
+  Top = 183
   Anchors = []
   BiDiMode = bdLeftToRight
   BorderIcons = []
@@ -2140,6 +2139,102 @@ object Form2: TForm2
         Height = 21
         TabOrder = 7
         Text = 'Edit19'
+      end
+    end
+    object TabSheet14: TTabSheet
+      Caption = 'Startup'
+      ImageIndex = 2
+      object GroupBox7: TGroupBox
+        Left = 8
+        Top = 16
+        Width = 201
+        Height = 81
+        Hint = 'These settings are for when starting with windows.'
+        Caption = 'Autostart'
+        Font.Charset = ANSI_CHARSET
+        Font.Color = clBlack
+        Font.Height = -11
+        Font.Name = 'Tahoma'
+        Font.Style = [fsBold]
+        ParentFont = False
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 0
+        object NoAutoStart: TRadioButton
+          Left = 8
+          Top = 24
+          Width = 169
+          Height = 17
+          Caption = 'Don'#39't autostart with windows'
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clBlack
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          ParentFont = False
+          TabOrder = 0
+        end
+        object AutoStart: TRadioButton
+          Left = 8
+          Top = 40
+          Width = 113
+          Height = 17
+          Caption = 'Autostart'
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clBlack
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          ParentFont = False
+          TabOrder = 1
+        end
+        object AutoStartHide: TRadioButton
+          Left = 8
+          Top = 56
+          Width = 177
+          Height = 17
+          Caption = 'Autostart hidden (in system tray)'
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clBlack
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          ParentFont = False
+          TabOrder = 2
+        end
+      end
+      object GroupBox8: TGroupBox
+        Left = 8
+        Top = 104
+        Width = 201
+        Height = 49
+        Hint = 
+          'These settings are for when starting apply to all start methods ' +
+          '(by hand or autostart).'
+        Caption = 'Start options'
+        Font.Charset = ANSI_CHARSET
+        Font.Color = clBlack
+        Font.Height = -11
+        Font.Name = 'Tahoma'
+        Font.Style = [fsBold]
+        ParentFont = False
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 1
+        object HideOnStartup: TCheckBox
+          Left = 8
+          Top = 24
+          Width = 185
+          Height = 17
+          Caption = 'Always start hidden'
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clBlack
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          ParentFont = False
+          TabOrder = 0
+        end
       end
     end
   end
