@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.26 $ $Date: 2004/12/12 10:19:59 $
+ *  $Revision: 1.27 $ $Date: 2004/12/14 12:28:16 $
  *****************************************************************************}
 
 interface
@@ -182,12 +182,7 @@ type
     screenLcd: Array[1..4] of ^TPanel;
     canflash: Boolean;
     iNrLines, foo2: Integer;
-    didMOFan, didWAShuffle, didbltoggle, didgpotoggle, didbl,
-      didwavolup, didwavoldown, didwaplay, didwastop, didwapause,
-      didgotoscreen, didgototheme, didfreeze, didrefreshall, didnexttheme,
-      didlasttheme, didnextscreen, didlastscreen, didgpo, didgpoflash,
-      didwanexttrack, didwalasttrack, didflash, didsound,
-      didexec: Array[1..99] of Boolean;
+    didAction: Array [1..99] of Boolean;
     file1: String;
     kleuren: Integer;
     parsedLine: Array[1..4] of String;
@@ -228,8 +223,6 @@ var
   Data: TData;
   poort1: TParPort;
   frozen: Boolean;
-  setupbutton: Integer;
-  setupscreen: Integer;
   tempscreen: Integer;
   key: char;
   activeScreen : Integer;
@@ -1365,9 +1358,11 @@ procedure TForm1.Timer3Timer(Sender: TObject);
 //ACTIONS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 var
   counter: Integer;
-  todo: Array[1..99] of String;
   temp1, temp2: String;
   cKey: Char;
+  iLeftValue, iRightValue: Integer;
+  sLeftValue, sRightValue, sAction: String;
+  bDoAction: Boolean;
 
 begin
 
@@ -1381,508 +1376,254 @@ begin
   begin
     for counter := 1 to config.totalactions do
     begin
-      if config.actionsArray[counter, 2] = '0' then
-      begin
-        try
-          if StrToInt(Data.change(config.actionsArray[counter, 1])) >
-            StrToInt(config.actionsArray[counter, 3]) then todo[counter] := '1' +
-            config.actionsArray[counter, 4]
-          else todo[counter] := '2' + config.actionsArray[counter, 4];
-        except
-          try
-            if Data.change(config.actionsArray[counter, 1]) > config.actionsArray[counter, 3]
-              then todo[counter] := '1' + config.actionsArray[counter, 4]
-            else todo[counter] := '2' + config.actionsArray[counter, 4];
-          except
-            todo[counter] := '';
-          end;
-        end;
-      end;
-      if config.actionsArray[counter, 2] = '1' then
-      begin
-        try
-          if StrToInt(Data.change(config.actionsArray[counter, 1])) <
-            StrToInt(config.actionsArray[counter, 3]) then todo[counter] := '1' +
-            config.actionsArray[counter, 4]
-          else todo[counter] := '2' + config.actionsArray[counter, 4];
-        except
-          try
-            if Data.change(config.actionsArray[counter, 1]) < config.actionsArray[counter, 3]
-              then todo[counter] := '1' + config.actionsArray[counter, 4]
-            else todo[counter] := '2' + config.actionsArray[counter, 4];
-          except
-            todo[counter] := '';
-          end;
-        end;
-      end;
-      if config.actionsArray[counter, 2] = '2' then
-      begin
-        try
-          if StrToInt(Data.change(config.actionsArray[counter, 1])) =
-            StrToInt(config.actionsArray[counter, 3]) then todo[counter] := '1' +
-            config.actionsArray[counter, 4]
-          else todo[counter] := '2' + config.actionsArray[counter, 4];
-        except
-          try
-            if Data.change(config.actionsArray[counter, 1]) = config.actionsArray[counter, 3]
-              then todo[counter] := '1' + config.actionsArray[counter, 4]
-            else todo[counter] := '2' + config.actionsArray[counter, 4];
-          except
-            todo[counter] := '';
-          end;
-        end;
-      end;
-      if config.actionsArray[counter, 2] = '3' then
-      begin
-        try
-          if StrToInt(Data.change(config.actionsArray[counter, 1])) <=
-            StrToInt(config.actionsArray[counter, 3]) then todo[counter] := '1' +
-            config.actionsArray[counter, 4]
-          else todo[counter] := '2' + config.actionsArray[counter, 4];
-        except
-          try
-            if Data.change(config.actionsArray[counter, 1]) <= config.actionsArray[counter, 3]
-              then todo[counter] := '1' + config.actionsArray[counter, 4]
-            else todo[counter] := '2' + config.actionsArray[counter, 4];
-          except
-            todo[counter] := '';
-          end;
-        end;
-      end;
-      if config.actionsArray[counter, 2] = '4' then
-      begin
-        try
-          if StrToInt(Data.change(config.actionsArray[counter, 1])) >=
-            StrToInt(config.actionsArray[counter, 3]) then todo[counter] := '1' +
-            config.actionsArray[counter, 4]
-          else todo[counter] := '2' + config.actionsArray[counter, 4];
-        except
-          try
-            if Data.change(config.actionsArray[counter, 1]) >= config.actionsArray[counter, 3]
-              then todo[counter] := '1' + config.actionsArray[counter, 4]
-            else todo[counter] := '2' + config.actionsArray[counter, 4];
-          except
-            todo[counter] := '';
-          end;
-        end;
-      end;
-      if config.actionsArray[counter, 2] = '5' then
-      begin
-        try
-          if StrToInt(Data.change(config.actionsArray[counter, 1])) <>
-            StrToInt(config.actionsArray[counter, 3]) then todo[counter] := '1' +
-            config.actionsArray[counter, 4]
-          else todo[counter] := '2' + config.actionsArray[counter, 4];
-        except
-          try
-            if Data.change(config.actionsArray[counter, 1]) <> config.actionsArray[counter, 3]
-              then todo[counter] := '1' + config.actionsArray[counter, 4]
-            else todo[counter] := '2' + config.actionsArray[counter, 4];
-          except
-            todo[counter] := '';
-          end;
-        end;
-      end;
-    end;
+      sLeftValue := Data.change(config.actionsArray[counter, 1]);
+      sRightValue := config.actionsArray[counter, 3];
 
-    for counter := 1 to config.totalactions do
-    begin
-      if pos('1NextTheme', todo[counter]) <> 0 then
+      bDoAction := false;
+      try
+        iLeftValue := StrToInt(sLeftValue);
+        iRightValue := StrToInt(sRightValue);
+        sAction :=  config.actionsArray[counter, 4];
+
+
+        case StrToInt(config.actionsArray[counter, 2]) of
+          0: if (iLeftValue > iRightValue) then bDoAction := true;
+          1: if (iLeftValue < iRightValue) then bDoAction := true;
+          2: if (iLeftValue = iRightValue) then bDoAction := true;
+          3: if (iLeftValue <= iRightValue) then bDoAction := true;
+          4: if (iLeftValue >= iRightValue) then bDoAction := true;
+          5: if (iLeftValue <> iRightValue) then bDoAction := true;
+        end;
+      except
+        // not a numeric value - lets do a string comparsion
+        try
+          case StrToInt(config.actionsArray[counter, 2]) of
+            0: if (sLeftValue > sRightValue) then bDoAction := true;
+            1: if (sLeftValue < sRightValue) then bDoAction := true;
+            2: if (sLeftValue = sRightValue) then bDoAction := true;
+            3: if (sLeftValue <= sRightValue) then bDoAction := true;
+            4: if (sLeftValue >= sRightValue) then bDoAction := true;
+            5: if (sLeftValue <> sRightValue) then bDoAction := true;
+          end;
+        except
+        end;
+      end;
+
+      // Handle actions have do something when they are activated and de-activated.
+      if (bDoAction <> didAction[counter]) then
       begin
-        if didNextTheme[counter] = false then
+        if (pos('Backlight(', sAction) <> 0) then
         begin
-          didNextTheme[counter] := true;
+          if (bDoAction) then
+          begin
+            temp1 := copy(sAction, pos('(', sAction) + 1, 1);
+            if temp1 = '1' then backlight := 0;
+            if temp1 = '0' then backlight := 1;
+            if (temp1 = '1') or (temp1 = '0') then backlit();
+          end
+          else
+          begin
+            temp1 := copy(sAction, pos('(', sAction) + 1, 1);
+            if temp1 = '0' then backlight := 0;
+            if temp1 = '1' then backlight := 1;
+            if (temp1 = '1') or (temp1 = '0') then backlit();
+          end;
+        end;
+
+        if (pos('GPO(', sAction) <> 0) and (config.isMO) then
+        begin
+          try
+            if (bDoAction) then
+            begin
+              temp1 := copy(sAction, pos('(', sAction) + 1,
+                pos(',', sAction)-pos('(', sAction)-1);
+              temp2 := copy(sAction, pos(',', sAction) + 1,
+                pos(')', sAction)-pos(',', sAction)-1);
+              if (temp2 = '1') or (temp2 = '0') then doGPO(StrToInt(temp1),
+                StrToInt(temp2));
+            end
+            else
+            begin
+              temp1 := copy(sAction, pos('(', sAction) + 1,
+                pos(',', sAction)-pos('(', sAction)-1);
+              temp2 := copy(sAction, pos(',', sAction) + 1,
+                pos(')', sAction)-pos(',', sAction)-1);
+              if temp2='1' then temp2 := '0'
+              else temp2 := '1';
+              if (temp2 = '1') or (temp2 = '0') then doGPO(StrToInt(temp1),
+                StrToInt(temp2));
+            end;
+          except
+          end;
+        end;
+      end;
+
+      // Handle actions that only do something when activated.
+      if (bDoAction <> didAction[counter]) and (bDoAction) then
+      begin
+        if (Pos('NextTheme', sAction) <> 0) then
+        begin
           activetheme := activetheme + 1;
           if activetheme = 10 then activetheme := 0;
           frozen := true;
           freeze();
         end;
-      end;
-      if pos('2NextTheme', todo[counter]) <> 0 then
-      begin
-        didNextTheme[counter] := false;
-      end;
-      if pos('1LastTheme', todo[counter]) <> 0 then
-      begin
-        if didLastTheme[counter] = false then
+
+        if (pos('LastTheme', sAction) <> 0) then
         begin
-          didLastTheme[counter] := true;
           activetheme := activetheme-1;
           if activetheme=-1 then activetheme := 9;
           frozen := true;
           freeze();
         end;
-      end;
-      if pos('2LastTheme', todo[counter]) <> 0 then
-      begin
-        didLastTheme[counter] := false;
-      end;
-      if pos('1NextScreen', todo[counter]) <> 0 then
-      begin
-        if didNextScreen[counter] = false then
+
+        if (pos('NextScreen', sAction) <> 0) then
         begin
-          didNextScreen[counter] := true;
           aantalscreensheenweer := 1;
           frozen := true;
           freeze();
         end;
-      end;
-      if pos('2NextScreen', todo[counter]) <> 0 then
-      begin
-        didNextScreen[counter] := false;
-      end;
-      if pos('1LastScreen', todo[counter]) <> 0 then
-      begin
-        if didLastScreen[counter] = false then
+
+        if (pos('LastScreen', sAction) <> 0) then
         begin
-          didLastScreen[counter] := true;
           aantalscreensheenweer := -1;
           frozen := true;
           freeze();
         end;
-      end;
-      if pos('2LastScreen', todo[counter]) <> 0 then
-      begin
-        didLastScreen[counter] := false;
-      end;
-      if pos('1GotoTheme(', todo[counter]) <> 0 then
-      begin
-        if didgototheme[counter] = false then
+
+        if (pos('GotoTheme(', sAction) <> 0) then
         begin
-          didgototheme[counter] := true;
-          activetheme := StrToInt(copy(todo[counter], pos('1GotoTheme(',
-            todo[counter]) + 11, pos(')', todo[counter])-pos('1GotoTheme(',
-            todo[counter])-11))-1;
+          activetheme := StrToInt(copy(sAction, pos('1GotoTheme(', sAction) + 11,
+            pos(')', sAction)-pos('1GotoTheme(', sAction)-11))-1;
         end;
-      end;
-      if pos('2GotoTheme', todo[counter]) <> 0 then
-      begin
-        didgototheme[counter] := false;
-      end;
-      if pos('1GotoScreen(', todo[counter]) <> 0 then
-      begin
-        if didgotoscreen[counter] = false then
+
+        if (pos('GotoScreen(', sAction) <> 0) then
         begin
-          didgotoscreen[counter] := true;
-          ChangeScreen(StrToInt(copy(todo[counter], pos('1GotoScreen(',
-            todo[counter]) + 12, pos(')', todo[counter])-pos('1GotoScreen(',
-            todo[counter])-12))-1);
+          ChangeScreen(StrToInt(copy(sAction, pos('1GotoScreen(', sAction) + 12,
+            pos(')', sAction)-pos('1GotoScreen(', sAction)-12)));
         end;
-      end;
-      if pos('2GotoScreen', todo[counter]) <> 0 then
-      begin
-        didGotoscreen[counter] := false;
-      end;
-      if pos('1FreezeScreen', todo[counter]) <> 0 then
-      begin
-        if didFreeze[counter] = false then
+        if pos('FreezeScreen', sAction) <> 0 then
         begin
-          didFreeze[counter] := true;
           freeze();
         end;
-      end;
-      if pos('2FreezeScreen', todo[counter]) <> 0 then
-      begin
-        didFreeze[counter] := false;
-      end;
-      if pos('1RefreshAll', todo[counter]) <> 0 then
-      begin
-        if didRefreshAll[counter] = false then
+
+        if pos('RefreshAll', sAction) <> 0 then
         begin
-          didRefreshAll[counter] := true;
           timer2.interval := 10;
           timer6.interval := 10;
           timer8.interval := 10;
           timer9.interval := 10;
           timer10.interval := 10;
         end;
-      end;
-      if pos('2RefreshAll', todo[counter]) <> 0 then
-      begin
-        didRefreshAll[counter] := false;
-      end;
-      if pos('1Backlight(', todo[counter]) <> 0 then
-      begin
-        if didbl[counter] = false then
+
+        if pos('BacklightToggle', sAction) <> 0 then
         begin
-          didbl[counter] := true;
-          temp1 := copy(todo[counter], pos('(', todo[counter]) + 1, 1);
-          if temp1 = '1' then backlight := 0;
-          if temp1 = '0' then backlight := 1;
-          if (temp1 = '1') or (temp1 = '0') then backlit();
-        end;
-      end;
-      if pos('2Backlight(', todo[counter]) <> 0 then
-      begin
-        if didbl[counter] = true then
-        begin
-          didbl[counter] := false;
-          temp1 := copy(todo[counter], pos('(', todo[counter]) + 1, 1);
-          if temp1 = '0' then backlight := 0;
-          if temp1 = '1' then backlight := 1;
-          if (temp1 = '1') or (temp1 = '0') then backlit();
-        end;
-      end;
-      if pos('1BacklightToggle', todo[counter]) <> 0 then
-      begin
-        if didbltoggle[counter] = false then
-        begin
-          didbltoggle[counter] := true;
           backlit();
         end;
-      end;
-      if pos('2BacklightToggle', todo[counter]) <> 0 then
-      begin
-        didbltoggle[counter] := false;
-      end;
-      if pos('1BLFlash(', todo[counter]) <> 0 then
-      begin
-        if didflash[counter] = false then
+
+        if pos('BLFlash(', sAction) <> 0 then
         begin
-          temp1 := copy(todo[counter], pos('(', todo[counter]) + 1, pos(')',
-            todo[counter])-pos('(', todo[counter])-1);
+          temp1 := copy(sAction, pos('(', sAction) + 1, pos(')', sAction)
+            - pos('(', sAction)-1);
           flash := StrToInt(temp1)*2;
-          didflash[counter] := true;
         end;
-      end;
-      if pos('2BLFlash(', todo[counter]) <> 0 then
-      begin
-        didflash[counter] := false;
-      end;
-      if pos('1Wave[', todo[counter]) <> 0 then
-      begin
-        temp1 := copy(todo[counter], pos('1Wave[', todo[counter]) + 6, pos(']',
-          todo[counter])-pos('1Wave[', todo[counter])-6);
-        if didsound[counter] = false then
+
+        if pos('Wave[', sAction) <> 0 then
         begin
-          didsound[counter] := true;
+          temp1 := copy(sAction, pos('1Wave[', sAction) + 6, pos(']', sAction)
+            - pos('1Wave[', sAction)-6);
           playsound(Pchar(temp1), 0, SND_FILENAME);
         end;
-      end;
-      if pos('2Wave[', todo[counter]) <> 0 then
-      begin
-        didsound[counter] := false;
-      end;
-      if pos('1Exec[', todo[counter]) <> 0 then
-      begin
-        temp1 := copy(todo[counter], pos('1Exec[', todo[counter]) + 6, pos(']',
-          todo[counter])-pos('1Exec[', todo[counter])-6);
-        if didexec[counter] = false then
+
+        if pos('Exec[', sAction) <> 0 then
         begin
-          didexec[counter] := true;
+          temp1 := copy(sAction, pos('1Exec[', sAction) + 6, pos(']', sAction)
+            - pos('1Exec[', sAction)-6);
           shellexecute(0, 'open', PChar(temp1), '', '', SW_SHOW);
         end;
-      end;
-      if pos('2Exec[', todo[counter]) <> 0 then
-      begin
-        didexec[counter] := false;
-      end;
-      if pos('1WANextTrack', todo[counter]) <> 0 then
-      begin
-        if didwanexttrack[counter] = false then
-        begin
-          didwanexttrack[counter] := true;
+
+        if pos('WANextTrack', sAction) <> 0 then
           Winampctrl1.Next;
-        end;
-      end;
-      if pos('2WANextTrack', todo[counter]) <> 0 then
-      begin
-        didwanexttrack[counter] := false;
-      end;
-      if pos('1WALastTrack', todo[counter]) <> 0 then
-      begin
-        if didwalasttrack[counter] = false then
-        begin
-          didwalasttrack[counter] := true;
+
+        if pos('WALastTrack', sAction) <> 0 then
           Winampctrl1.Previous;
-        end;
-      end;
-      if pos('2WALastTrack', todo[counter]) <> 0 then
-      begin
-        didwalasttrack[counter] := false;
-      end;
-      if pos('1WAPlay', todo[counter]) <> 0 then
-      begin
-        if didwaPlay[counter] = false then
-        begin
-          didwaPlay[counter] := true;
+
+        if pos('WAPlay', sAction) <> 0 then
           Winampctrl1.Play;
-        end;
-      end;
-      if pos('2WAPlay', todo[counter]) <> 0 then
-      begin
-        didwaplay[counter] := false;
-      end;
-      if pos('1WAStop', todo[counter]) <> 0 then
-      begin
-        if didwaStop[counter] = false then
-        begin
-          didwaStop[counter] := true;
+
+        if pos('WAStop', sAction) <> 0 then
           Winampctrl1.Stop;
-        end;
-      end;
-      if pos('2WAStop', todo[counter]) <> 0 then
-      begin
-        didwastop[counter] := false;
-      end;
-      if pos('1WAPause', todo[counter]) <> 0 then
-      begin
-        if didwaPause[counter] = false then
-        begin
-          didwaPause[counter] := true;
+
+        if pos('WAPause', sAction) <> 0 then
           Winampctrl1.Pause;
-        end;
-      end;
-      if pos('2WAPause', todo[counter]) <> 0 then
-      begin
-        didwaPause[counter] := false;
-      end;
-      if pos('1WAShuffle', todo[counter]) <> 0 then
-      begin
-        if didwaShuffle[counter] = false then
-        begin
-          didwashuffle[counter] := true;
+
+        if pos('WAShuffle', sAction) <> 0 then
           Winampctrl1.ToggleShufflE;
-        end;
-      end;
-      if pos('2WAShuffle', todo[counter]) <> 0 then
-      begin
-        didwaShuffle[counter] := false;
-      end;
-      if pos('1WAVolDown', todo[counter]) <> 0 then
-      begin
-        if didWAVolDown[counter] = false then
+
+        if pos('WAVolDown', sAction) <> 0 then
         begin
-          didWAVolDown[counter] := true;
           WinampCtrl1.VolumeDown;
           WinampCtrl1.VolumeDown;
           WinampCtrl1.VolumeDown;
           WinampCtrl1.VolumeDown;
           WinampCtrl1.VolumeDown;
         end;
-      end;
-      if pos('2WAVolDown', todo[counter]) <> 0 then
-      begin
-        didWAVolDown[counter] := false;
-      end;
-      if pos('1WAVolUp', todo[counter]) <> 0 then
-      begin
-        if didWAVolUp[counter] = false then
+
+        if pos('WAVolUp', sAction) <> 0 then
         begin
-          didWAVolUp[counter] := true;
           WinampCtrl1.VolumeUp;
           WinampCtrl1.VolumeUp;
           WinampCtrl1.VolumeUp;
           WinampCtrl1.VolumeUp;
           WinampCtrl1.VolumeUp;
         end;
-      end;
-      if pos('2WAVolUp', todo[counter]) <> 0 then
-      begin
-        didWAVolUp[counter] := false;
-      end;
-      if pos('1GPO(', todo[counter]) <> 0 then
-      begin
-        if didgpo[counter] = false then
-        begin
-          didgpo[counter] := true;
-          if config.isMO then
-          begin
-            try
-              temp1 := copy(todo[counter], pos('(', todo[counter]) + 1,
-                pos(',', todo[counter])-pos('(', todo[counter])-1);
-              temp2 := copy(todo[counter], pos(',', todo[counter]) + 1,
-                pos(')', todo[counter])-pos(',', todo[counter])-1);
-              if (temp2 = '1') or (temp2 = '0') then doGPO(StrToInt(temp1),
-                StrToInt(temp2));
-            except
-            end;
-          end;
-        end;
-      end;
-      if pos('2GPO(', todo[counter]) <> 0 then
-      begin
-        if didgpo[counter] = true then
-        begin
-          didgpo[counter] := false;
-          if config.isMO then
-          begin
-            try
-              temp1 := copy(todo[counter], pos('(', todo[counter]) + 1,
-                pos(',', todo[counter])-pos('(', todo[counter])-1);
-              temp2 := copy(todo[counter], pos(',', todo[counter]) + 1,
-                pos(')', todo[counter])-pos(',', todo[counter])-1);
-              if temp2='1' then temp2 := '0'
-              else temp2 := '1';
-              if (temp2 = '1') or (temp2 = '0') then doGPO(StrToInt(temp1),
-                StrToInt(temp2));
-            except
-            end;
-          end;
-        end;
-      end;
-      if pos('1GPOFlash(', todo[counter]) <> 0 then
-      begin
-        if didGPOFlash[counter] = false then
-        begin
-          didGPOFlash[counter] := true;
-          if config.isMO then
-          begin
-            try
-              whatgpo := StrToInt(copy(todo[counter], pos('(', todo[counter]) +
-                1, pos(',', todo[counter])-pos('(', todo[counter])-1));
-              temp2 := copy(todo[counter], pos(',', todo[counter]) + 1,
-                pos(')', todo[counter])-pos(',', todo[counter])-1);
-              gpoflash := StrToInt(temp2)*2;
-            except
-            end;
-          end;
-        end;
-      end;
-      if pos('2GPOFlash(', todo[counter]) <> 0 then
-      begin
-        didGPOFlash[counter] := false;
-      end;
-      if pos('1GPOToggle(', todo[counter]) <> 0 then
-      begin
-        if didgpotoggle[counter] = false then
+
+        if (pos('GPOFlash(', sAction) <> 0) and (config.isMO) then
         begin
           try
-            didgpotoggle[counter] := true;
-            temp1 := copy(todo[counter], pos('(', todo[counter]) + 1, pos(')',
-              todo[counter])-pos('(', todo[counter])-1);
+            whatgpo := StrToInt(copy(sAction, pos('(', sAction) + 1,
+              pos(',', sAction)-pos('(', sAction)-1));
+            temp2 := copy(sAction, pos(',', sAction) + 1,
+              pos(')', sAction)-pos(',', sAction)-1);
+            gpoflash := StrToInt(temp2)*2;
+          except
+          end;
+        end;
+
+        if pos('GPOToggle(', sAction) <> 0 then
+        begin
+          try
+            temp1 := copy(sAction, pos('(', sAction) + 1, pos(')', sAction)
+              - pos('(', sAction)-1);
             dogpo(StrToInt(temp1), 2)
           except
           end;
         end;
-      end;
-      if pos('2GPOToggle(', todo[counter]) <> 0 then
-      begin
-        didgpotoggle[counter] := false;
-      end;
-      if pos('1Fan(', todo[counter]) <> 0 then
-      begin
-        if didMOFan[counter] = false then
+
+        if pos('1Fan(', sAction) <> 0 then
         begin
           try
-            didMOFan[counter] := true;
-            temp1 := copy(todo[counter], pos('(', todo[counter]) + 1, pos(',',
-              todo[counter])-pos('(', todo[counter])-1);
-            temp2 := copy(todo[counter], pos(',', todo[counter]) + 1, pos(')',
-              todo[counter])-pos(',', todo[counter])-1);
+            temp1 := copy(sAction, pos('(', sAction) + 1, pos(',', sAction)
+              - pos('(', sAction)-1);
+            temp2 := copy(sAction, pos(',', sAction) + 1, pos(')', sAction)
+              - pos(',', sAction)-1);
 
             Lcd.setFan(StrToInt(temp1), StrToInt(temp2));
-
           except
           end;
         end;
       end;
-      if pos('2Fan(', todo[counter]) <> 0 then
-      begin
-        didMOFan[counter] := false;
-      end;
+      didAction[counter] := bDoAction;
+
+      // Ulgy special case - [the action code needs a rewrite]
+      // If action was caused by a key press then don't record that we have
+      // done it - this will reduce the delay required to reset actions.
+      // This delay impacts the user experience when using keys.
+      if (Pos('MObutton', sLeftValue)<>0) then
+        didAction[counter] := false;
     end;
   end;
+
 
   // All actions have been processed using this key.
   // Delete it so a repeated press is processed.
