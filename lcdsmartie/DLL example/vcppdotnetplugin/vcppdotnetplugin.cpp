@@ -39,9 +39,20 @@ String __gc *LCDSmartie::function1(String *param1, String *param2)
 
 // This function is used in LCDSmartie by using the dll command as follows:
 //    $dll(vbdotnetplugin,2,hello,there)
-// Smartie will then display on the LCD: Not implemented
+// Smartie will then display on the LCD: c++.net
 String __gc *LCDSmartie::function2(String *param1, String *param2)
 {
-	return new String("Not Implemented");
+	return new String("c++.net");
+}
+
+
+//
+// Define the minimum interval that a screen should get fresh data from our plugin.
+// The actual value used by Smartie will be the higher of this value and of the "dll check interval" setting
+// on the Misc tab.  [This function is optional, Smartie will assume 300ms if it is not provided.]
+// 
+int LCDSmartie::GetMinRefreshInterval()
+{
+	return 300; // 300 ms (around 3 times a second)
 }
 

@@ -34,11 +34,22 @@ namespace csharpplugin
 
 		// This function is used in LCDSmartie by using the dll command as follows:
 		//    $dll(vbdotnetplugin,2,hello,there)
-		// Smartie will then display on the LCD: Not implemented
+		// Smartie will then display on the LCD: c#
 		public string function2(string param1, string param2)
 		{
-			return "Not Implemented";
+			return "c#";
 		}
+
+		//
+		// Define the minimum interval that a screen should get fresh data from our plugin.
+		// The actual value used by Smartie will be the higher of this value and of the "dll check interval" setting
+		// on the Misc tab.  [This function is optional, Smartie will assume 300ms if it is not provided.]
+		// 
+		public int GetMinRefreshInterval()
+		{
+			return 300; // 300 ms (around 3 times a second)
+		}
+
 	}
 
 

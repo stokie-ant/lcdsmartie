@@ -14,6 +14,7 @@ namespace vcppdotnetplugin
 		~LCDSmartie();
 		String __gc *function1(String *param1, String *param2);
 		String __gc *function2(String *param1, String *param2);
+		int GetMinRefreshInterval();
 	};
 
 }
