@@ -9,7 +9,7 @@ unit UCFSetup;
  *  as published by the Free Software Foundation; either version 2
  *  of the License, or (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
+ *  This program is distributed in the hope that it will be useful, 
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
@@ -19,7 +19,7 @@ unit UCFSetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UCFSetup.pas,v $
- *  $Revision: 1.2 $ $Date: 2004/11/05 21:50:54 $
+ *  $Revision: 1.3 $ $Date: 2004/11/19 19:55:19 $
  *****************************************************************************}
 
 interface
@@ -61,28 +61,28 @@ end;
 
 procedure TForm5.FormShow(Sender: TObject);
 begin
-  trackbar1.position:=config.CF_contrast;
-  trackbar2.position:=config.CF_brightness;
+  trackbar1.position := config.CF_contrast;
+  trackbar2.position := config.CF_brightness;
 end;
 
 // CF options - contrast bar.
 procedure TForm5.TrackBar1Change(Sender: TObject);
 begin
   Lcd.setContrast(trackbar1.Position);
-  config.CF_contrast:=trackbar1.Position;
+  config.CF_contrast := trackbar1.Position;
 end;
 
 // CF options - brightness bar.
 procedure TForm5.TrackBar2Change(Sender: TObject);
 begin
   Lcd.setBrightness(trackbar2.Position);
-  config.CF_brightness:=trackbar2.Position;
+  config.CF_brightness := trackbar2.Position;
 end;
 
 procedure TForm5.Button1Click(Sender: TObject);
 begin
-  form5.visible:=false;
-  form2.enabled:=true;
+  form5.visible := false;
+  form2.enabled := true;
   form2.BringToFront;
 end;
 

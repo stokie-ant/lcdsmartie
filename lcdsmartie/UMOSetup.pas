@@ -9,7 +9,7 @@ unit UMOSetup;
  *  as published by the Free Software Foundation; either version 2
  *  of the License, or (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
+ *  This program is distributed in the hope that it will be useful, 
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
@@ -19,14 +19,13 @@ unit UMOSetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/Attic/UMOSetup.pas,v $
- *  $Revision: 1.1 $ $Date: 2004/11/05 14:34:15 $
+ *  $Revision: 1.2 $ $Date: 2004/11/19 19:55:19 $
  *****************************************************************************}
 
 
 interface
 
-uses
-  StdCtrls, ComCtrls, Classes, Controls, Forms;
+uses StdCtrls, ComCtrls, Classes, Controls, Forms;
 
 type
   TForm3 = class(TForm)
@@ -52,7 +51,7 @@ type
 
 var
   Form3: TForm3;
-  combobox19temp:integer;
+  combobox19temp: Integer;
 
 implementation
 
@@ -62,13 +61,13 @@ uses USetup, UMain;
 
 procedure TForm3.FormKeyPress(Sender: TObject; var Key: Char);
 begin
-  if key=chr(27) then button2.click();
+  if key = chr(27) then button2.click();
 end;
 
 procedure TForm3.Button2Click(Sender: TObject);
 begin
-  form3.visible:=false;
-  form2.enabled:=true;
+  form3.visible := false;
+  form2.enabled := true;
   form2.BringToFront;
 end;
 
@@ -83,15 +82,15 @@ begin
   form1.VaComm1.WriteChar(Chr($098));
   form1.VaComm1.WriteChar(chr(trackbar2.position));
 
-  form3.visible:=false;
-  form2.enabled:=true;
+  form3.visible := false;
+  form2.enabled := true;
   form2.BringToFront;
 end;
 
 procedure TForm3.FormShow(Sender: TObject);
 begin
-  trackbar1.position:=config.contrast;
-  trackbar2.position:=config.brightness;
+  trackbar1.position := config.contrast;
+  trackbar2.position := config.brightness;
 end;
 
 // MO options - contrast bar.
@@ -100,7 +99,7 @@ begin
   form1.VaComm1.WriteChar(Chr($0FE));
   form1.VaComm1.WriteChar('P');
   form1.VaComm1.WriteChar(chr(trackbar1.position));
-  config.contrast:=trackbar1.position;
+  config.contrast := trackbar1.position;
 end;
 
 procedure TForm3.FormClose(Sender: TObject; var Action: TCloseAction);
@@ -114,7 +113,7 @@ begin
   form1.VaComm1.WriteChar(Chr($0FE));
   form1.VaComm1.WriteChar(Chr($099));
   form1.VaComm1.WriteChar(chr(trackbar2.position));
-  config.brightness:=trackbar2.position;
+  config.brightness := trackbar2.position;
 end;
 
 end.

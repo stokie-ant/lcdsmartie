@@ -8,7 +8,7 @@
  *  as published by the Free Software Foundation; either version 2
  *  of the License, or (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
+ *  This program is distributed in the hope that it will be useful, 
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
@@ -18,17 +18,19 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/Attic/DLPORTIO.PAS,v $
- *  $Revision: 1.3 $ $Date: 2004/11/05 13:16:21 $
+ *  $Revision: 1.4 $ $Date: 2004/11/19 19:55:19 $
  *****************************************************************************}
 unit DLPortIO;
 
 interface
 
-function DlPortReadPortUchar(poort: Word): Byte; stdcall; external 'dlportio.dll';
+function DlPortReadPortUchar(poort: Word): Byte; stdcall; external
+  'dlportio.dll';
 
-procedure DlPortWritePortUchar(poort: Word; Value: Byte); stdcall; external 'dlportio.dll';
+procedure DlPortWritePortUchar(poort: Word; Value: Byte); stdcall; external
+  'dlportio.dll';
 
 implementation
 
 end.
- 
+
