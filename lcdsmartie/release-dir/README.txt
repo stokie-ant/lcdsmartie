@@ -18,15 +18,17 @@ See: http://sourceforge.net/tracker/?func=browse&group_id=122330&atid=693136
 
 USB Palm users
 ==============
-We're still having trouble getting all USB Palms working - this area is
-completely undocumented by Palm! Help us to support all USB Palms by using
-this alpha and then emailing the usb.log file to "usb <at> x5.me.uk" and
-state if this build works for you. Together we will get full USB Palm support!
+In Alpha 5, the USB code has been rewritten. If you have any problems then
+email "usb <at> x5.me.uk" - stating your Palm make/model, and PalmOS version.
 
 Changes
 =======
 5.3Alpha5
 	- Removed delay when applying settings.
+	- List only usable serial ports.
+	- Fix closedown bug; where turing off the backlight, etc sometimes
+	  didn't work.
+	- USB Palm support rewritten.
 5.3Alpha4
 	- Fixed bug [1073921] Exception: Range Check (Rss)
 	- Removed limit on the number of Rss feeds.
