@@ -19,7 +19,7 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.13 $ $Date: 2004/11/28 18:35:32 $
+ *  $Revision: 1.14 $ $Date: 2004/11/29 23:32:42 $
  *****************************************************************************}
 
 interface
@@ -255,8 +255,6 @@ type
   private
     procedure SaveScreen(scr: Integer);
     procedure LoadScreen(scr: Integer);
-    function getUsbPalms(var names, devicenames: Array of String; max:
-      Integer): Integer;
   end;
 
   TStringObj = class(TObject)
@@ -271,7 +269,7 @@ var
 implementation
 
 uses Windows, ShellApi, graphics, sysutils, parport, UMain, UMOSetup,
-  UCFSetup, UPara, UInteract, UConfig, Registry;
+  UCFSetup, UPara, UInteract, UConfig, Registry, ULCD_MO;
 
 {$R *.DFM}
 
@@ -310,90 +308,7 @@ begin
   form1.SetFocus;
 end;
 
-function TForm2.getUsbPalms(var names, devicenames: Array of String; max:
-  Integer): Integer;
-const
-  USBKEY='\SYSTEM\CurrentControlSet\Enum\USB';
-var
-  i, j: Integer;
-  Reg: TRegistry;
-  subkeys: TStringList;
-  subsubkeys: TStringList;
-  symName: String;
-  count: Integer;
 
-begin
-  count := 0;
-
-  // Check if there are any Usb Palm entries in the registry.
-  Reg := TRegistry.Create;
-  try
-    Reg.RootKey := HKEY_LOCAL_MACHINE;
-    if Reg.OpenKeyReadOnly(USBKEY) then
-    begin
-      subkeys := TStringList.Create;
-      subsubkeys := TStringList.Create;
-
-      Reg.GetKeyNames(subkeys);
-      Reg.CloseKey;
-      for i := 0 to subkeys.Count-1 do
-      begin
-        // Examine each USB Device type
-
-        if Reg.OpenKeyReadOnly(USBKEY + '\' + subkeys.Strings[i]) then
-        begin
-          Reg.GetKeyNames(subsubkeys);
-          Reg.CloseKey;
-          for j := 0 to subsubkeys.Count -1 do
-          begin
-
-            // Examine each USB Device
-            if Reg.OpenKeyReadOnly(USBKEY + '\' + subkeys.Strings[i] + '\' +
-              subsubkeys.Strings[j]) then
-            begin
-              // Check if it's a USB Palm device
-              if (Reg.ReadString('Service') = 'PalmUSBD') or
-                (Reg.ReadString('LocationInformation') = 'Palm Handheld') or
-                (Reg.ReadString('Class') = 'Palm OS Handlheld Devices') then
-              begin
-                with TRegistry.Create do
-                begin
-                  RootKey := HKEY_LOCAL_MACHINE;
-                  if (OpenKeyReadOnly(USBKEY + '\' + subkeys.Strings[i] + '\'
-                    + subsubkeys.Strings[j] + '\Device Parameters')) then
-                  begin
-                    symName := ReadString('SymbolicName')
-                  end
-                  else
-                  begin
-                    symName := '';
-                  end;
-                  CloseKey;
-                  Free;
-                end;
-                if (count < max) and (symName <> '') and
-                  (Reg.ReadString('DeviceDesc') <> '') then
-                begin
-                  Inc(count);
-                  names[count-1] := Reg.ReadString('DeviceDesc') +
-                    IntToStr(count);
-                  devicenames[count-1] := symName;
-                end;
-              end;
-            end;
-            Reg.CloseKey;
-          end;
-          subsubkeys.Clear;
-        end;
-      end;
-      subkeys.Free;
-    end;
-  finally
-    Reg.Free;
-  end;
-
-  Result := count;
-end;
 
 
 procedure TForm2.FormShow(Sender: TObject);
@@ -408,7 +323,7 @@ var
 begin
   usbSelection := 0;
 
-  numUsbPalms := getUsbPalms(namesUsbPalms, deviceUsbPalms, 10);
+  numUsbPalms := TLCD_MO.getUsbPalms(namesUsbPalms, deviceUsbPalms, 10);
   for i := 0 to numUsbPalms-1 do
   begin
     strobj := TStringObj.Create;

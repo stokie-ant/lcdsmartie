@@ -1,5 +1,10 @@
 unit ULCD_MO;
 
+{ The USB Palm code that is in this file is currently highly experimental.
+  The USB Palm code will be replaced once we have some firm ideas on how to
+  correctly communicate with the Palm - this area is completely undocumented
+  by Palm.}
+
 interface
 
 uses ULCD, Classes, SyncObjs, SysUtils, Windows, VaClasses, VaComm;
@@ -21,6 +26,8 @@ type
 
   TLCD_MO = class(TLCD)
   public
+    class function getUsbPalms(var names, devicenames: Array of String; max:
+      Integer): Integer;
     procedure customChar(character: Integer; data: Array of Byte); override;
     procedure setPosition(x, y: Integer); override;
     procedure write(str: String); override;
@@ -59,7 +66,7 @@ type
 
 implementation
 
-uses UMain, Dialogs, Forms;
+uses UMain, Dialogs, Forms, Registry;
 
 constructor TMyThread.Create(myMethod: TThreadMethod);
 begin
@@ -147,17 +154,29 @@ end;
 
 procedure TLCD_MO.GetUsbPalmFiles(const sDevice: String;
   var sReadFile: String; var sWriteFile: String);
+const
+  maxDevice = 20;
 var
   device, test: Cardinal;
   fUsbLog: TextFile;
   x: Integer;
   iWorkedIn, iWorkedOut: Integer;
+  bOpenedIn, bOpenedOut, bOpenedPipe: array [0..maxDevice] of Boolean;
+  names, devicenames: array[0..maxDevice] of String;
+  sReadFileOR, sWriteFileOR: String;
 begin
   // Create a log file with possibly interesting information, it may be useful
   // when users are having problems.
 
   AssignFile(fUsbLog, 'usb.log');
   Rewrite(fUsbLog);
+
+
+  test := getUsbPalms(names, devicenames, maxDevice);
+  for x:= 0 to test-1 do
+    WriteLn(fUsbLog, IntToStr(x+1)+': '+names[x]+' = '+devicenames[x]);
+
+
   WriteLn(fUsbLog, sDevice);
   WriteLn(fUsbLog, '');
 
@@ -187,53 +206,120 @@ begin
   iWorkedOut:=99;
   for x:= 0 to 10 do
   begin
-    test := CreateFile (PChar(sDevice+'\PIPE'+IntToHex(x,2)),
+    test := CreateFile (PChar(sDevice+'\PIPE'+Format('%.2d',[x])),
        GENERIC_WRITE or GENERIC_READ, FILE_SHARE_WRITE or FILE_SHARE_READ,
        nil, OPEN_EXISTING, 0, 0);
     if (test = INVALID_HANDLE_VALUE) then
     begin
-      WriteLn(fUsbLog, 'PIPE'+IntToHex(x,2)+': Failed: ' + errMsg(GetLastError));
+      if (GetLastError <> 87) then
+        WriteLn(fUsbLog, 'PIPE'+Format('%.2d',[x])+': Failed: '
+          + errMsg(GetLastError));
+      bOpenedPipe[x]:=False;
     end
     else
     begin
-      WriteLn(fUsbLog, 'PIPE'+IntToHex(x,2)+': Success');
+      bOpenedPipe[x]:=True;
     end;
     CloseHandle(test);
 
-    test := CreateFile (PChar(sDevice+'\IN_'+IntToHex(x,2)),
+    test := CreateFile (PChar(sDevice+'\IN_'+Format('%.2d',[x])),
        GENERIC_WRITE or GENERIC_READ, FILE_SHARE_WRITE or FILE_SHARE_READ,
        nil, OPEN_EXISTING, 0, 0);
     if (test = INVALID_HANDLE_VALUE) then
     begin
-      WriteLn(fUsbLog, 'IN_'+IntToHex(x,2)+': Failed: ' + errMsg(GetLastError));
+      if (GetLastError <> 87) then
+        WriteLn(fUsbLog, 'IN_'+Format('%.2d',[x])+': Failed: '
+          + errMsg(GetLastError));
+      bOpenedIn[x]:=False;
     end
     else
     begin
-      WriteLn(fUsbLog, 'IN_'+IntToHex(x,2)+': Success');
-      if (iWorkedIn>x) then iWorkedIn := x;
+      bOpenedIn[x]:=True;
     end;
     CloseHandle(test);
 
-    test := CreateFile (PChar(sDevice+'\OUT_'+IntToHex(x,2)),
+    test := CreateFile (PChar(sDevice+'\OUT_'+Format('%.2d',[x])),
        GENERIC_WRITE or GENERIC_READ, FILE_SHARE_WRITE or FILE_SHARE_READ,
        nil, OPEN_EXISTING, 0, 0);
     if (test = INVALID_HANDLE_VALUE) then
     begin
-      WriteLn(fUsbLog, 'OUT_'+IntToHex(x,2)+': Failed: ' + errMsg(GetLastError));
+      if (GetLastError <> 87) then
+        WriteLn(fUsbLog, 'OUT_'+Format('%.2d',[x])+': Failed: '
+          + errMsg(GetLastError));
+      bOpenedOut[x]:=False;
     end
     else
     begin
-      WriteLn(fUsbLog, 'OUT_'+IntToHex(x,2)+': Success');
-      if (iWorkedOut>x) then iWorkedOut := x;
+      bOpenedOut[x]:=True;
     end;
     CloseHandle(test);
   end;
 
-  WriteLn(fUsbLog, 'Using: IN_'+IntToHex(iWorkedIn,2)+' & OUT_'+IntToHex(iWorkedOut,2));
+  // Current selection method choose lower IN/OUT available
+  for x:= MaxDevice downto 0 do
+  begin
+    if (bOpenedOut[x]) then iWorkedOut := x;
+    if (bOpenedIn[x]) then iWorkedIn := x;
+  end;
+  System.Write(fUsbLog, 'OUT: ');
+  for x:= 0 to MaxDevice do
+    if (bOpenedOut[x]) then System.Write(fUsbLog, Format('%.2d ',[x]));
+  WriteLn(fUsbLog, '');
+
+  System.Write(fUsbLog, 'IN: ');
+  for x:= 0 to MaxDevice do
+    if (bOpenedIn[x]) then System.Write(fUsbLog, Format('%.2d ',[x]));
+  WriteLn(fUsbLog, '');
+
+  System.Write(fUsbLog, 'PIPE: ');
+  for x:= 0 to MaxDevice do
+    if (bOpenedPipe[x]) then System.Write(fUsbLog, Format('%.2d ',[x]));
+  WriteLn(fUsbLog, '');
+  WriteLn(fUsbLog, '');
+
+  sWriteFile := 'OUT_' +Format('%.2d', [iWorkedOut]);
+  sReadFile := 'IN_' + Format('%.2d', [iWorkedIn]);
+
+  WriteLn(fUsbLog, 'To use: ' + sWriteFile + ' & ' + sReadFile);
+
+  // ================ Auto over riding - based on usb.log files sent in.
+  sReadFileOR := sReadFile;
+  sWriteFileOR := sWriteFile;
+  if (pos('Vid_054c&Pid_0066', sDevice) <> 0) then
+  begin
+    if (bOpenedIn[2]) then sReadFileOR := 'IN_02';
+    if (bOpenedOut[2]) then sWriteFileOR := 'OUT_02';
+  end;
+
+  if (sReadFileOR <> sReadFile) then
+  begin
+    sReadFile := sReadFileOR;
+    WriteLn(fUsbLog, 'Auto overriding reading: using ' + sReadFile + ' instead');
+  end;
+
+  if (sWritefileOR <> sWriteFile) then
+  begin
+    sWriteFile := sWriteFileOR;
+    WriteLn(fUsbLog, 'Auto overriding writing: using ' + sWriteFile + ' instead');
+  end;
+
+  // ================= Config over riding - sent in response to support requests.
+
+  if (config.sUsbPalmWriteOverride<>'')
+    and (config.sUsbPalmWriteOverride<>sWriteFile) then
+  begin
+    sWriteFile := config.sUsbPalmWriteOverride;
+    WriteLn(fUsbLog, 'Config overriding writing: using ' + sWriteFile + ' instead');
+  end;
+  if (config.sUsbPalmReadOverride <> '') and (config.sUsbPalmReadOverride <> sReadFile) then
+  begin
+    sReadFile := config.sUsbPalmReadOverride;
+    WriteLn(fUsbLog, 'Config overriding reading: using ' + sReadFile + ' instead');
+  end;
   CloseFile(fUsbLog);
 
-  sWriteFile := sDevice + '\OUT_' +IntToHex(iWorkedOut,2);
-  sReadFile := sDevice + '\IN_' + IntToHex(iWorkedIn,2);
+  sWriteFile := sDevice + '\' + sWriteFile;
+  sReadFile := sDevice + '\' + sReadFile;
 end;
 
 
@@ -692,5 +778,91 @@ begin
 end;
 
 
+
+
+class function TLCD_MO.getUsbPalms(var names, devicenames: Array of String; max:
+  Integer): Integer;
+const
+  USBKEY='\SYSTEM\CurrentControlSet\Enum\USB';
+var
+  i, j: Integer;
+  Reg: TRegistry;
+  subkeys: TStringList;
+  subsubkeys: TStringList;
+  symName: String;
+  count: Integer;
+
+begin
+  count := 0;
+
+  // Check if there are any Usb Palm entries in the registry.
+  Reg := TRegistry.Create;
+  try
+    Reg.RootKey := HKEY_LOCAL_MACHINE;
+    if Reg.OpenKeyReadOnly(USBKEY) then
+    begin
+      subkeys := TStringList.Create;
+      subsubkeys := TStringList.Create;
+
+      Reg.GetKeyNames(subkeys);
+      Reg.CloseKey;
+      for i := 0 to subkeys.Count-1 do
+      begin
+        // Examine each USB Device type
+
+        if Reg.OpenKeyReadOnly(USBKEY + '\' + subkeys.Strings[i]) then
+        begin
+          Reg.GetKeyNames(subsubkeys);
+          Reg.CloseKey;
+          for j := 0 to subsubkeys.Count -1 do
+          begin
+
+            // Examine each USB Device
+            if Reg.OpenKeyReadOnly(USBKEY + '\' + subkeys.Strings[i] + '\' +
+              subsubkeys.Strings[j]) then
+            begin
+              // Check if it's a USB Palm device
+              if (Reg.ReadString('Service') = 'PalmUSBD') or
+                (Reg.ReadString('LocationInformation') = 'Palm Handheld') or
+                (Reg.ReadString('Class') = 'Palm OS Handlheld Devices') then
+              begin
+                with TRegistry.Create do
+                begin
+                  RootKey := HKEY_LOCAL_MACHINE;
+                  if (OpenKeyReadOnly(USBKEY + '\' + subkeys.Strings[i] + '\'
+                    + subsubkeys.Strings[j] + '\Device Parameters')) then
+                  begin
+                    symName := ReadString('SymbolicName')
+                  end
+                  else
+                  begin
+                    symName := '';
+                  end;
+                  CloseKey;
+                  Free;
+                end;
+                if (count < max) and (symName <> '') and
+                  (Reg.ReadString('DeviceDesc') <> '') then
+                begin
+                  Inc(count);
+                  names[count-1] := Reg.ReadString('DeviceDesc') +
+                    IntToStr(count);
+                  devicenames[count-1] := symName;
+                end;
+              end;
+            end;
+            Reg.CloseKey;
+          end;
+          subsubkeys.Clear;
+        end;
+      end;
+      subkeys.Free;
+    end;
+  finally
+    Reg.Free;
+  end;
+
+  Result := count;
+end;
 
 end.

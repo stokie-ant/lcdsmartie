@@ -1,0 +1,51 @@
+
+This file is for logging information about USB Palms.
+
+Currently we know about 5 iocontrols:
+000: [tends to give error 23, unless 424 gives error 23...]
+424: Gives same data as send in USB packet during connect.
+	[tends to give error 23 if palm is connected but switched off]
+004: Gives vendor Id and Product Id. (also in device name)
+00c: always gives 0's mostly like a set operation.
+40c: always gives 01 00.
+
+
+Data collected from usb.logs:
+
+Vid_054c: 
+   Pid_066: 
+	// sony clie PEG-N770C/U == 2,2
+	\\.\USB#Vid_054c&Pid_0066#5&1f8fd7d0&0&1#{a5dcbf10-6530-11d2-901f-00c04fb951ed}
+	424: 6: 02 00 00 01 02 02		004: 8: 4C 05 00 00 66 00 00 00 
+	40C: 2: 01 00 				00C: 8: 00 00 00 00 00 00 00 00 
+	000: 0: Error: #23
+	PIPE: 00, 01, 02, 03		IN: 02		OUT: 02
+
+	// Sony PEG-SJ22 - PalmOS 4.1 == 2,2
+	\\.\USB#Vid_054c&Pid_0066#5&89633ef&0&1#{a5dcbf10-6530-11d2-901f-00c04fb951ed}
+	424: 6: 02 00 00 01 02 02 		004: 8: 4C 05 00 00 66 00 00 00 
+	40C: 2: 01 00 				00C: 8: 00 00 00 00 00 00 00 00 
+	000: 0: Error: #23
+	PIPE: 00, 01, 02, 03		IN: 01, 02	OUT: 01, 02
+	[Caused palm crash on IN_01 & OUT_01]
+
+Vid_0830:
+   Pid_0060: // tungsten C == 1,2
+	\\.\USB#Vid_0830&Pid_0060#PalmSN12345678#{a5dcbf10-6530-11d2-901f-00c04fb951ed}
+	424: 0: Error: #23			004: 8: 30 08 00 00 60 00 00 00 
+	40C: 2: 01 00 				00C: 8: 00 00 00 00 00 00 00 00 
+	000: 20: 02 01 00 00 73 79 73 70 01 12 00 00 63 6E 79 73 02 67 00 00 
+	PIPE: 00, 01, 02, 03		IN: 01, 06	OUT: 02, 07
+	[IN_06 with OUT_07 failed, IN_01 & OUT_02 works]
+
+vid_082d: 
+   Pid_0100: // visor delux == 1,1
+	\\.\USB#Vid_082d&Pid_0100#5&160f4e1&0&2#{a5dcbf10-6530-11d2-901f-00c04fb951ed}
+	424: 6: 02 00 00 01 00 02 		004: 8: 2D 08 00 00 00 01 00 00 
+	40C: 2: 01 00 				00C: 8: 00 00 00 00 00 00 00 00 
+	000: 0: Error: #23
+	PIPE: 00, 01, 02 ,03		IN: 01, 02	OUT: 01, 02
+	[Works with 1,1 but not 2,2]
+ 
+
+
