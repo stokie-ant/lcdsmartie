@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.3 $ $Date: 2004/11/07 01:19:41 $
+ *  $Revision: 1.4 $ $Date: 2004/11/07 23:39:13 $
  *****************************************************************************}
 
 interface
@@ -304,7 +304,7 @@ type
     doesgpoflash, doesflash: boolean;
     activetheme:integer;
     kar:char;
-    STUsername, STComputername, STCPUType, STCPUSpeed, STCPUUsage:string;
+    STUsername, STComputername, STCPUType, STCPUSpeed: string;
     STPageFree,STPageTotal:Integer;
     STMemFree, STMemTotal: Integer;
     STHDFree,STHDTotal:array[67..90] of Integer;
@@ -332,6 +332,11 @@ type
     VoltName          : array[1..11] of String;
     FanName           : array[1..11] of String;
     SharedData   : PSharedData;
+    CPUUsage: array [1..5] of Cardinal;
+    CPUUsageCount: Cardinal;
+    CPUUsagePos: Cardinal;
+    STCPUUsage: Cardinal;
+    lastCpuUpdate: LongWord;
     function ReadMBM5Data : Boolean;
     function doguess(regel:integer): integer;
     procedure checkIfNewsUpdatesRequired;
@@ -382,7 +387,7 @@ uses
   Registry, Windows, SysUtils, Graphics,  Dialogs,
   ShellAPI, IpHlpApi,  IpIfConst, IpRtrMib,
   mmsystem, winsock, cxCpu40, USetup, UCredits,
-  ULCD_MO, ULCD_CF, ULCD_HD;
+  ULCD_MO, ULCD_CF, ULCD_HD, adCpuUsage;
 
 function TForm1.doguess(regel:integer): integer;
 var
@@ -790,7 +795,7 @@ begin
     regel:=StringReplace(regel,'$Computername',STcomputername,[rfReplaceAll]);
     regel:=StringReplace(regel,'$CPUType',STCPUType,[rfReplaceAll]);
     regel:=StringReplace(regel,'$CPUSpeed',STCPUSpeed,[rfReplaceAll]);
-    regel:=StringReplace(regel,'$CPUUsage%',STCPUUsage,[rfReplaceAll]);
+    regel:=StringReplace(regel,'$CPUUsage%',IntToStr(STCPUUsage),[rfReplaceAll]);
     regel:=StringReplace(regel,'$MemFree',IntToStr(STMemFree),[rfReplaceAll]);
     regel:=StringReplace(regel,'$MemUsed',IntToStr(STMemTotal-STMemFree),[rfReplaceAll]);
     regel:=StringReplace(regel,'$MemTotal',IntToStr(STMemTotal),[rfReplaceAll]);
@@ -1452,6 +1457,7 @@ var
 
 begin
   qstattemp:=1;
+  CPUUsagePos:=1;
   Randomize;
 //SetWindowLong(Application.Handle, GWL_EXSTYLE, GetWindowLong(Application.Handle, GWL_EXSTYLE) or WS_EX_TOOLWINDOW and not WS_EX_APPWINDOW );
   try
@@ -1673,6 +1679,9 @@ begin
   end;
 end;
 
+
+
+
 procedure TForm1.refres(Sender: TObject);
 const
   ticksperweek    : integer = 3600000*24*7;
@@ -1686,6 +1695,8 @@ var
   w, d, h, m, s : integer;
   teller:integer;
   regel:string;
+  total, y: Cardinal;
+  rawcpu: Double;
 
 begin
 try
@@ -1726,13 +1737,30 @@ if ((donewsupdate1 = 1) or
   end;
 
 //cpuusage!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-STCPUUsage:='';
 //Application.ProcessMessages;
-try
-  STCPUUsage:=cxCpu[0].Usage.Value.AsString;
-except
-  STCPUUsage:='Unknown';
+t:=GetTickCount;
+if (t - lastCpuUpdate > (ticksperseconde div 4)) then begin
+  lastCpuUpdate := t;
+  try
+  {  CPUUsage[CPUUsagePos]:=cxCpu[0].Usage.Value.AsNumber;}
+    CollectCPUData;
+    rawcpu:= adCpuUsage.GetCPUUsage(0);
+
+    if (rawcpu <= 1.1) and (rawcpu >= -0.1) then begin
+      CPUUsage[CPUUsagePos]:=Trunc(abs(rawcpu) * 100);
+      Inc(CPUUsagePos);
+      if (CPUUsagePos>5) then CPUUsagePos:=1;
+      if (CPUUsageCount<5) then Inc(CPUUsageCount);
+    end ;
+
+  except
+  end;
+  total:=0;
+  for y:=1 to CPUUsageCount do total:=total+CPUUsage[y];
+  if (CPUUsageCount>0) then STCPUUsage:=total div CPUUsageCount;
+
 end;
+
 
 //time/uptime!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   t:=GetTickCount;
