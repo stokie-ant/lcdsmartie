@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.30 $ $Date: 2004/12/15 21:22:27 $
+ *  $Revision: 1.31 $ $Date: 2004/12/15 22:44:28 $
  *****************************************************************************}
 
 interface
@@ -1333,8 +1333,8 @@ begin
   except
   end;
 
-  Data.Destroy;
-  config.Destroy;
+  if (Data <> nil) then Data.Destroy;
+  if (config <> nil) then config.Destroy;
 end;
 
 procedure TForm1.Timer8Timer(Sender: TObject);
