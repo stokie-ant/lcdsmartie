@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.14 $ $Date: 2004/11/20 00:19:40 $
+ *  $Revision: 1.15 $ $Date: 2004/11/23 19:22:05 $
  *****************************************************************************}
 
 interface
@@ -234,10 +234,8 @@ var
   tempscreen: Integer;
   key: char;
   activeScreen : Integer;
-  actionsArray: Array[1..99, 1..4] of String;
   aantalscreensheenweer: Integer;
   combobox8temp: Integer;
-  totalactions: Integer;
 procedure customchar(fline: String);
 procedure backlit();
 
@@ -1036,13 +1034,10 @@ end;
 
 procedure TForm1.FormShow(Sender: TObject);
 var
-  initfile: textfile;
   counter: Integer;
-  line: String;
 
 begin
   timer1.Interval := config.refreshRate;
-
 
   if config.height <> iNrLines then
   begin
@@ -1054,29 +1049,6 @@ begin
     end;
   end;
 
-  counter := 0;
-  try
-    assignfile(initfile, extractfilepath(application.exename) +
-      'actions.cfg');
-    try
-      reset (initfile);
-      while not eof(initfile) do
-      begin
-        readln(initfile, line);
-        counter := counter + 1;
-        actionsArray[counter, 1] := copy(line, 1, pos('¿', line)-1);
-        actionsArray[counter, 2] := copy(line, pos('¿', line) + 1, 1);
-        actionsArray[counter, 3] := copy(line, pos('¿¿', line) + 2,
-          pos('¿¿¿', line)-pos('¿¿', line)-2);
-        actionsArray[counter, 4] := copy(line, pos('¿¿¿', line) + 3,
-          length(line));
-      end;
-    finally
-      closefile(initfile);
-    end;
-  except
-  end;
-  totalactions := counter;
 end;
 
 procedure TForm1.Timer2Timer(Sender: TObject);
@@ -1422,105 +1394,105 @@ begin
 
   if (form2 <> nil) and (form2.Visible = false) then
   begin
-    for counter := 1 to totalactions do
+    for counter := 1 to config.totalactions do
     begin
-      if actionsArray[counter, 2] = '0' then
+      if config.actionsArray[counter, 2] = '0' then
       begin
         try
-          if StrToInt(Data.change(actionsArray[counter, 1])) >
-            StrToInt(actionsArray[counter, 3]) then todo[counter] := '1' +
-            actionsArray[counter, 4]
-          else todo[counter] := '2' + actionsArray[counter, 4];
+          if StrToInt(Data.change(config.actionsArray[counter, 1])) >
+            StrToInt(config.actionsArray[counter, 3]) then todo[counter] := '1' +
+            config.actionsArray[counter, 4]
+          else todo[counter] := '2' + config.actionsArray[counter, 4];
         except
           try
-            if Data.change(actionsArray[counter, 1]) > actionsArray[counter, 3]
-              then todo[counter] := '1' + actionsArray[counter, 4]
-            else todo[counter] := '2' + actionsArray[counter, 4];
+            if Data.change(config.actionsArray[counter, 1]) > config.actionsArray[counter, 3]
+              then todo[counter] := '1' + config.actionsArray[counter, 4]
+            else todo[counter] := '2' + config.actionsArray[counter, 4];
           except
             todo[counter] := '';
           end;
         end;
       end;
-      if actionsArray[counter, 2] = '1' then
+      if config.actionsArray[counter, 2] = '1' then
       begin
         try
-          if StrToInt(Data.change(actionsArray[counter, 1])) <
-            StrToInt(actionsArray[counter, 3]) then todo[counter] := '1' +
-            actionsArray[counter, 4]
-          else todo[counter] := '2' + actionsArray[counter, 4];
+          if StrToInt(Data.change(config.actionsArray[counter, 1])) <
+            StrToInt(config.actionsArray[counter, 3]) then todo[counter] := '1' +
+            config.actionsArray[counter, 4]
+          else todo[counter] := '2' + config.actionsArray[counter, 4];
         except
           try
-            if Data.change(actionsArray[counter, 1]) < actionsArray[counter, 3]
-              then todo[counter] := '1' + actionsArray[counter, 4]
-            else todo[counter] := '2' + actionsArray[counter, 4];
+            if Data.change(config.actionsArray[counter, 1]) < config.actionsArray[counter, 3]
+              then todo[counter] := '1' + config.actionsArray[counter, 4]
+            else todo[counter] := '2' + config.actionsArray[counter, 4];
           except
             todo[counter] := '';
           end;
         end;
       end;
-      if actionsArray[counter, 2] = '2' then
+      if config.actionsArray[counter, 2] = '2' then
       begin
         try
-          if StrToInt(Data.change(actionsArray[counter, 1])) =
-            StrToInt(actionsArray[counter, 3]) then todo[counter] := '1' +
-            actionsArray[counter, 4]
-          else todo[counter] := '2' + actionsArray[counter, 4];
+          if StrToInt(Data.change(config.actionsArray[counter, 1])) =
+            StrToInt(config.actionsArray[counter, 3]) then todo[counter] := '1' +
+            config.actionsArray[counter, 4]
+          else todo[counter] := '2' + config.actionsArray[counter, 4];
         except
           try
-            if Data.change(actionsArray[counter, 1]) = actionsArray[counter, 3]
-              then todo[counter] := '1' + actionsArray[counter, 4]
-            else todo[counter] := '2' + actionsArray[counter, 4];
+            if Data.change(config.actionsArray[counter, 1]) = config.actionsArray[counter, 3]
+              then todo[counter] := '1' + config.actionsArray[counter, 4]
+            else todo[counter] := '2' + config.actionsArray[counter, 4];
           except
             todo[counter] := '';
           end;
         end;
       end;
-      if actionsArray[counter, 2] = '3' then
+      if config.actionsArray[counter, 2] = '3' then
       begin
         try
-          if StrToInt(Data.change(actionsArray[counter, 1])) <=
-            StrToInt(actionsArray[counter, 3]) then todo[counter] := '1' +
-            actionsArray[counter, 4]
-          else todo[counter] := '2' + actionsArray[counter, 4];
+          if StrToInt(Data.change(config.actionsArray[counter, 1])) <=
+            StrToInt(config.actionsArray[counter, 3]) then todo[counter] := '1' +
+            config.actionsArray[counter, 4]
+          else todo[counter] := '2' + config.actionsArray[counter, 4];
         except
           try
-            if Data.change(actionsArray[counter, 1]) <= actionsArray[counter, 3]
-              then todo[counter] := '1' + actionsArray[counter, 4]
-            else todo[counter] := '2' + actionsArray[counter, 4];
+            if Data.change(config.actionsArray[counter, 1]) <= config.actionsArray[counter, 3]
+              then todo[counter] := '1' + config.actionsArray[counter, 4]
+            else todo[counter] := '2' + config.actionsArray[counter, 4];
           except
             todo[counter] := '';
           end;
         end;
       end;
-      if actionsArray[counter, 2] = '4' then
+      if config.actionsArray[counter, 2] = '4' then
       begin
         try
-          if StrToInt(Data.change(actionsArray[counter, 1])) >=
-            StrToInt(actionsArray[counter, 3]) then todo[counter] := '1' +
-            actionsArray[counter, 4]
-          else todo[counter] := '2' + actionsArray[counter, 4];
+          if StrToInt(Data.change(config.actionsArray[counter, 1])) >=
+            StrToInt(config.actionsArray[counter, 3]) then todo[counter] := '1' +
+            config.actionsArray[counter, 4]
+          else todo[counter] := '2' + config.actionsArray[counter, 4];
         except
           try
-            if Data.change(actionsArray[counter, 1]) >= actionsArray[counter, 3]
-              then todo[counter] := '1' + actionsArray[counter, 4]
-            else todo[counter] := '2' + actionsArray[counter, 4];
+            if Data.change(config.actionsArray[counter, 1]) >= config.actionsArray[counter, 3]
+              then todo[counter] := '1' + config.actionsArray[counter, 4]
+            else todo[counter] := '2' + config.actionsArray[counter, 4];
           except
             todo[counter] := '';
           end;
         end;
       end;
-      if actionsArray[counter, 2] = '5' then
+      if config.actionsArray[counter, 2] = '5' then
       begin
         try
-          if StrToInt(Data.change(actionsArray[counter, 1])) <>
-            StrToInt(actionsArray[counter, 3]) then todo[counter] := '1' +
-            actionsArray[counter, 4]
-          else todo[counter] := '2' + actionsArray[counter, 4];
+          if StrToInt(Data.change(config.actionsArray[counter, 1])) <>
+            StrToInt(config.actionsArray[counter, 3]) then todo[counter] := '1' +
+            config.actionsArray[counter, 4]
+          else todo[counter] := '2' + config.actionsArray[counter, 4];
         except
           try
-            if Data.change(actionsArray[counter, 1]) <> actionsArray[counter, 3]
-              then todo[counter] := '1' + actionsArray[counter, 4]
-            else todo[counter] := '2' + actionsArray[counter, 4];
+            if Data.change(config.actionsArray[counter, 1]) <> config.actionsArray[counter, 3]
+              then todo[counter] := '1' + config.actionsArray[counter, 4]
+            else todo[counter] := '2' + config.actionsArray[counter, 4];
           except
             todo[counter] := '';
           end;
@@ -1528,7 +1500,7 @@ begin
       end;
     end;
 
-    for counter := 1 to totalactions do
+    for counter := 1 to config.totalactions do
     begin
       if pos('1NextTheme', todo[counter]) <> 0 then
       begin

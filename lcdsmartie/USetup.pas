@@ -19,7 +19,7 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.8 $ $Date: 2004/11/19 23:03:23 $
+ *  $Revision: 1.9 $ $Date: 2004/11/23 19:22:08 $
  *****************************************************************************}
 
 interface
@@ -379,7 +379,6 @@ end;
 procedure TForm2.FormShow(Sender: TObject);
 var
   i, blaat: Integer;
-  fFile: textfile;
   line, line2: String;
   laatstepacket: Boolean;
   ch: char;
@@ -422,34 +421,23 @@ begin
 
   edit10.text := config.gameServer[1, 1];
 
-  try
-    form2.StringGrid1.rowcount := 0;
-    for blaat := 0 to 999 do
-    begin
-      form2.StringGrid1.Cells[0, blaat] := '';
-      form2.StringGrid1.Cells[1, blaat] := '';
-      form2.StringGrid1.Cells[2, blaat] := '';
-      form2.StringGrid1.Cells[3, blaat] := '';
-      form2.StringGrid1.Cells[4, blaat] := '';
-    end;
-    assignfile(fFile, extractfilepath(application.exename) + 'actions.cfg');
-    reset (fFile);
-    while not eof(fFile) do
-    begin
-      readln(fFile, line);
-      edit16.text := copy(line, 1, pos('¿', line)-1);
-      combobox9.itemindex := StrToInt(copy(line, pos('¿', line) + 1, 1));
-      edit19.text := copy(line, pos('¿¿', line) + 2, pos('¿¿¿',
-        line)-pos('¿¿', line)-2);
-      edit18.text := copy(line, pos('¿¿¿', line) + 3, length(line));
+  form2.StringGrid1.rowcount := 0;
+  for blaat := 0 to 999 do
+  begin
+    form2.StringGrid1.Cells[0, blaat] := '';
+    form2.StringGrid1.Cells[1, blaat] := '';
+    form2.StringGrid1.Cells[2, blaat] := '';
+    form2.StringGrid1.Cells[3, blaat] := '';
+    form2.StringGrid1.Cells[4, blaat] := '';
+  end;
+
+  for i := 1 to config.totalactions do
+  begin
+      edit16.text := config.actionsArray[i, 1];
+      combobox9.itemindex := StrToInt(config.actionsArray[i, 2]);
+      edit19.text := config.actionsArray[i, 3];
+      edit18.text := config.actionsArray[i, 4];
       button8.click;
-    end;
-    closefile(fFile);
-  except
-    try
-      closefile(fFile);
-    except
-    end;
   end;
 
   //application.ProcessMessages;
@@ -2138,41 +2126,32 @@ end;
 // Apply pressed.
 procedure TForm2.Button7Click(Sender: TObject);
 var
-  fFile: textfile;
-  line: String;
   relood: Boolean;
   x: Integer;
 
 begin
   relood := false;
 
-
-
-  try
-    assignfile(fFile, extractfilepath(application.exename) + 'actions.cfg');
-    rewrite (fFile);
-    for x := 0 to form2.StringGrid1.RowCount do
+  for x := 0 to form2.StringGrid1.RowCount do
+  begin
+    if (form2.Stringgrid1.cells[0, x] <> '') and (form2.Stringgrid1.cells[4,
+      x] <> '') then
     begin
-      if (form2.Stringgrid1.cells[0, x] <> '') and (form2.Stringgrid1.cells[4,
-        x] <> '') then
-      begin
-        line := form2.StringGrid1.Cells[0, x] + '¿';
-        if form2.StringGrid1.Cells[1, x]='>' then line := line + '0¿¿';
-        if form2.StringGrid1.Cells[1, x]='<' then line := line + '1¿¿';
-        if form2.StringGrid1.Cells[1, x]='=' then line := line + '2¿¿';
-        if form2.StringGrid1.Cells[1, x]='<=' then line := line + '3¿¿';
-        if form2.StringGrid1.Cells[1, x]='>=' then line := line + '4¿¿';
-        if form2.StringGrid1.Cells[1, x]=' <> ' then line := line + '5¿¿';
-        line := line + form2.StringGrid1.Cells[2, x] + '¿¿¿';
-        line := line + form2.StringGrid1.Cells[4, x];
-        writeln(fFile, line);
-      end;
-    end;
-    closefile(fFile);
-  except
-    try
-      closefile(fFile);
-    except
+        config.actionsArray[x + 1, 1] := form2.StringGrid1.Cells[0, x];
+        if form2.StringGrid1.Cells[1, x]='>' then
+           config.actionsArray[x + 1, 2] := '0';
+        if form2.StringGrid1.Cells[1, x]='<' then
+           config.actionsArray[x + 1, 2] := '1';
+        if form2.StringGrid1.Cells[1, x]='=' then
+           config.actionsArray[x + 1, 2] := '2';
+        if form2.StringGrid1.Cells[1, x]='<=' then
+           config.actionsArray[x + 1, 2] := '3';
+        if form2.StringGrid1.Cells[1, x]='>=' then
+           config.actionsArray[x + 1, 2] := '4';
+        if form2.StringGrid1.Cells[1, x]='<>' then
+           config.actionsArray[x + 1, 2] := '5';
+        config.actionsArray[x + 1, 3] := form2.StringGrid1.Cells[2, x];
+        config.actionsArray[x + 1, 4] := form2.StringGrid1.Cells[4, x];
     end;
   end;
 
@@ -2268,28 +2247,6 @@ begin
     form1.close;
   end;
 
-  x := 0;
-  try
-    assignfile(fFile, extractfilepath(application.exename) + 'actions.cfg');
-    reset (fFile);
-    while not eof(fFile) do
-    begin
-      readln(fFile, line);
-      x := x + 1;
-      actionsArray[x, 1] := copy(line, 1, pos('¿', line)-1);
-      actionsArray[x, 2] := copy(line, pos('¿', line) + 1, 1);
-      actionsArray[x, 3] := copy(line, pos('¿¿', line) + 2, pos('¿¿¿',
-        line)-pos('¿¿', line)-2);
-      actionsArray[x, 4] := copy(line, pos('¿¿¿', line) + 3, length(line));
-    end;
-    closefile(fFile);
-  except
-    try
-      closefile(fFile);
-    except
-    end;
-  end;
-  totalactions := x;
 end;
 
 procedure TForm2.Button1Click(Sender: TObject);

@@ -19,7 +19,7 @@ unit UConfig;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UConfig.pas,v $
- *  $Revision: 1.11 $ $Date: 2004/11/19 19:55:19 $
+ *  $Revision: 1.12 $ $Date: 2004/11/23 19:22:07 $
  *****************************************************************************}
 
 interface
@@ -50,24 +50,48 @@ type
     P_width: Integer;
     P_height: Integer;
     function loadINI: Boolean;
-    function loadCFG: Boolean;
+    function loadCCFG: Boolean;
+    function loadACFG: Boolean;
     procedure saveINI;
-    Procedure saveCFG;
     procedure setSizeOption(con: Integer);
   public
-    isUsbPalm: Boolean; UsbPalmDevice: String; gameServer: Array[1..20, 1..4]
-      of String; pop: Array [0..9] of TPopAccount; comPort: Integer; baudrate:
-      Integer; refreshRate: Integer; bootDriverDelay: Integer; emailPeriod:
-      Integer; dllPeriod: Integer; scrollPeriod: Integer; parallelPort:
-      Integer; colorOption: Integer; alwaysOnTop: Boolean; mx3Usb: Boolean;
-      httpProxy: String; httpProxyPort: Integer; brightness: Integer;
-      CF_contrast: Integer; CF_brightness: Integer; newsRefresh: Integer;
-      randomScreens: Boolean; gameRefresh: Integer; mbmRefresh: Integer;
-      foldUsername: String; isMO: Boolean; isCF: Boolean; isHD: Boolean;
-      isHD2: Boolean;   // not used.
-      checkUpdates: Boolean; distLog: String; screen: Array[1..20] of
-      Array[1..4] of TScreenLine; winampLocation: String; setiEmail: String;
-      contrast: Integer;
+    isUsbPalm: Boolean;
+    UsbPalmDevice: String;
+    gameServer: Array[1..20, 1..4] of String;
+    pop: Array [0..9] of TPopAccount;
+    comPort: Integer;
+    baudrate: Integer;
+    refreshRate: Integer;
+    bootDriverDelay: Integer;
+    emailPeriod: Integer;
+    dllPeriod: Integer;
+    scrollPeriod: Integer;
+    parallelPort: Integer;
+    colorOption: Integer;
+    alwaysOnTop: Boolean;
+    mx3Usb: Boolean;
+    httpProxy: String;
+    httpProxyPort: Integer;
+    brightness: Integer;
+    CF_contrast: Integer;
+    CF_brightness: Integer;
+    newsRefresh: Integer;
+    randomScreens: Boolean;
+    gameRefresh: Integer;
+    mbmRefresh: Integer;
+    foldUsername: String;
+    isMO: Boolean;
+    isCF: Boolean;
+    isHD: Boolean;
+    isHD2: Boolean;   // not used.
+    checkUpdates: Boolean;
+    distLog: String;
+    screen: Array[1..20] of Array[1..4] of TScreenLine;
+    winampLocation: String;
+    setiEmail: String;
+    contrast: Integer;
+    actionsArray: Array[1..99, 1..4] of String;
+    totalactions: Integer;
     function load: Boolean;
     procedure save;
     property sizeOption: Integer read P_sizeOption write setSizeOption;
@@ -157,7 +181,44 @@ begin
   end;
 end;
 
-function TConfig.loadCFG: Boolean;
+function TConfig.loadACFG: Boolean;
+var
+  initfile: textfile;
+  counter: Integer;
+  configline: String;
+begin
+  // Load Actions
+  counter := 0;
+  try
+    assignfile(initfile, extractfilepath(application.exename) +
+      'actions.cfg');
+    try
+      reset (initfile);
+      while not eof(initfile) do
+      begin
+        readln(initfile, configline);
+        counter := counter + 1;
+        actionsArray[counter, 1] := copy(configline, 1,
+          pos('¿', configline)-1);
+        actionsArray[counter, 2] := copy(configline, pos('¿',
+          configline) + 1, 1);
+        actionsArray[counter, 3] := copy(configline, pos('¿¿',
+          configline) + 2, pos('¿¿¿', configline)-pos('¿¿', configline)-2);
+        actionsArray[counter, 4] := copy(configline, pos('¿¿¿',
+          configline) + 3, length(configline));
+      end;
+    finally
+      closefile(initfile);
+    end;
+  except
+  end;
+  totalactions := counter;
+
+  result := true;
+
+end;
+
+function TConfig.loadCCFG: Boolean;
 var
   initfile: textfile;
   x, y: Integer;
@@ -371,170 +432,34 @@ begin
   result := true;
 end;
 
-procedure TConfig.saveCFG;
-var
-  fFile: textfile;
-  line: String;
-  z, y, tempradio: Integer;
-  ascreen: TScreenLine;
-  templine1, form7spinedit, tempserver, tempuser, temppword: String;
-begin
-  assignfile(fFile, extractfilepath(application.exename) + 'config.cfg');
-  rewrite(fFile);
-
-  // line 1
-  line := IntToStr(refreshRate) + '¿' + winampLocation;
-  writeln(fFile, line);
-
-  // line 2
-  line := IntToStr(bootDriverDelay) + '¿' + setiEmail;
-  writeln(fFile, line);
-
-  // line 3
-  line := IntToStr(sizeOption) + '¿1' + IntToStr(contrast) + '¿2' +
-    IntToStr(brightness) + '¿3' + IntToStr(CF_contrast) + '¿4' +
-    IntToStr(CF_brightness);
-  writeln(fFile, line);
-
-  // lines 4..84
-  for z := 1 to 20 do
-  begin
-    for y := 1 to 4 do
-    begin
-      ascreen := screen[z][y];
-      if ascreen.enabled then line := '¿1'
-      else line := '¿0';
-      line := line + IntToStr(ascreen.skip);
-      if ascreen.center then templine1 := '%c%'
-      else templine1 := '';
-      templine1 := templine1 + ascreen.text + line;
-      if ascreen.noscroll then templine1 := templine1 + '1'
-      else templine1 := templine1 + '0';
-
-      if ascreen.contNextLine then templine1 := templine1 + '1'
-      else templine1 := templine1 + '0';
-
-      form7spinedit := IntToStr(ascreen.interactionTime);
-      if ascreen.interactionTime < 10 then form7spinedit := '0' +
-        form7spinedit;
-
-      templine1 := templine1 + intToStr(ascreen.theme) +
-        IntToStr(ascreen.interaction) + Form7Spinedit +
-        intToStr(ascreen.showTime);
-
-      writeln(fFile, templine1);
-    end;
-  end;
-
-  // line 84
-  if randomScreens then line := '1'
-  else line := '0';
-
-  line := line + IntToStr(newsRefresh);
-  writeln(fFile, line);
-
-  // line 85
-  line := foldUsername + '¿' + IntToStr(gameRefresh);
-  writeln(fFile, line);
-
-
-  // line 86
-  if checkUpdates then line := '1'
-  else line := '0';
-  writeln(fFile, line + IntToStr(mbmRefresh));
-
-  // line 87
-  writeln(fFile, IntToStr(colorOption));
-
-  // line 88
-  writeln(fFile, distLog);
-
-  // line 89
-  writeln(fFile, IntToStr(emailPeriod) + '¿' + IntToStr(dllPeriod) + '¿¿' +
-    IntToStr(scrollPeriod));
-
-  // line 90
-  if (isUsbPalm) then writeln(fFile, UsbPalmDevice)
-  else writeln(fFile, '');
-
-  // line 91
-  writeln(fFile, IntToStr(parallelPort));
-
-  // line 92
-  if mx3Usb then line := '1'
-  else line := '0';
-  if alwaysOnTop then writeln(fFile, '1' + line)
-  else writeln(fFile, '0' + line);
-
-  // lines 93..94
-  writeln(fFile, httpProxy);
-  writeln(fFile, httpProxyPort);
-
-  // lines 95..97
-  tempserver := '';
-  tempuser := '';
-  temppword := '';
-  for y := 1 to 10 do
-  begin
-    tempserver := tempserver + pop[y mod 10].server + '¿' + IntToStr(y-1);
-    tempuser := tempuser + pop[y mod 10].user + '¿' + IntToStr(y-1);
-    temppword := temppword + pop[y mod 10].pword + '¿' + IntToStr(y-1);
-  end;
-
-  writeln(fFile, tempserver);
-  writeln(fFile, tempuser);
-  writeln(fFile, temppword);
-
-  // line 98
-  tempradio := 0;
-  if (isHD) then tempradio := 1;
-  if (isMO) then tempradio := 2;
-  if (isCF) then tempradio := 3;
-  if (isHD2) then tempradio := 4;
-  writeln(fFile, tempradio);
-
-  // line 99
-  writeln(fFile, IntToStr(comPort));
-
-  // line 100
-  writeln(fFile, intToStr(baudrate));
-
-  closefile(fFile);
-
-  // Save Game server list.
-  try
-    assignfile(fFile, extractfilepath(application.exename) + 'servers.cfg');
-    rewrite(fFile);
-    for z := 1 to 20 do
-      for y := 1 to 4 do writeln(fFile, gameServer[z, y]);
-    closefile (fFile);
-  except
-    try
-      closefile(fFile);
-    except
-    end;
-  end;
-end;
-
-
 function TConfig.load: Boolean;
+var
+  bResult1, bResult2: Boolean;
 begin
   if (FileExists(ExtractFilePath(Application.EXEName) + 'config.ini')) or (not
     FileExists(ExtractFilePath(Application.EXEName) + 'config.cfg')) then
   begin
-    result := loadINI;
+    bResult1 := loadINI;
   end
   else
   begin
-    result := loadCFG;
+    bResult1 := loadCCFG;
   end;
+  if (FileExists(ExtractFilePath(Application.EXEName) + 'actions.cfg')) then
+    bResult2 := loadACFG
+  else
+    bResult2 := true;
+
+  result := bResult1 and bResult2;
 end;
 
 procedure TConfig.save;
 begin
   saveINI;
   if FileExists(ExtractFilePath(Application.EXEName) + 'config.cfg') then
-    saveCFG;
+    DeleteFile(ExtractFilePath(Application.EXEName) + 'config.cfg');
+  if FileExists(ExtractFilePath(Application.EXEName) + 'actions.cfg') then
+    DeleteFile(ExtractFilePath(Application.EXEName) + 'actions.cfg')
 end;
 
 
@@ -680,6 +605,22 @@ begin
     end;
   end;
 
+  // Load Actions
+  x := 0;
+  if not FileExists(ExtractFilePath(Application.EXEName) + 'actions.cfg') then
+  repeat
+    x := x + 1;
+    actionsArray[x, 1] := initfile.ReadString('Actions', 'Action' +
+      Format('%.2u', [x]) + 'Variable', '');
+    actionsArray[x, 2] := initfile.ReadString('Actions', 'Action' +
+      Format('%.2u', [x]) + 'Condition', '0');
+    actionsArray[x, 3] := initfile.ReadString('Actions', 'Action' +
+      Format('%.2u', [x]) + 'ConditionValue', '');
+    actionsArray[x, 4] := initfile.ReadString('Actions', 'Action' +
+      Format('%.2u', [x]) + 'Action', '')
+  until (actionsArray[x, 1] = '') or (x = 99);
+  totalactions := x - 1;
+
   result := true;
 
   initfile.Free;
@@ -809,9 +750,23 @@ begin
     end;
   end;
 
+  // Save Actions
+  for x := 1 to totalactions do
+  begin
+    initfile.WriteString('Actions', 'Action' + Format('%.2u', [x]) +
+      'Variable', actionsArray[x, 1]);
+    initfile.WriteString('Actions', 'Action' + Format('%.2u', [x]) +
+      'Condition', actionsArray[x, 2]);
+    initfile.WriteString('Actions', 'Action' + Format('%.2u', [x]) +
+      'ConditionValue', actionsArray[x, 3]);
+    initfile.WriteString('Actions', 'Action' + Format('%.2u', [x]) +
+      'Action', actionsArray[x, 4]);
+  end;
+
   initfile.Free;
 
 end;
 
 
 end.
+
