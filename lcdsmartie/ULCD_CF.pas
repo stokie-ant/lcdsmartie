@@ -240,10 +240,13 @@ end;
 
 destructor TLCD_CF.Destroy;
 begin
-  setbacklight(false);
-  ClearScreen;
-
-  serial.Destroy;
+  if (Assigned(serial)) then
+  begin
+    setbacklight(false);
+    ClearScreen;
+    serial.Destroy;
+  end;
+ 
   inherited;
 end;
 
