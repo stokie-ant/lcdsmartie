@@ -19,14 +19,14 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.35 $ $Date: 2005/01/04 22:53:52 $
+ *  $Revision: 1.36 $ $Date: 2005/01/05 15:32:41 $
  *****************************************************************************}
 
 
 interface
 
 uses Classes, System2, xmldom, XMLIntf, SysUtils, xercesxmldom, XMLDoc,
-  msxmldom, ComCtrls, ComObj;
+  msxmldom, ComCtrls, ComObj, UUtils;
 
 const
   ticksperseconde = 1000;
@@ -49,17 +49,6 @@ type
   TSharedIndex = Record
     iType : TSensorType;                          // type of sensor
     Count : Integer;                              // number of sensor for that type
-  end;
-
-  TThreadMethod = procedure of object;
-
-  TMyThread = class(TTHREAD)
-  public
-    constructor Create(myMethod: TThreadMethod);
-  private
-    method: TThreadMethod; 
-  published
-    procedure execute; override;
   end;
 
 
@@ -237,7 +226,7 @@ uses cxCpu40, adCpuUsage, UMain, Windows, Forms, Registry, IpHlpApi,
   mmsystem, ExtActns, Messages, IdHTTP, IdBaseComponent, IdComponent,
   IdTCPConnection, IdTCPClient, IdMessageClient, IdPOP3, IdMessage, Menus,
   ExtCtrls, Controls, StdCtrls, StrUtils, ActiveX, IdUri, DateUtils, IdGlobal,
-  UUtils;
+  SyncObjs;
 
 procedure TData.NewScreen(bYes: Boolean);
 begin
@@ -290,17 +279,6 @@ begin
   result := str;
 end;
 
-constructor TMyThread.Create(myMethod: TThreadMethod);
-begin
-  method := myMethod;
-  inherited Create(true);   // Create suspended.
-end;
-
-procedure TMyThread.Execute;
-begin
-  method();
-end;
-
 constructor TData.Create;
 begin
   inherited;
@@ -338,16 +316,22 @@ var
 begin
   if (Assigned(dataThread)) then
   begin
-    if (not dataThread.Terminated) then dataThread.Terminate;
-    dataThread.WaitFor;
-    dataThread.Destroy;
+    dataThread.Terminate;
+    // wait upto 30 seconds for it to exit - may be blocked in net calls
+    if (dataThread.exited.WaitFor(30*1000) = wrSignaled) then
+      dataThread.Free()
+    else
+      dataThread.Suspend();
   end;
 
   if (Assigned(cpuThread)) then
   begin
-    if (not cpuThread.Terminated) then cpuThread.Terminate;
-    cpuThread.WaitFor;
-    cpuThread.Destroy;
+    cpuThread.Terminate;
+    // wait upto 5 seconds for it to exit
+    if (cpuThread.exited.WaitFor(5*1000) = wrSignaled) then
+      cpuThread.Free()
+    else
+      cpuThread.Suspend();
   end;
 
   for uiDll:=1 to uiTotalDlls do

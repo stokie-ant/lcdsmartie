@@ -6,7 +6,7 @@ unit ULCD_MO;
 
 interface
 
-uses ULCD, Classes, SyncObjs, SysUtils, Windows, USerial;
+uses ULCD, Classes, SyncObjs, SysUtils, Windows, USerial, UUtils;
 
 const
   readBufferSize=100;
@@ -45,18 +45,6 @@ type
   //typedef VOID					(*UnRegisterDeviceInterfaceProc)	(HDEVNOTIFY);
   //typedef BOOL					(*IsPalmOSDeviceNotificationProc)	(ULONG, ULONG, PTCHAR, GUID*);
   //TFNGetDeviceFriendlyName = function ( pDeviceName:PCHAR; pFriendlyName: PCHAR):ULONG; cdecl;
-
-  TThreadMethod = procedure of object;
-
-  TMyThread = class(TTHREAD)
-  public
-    constructor Create(myMethod: TThreadMethod);
-  private
-    method: TThreadMethod;
-  published
-    procedure execute; override;
-  end;
-
 
   TLCD_MO = class(TLCD)
   public
@@ -102,18 +90,7 @@ type
 
 implementation
 
-uses UMain, Dialogs, Forms, Registry, UUtils;
-
-constructor TMyThread.Create(myMethod: TThreadMethod);
-begin
-  method:=myMethod;
-  inherited Create(true);   // Create suspended.
-end;
-
-procedure TMyThread.Execute;
-begin
-  method();
-end;
+uses UMain, Dialogs, Forms, Registry;
 
 constructor TLCD_MO.CreateSerial(uiPort: Byte; baudRate: Cardinal);
 begin
@@ -402,8 +379,11 @@ begin
     if Assigned(readThread) then
     begin
       readThread.Terminate;
-      readThread.WaitFor;
-      readThread.Destroy;
+      // wait for upto 5 seconds
+      if (readThread.exited.WaitFor(5000) = wrSignaled) then
+        readThread.Free()
+      else
+        readThread.Suspend();
     end;
 
     if (usbPalm <> INVALID_HANDLE_VALUE) then
@@ -681,12 +661,6 @@ begin
           end;
         end;
 
-        // When the Palm is switched off then we get bytesRead=0 and
-        // WaitForMultipleObjects doesn't block - this causes a busy
-        // loop, hence the ugly sleep.
-        // [We could exit the thread instead, but when the palm is switched
-        // back on everything works again - so it's a shame to break that].
-        // Update: The read returns 0 bytes also when the read has timed out.
         if (bytesRead<=0) then Sleep(10);
       end
       else

@@ -1,14 +1,53 @@
 unit UUtils;
 
 interface
+
+uses SyncObjs, Classes;
+
+type
+  TThreadMethod = procedure of object;
+
+  TMyThread = class(TTHREAD)
+  private
+    method: TThreadMethod;
+  published
+    procedure execute; override;
+  public
+    exited: TEvent;
+    property Terminated;
+    constructor Create(myMethod: TThreadMethod);
+    destructor Destroy;  override;
+  end;
+
   function errMsg(uError: Cardinal): String;
   function decodeArgs(str: String; funcName: String; maxargs: Cardinal; var
       args: Array of String; var prefix: String; var postfix: String; var
       numArgs: Cardinal): Boolean;
 
+
 implementation
 
 uses Windows, SysUtils;
+
+
+constructor TMyThread.Create(myMethod: TThreadMethod);
+begin
+  method := myMethod;
+  exited := TEvent.Create(nil, true, false, '');
+  inherited Create(true);   // Create suspended.
+end;
+
+destructor TMyThread.Destroy;
+begin
+  exited.Free();
+  inherited;
+end;
+
+procedure TMyThread.Execute;
+begin
+  method();
+  exited.SetEvent();
+end;
 
 function errMsg(uError: Cardinal): String;
 var

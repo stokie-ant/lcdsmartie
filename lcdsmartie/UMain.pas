@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.42 $ $Date: 2005/01/04 22:38:35 $
+ *  $Revision: 1.43 $ $Date: 2005/01/05 15:32:58 $
  *****************************************************************************}
 
 interface
@@ -264,6 +264,8 @@ end;
 
 procedure TForm1.WMPowerBroadcast (var M: TMessage);
 const
+  PBT_APMSUSPEND = 4;
+  PBT_APMSTANDBY = 5;
   PBT_APMRESUMECRITICAL = 6;
   PBT_APMRESUMESUSPEND = 7;
   PBT_APMRESUMESTANDBY = 8;
@@ -274,6 +276,11 @@ begin
     then
   begin
     ReInitLCD();
+  end
+  else if (M.WParam = PBT_APMSUSPEND) or (M.WParam = PBT_APMSTANDBY) then
+  begin
+    FiniLCD();
+    Lcd := TLCD.Create(); // replace with a dummy driver.
   end;
 end;
 
@@ -465,7 +472,6 @@ procedure TForm1.FormCreate(Sender: TObject);
 var
   line: String;
   initfile: textfile;
-  i: Integer;
 
 begin
   Randomize;
@@ -479,10 +485,6 @@ begin
   screenLcd[2] := @Panel2;
   screenLcd[3] := @Panel3;
   screenLcd[4] := @Panel4;
-
-  // Sync the display to our initial view of the custom chars.
-  for i:= 1 to 8 do
-    customCharsChanged[i] := true;
 
 
 //SetWindowLong(Application.Handle, GWL_EXSTYLE, GetWindowLong(Application.Handle, GWL_EXSTYLE) or WS_EX_TOOLWINDOW and not W
@@ -603,8 +605,14 @@ const
   baudRates: array [0..14] of Cardinal =(CBR_110, CBR_300, CBR_600, CBR_1200, CBR_2400,
     CBR_4800, CBR_9600, CBR_14400, CBR_19200, CBR_38400, CBR_56000, CBR_57600,
     CBR_115200, CBR_128000, CBR_256000);
+var
+  i: Integer;
 begin
   timer11.enabled := false; // stop any startup of the HD44780 driver
+
+  // Sync the display to our current view of the custom chars.
+  for i:= 1 to 8 do
+    customCharsChanged[i] := true;
 
   if (config.isMO) or (config.isCF) or (config.isTestDriver) then
   begin
