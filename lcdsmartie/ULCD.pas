@@ -19,13 +19,18 @@ unit ULCD;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/ULCD.pas,v $
- *  $Revision: 1.4 $ $Date: 2004/11/19 19:55:19 $
+ *  $Revision: 1.5 $ $Date: 2004/11/24 14:50:53 $
  *****************************************************************************}
 
 
 interface
 
+uses VaClasses, VaComm;
+
+
 type
+  PTVACOMM = ^TVaComm;
+
   TLCD = class(TObject)
   public
     procedure setPosition(x, y: Integer); virtual;

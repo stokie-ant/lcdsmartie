@@ -488,7 +488,7 @@ object Form1: TForm1
     Left = 40
     Top = 152
   end
-  object VaComm1: TVaComm
+  object VaCommNoFlowControl: TVaComm
     FlowControl.OutCtsFlow = False
     FlowControl.OutDsrFlow = False
     FlowControl.ControlDtr = dtrDisabled
@@ -515,7 +515,7 @@ object Form1: TForm1
     Left = 136
     Top = 128
   end
-  object VaComm2: TVaComm
+  object VaCommFlowControl: TVaComm
     FlowControl.OutCtsFlow = False
     FlowControl.OutDsrFlow = False
     FlowControl.ControlDtr = dtrHandshake

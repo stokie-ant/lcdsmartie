@@ -2,7 +2,7 @@ unit ULCD_MO;
 
 interface
 
-uses ULCD, Classes, SyncObjs, SysUtils, Windows;
+uses ULCD, Classes, SyncObjs, SysUtils, Windows, VaClasses, VaComm;
 
 const
   readBufferSize=100;
@@ -30,11 +30,13 @@ type
     procedure setGPO(gpo: Byte; on: Boolean); override;
     procedure setContrast(level: Integer); override;
     procedure setBrightness(level: Integer); override;
-    constructor Create; override;
+    constructor CreateSerial(serial: PTVACOMM; uiPort: Cardinal; baudRate: TVaBaudrate);
     constructor CreateUsb(device: String);
+    constructor Create; override;
     destructor Destroy; override;
   private
     bConnected: Boolean;
+    serial: PTVACOMM;
     bUsb: Boolean; input, output: Cardinal; // for Usb
     eStopReadThread: THandle;            // for Usb
     csRead: TCriticalSection;           // for Usb
@@ -46,6 +48,7 @@ type
     procedure writeDevice(byte: Byte); overload;
     function readDevice(var chr: Char): Boolean;
     function errMsg(uError: Cardinal): String;
+
   end;
 
 implementation
@@ -60,7 +63,18 @@ end;
 
 procedure TMyThread.Execute;
 begin
-    method();
+  method();
+end;
+
+constructor TLCD_MO.CreateSerial(serial: PTVACOMM; uiPort: Cardinal; baudRate: TVaBaudrate);
+begin
+  self.serial := serial;
+  serial.Baudrate := baudRate;
+  serial.PortNum := uiPort;
+  //VaComm1.Close;
+  serial.Open;
+
+  Create();
 end;
 
 function TLCD_MO.errMsg(uError: Cardinal): String;
@@ -180,6 +194,11 @@ begin
       CloseHandle(eStopReadThread);
     end;
     if Assigned(csRead) then csRead.Free;
+  end
+  else
+  begin
+    sleep(500);
+    serial.close;
   end;
 
   inherited;
@@ -318,7 +337,7 @@ begin
   if not bUsb then
   begin
 
-    Form1.VaComm1.WriteText(str);
+    serial.WriteText(str);
 
   end
   else
@@ -343,7 +362,7 @@ begin
   if not bUsb then
   begin
 
-    Form1.VaComm1.WriteChar(Chr(byte));
+    serial.WriteChar(Chr(byte));
 
   end
   else
@@ -382,9 +401,9 @@ begin
   else
   begin
 
-    if form1.VaComm1.ReadBufUsed>0 then
+    if serial.ReadBufUsed>0 then
     begin
-      if (form1.VaComm1.ReadChar(chr)) then gotdata:=true;
+      if (serial.ReadChar(chr)) then gotdata:=true;
     end;
 
   end;

@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.18 $ $Date: 2004/11/24 02:35:06 $
+ *  $Revision: 1.19 $ $Date: 2004/11/24 14:50:53 $
  *****************************************************************************}
 
 interface
@@ -72,8 +72,8 @@ type
     SpeedButton1: TSpeedButton;
     Panel5: TPanel;
     Timertrans: TTimer;
-    VaComm1: TVaComm;
-    VaComm2: TVaComm;
+    VaCommNoFlowControl: TVaComm;
+    VaCommFlowControl: TVaComm;
     Timer1: TTimer;
     Timer2: TTimer;
     Timer3: TTimer;
@@ -365,6 +365,7 @@ procedure TForm1.FormCreate(Sender: TObject);
 var
   line: String;
   initfile: textfile;
+  baudRate: TVaBaudrate;
 begin
   Randomize;
 
@@ -504,29 +505,31 @@ begin
       end
       else
       begin
+
         case config.baudrate of
-          0: VaComm1.Baudrate := br110;
-          1: VaComm1.Baudrate := br300;
-          2: VaComm1.Baudrate := br600;
-          3: VaComm1.Baudrate := br1200;
-          4: VaComm1.Baudrate := br2400;
-          5: VaComm1.Baudrate := br4800;
-          6: VaComm1.Baudrate := br9600;
-          7: VaComm1.Baudrate := br14400;
-          8: VaComm1.Baudrate := br19200;
-          9: VaComm1.Baudrate := br38400;
-          10: VaComm1.Baudrate := br56000;
-          11: VaComm1.Baudrate := br57600;
-          12: VaComm1.Baudrate := br115200;
-          13: VaComm1.Baudrate := br128000;
-          14: VaComm1.Baudrate := br256000;
+          0: baudRate := br110;
+          1: baudRate := br300;
+          2: baudRate := br600;
+          3: baudRate := br1200;
+          4: baudRate := br2400;
+          5: baudRate := br4800;
+          6: baudRate := br9600;
+          7: baudRate := br14400;
+          8: baudRate := br19200;
+          9: baudRate := br38400;
+          10: baudRate := br56000;
+          11: baudRate := br57600;
+          12: baudRate := br115200;
+          13: baudRate := br128000;
+          14: baudRate := br256000;
+          else raise Exception.Create('unknown baudrate setting: '
+            + IntToStr(config.baudrate));
         end;
-        VaComm1.PortNum := config.comPort;
-        //VaComm1.Close;
-        VaComm1.Open;
-        if (config.isCF) then Lcd := TLCD_CF.Create()
-        else
-          if (config.isMO) then Lcd := TLCD_MO.Create();
+
+        if (config.isCF) then
+          Lcd := TLCD_CF.CreateSerial(@VaCommFlowControl, config.comPort, baudRate)
+        else if (config.isMO) then
+          Lcd := TLCD_MO.CreateSerial(@VaCommNoFlowControl, config.comPort, baudRate);
       end;
     except
       on E: Exception do
@@ -537,8 +540,8 @@ begin
     end;
   end;
 
-  if not (config.isCF or config.isMO or config.isHD) then Lcd :=
-    TLCD.Create();
+  if not (config.isCF or config.isMO or config.isHD) then
+    Lcd := TLCD.Create();
 
   if (config.isMO) or (config.isCF) then
   begin
@@ -1358,20 +1361,6 @@ begin
       poort1.Free;
     except
     end;
-  end;
-
-  if config.isMO then
-  begin
-    sleep(500);
-    try
-      Vacomm1.close;
-    except
-    end;
-  end;
-
-  if config.isCF then
-  begin
-    Vacomm1.close;
   end;
 
   Data.Destroy;

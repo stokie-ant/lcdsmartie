@@ -19,7 +19,7 @@ unit UMOSetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/Attic/UMOSetup.pas,v $
- *  $Revision: 1.2 $ $Date: 2004/11/19 19:55:19 $
+ *  $Revision: 1.3 $ $Date: 2004/11/24 14:50:53 $
  *****************************************************************************}
 
 
@@ -74,13 +74,8 @@ end;
 procedure TForm3.Button1Click(Sender: TObject);
 
 begin
-  form1.VaComm1.WriteChar(Chr($0FE));
-  form1.VaComm1.WriteChar(chr($091));
-  form1.VaComm1.WriteChar(chr(trackbar1.position));
-
-  form1.VaComm1.WriteChar(Chr($0FE));
-  form1.VaComm1.WriteChar(Chr($098));
-  form1.VaComm1.WriteChar(chr(trackbar2.position));
+  lcd.setContrast(trackbar1.position);
+  lcd.setBrightness(trackbar2.position);
 
   form3.visible := false;
   form2.enabled := true;
@@ -96,9 +91,7 @@ end;
 // MO options - contrast bar.
 procedure TForm3.TrackBar1Change(Sender: TObject);
 begin
-  form1.VaComm1.WriteChar(Chr($0FE));
-  form1.VaComm1.WriteChar('P');
-  form1.VaComm1.WriteChar(chr(trackbar1.position));
+  lcd.setContrast(trackbar1.position);
   config.contrast := trackbar1.position;
 end;
 
@@ -110,9 +103,7 @@ end;
 // MO options - brightness bar.
 procedure TForm3.TrackBar2Change(Sender: TObject);
 begin
-  form1.VaComm1.WriteChar(Chr($0FE));
-  form1.VaComm1.WriteChar(Chr($099));
-  form1.VaComm1.WriteChar(chr(trackbar2.position));
+  lcd.setBrightness(trackbar2.position);
   config.brightness := trackbar2.position;
 end;
 

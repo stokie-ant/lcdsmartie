@@ -2,7 +2,7 @@ unit ULCD_CF;
 
 interface
 
-uses ULCD;
+uses ULCD, VaClasses, VaComm;
 
 type
   TLCD_CF = class(TLCD)
@@ -12,42 +12,48 @@ type
     procedure setbacklight(on: Boolean); override;
     procedure setContrast(level: Integer); override;
     procedure setBrightness(level: Integer); override;
-    constructor Create; override;
+    constructor CreateSerial(serial: PTVACOMM; uiPort: Cardinal; baudRate: TVaBaudrate);
     destructor Destroy; override;
+  private
+    serial: PTVACOMM;
   end;
 
 implementation
 
 uses UMain, SysUtils;
 
-constructor TLCD_CF.Create;
+constructor TLCD_CF.CreateSerial(serial: PTVACOMM; uiPort: Cardinal; baudRate: TVaBaudrate);
 begin
-  with form1.VaComm1 do
-  begin
-    WriteChar(Chr(3));
-    WriteChar(Chr(4));
-    WriteChar(Chr(20));
-  end;
+  self.serial := serial;
+  serial.Baudrate := baudRate;
+  serial.PortNum := uiPort;
+  //VaComm1.Close;
+  serial.Open;
 
-  inherited;
+  serial.WriteChar(Chr(3));
+  serial.WriteChar(Chr(4));
+  serial.WriteChar(Chr(20));
+
+  inherited Create;
 end;
 
 destructor TLCD_CF.Destroy;
 begin
   setbacklight(false);
+  serial.close;
   inherited;
 end;
 
 procedure TLCD_CF.setContrast(level: Integer);
 begin
-  Form1.VaComm1.WriteChar(chr(15));
-  Form1.VaComm1.WriteChar(chr(level));
+  serial.WriteChar(chr(15));
+  serial.WriteChar(chr(level));
 end;
 
 procedure TLCD_CF.setBrightness(level: Integer);
 begin
-  Form1.VaComm1.WriteChar(chr(14));
-  Form1.VaComm1.WriteChar(chr(level));
+  serial.WriteChar(chr(14));
+  serial.WriteChar(chr(level));
 end;
 
 
@@ -55,29 +61,18 @@ end;
 
 procedure TLCD_CF.setbacklight(on: Boolean);
 begin
-  with form1.VaComm1 do
-  begin
-    if (on) then
-    begin
-      WriteChar(chr(14));
-      WriteChar(chr(100));
-    end
-    else
-    begin
-      WriteChar(chr(14));
-      WriteChar(chr(0));
-    end;
-  end;
+  serial.WriteChar(chr(14));
+  if (on) then
+    serial.WriteChar(chr(100))
+  else
+    serial.WriteChar(chr(0));
 end;
 
 procedure TLCD_CF.setPosition(x, y: Integer);
 begin
-  with form1.VaComm1 do
-  begin
-    WriteChar(chr(17));
-    WriteChar(chr(x-1));
-    WriteChar(chr(y-1));
-  end;
+  serial.WriteChar(chr(17));
+  serial.WriteChar(chr(x-1));
+  serial.WriteChar(chr(y-1));
 end;
 
 procedure TLCD_CF.write(str: String);
@@ -104,30 +99,22 @@ begin
   str := StringReplace(str, '\', 'û', [rfReplaceAll]);
   str := StringReplace(str, '^', chr(206), [rfReplaceAll]);
 
- { VaComm2.WriteChar(Chr(3));
-  VaComm2.WriteChar(Chr(4));
-  VaComm2.WriteChar(Chr(20));
-  }
-
-  Form1.VaComm1.WriteText(str);
+  serial.WriteText(str);
 end;
 
 
 procedure TLCD_CF.customChar(character: Integer; data: Array of Byte);
 begin
-  with Form1.VaComm1 do
-  begin
-    WriteChar(chr(25));           //this starts the custom characters
-    WriteChar(chr(character-1));  //00 to 07 for 8 custom characters.
-    WriteChar(chr(data[0]));
-    WriteChar(chr(data[1]));
-    WriteChar(chr(data[2]));
-    WriteChar(chr(data[3]));
-    WriteChar(chr(data[4]));
-    WriteChar(chr(data[5]));
-    WriteChar(chr(data[6]));
-    WriteChar(chr(data[7]));
-  end;
+  serial.WriteChar(chr(25));           //this starts the custom characters
+  serial.WriteChar(chr(character-1));  //00 to 07 for 8 custom characters.
+  serial.WriteChar(chr(data[0]));
+  serial.WriteChar(chr(data[1]));
+  serial.WriteChar(chr(data[2]));
+  serial.WriteChar(chr(data[3]));
+  serial.WriteChar(chr(data[4]));
+  serial.WriteChar(chr(data[5]));
+  serial.WriteChar(chr(data[6]));
+  serial.WriteChar(chr(data[7]));
 end;
 
 end.

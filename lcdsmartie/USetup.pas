@@ -19,7 +19,7 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.11 $ $Date: 2004/11/24 02:35:06 $
+ *  $Revision: 1.12 $ $Date: 2004/11/24 14:50:54 $
  *****************************************************************************}
 
 interface
@@ -385,16 +385,11 @@ end;
 procedure TForm2.FormShow(Sender: TObject);
 var
   i, blaat: Integer;
-  line, line2: String;
-  laatstepacket: Boolean;
-  ch: char;
   namesUsbPalms, deviceUsbPalms: Array [0..9] of String;
   numUsbPalms: Integer;
   usbSelection: Integer;
   itemNum: Integer;
   strobj: TStringObj;
-
-label nextpacket;
 
 begin
   usbSelection := 0;
@@ -586,6 +581,17 @@ begin
     tabsheet13.Enabled := true;
     listbox12.Items.Add('FanSpeed(1,1) (nr,divider)');
 
+    { The below is commented out as it is reading/writing directly to the device.
+      We need to know more details so we can move it in to the lcd code.
+
+       // var section move down to here:
+	var
+	  line, line2: String;
+	  ch: char;
+	  laatstepacket: Boolean;
+
+	label nextpacket;
+
     form1.VaComm1.WriteChar(chr($FE));   //probe 4 one-wire devices
     form1.VaComm1.WriteChar(chr($C8));
     form1.VaComm1.WriteChar(chr($02));
@@ -615,7 +621,7 @@ begin
         end;
       end;
       if laatstepacket <> true then goto nextpacket;
-    end;
+    end;}
   end;
 end;
 
