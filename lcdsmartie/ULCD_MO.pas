@@ -96,14 +96,13 @@ type
     procedure writeDevice(buffer: string); overload;
     procedure writeDevice(byte: Byte); overload;
     function readDevice(var chr: Char): Boolean;
-    function errMsg(uError: Cardinal): String;
     Function OpenUsbPort: Boolean;
     procedure initLCD;
   end;
 
 implementation
 
-uses UMain, Dialogs, Forms, Registry;
+uses UMain, Dialogs, Forms, Registry, UUtils;
 
 constructor TMyThread.Create(myMethod: TThreadMethod);
 begin
@@ -127,22 +126,6 @@ begin
   Create();
 end;
 
-function TLCD_MO.errMsg(uError: Cardinal): String;
-var
-  psError: pointer;
-  sError: String;
-begin
-  if (uError <> 0) then
-  begin
-    FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER or FORMAT_MESSAGE_FROM_SYSTEM,
-      nil, uError, 0, @psError, 0, nil );
-    sError := '#' + IntToStr(uError) + ': ' + PChar(psError);
-    LocalFree(Cardinal(psError));
-    Result := sError;
-  end
-  else
-    Result := '#0'; // don't put "operation completed successfully!" It's too confusing!
-end;
 
 Function TLCD_MO.OpenUsbPort: Boolean;
 var
@@ -167,11 +150,21 @@ begin
 
     // $504F7262   == 'POrb'
     usbPalm := FNOpenPort(@buffer[1], $504F7262);
+
+    // Some Palms incorrectly don't use an app id, also PalmOrb didn't use
+    // to use an app id in older versions. So we try to connect with 0 id.
+    if (usbPalm = INVALID_HANDLE_VALUE) then
+      usbPalm := FNOpenPort(@buffer[1], 0);
+
+    // Some Palms incorrectly use the app id, and so we have to
+    // connect using 'sync'
+    if (usbPalm = INVALID_HANDLE_VALUE) then
+      usbPalm := FNOpenPort(@buffer[1], $73796e63); // $73796e63 == 'sync'
+   
     if (usbPalm = INVALID_HANDLE_VALUE) then
        raise Exception.Create(
          'An USB palm was detected but we failed to connect to PalmOrb.'+#10+#13
          + 'Please ensure PalmOrb is already running on your Palm.');
-
 
     // Set read/write time outs so LCD Smartie doesnt hang
     timeouts.uiReadTimeout:=8000; // 8 seconds

@@ -18,17 +18,17 @@ See: http://sourceforge.net/tracker/?func=browse&group_id=122330&atid=693136
 
 USB Palm users
 ==============
-In Alpha 5, the USB code has been completely rewritten. If you have any problems
-then email "usb <at> x5.me.uk" - stating your Palm make/model, PalmOS version
-and the usb.log file.
+If you have any problems then email "usb <at> x5.me.uk" - 
+stating your Palm make/model, PalmOS version and the usb.log file.
 
 Changes
 =======
-5.3Beta1
+5.3Alpha6
 	- Fixed bug: Actions weren't being saved.
 	- Fixed bug: Multiple presses of keys were being ignored.
 	- Fixed bug: hanged when variable use had syntax error.
 	- Improved: parameter checking of variables.
+	- Fixed bug: Couldn't connect to some USB Palms.
 5.3Alpha5
 	- Removed delay when applying settings.
 	- List only usable serial ports.
