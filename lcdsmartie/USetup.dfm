@@ -1,6 +1,6 @@
 object Form2: TForm2
-  Left = 270
-  Top = 655
+  Left = 210
+  Top = 249
   Anchors = []
   BiDiMode = bdLeftToRight
   BorderIcons = []
@@ -29,7 +29,7 @@ object Form2: TForm2
     Top = 0
     Width = 233
     Height = 409
-    ActivePage = TabSheet6
+    ActivePage = TabSheet2
     Font.Charset = ANSI_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
@@ -616,6 +616,19 @@ object Form2: TForm2
         Width = 71
         Height = 13
         Caption = 'E-Mail number:'
+      end
+      object Label28: TLabel
+        Left = 56
+        Top = 192
+        Width = 56
+        Height = 13
+        Caption = 'POP3 only'
+        Font.Charset = ANSI_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -11
+        Font.Name = 'Tahoma'
+        Font.Style = [fsBold]
+        ParentFont = False
       end
       object Edit13: TEdit
         Left = 72
