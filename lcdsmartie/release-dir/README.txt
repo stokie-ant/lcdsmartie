@@ -3,8 +3,8 @@
 Please see our website for instructions and the latest information:
 		http://lcdsmartie.sourceforge.net/
 
-Pre-alpha builds
-================
+Alpha builds
+============
 These builds are believed to be stable but the developer(s) do not have access
 to all supported LCD types and/or use all the features of LCD Smartie.
 
