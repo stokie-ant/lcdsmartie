@@ -9,7 +9,7 @@ unit UConfig;
  *  as published by the Free Software Foundation; either version 2
  *  of the License, or (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful, 
+ *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
@@ -19,10 +19,14 @@ unit UConfig;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UConfig.pas,v $
- *  $Revision: 1.13 $ $Date: 2004/11/23 20:44:00 $
+ *  $Revision: 1.14 $ $Date: 2004/11/23 22:28:28 $
  *****************************************************************************}
 
 interface
+
+const
+  sMyConfigFileFormatVersion = '1.0';
+  sMyScreenTextSyntaxVersion = '1.0';
 
 type
   TScreenLine = Record
@@ -469,6 +473,7 @@ function TConfig.loadINI: Boolean;
 var
   initfile: TINIFile;
   x, y: Integer;
+  sConfigFileFormatVersion, sScreenTextSyntaxVersion: String;
   sScreen, sLine, sPOPAccount, sGameLine: String;
 begin
 
@@ -479,6 +484,11 @@ begin
     result := false;
     Exit;
   end;
+
+  sConfigFileFormatVersion := initfile.ReadString('Versions',
+    'ConfigFileFormat', '1.0');
+  sScreenTextSyntaxVersion := initfile.ReadString('Versions',
+    'ScreenTextSyntax', '1.0');
 
   baudrate := initfile.ReadInteger('Communication Settings', 'Baudrate', 8);
   comPort := initfile.ReadInteger('Communication Settings', 'COMPort', 1);
@@ -640,6 +650,11 @@ var
 begin
   initfile := TINIFile.Create(ExtractFilePath(Application.EXEName) +
     'config.ini');
+
+  initfile.WriteString('Versions', 'ConfigFileFormat',
+    sMyConfigFileFormatVersion);
+  initfile.WriteString('Versions', 'ScreenTextSyntax',
+    sMyScreenTextSyntaxVersion);
 
   initfile.WriteInteger('Communication Settings', 'Baudrate', baudrate);
   initfile.WriteInteger('Communication Settings', 'COMPort', comPort);
