@@ -214,7 +214,6 @@ object Form1: TForm1
     Height = 17
     Alignment = taLeftJustify
     BevelOuter = bvNone
-    Caption = 'version 5.3'
     Color = clNone
     Font.Charset = ANSI_CHARSET
     Font.Color = clWindowText
@@ -231,7 +230,6 @@ object Form1: TForm1
     Height = 17
     Alignment = taLeftJustify
     BevelOuter = bvNone
-    Caption = 'By BasieP'
     Color = clNone
     Font.Charset = ANSI_CHARSET
     Font.Color = clWindowText
@@ -248,7 +246,6 @@ object Form1: TForm1
     Height = 17
     Alignment = taLeftJustify
     BevelOuter = bvNone
-    Caption = 'anno 2002'
     Color = clNone
     Font.Charset = ANSI_CHARSET
     Font.Color = clWindowText
