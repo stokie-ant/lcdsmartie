@@ -16,6 +16,12 @@ BUGS KNOWN
 ==========
 See: http://sourceforge.net/tracker/?func=browse&group_id=122330&atid=693136
 
+USB Palm users
+==============
+We're still having trouble getting all USB Palms working - this area is
+completely undocumented by Palm! Help us to support all USB Palms by using
+this alpha and then emailing the usb.log file to "usb <at> x5.me.uk" and
+state if this build works for you. Together we will get full USB Palm support!
 
 Changes
 =======
@@ -25,7 +31,8 @@ Changes
 	- Fixed unwanted scrolling on Crystalfontz displays.
 	- Fixed bug: duplicated USB Palm entries in COMport list.
 	- Fixed bug: [1073684] Exception: Range check error (cpuspeed)
-	- Fixed bug: [1073925] PalmOS4.0+ USB Palm support broken
+	- Fixed bug: asked for disk to be inserted when checking free space
+	  of a removable drive.
 5.3Alpha3
 	- Actions moved from action.cfg to config.ini.
 	- Fixed bug where some Crystalfontz display weren't working.
