@@ -14,6 +14,7 @@ Changes
 	- Allow easier editing of actions.
 	- Double clicking a command title, inserts the command.
 	- Add some more default RSS feeds.
+	- Fixed Div by Zero bug that could happen on screen 'interactions'.
 5.3 rc2
 	- Fixed bug when used with high refresh rates (scrolling and
 	  other things just stopped working!)

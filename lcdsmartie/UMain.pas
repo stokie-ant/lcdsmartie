@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.55 $ $Date: 2005/01/28 21:39:02 $
+ *  $Revision: 1.56 $ $Date: 2005/01/29 02:11:16 $
  *****************************************************************************}
 
 interface
@@ -767,6 +767,7 @@ begin
   TransCycle := (GetTickCount()-TransStart) div timerRefresh.Interval;
   maxTransCycles := timertrans.Interval div timerRefresh.Interval;
 
+  if (maxTransCycles = 0) then Exit;
   if (TransCycle > maxTransCycles) then Exit;
 
   for x := 1 to config.height do
