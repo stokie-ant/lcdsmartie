@@ -3,33 +3,26 @@
 Please see our website for instructions and the latest information:
 		http://lcdsmartie.sourceforge.net/
 
-***************************************
+**************************************************************************
 *   No further bug fixes are planned!
-*---------------------------------------
-* There will only be a few more releases
-* before we offically release 5.3.
+*-------------------------------------------------------------------------
+* There will only be a few more releases before we offically release 5.3.
 *
-* If you're suffering from a bug and
-* haven't reported it yet because you
-* were hoping somebody else would 
-* report it - now is the time to report
-* it, otherwise it won't get fixed
-* in this release.
+* If you're suffering from a bug and haven't reported it yet because you
+* were hoping somebody else would report it - now is the time to report
+* it, otherwise it has no chance of being fixed in this release.
 *
-* If you have reported a bug and it's   
-* still not fixed then report it again! 
+* If you have reported a bug and it's still not fixed then make sure it's
+* in the bug database! 
 *
-* [This excludes bugs with USB Palms as
-* their support will always be experimental.]
+* [This excludes bugs with USB Palms as their support will always be
+* experimental.]
 *
-****************************************
-* Help the project! Design screens for
-* use in the default config(s), I'm looking
-* for screens that make use of plugins and
-* those that don't.
-* I'm also interested in screens for
-* different screen sizes.
-****************************************
+*************************************************************************
+* Help the project! Design screens for use in the default config(s), I'm
+* looking for screens that make use of plugins and  those that don't.
+* I'm also interested in screens for different screen sizes.
+*************************************************************************
 
 Beta builds
 ===========
