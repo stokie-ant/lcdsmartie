@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.28 $ $Date: 2004/12/22 22:01:20 $
+ *  $Revision: 1.29 $ $Date: 2004/12/29 19:15:02 $
  *****************************************************************************}
 
 
@@ -219,6 +219,8 @@ type
     function FileToString(sFilename: String): String;
     function CleanString(str: String): String;
     procedure RequiredParameters(uiArgs: Cardinal; uiMinArgs: Cardinal; uiMaxArgs: Cardinal = 0);
+    procedure ProcessPlugin(var line: String; var args: array of String; numargs: Integer;
+       var prefix: String; var postfix: String);
   end;
 
 function stripspaces(FString: String): String;
@@ -287,12 +289,13 @@ begin
     if (uiLevel = 0) then
       posArgsEnd := posTemp-1
     else
-      posArgsEnd := 0;
+      posArgsEnd := length(str);
+
+    prefix := copy(str, 1, posFuncStart-1);
+    postfix := copy(str, posArgsEnd + 1, length(str)-posArgsEnd + 1);
 
     if (posArgsStart <> 0) and (posArgsEnd <> 0) then
     begin
-      prefix := copy(str, 1, posFuncStart-1);
-      postfix := copy(str, posArgsEnd + 1, length(str)-posArgsEnd + 1);
       tempstr := copy(str, posArgsStart + 1, posArgsEnd-posArgsStart-1);
       // tempstr is now something like: '20,30,10'
       posComma2 := 1;
@@ -1021,6 +1024,87 @@ begin
   Result := line;
 end;
 
+procedure TData.ProcessPlugin(var line: String; var args: array of String; numargs: Integer;
+   var prefix: String; var postfix: String);
+var
+  nlib: Integer;
+  plib: String;
+  tlib: String;
+  uiDll: Cardinal;
+  i: Integer;
+  sDllName: String;
+begin
+      Inc(iTotalDllResults);
+      try
+        RequiredParameters(numargs, 4, 4);
+        // check if we have seen this dll before
+        sDllName := args[0];
+        if (Pos('.DLL', UpperCase(sDllName)) = 0) then
+          sDllName := sDllName + '.dll';
+        uiDll:=1;
+        while (uiDll<=uiTotalDlls) and (dlls[uiDll-1].sName <> sDllName) do
+          Inc(uiDll);
+
+        Dec(uiDll);
+
+        if (uiDll >= uiTotalDlls) then
+        begin // we havent seen this one before - load it
+          Inc(uiTotalDlls);
+          SetLength(dlls, uiTotalDlls);
+          dlls[uiDll].sName := sDllName;
+          dlls[uiDll].hDll := LoadLibrary(pchar(extractfilepath(application.exename) +
+              'plugins\' + sDllName));
+          //dlls[uiDll].hDll := LoadLibrary(pchar(
+          //    'c:\Documents and Settings\Administrator\My Documents\Visual Studio Projects\perf\Debug\perf.dll'));
+
+
+          if (dlls[uiDll].hDll <> INVALID_HANDLE_VALUE) then
+          begin
+            for i:= 1 to 10 do
+            begin
+              @dlls[uiDll].functions[i] := getprocaddress(dlls[uiDll].hDll,
+                PChar('function' + IntToStr(i)));
+              if (@dlls[uiDll].functions[i] = nil) then
+                  @dlls[uiDll].functions[i] := getprocaddress(dlls[uiDll].hDll,
+                    PChar('_function' + IntToStr(i)+'@8'));
+            end;
+          end;
+        end;
+
+        nlib := StrToInt(args[1]);
+        plib := args[2];
+        tlib := args[3];
+
+        if (iTotalDllResults >= Length(sDllResults)) then
+            SetLength(sDllResults, iTotalDllResults + 5);
+
+        if (dllcancheck = true) then
+        begin
+
+          if (dlls[uiDll].hDll <> INVALID_HANDLE_VALUE) then
+          begin
+            if (nlib >= 0) and (nlib <= 9) then
+            begin
+              if (nlib = 0) then nlib := 10;
+
+              if @dlls[uiDll].functions[nlib] <> nil then
+                sDllResults[iTotalDllResults] := dlls[uiDll].functions[nlib](pchar(plib), pchar(tlib))
+              else
+                sDllResults[iTotalDllResults] := '[Dll: Function not found]';
+            end
+            else
+                sDllResults[iTotalDllResults] := '[Dll: out of range]';
+          end
+          else
+            sDllResults[iTotalDllResults] := '[Dll: Cant load dll: '
+              + CleanString(ErrMsg(GetLastError)) + ']';
+        end;
+        line := prefix +  sDllResults[iTotalDllResults] + postfix;
+      except
+        on E: Exception do
+          line := prefix + '[Dll: ' + CleanString(E.Message) + ']' + postfix;
+      end;
+end;
 
 
 function TData.change(line: String; qstattemp: Integer = 1): String;
@@ -1046,11 +1130,6 @@ var
   mem: Int64;
   jj: Cardinal;
   found: Boolean;
-  nlib: Integer;
-  plib: String;
-  tlib: String;
-  dllFunction: TmyProc;
-  uiDll: Cardinal;
 
 begin
   try
@@ -1441,75 +1520,7 @@ begin
 
     while decodeArgs(line, '$dll', maxArgs, args, prefix, postfix, numargs) do
     begin
-      Inc(iTotalDllResults);
-      try
-        RequiredParameters(numargs, 4, 4);
-        // check if we have seen this dll before
-        uiDll:=1;
-        while (uiDll<=uiTotalDlls) and (dlls[uiDll-1].sName <> args[1]) do
-          Inc(uiDll);
-
-        Dec(uiDll);
-
-        if (uiDll >= uiTotalDlls) then
-        begin // we havent seen this one before - load it
-          Inc(uiTotalDlls);
-          SetLength(dlls, uiTotalDlls);
-          dlls[uiDll].sName := args[1];
-          dlls[uiDll].hDll := LoadLibrary(pchar(extractfilepath(application.exename) +
-              'plugins\' + args[1]));
-          //dlls[uiDll].hDll := LoadLibrary(pchar(
-          //    'c:\Documents and Settings\Administrator\My Documents\Visual Studio Projects\perf\Debug\perf.dll'));
-
-
-          if (dlls[uiDll].hDll <> INVALID_HANDLE_VALUE) then
-          begin
-            for i:= 1 to 10 do
-            begin
-              @dlls[uiDll].functions[i] := getprocaddress(dlls[uiDll].hDll,
-                PChar('function' + IntToStr(i)));
-              if (@dlls[uiDll].functions[i] = nil) then
-                  @dlls[uiDll].functions[i] := getprocaddress(dlls[uiDll].hDll,
-                    PChar('_function' + IntToStr(i)+'@8'));
-            end;
-          end;
-        end;
-
-        nlib := StrToInt(args[2]);
-        plib := args[3];
-        tlib := args[4];
-
-        if (iTotalDllResults >= Length(sDllResults)) then
-            SetLength(sDllResults, iTotalDllResults + 5);
-
-        if (dllcancheck = true) then
-        begin
-
-          if (dlls[uiDll].hDll <> INVALID_HANDLE_VALUE) then
-          begin
-            if (nlib >= 0) and (nlib <= 9) then
-            begin
-              if (nlib = 0) then nlib := 10;
-
-              if @dlls[uiDll].functions[nlib] <> nil then
-                sDllResults[iTotalDllResults] := dlls[uiDll].functions[nlib](pchar(plib), pchar(tlib))
-              else
-                sDllResults[iTotalDllResults] := '[Dll: Function not found]';
-            end
-            else
-                sDllResults[iTotalDllResults] := '[Dll: out of range]';
-          end
-          else
-            sDllResults[iTotalDllResults] := '[Dll: Cant load dll: '
-              + CleanString(ErrMsg(GetLastError)) + ']';
-        end;
-        line := prefix +  sDllResults[iTotalDllResults] + postfix;
-      except
-        on E: Exception do
-          line := prefix + '[Dll: ' + CleanString(E.Message) + ']' + postfix;
-      end;
-
-
+      ProcessPlugin(line, args, numargs, prefix, postfix);
     end;
 
     while decodeArgs(line, '$Count', maxArgs, args, prefix, postfix, numargs)

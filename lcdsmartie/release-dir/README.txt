@@ -18,6 +18,11 @@ See: http://sourceforge.net/tracker/?func=browse&group_id=122330&atid=693136
 
 Changes
 =======
+5.3Beta2
+	- Fixed bug: $dll sometimes required the .dll extension, this was
+	  meant to be optional.
+	- Fixed bug: Smartie would hang if a function didn't have an ending
+	  bracket.
 5.3Beta1
 	- Fixed screen timings, esp. when using GotoScreen action.
 	- Fixed bug: only one $Chr was processed per a line.
