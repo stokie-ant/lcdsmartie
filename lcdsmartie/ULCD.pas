@@ -19,7 +19,7 @@ unit ULCD;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/ULCD.pas,v $
- *  $Revision: 1.2 $ $Date: 2004/11/07 01:19:40 $
+ *  $Revision: 1.3 $ $Date: 2004/11/16 19:44:33 $
  *****************************************************************************}
 
 
@@ -37,8 +37,9 @@ type
       procedure setGPO(gpo: Byte; on: Boolean); virtual;
       procedure setContrast(level: Integer); virtual;
       procedure setBrightness(level: Integer); virtual;
+      procedure powerResume; virtual;
       constructor Create; virtual;
-      destructor Destory; virtual;
+      destructor Destroy; override;
     private
       posX, posY: Integer;
     end;
@@ -50,9 +51,14 @@ begin
   inherited;
 end;
 
-destructor TLCD.Destory;
+destructor TLCD.Destroy;
 begin
   inherited;
+end;
+
+procedure TLCD.powerResume;
+begin
+  // dummy procedure - do nothing
 end;
 
 procedure TLCD.setContrast(level: Integer);

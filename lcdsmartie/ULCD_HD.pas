@@ -10,11 +10,17 @@ type
     procedure setPosition(x, y: Integer); override;
     procedure write(str: String);  override;
     procedure setbacklight(on: Boolean);  override;
+    procedure powerResume;  override;
   end;
 
 implementation
 
 uses UMain, SysUtils;
+
+procedure TLCD_HD.powerResume;
+begin
+  poort1.powerResume;
+end;
 
 procedure TLCD_HD.setbacklight(on: Boolean);
 begin
@@ -50,12 +56,12 @@ begin
   with poort1 do begin
     // for 1st controller
     writectrl(64 + ((character-1) * 8));
-    for i := 1 to 8 do
+    for i := 0 to 7 do
       writedata(data[i]);
 
     // for 2nd controller
     writectrl2(64 + ((character-1) * 8));
-    for i := 1 to 8 do
+    for i := 0 to 7 do
       writedata2(data[i]);
     { why twice?
     writectrl2(64 + ((adr-1) * 8));

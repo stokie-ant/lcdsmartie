@@ -19,7 +19,7 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.3 $ $Date: 2004/11/14 22:35:25 $
+ *  $Revision: 1.4 $ $Date: 2004/11/16 19:44:33 $
  *****************************************************************************}
 
 interface
@@ -250,6 +250,11 @@ type
   private
     procedure SaveScreen(scr: Integer);
     procedure LoadScreen(scr: Integer);
+    function getUsbPalms(var names, devicenames: array of String; max: Integer): Integer;
+  end;
+
+  TStringObj = class(TObject)
+    str: String;
   end;
 
 var
@@ -260,7 +265,7 @@ var
 implementation
 
 uses Windows, ShellApi, graphics, sysutils, parport, UMain, UMOSetup, UCFSetup,
-  UPara, UInteract, UConfig;
+  UPara, UInteract, UConfig, Registry;
 
 {$R *.DFM}
 
@@ -283,6 +288,82 @@ begin
   form1.SetFocus;
 end;
 
+function TForm2.getUsbPalms(var names, devicenames: array of String; max: Integer): Integer;
+const
+  USBKEY='\SYSTEM\CurrentControlSet\Enum\USB';
+var
+  i, j: Integer;
+  Reg: TRegistry;
+  subkeys: TStringList;
+  subsubkeys: TStringList;
+  symName: String;
+  count: Integer;
+
+begin
+  count:=0;
+
+  // Check if there are any Usb Palm entries in the registry.
+  Reg := TRegistry.Create;
+  try
+    Reg.RootKey := HKEY_LOCAL_MACHINE;
+    if Reg.OpenKeyReadOnly(USBKEY) then begin
+      subkeys:=TStringList.Create;
+      subsubkeys:=TStringList.Create;
+
+      Reg.GetKeyNames(subkeys);
+      Reg.CloseKey;
+      for i:=0 to subkeys.Count-1 do begin
+        // Examine each USB Device type
+
+        if Reg.OpenKeyReadOnly(USBKEY+'\'+subkeys.Strings[i]) then begin
+          Reg.GetKeyNames(subsubkeys);
+          Reg.CloseKey;
+          for j:=0 to subsubkeys.Count -1 do begin
+
+            // Examine each USB Device
+            if Reg.OpenKeyReadOnly(USBKEY+'\'+subkeys.Strings[i]
+                                            +'\'+subsubkeys.Strings[j]) then
+            begin
+              // Check if it's a USB Palm device
+              if (Reg.ReadString('Service') = 'PalmUSBD') or
+                  (Reg.ReadString('LocationInformation') = 'Palm Handheld') or
+                  (Reg.ReadString('Class') = 'Palm OS Handlheld Devices') then
+              begin
+                with TRegistry.Create do begin
+                  RootKey:=HKEY_LOCAL_MACHINE;
+                  if (OpenKeyReadOnly(USBKEY+'\'+subkeys.Strings[i]
+                                            +'\'+subsubkeys.Strings[j]
+                                            +'\Device Parameters'))  then
+                  begin
+                    symName:=ReadString('SymbolicName')
+                  end else begin
+                    symName:='';
+                  end;
+                  CloseKey;
+                  Free;
+                end;
+                if (count<max) and (symName<>'') and (Reg.ReadString('DeviceDesc')<>'') then begin
+                  Inc(count);
+                  names[count-1]:=Reg.ReadString('DeviceDesc')+IntToStr(count);
+                  devicenames[count-1]:=symName;
+                end;
+              end;
+            end;
+            Reg.CloseKey;
+          end;
+          subsubkeys.Clear;
+        end;
+      end;
+      subkeys.Free;
+    end;
+  finally
+    Reg.Free;
+  end;
+
+  Result:=count;
+end;
+
+
 procedure TForm2.FormShow(Sender: TObject);
 var
   i,blaat:integer;
@@ -290,11 +371,26 @@ var
   regel,regel2:string;
   laatstepacket:boolean;
   ch:char;
+  namesUsbPalms, deviceUsbPalms: array [0..9] of String;
+  numUsbPalms: Integer;
+  usbSelection: Integer;
+  itemNum: Integer;
+  strobj: TStringObj;
 
 label
   nextpacket;
 
 begin
+  usbSelection:=0;
+  numUsbPalms:=getUsbPalms(namesUsbPalms, deviceUsbPalms, 10);
+  for i:= 0 to numUsbPalms-1 do begin
+    strobj:=TStringObj.Create;
+    strobj.str:=deviceUsbPalms[i];
+    itemnum:=ComboBox4.Items.AddObject(namesUsbPalms[i], strobj);
+    if (deviceUsbPalms[i] = config.UsbPalmDevice) then
+      usbSelection:=itemnum;
+  end;
+
   form1.timer2.enabled:=false;
   form1.timer4.enabled:=false;
   form1.timer5.enabled:=false;
@@ -311,16 +407,7 @@ begin
   UMain.setupbutton:=1;
   setupscreen:=1;
 
-  try
-    assignfile(bestand, extractfilepath(application.exename)+'servers.cfg');
-    reset(bestand);
-    for blaat:=1 to 80 do
-      readln(bestand,serversarray[blaat]);
-    closefile(bestand);
-  except
-    try closefile(bestand); except end;
-  end;
-  edit10.text:=serversarray[1];
+  edit10.text:=config.gameServer[1, 1];
 
   try
     form2.StringGrid1.rowcount:=0;
@@ -406,7 +493,14 @@ begin
     combobox5.enabled:=true;
   end;
 
-  combobox4.ItemIndex:=config.comPort-1;
+  // Set up the com port selection
+  if (config.isUsbPalm) then begin
+    combobox4.ItemIndex:=usbSelection;
+  end else begin
+    combobox4.ItemIndex:=config.comPort-1;
+  end;
+
+
   combobox5.ItemIndex:=config.baudrate;
   combobox2.itemindex:=config.sizeOption-1;
 
@@ -640,7 +734,7 @@ begin
   edit7.color:=clWhite;
   edit8.color:=clWhite;
   UMain.setupbutton:=1;
-  edit10.text:=serversarray[(scr-1)*4+1];
+  edit10.text:=config.gameServer[scr, 1];
 
   ascreen:=config.screen[scr][1];
   checkbox3.checked:=ascreen.noscroll;
@@ -1432,7 +1526,7 @@ end;
 
 procedure TForm2.Edit10Exit(Sender: TObject);
 begin
-  serversarray[combobox3.itemindex*4+UMain.setupbutton]:=edit10.text;
+  config.gameServer[combobox3.itemindex+1, UMain.setupbutton]:=edit10.text;
 end;
 
 procedure TForm2.Button4Click(Sender: TObject);
@@ -1680,7 +1774,7 @@ end;
 
 procedure TForm2.Edit5Enter(Sender: TObject);
 begin
-  edit10.text:=serversarray[combobox3.itemindex*4+1];
+  edit10.text:=config.gameServer[combobox3.itemindex+1, 1];
   UMain.setupbutton:=1;
   edit5.color:=$00A1D7A4;
   if edit6.enabled= true then edit6.color:=clWhite else edit6.color:=$00BBBBFF;
@@ -1690,7 +1784,7 @@ end;
 
 procedure TForm2.Edit6Enter(Sender: TObject);
 begin
-  edit10.text:=serversarray[combobox3.itemindex*4+2];
+  edit10.text:=config.gameServer[combobox3.itemindex+1, 2];
   UMain.setupbutton:=2;
   edit6.color:=$00A1D7A4;
   if edit5.enabled= true then edit5.color:=clWhite else edit5.color:=$00BBBBFF;
@@ -1700,7 +1794,7 @@ end;
 
 procedure TForm2.Edit7Enter(Sender: TObject);
 begin
-  edit10.text:=serversarray[combobox3.itemindex*4+3];
+  edit10.text:=config.gameServer[combobox3.itemindex+1, 3];
   UMain.setupbutton:=3;
   edit7.color:=$00A1D7A4;
   if edit6.enabled= true then edit6.color:=clWhite else edit6.color:=$00BBBBFF;
@@ -1710,7 +1804,7 @@ end;
 
 procedure TForm2.Edit8Enter(Sender: TObject);
 begin
-  edit10.text:=serversarray[combobox3.itemindex*4+4];
+  edit10.text:=config.gameServer[combobox3.itemindex+1, 4];
   UMain.setupbutton:=4;
   edit8.color:=$00A1D7A4;
   if edit6.enabled= true then edit6.color:=clWhite else edit6.color:=$00BBBBFF;
@@ -1841,15 +1935,7 @@ var
 begin
   relood:=false;
 
-  try
-    assignfile(bestand, extractfilepath(application.exename)+'servers.cfg');
-    rewrite(bestand);
-    for x:=1 to 80 do
-      writeln(bestand, serversarray[x]);
-    closefile (bestand);
-  except
-    try closefile(bestand); except end;
-  end;
+
 
   try
     assignfile(bestand,extractfilepath(application.exename)+'actions.cfg');
@@ -1915,7 +2001,14 @@ begin
   config.parallelPort:=StrToInt('$'+form6.edit1.text);
   config.mx3Usb:=form3.checkbox1.checked;
   config.alwaysOnTop:=checkbox2.checked;
+
   config.comPort:=combobox4.itemindex+1;
+  if (config.comPort>9) then begin
+      config.isUsbPalm:=True;
+      config.UsbPalmDevice:=(ComboBox4.Items.Objects[combobox4.ItemIndex] as TStringObj).str;
+  end else begin
+    config.isUsbPalm:=False;
+  end;
   config.baudrate:=combobox5.itemindex;
   config.pop[combobox8.itemindex+1].server:=edit11.text;
   config.pop[combobox8.itemindex+1].user:=edit12.text;
@@ -2055,7 +2148,7 @@ begin
       if pos('$MObutton',edit9.text) <> 0 then edit9.text:='Variable:';
       pagecontrol1.ActivePage:=Tabsheet1;
     end;
-    edit10.text:=serversarray[combobox3.itemindex*4+1];
+    edit10.text:=config.gameServer[combobox3.itemindex+1, 1];
     UMain.setupbutton:=1;
     edit5.color:=$00A1D7A4;
     if edit6.enabled= true then edit6.color:=clWhite else edit6.color:=$00BBBBFF;

@@ -17,49 +17,109 @@ type
     procedure setContrast(level: Integer); override;
     procedure setBrightness(level: Integer); override;
     constructor Create; override;
-    destructor Destory; override;
+    constructor CreateUsb(device: String);
+    destructor Destroy; override;
+  private
+    Usb: Boolean;
+    input, output: Cardinal;
+    procedure writeDevice(str: String); overload;
+    procedure writeDevice(byte: Byte); overload;
+    function readDevice(var char: Char): Boolean;
   end;
 
 implementation
 
-uses UMain, SysUtils;
+uses UMain, SysUtils, Windows;
+
+constructor TLCD_MO.CreateUsb(device: String);
+var
+  symName: String;
+  error: String;
+  errorp: pointer;
+  lastErr: Cardinal;
+begin
+  Usb:=True;
+
+  symName:=StringReplace(device, '\??\', '\\.\', []);
+  //'\\.\USB#Vid_054c&Pid_0066#6&673a0bd&0&4#{a5dcbf10-6530-11d2-901f-00c04fb951ed}';
+
+  input := CreateFile (PChar(symName+'\PIPE02'), GENERIC_READ,
+                        FILE_SHARE_READ, nil, OPEN_EXISTING, 0, 0);
+
+  if (input = INVALID_HANDLE_VALUE) then begin
+    lastErr:=GetLastError();
+    FormatMessage(
+          FORMAT_MESSAGE_ALLOCATE_BUFFER or FORMAT_MESSAGE_FROM_SYSTEM,
+          nil,
+          lastErr,
+          0,
+          @errorp,
+          0,
+          nil
+      );
+    error:= 'USB Palm: #'+IntToStr(lastErr)+': '+PChar(errorp);
+    // need to free errorp...
+
+    raise exception.Create(error)
+  end;
+
+  output := CreateFile (PChar(symName+'\PIPE03'), GENERIC_WRITE,
+                         FILE_SHARE_WRITE, nil, OPEN_EXISTING, 0, 0);
+  if (output = INVALID_HANDLE_VALUE) then begin
+    lastErr:=GetLastError();
+    FormatMessage(
+          FORMAT_MESSAGE_ALLOCATE_BUFFER or FORMAT_MESSAGE_FROM_SYSTEM,
+          nil,
+          lastErr,
+          0,
+          @errorp,
+          0,
+          nil
+      );
+    error:= 'USBPalm: #'+IntToStr(lastErr)+': '+PChar(errorp);
+    // need to free errorp...
+
+    raise exception.Create(error)
+  end;
+
+  Create;
+end;
 
 constructor TLCD_MO.Create;
 var
   g: Integer;
 begin
-  with form1.VaComm1 do begin
     for g:= 1 to 8 do begin
       setGPO(g, false);
     end;
 
-    WriteChar(chr($0FE));   //Cursor blink off
-    WriteChar('T');
+    writeDevice($0FE);   //Cursor blink off
+    writeDevice('T');
 
-    WriteChar(chr($0FE));   //clear screen
-    WriteChar('X');
+    writeDevice($0FE);   //clear screen
+    writeDevice('X');
 
-    WriteChar(chr($0FE));   //Cursor off
-    WriteChar('K');
+    writeDevice($0FE);   //Cursor off
+    writeDevice('K');
 
-    WriteChar(chr($0FE));   //auto scroll off
-    WriteChar('R');
+    writeDevice($0FE);   //auto scroll off
+    writeDevice('R');
 
-    WriteChar(chr($0FE));   //auto line wrap off
-    WriteChar('D');
+    writeDevice($0FE);   //auto line wrap off
+    writeDevice('D');
 
-    WriteChar(chr($0FE));   //keypad polling on
-    WriteChar('O');
+    writeDevice($0FE);   //keypad polling on
+    writeDevice('O');
 
-    WriteChar(chr($0FE));   //auto repeat off
-    WriteChar('`');
+    writeDevice($0FE);   //auto repeat off
+    writeDevice('`');
 
     setbacklight(true);
-  end;
-  inherited;
+
+  inherited Create;
 end;
 
-destructor TLCD_MO.Destory;
+destructor TLCD_MO.Destroy;
 var
   g: Integer;
 begin
@@ -69,9 +129,12 @@ begin
     setGPO(g, false);
   end;
 
-  with form1.VaComm1 do begin
-    WriteChar(chr($0FE));  //clear screen
-    WriteChar('X');
+  writeDevice($0FE);  //clear screen
+  writeDevice('X');
+
+  if (Usb) then begin
+    CloseHandle(output);
+    CloseHandle(input);
   end;
 
   inherited;
@@ -79,40 +142,32 @@ end;
 
 procedure TLCD_MO.setContrast(level: Integer);
 begin
-  with form1.VaComm1 do begin
-    WriteChar(Chr($0FE));
-    WriteChar('P');
-    WriteChar(chr(level));
-  end;
+    writeDevice($0FE);
+    writeDevice('P');
+    writeDevice(level);
 end;
 
 procedure TLCD_MO.setBrightness(level: Integer);
 begin
-  with form1.VaComm1 do begin
-    WriteChar(Chr($0FE));
-    WriteChar(Chr($098));
-    WriteChar(chr(level));
-  end;
+    writeDevice($0FE);
+    writeDevice($098);
+    writeDevice(level);
 end;
 
 procedure TLCD_MO.setGPO(gpo: Byte; on: Boolean);
 begin
-  with form1.VaComm1 do begin
-    WriteChar(chr($0FE));
-    if (on) then WriteChar('W')
-    else WriteChar('V');
-    WriteChar(chr(gpo));
-  end;
+  writeDevice($0FE);
+  if (on) then writeDevice('W')
+  else writeDevice('V');
+  writeDevice(gpo);
 end;
 
 procedure TLCD_MO.setFan(t1,t2: Integer);
 begin
-  with form1.VaComm1 do begin
-    WriteChar(chr($FE));                         //set speed
-    WriteChar(chr($C0));
-    WriteChar(chr(t1));
-    WriteChar(chr(t2));
-  end;
+  writeDevice($FE);                         //set speed
+  writeDevice($C0);
+  writeDevice(t1);
+  writeDevice(t2);
 
   {
     form1.VaComm1.WriteChar(chr($FE));                         //remember startup state
@@ -126,15 +181,15 @@ function TLCD_MO.readKey(var key: Char): Boolean;
 var
   gotkey: Boolean;
 begin
-  gotkey:=False;
 
 {  form1.VaComm1.WriteChar(chr($0FE));
   form1.VaComm1.WriteChar(chr($026));
   Sleep(200);
   }
-  if form1.VaComm1.ReadBufUsed>0 then begin
-    if (form1.VaComm1.ReadChar(key)) then gotkey:=true;
-  end;
+
+  gotkey:=readDevice(key);
+  // but ignore 0.
+  if (gotkey) and (key=Chr(0)) then gotkey:=False;
 
   {
   if (config.mx3Usb) then begin
@@ -157,26 +212,22 @@ end;
 
 procedure TLCD_MO.setbacklight(on: Boolean);
 begin
-  with form1.VaComm1 do begin
-    if (not on) then begin
-      WriteChar(chr($0FE));
-      WriteChar('F');
-    end else begin
-      WriteChar(chr($0FE));
-      WriteChar('B');
-      WriteChar(chr($00));
-    end;
+  if (not on) then begin
+    writeDevice($0FE);
+    writeDevice('F');
+  end else begin
+    writeDevice($0FE);
+    writeDevice('B');
+    writeDevice(0);
   end;
 end;
 
 procedure TLCD_MO.setPosition(x, y: Integer);
 begin
-  with Form1.VaComm1 do begin
-    WriteChar(Chr($0FE));
-    WriteChar('G');
-    WriteChar(Chr(x));
-    WriteChar(Chr(y));
-  end;
+  writeDevice($0FE);
+  writeDevice('G');
+  writeDevice(x);
+  writeDevice(y);
 
   inherited;
 end;
@@ -193,24 +244,100 @@ begin
   str:=StringReplace(str,chr(134),chr(5),[rfReplaceAll]);
   str:=StringReplace(str,chr(135),chr(6),[rfReplaceAll]);
   str:=StringReplace(str,chr(136),chr(7),[rfReplaceAll]);
-  Form1.VaComm1.WriteText(str);
+  writeDevice(str);
 end;
 
 procedure TLCD_MO.customChar(character: Integer; data: array of Byte);
 begin
-  with Form1.VaComm1 do begin
-    WriteChar(Chr($0FE));     //command prefix
-    WriteChar(Chr($04E));     //this starts the custom characters
-    WriteChar(Chr(character-1));    //00 to 07 for 8 custom characters.
-    WriteChar(Chr(data[0]));
-    WriteChar(Chr(data[1]));
-    WriteChar(Chr(data[2]));
-    WriteChar(Chr(data[3]));
-    WriteChar(Chr(data[4]));
-    WriteChar(Chr(data[5]));
-    WriteChar(Chr(data[6]));
-    WriteChar(Chr(data[7]));
+    writeDevice($0FE);     //command prefix
+    writeDevice($04E);     //this starts the custom characters
+    writeDevice(character-1);    //00 to 07 for 8 custom characters.
+    writeDevice(data[0]);
+    writeDevice(data[1]);
+    writeDevice(data[2]);
+    writeDevice(data[3]);
+    writeDevice(data[4]);
+    writeDevice(data[5]);
+    writeDevice(data[6]);
+    writeDevice(data[7]);
+
+end;
+
+procedure TLCD_MO.writeDevice(str: String);
+var
+  bytesWritten: Cardinal;
+  {error: String;
+  errorp: pointer;
+  lastErr: Cardinal;}
+begin
+  if not Usb then begin
+    Form1.VaComm1.WriteText(str);
+  end else begin
+    if (not WriteFile(output, str[1], length(str), bytesWritten, nil)) or (bytesWritten <> Cardinal(length(str))) then begin
+      {lastErr:=GetLastError();
+      FormatMessage(
+            FORMAT_MESSAGE_ALLOCATE_BUFFER or FORMAT_MESSAGE_FROM_SYSTEM,
+            nil,
+            lastErr,
+            0,
+            @errorp,
+            0,
+            nil
+        );
+      error:= 'failed to write (wrote: '+IntToStr(bytesWritten)+'bytes): #'+IntToStr(lastErr)+': '+PChar(errorp);
+      // need to free errorp...
+
+      raise exception.Create(error)    }
+    end;
+  end;
+
+end;
+
+procedure TLCD_MO.writeDevice(byte: Byte);
+var
+  bytesWritten: Cardinal;
+  {error: String;
+  errorp: pointer;
+  lastErr: Cardinal; }
+begin
+
+  if not Usb then begin
+    Form1.VaComm1.WriteChar(Chr(byte));
+  end else begin
+    if (not WriteFile(output, byte, 1, bytesWritten, nil)) or (bytesWritten <> 1) then begin
+      {lastErr:=GetLastError();
+      FormatMessage(
+            FORMAT_MESSAGE_ALLOCATE_BUFFER or FORMAT_MESSAGE_FROM_SYSTEM,
+            nil,
+            lastErr,
+            0,
+            @errorp,
+            0,
+            nil
+        );
+      error:= 'failed to write (wrote: '+IntToStr(bytesWritten)+'bytes): #'+IntToStr(lastErr)+': '+PChar(errorp);
+      // need to free errorp...
+
+      raise exception.Create(error)  }
+    end;
   end;
 end;
+
+function TLCD_MO.readDevice(var char: Char): Boolean;
+var
+  gotdata: Boolean;
+begin
+  gotdata:=False;
+  if Usb then begin
+    // do nothing for the moment.
+  end else begin
+    if form1.VaComm1.ReadBufUsed>0 then begin
+      if (form1.VaComm1.ReadChar(char)) then gotdata:=true;
+    end;
+  end;
+
+  Result:=gotdata;
+end;
+
 
 end.

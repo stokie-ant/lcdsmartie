@@ -13,7 +13,7 @@ type
     procedure setContrast(level: Integer);  override;
     procedure setBrightness(level: Integer);   override;
     constructor Create;  override;
-    destructor Destory;  override;
+    destructor Destroy;  override;
   end;                  
 
 implementation
@@ -31,7 +31,7 @@ begin
   inherited;
 end;
 
-destructor TLCD_CF.Destory;
+destructor TLCD_CF.Destroy;
 begin
   setbacklight(false);
   inherited;

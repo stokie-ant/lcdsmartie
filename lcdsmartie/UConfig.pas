@@ -19,7 +19,7 @@ unit UConfig;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UConfig.pas,v $
- *  $Revision: 1.3 $ $Date: 2004/11/14 22:35:25 $
+ *  $Revision: 1.4 $ $Date: 2004/11/16 19:44:33 $
  *****************************************************************************}
 
 interface
@@ -50,6 +50,9 @@ type
       P_width: Integer;
       P_height: Integer;
     public
+        isUsbPalm: Boolean;
+        UsbPalmDevice: String;
+        gameServer: array[1..20,1..4] of string;
         pop: array [0..9] of TPopAccount;
         comPort: Integer;
         baudrate: Integer;
@@ -149,6 +152,22 @@ var
   configline: String;
   configarray: array[1..100] of String;
 begin
+  // Load Game server list.
+  try
+    assignfile(initfile, extractfilepath(application.exename)+'servers.cfg');
+    try
+      reset(initfile);
+      for x:=1 to 20 do
+        for y:=1 to 4 do
+          readln(initfile, gameServer[x,y]);
+    finally
+      closefile (initfile);
+    end;
+  except
+    result := false;
+    Exit;
+  end;
+
   try
     assignfile(initfile, extractfilepath(application.exename)+'config.cfg');
     reset(initfile);
@@ -162,8 +181,7 @@ begin
 
   closefile(initfile);
 
-  baudrate := StrToInt(configarray[100]);
-  comPort := StrToInt(configarray[99]);
+
 
   refreshRate := StrToInt(copy(configarray[1],1,pos('¿',configarray[1])-1));
   winampLocation := copy(configarray[1],pos('¿',configarray[1])+1,
@@ -172,6 +190,16 @@ begin
   bootDriverDelay:=StrToInt(copy(configarray[2],1,pos('¿',configarray[2])-1));
   setiEmail:=copy(configarray[2],pos('¿',configarray[2])+1,length(configarray[2]));
 
+  setSizeOption(strtoInt(copy(configarray[3], 1, pos('¿1',configarray[3])-1)));
+
+  contrast:=strtoint(copy(configarray[3],pos('¿1',configarray[3])+2,pos('¿2',configarray[3])-pos('¿1',configarray[3])-2));
+  brightness:=strtoint(copy(configarray[3],pos('¿2',configarray[3])+2,pos('¿3',configarray[3])-pos('¿2',configarray[3])-2));
+
+  CF_contrast:=strtoint(copy(configarray[3],pos('¿3',configarray[3])+2,pos('¿4',configarray[3])-pos('¿3',configarray[3])-2));
+  CF_brightness:=strtoint(copy(configarray[3],pos('¿4',configarray[3])+2,3));
+
+
+  // Lines 4..83
   for x:= 1 to 20 do
   begin
     for y:= 1 to 4 do
@@ -192,40 +220,6 @@ begin
     end;
   end;
 
-  distLog := configarray[88];
-  emailPeriod := StrToInt(copy(configarray[89],1,pos('¿',configarray[89])-1));
-  dllPeriod:=StrToInt(copy(configarray[89],pos('¿',configarray[89])+1,pos('¿¿',configarray[89])-pos('¿',configarray[89])-1));
-  scrollPeriod:=StrToInt(copy(configarray[89],pos('¿¿',configarray[89])+2,length(configarray[89])));
-  parallelPort:=StrToInt(configarray[91]);
-
-  if (copy(configarray[92],2,1)='1') then mx3Usb:=true
-  else mx3Usb:=false;
-
-  if (copy(configarray[92],1,1)='1') then alwaysOnTop:=true
-  else alwaysOnTop:=false;
-
-  httpProxy:=configarray[93];
-  httpProxyPort:=StrToInt(configarray[94]);
-
-  isMO:=false;
-  isCF:=false;
-  isHD:=false;
-  isHD2:=false;
-  case StrToInt(configarray[98]) of
-    1: isHD:=true;
-    2: isMO:=true;
-    3: isCF:=true;
-    4: isHD2:=true;
-  end;
-
-  setSizeOption(strtoInt(copy(configarray[3], 1, pos('¿1',configarray[3])-1)));
-
-  contrast:=strtoint(copy(configarray[3],pos('¿1',configarray[3])+2,pos('¿2',configarray[3])-pos('¿1',configarray[3])-2));
-  brightness:=strtoint(copy(configarray[3],pos('¿2',configarray[3])+2,pos('¿3',configarray[3])-pos('¿2',configarray[3])-2));
-
-  CF_contrast:=strtoint(copy(configarray[3],pos('¿3',configarray[3])+2,pos('¿4',configarray[3])-pos('¿3',configarray[3])-2));
-  CF_brightness:=strtoint(copy(configarray[3],pos('¿4',configarray[3])+2,3));
-
   newsRefresh:=StrToInt(copy(configarray[84],2,length(configarray[84])));
   randomScreens:=copy(configarray[84],1,1)='1';
 
@@ -236,6 +230,28 @@ begin
   checkUpdates:=copy(configarray[86],1,1)='1';
 
   colorOption:=StrToInt(configarray[87]);
+
+
+  distLog := configarray[88];
+
+  emailPeriod := StrToInt(copy(configarray[89],1,pos('¿',configarray[89])-1));
+  dllPeriod:=StrToInt(copy(configarray[89],pos('¿',configarray[89])+1,pos('¿¿',configarray[89])-pos('¿',configarray[89])-1));
+  scrollPeriod:=StrToInt(copy(configarray[89],pos('¿¿',configarray[89])+2,length(configarray[89])));
+
+  UsbPalmDevice:=configarray[90];
+  if (UsbPalmDevice='') then isUsbPalm:=False
+  else isUsbPalm:=True;
+
+  parallelPort:=StrToInt(configarray[91]);
+
+  if (copy(configarray[92],2,1)='1') then mx3Usb:=true
+  else mx3Usb:=false;
+
+  if (copy(configarray[92],1,1)='1') then alwaysOnTop:=true
+  else alwaysOnTop:=false;
+
+  httpProxy:=configarray[93];
+  httpProxyPort:=StrToInt(configarray[94]);
 
   // Pop accounts
   pop[1].server:=copy(configarray[95],1,pos('¿0', configarray[95])-1);
@@ -278,6 +294,20 @@ begin
   pop[0].user:=copy(configarray[96],pos('¿8', configarray[96])+2,pos('¿9', configarray[96])-pos('¿8', configarray[96])-2);
   pop[0].pword:=copy(configarray[97],pos('¿8', configarray[97])+2,pos('¿9', configarray[97])-pos('¿8', configarray[97])-2);
 
+  isMO:=false;
+  isCF:=false;
+  isHD:=false;
+  isHD2:=false;
+  case StrToInt(configarray[98]) of
+    1: isHD:=true;
+    2: isMO:=true;
+    3: isCF:=true;
+    4: isHD2:=true;
+  end;
+
+
+  comPort := StrToInt(configarray[99]);
+  baudrate := StrToInt(configarray[100]);
 
   result:=true;
 end;
@@ -357,7 +387,8 @@ begin
   writeln(bestand, IntToStr(emailPeriod)+'¿'+IntToStr(dllPeriod)+'¿¿'+IntToStr(scrollPeriod));
 
   // line 90
-  writeln(bestand, '');
+  if (isUsbPalm) then writeln(bestand, UsbPalmDevice)
+  else writeln(bestand, '');
 
   // line 91
   writeln(bestand, IntToStr(parallelPort));
@@ -401,6 +432,18 @@ begin
   writeln(bestand, intToStr(baudrate));
 
   closefile(bestand);
+
+  // Save Game server list.
+  try
+    assignfile(bestand, extractfilepath(application.exename)+'servers.cfg');
+    rewrite(bestand);
+    for z:=1 to 20 do
+      for y:=1 to 4 do
+        writeln(bestand, gameServer[z,y]);
+    closefile (bestand);
+  except
+    try closefile(bestand); except end;
+  end;
 end;
 
 end.

@@ -37,7 +37,9 @@ type
       procedure init;
       procedure CtrlOut(const AValue: Byte);
       procedure DataOut(const AValue: Byte);
+      procedure initClass;
    public
+      procedure powerResume;
       procedure writectrl(const x: Byte);
       procedure writectrl2(const x: Byte);
       procedure writedata(const x: Byte);
@@ -110,6 +112,8 @@ begin
 end;
 
 procedure TParPort.writedata(const x: Byte);
+var
+  i: Integer;
 begin
   CtrlOut(7 or backlight);     //7 + 8
   DataOut(x);
@@ -117,21 +121,23 @@ begin
   CtrlOut(7 or backlight);     //7
   CtrlOut(5 or backlight);     //5
 
-  Sleep(1);  //instead of the line below because of faster processors
-  //for i := 0 to 65535 do begin { +/- 40 us } end;
-  //for i := 0 to 65535 do begin { +/- 40 us } end;
+  //Sleep(1);  //instead of the line below because of faster processors
+  for i := 0 to 65535 do begin { +/- 40 us } end;
+  for i := 0 to 65535 do begin { +/- 40 us } end;
 end;
 
 procedure TParPort.writedata2(const x: Byte);
+var
+  i: Integer;
 begin
   CtrlOut(15 );
   DataOut(x);
   CtrlOut(7 );
   CtrlOut(15 );
   CtrlOut(13 );
-  Sleep(1);  //instead of the line below because of faster processors
-  //for i := 0 to 65535 do begin { +/- 40 us } end;
-  //for i := 0 to 65535 do begin { +/- 40 us } end;
+  //Sleep(1);  //instead of the line below because of faster processors
+  for i := 0 to 65535 do begin { +/- 40 us } end;
+  for i := 0 to 65535 do begin { +/- 40 us } end;
 end;
 
 procedure TParPort.writestring(s: String);
@@ -205,11 +211,21 @@ end;
 
 constructor TParPort.Create(const poortadres: Word; const width, heigth: Byte);
 begin
-  backlight := 0;
   FBaseAddr := poortadres;
   FCtrlAddr := FBaseAddr + 2;
   self.width := width;
   self.heigth := heigth;
+  initClass;
+end;
+
+procedure TParPort.powerResume;
+begin
+  initClass;
+end;
+
+procedure TParPort.initClass;
+begin
+  backlight := 0;
   cursorx := 1;
   cursory := 1;
 

@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.6 $ $Date: 2004/11/14 22:35:25 $
+ *  $Revision: 1.7 $ $Date: 2004/11/16 19:44:33 $
  *****************************************************************************}
 
 interface
@@ -174,6 +174,7 @@ type
     procedure TimertransTimer(Sender: TObject);
     procedure Timer12Timer(Sender: TObject);
     procedure WMQueryEndSession (var M: TWMQueryEndSession); message WM_QUERYENDSESSION;
+    procedure WMPowerBroadcast (var M: TMessage); message WM_POWERBROADCAST;
     procedure kleur();
     procedure ChangeScreen(scr: Integer);
   private
@@ -224,7 +225,6 @@ var
   tempscreen: Integer;
   kar:char;
   activeScreen : Integer;
-  serversarray:array[1..80] of string;
   actionsarray:array[1..99,1..4] of string;
   aantalscreensheenweer: Integer;
   combobox8temp: Integer;
@@ -238,6 +238,21 @@ uses
   Registry, Windows, SysUtils, Graphics,  Dialogs,
   ShellAPI, mmsystem, USetup, UCredits,
   ULCD_MO, ULCD_CF, ULCD_HD, ExtActns;
+
+procedure TForm1.WMPowerBroadcast (var M: TMessage);
+const
+  PBT_APMRESUMECRITICAL=6;
+  PBT_APMRESUMESUSPEND=7;
+  PBT_APMRESUMESTANDBY=8;
+  PBT_APMRESUMEAUTOMATIC=$012;
+begin
+  if (M.WParam=PBT_APMRESUMEAUTOMATIC) or
+      (M.WParam=PBT_APMRESUMECRITICAL) or
+      (M.WParam=PBT_APMRESUMESTANDBY) or
+      (M.WParam=PBT_APMRESUMESUSPEND) then begin
+    if Assigned(Lcd) then Lcd.powerResume;
+  end;
+end;
 
 procedure TForm1.ChangeScreen(scr: Integer);
 var
@@ -332,7 +347,6 @@ end;
 
 procedure TForm1.FormCreate(Sender: TObject);
 var
-  Reg: TRegistry;
   regel:string;
   initfile:textfile;
 begin
@@ -370,8 +384,10 @@ begin
     application.Icon.LoadFromFile(regel+'images\smartie.ico');
     cooltrayicon1.Refresh;
   except
-    showmessage('Error: unable to access images subdirectory.');
-    application.terminate;
+    on E: Exception do begin
+      showmessage('Error: unable to access images subdirectory: '+E.Message);
+      application.terminate;
+    end;
   end;
   form1.color:=$00BFBFBF;
 
@@ -380,19 +396,6 @@ begin
   parameter3:=lowercase(paramstr(3));
   parameter4:=lowercase(paramstr(4));
   aantalscreensheenweer:=1;
-  if (parameter1 = '-register') or (parameter2 = '-register') or (parameter3 = '-register') or (parameter4 = '-register') then begin
-    Reg := TRegistry.Create;
-    try
-      Reg.RootKey := HKEY_LOCAL_MACHINE;
-      if Reg.OpenKey('\SOFTWARE\LCDSmartie\', True) then begin
-        Reg.Writeinteger('backlight', 1);
-      end;
-    finally
-      Reg.CloseKey;
-      Reg.Free;
-      inherited;
-    end;
-  end;
 
 //register
   try
@@ -412,15 +415,16 @@ begin
     backgroundcoloroff:=StrToInt('$00'+copy(regel,1,6));
     closefile(initfile);
   except
-    showmessage('Fatal Error:  Can`t find images\colors.cfg');
-    application.Terminate;
+    on E: Exception do begin
+      showmessage('Fatal Error:  Can`t find images\colors.cfg: ' + E.Message);
+      application.Terminate;
+    end;
   end;
 
   config:=TConfig.Create();
 
-  if (config.load() = false) then
-  begin
-    showmessage('Fatal Error:  Can`t load config.cfg');
+  if (config.load() = false) then begin
+    showmessage('Fatal Error:  Failed to load configuration');
     application.Terminate;
   end;
 
@@ -462,33 +466,42 @@ begin
   backlight:=1;
   kleur();
 
-  if (parameter1 <> '-nolcd') AND (parameter2 <> '-nolcd') AND (parameter3 <> '-nolcd') AND (parameter4 <> '-nolcd') then begin
-    if (config.isMO) or (config.isCF) then begin
-      if config.baudrate=0 then VaComm1.Baudrate:=br110;
-      if config.baudrate=1 then VaComm1.Baudrate:=br300;
-      if config.baudrate=2 then VaComm1.Baudrate:=br600;
-      if config.baudrate=3 then VaComm1.Baudrate:=br1200;
-      if config.baudrate=4 then VaComm1.Baudrate:=br2400;
-      if config.baudrate=5 then VaComm1.Baudrate:=br4800;
-      if config.baudrate=6 then VaComm1.Baudrate:=br9600;
-      if config.baudrate=7 then VaComm1.Baudrate:=br14400;
-      if config.baudrate=8 then VaComm1.Baudrate:=br19200;
-      if config.baudrate=9 then VaComm1.Baudrate:=br38400;
-      if config.baudrate=10 then VaComm1.Baudrate:=br56000;
-      if config.baudrate=11 then VaComm1.Baudrate:=br57600;
-      if config.baudrate=12 then VaComm1.Baudrate:=br115200;
-      if config.baudrate=13 then VaComm1.Baudrate:=br128000;
-      if config.baudrate=14 then VaComm1.Baudrate:=br256000;
-      VaComm1.PortNum:=config.comPort;
-      VaComm1.Close;
-      try
+
+  if (config.isMO) or (config.isCF) then begin
+    try
+      if (config.isMO) and (config.isUsbPalm) then begin
+        Lcd:=TLCD_MO.CreateUsb(config.UsbPalmDevice);
+      end else begin
+        case config.baudrate of
+        0:  VaComm1.Baudrate:=br110;
+        1:  VaComm1.Baudrate:=br300;
+        2:  VaComm1.Baudrate:=br600;
+        3:  VaComm1.Baudrate:=br1200;
+        4:  VaComm1.Baudrate:=br2400;
+        5:  VaComm1.Baudrate:=br4800;
+        6:  VaComm1.Baudrate:=br9600;
+        7:  VaComm1.Baudrate:=br14400;
+        8:  VaComm1.Baudrate:=br19200;
+        9:  VaComm1.Baudrate:=br38400;
+        10: VaComm1.Baudrate:=br56000;
+        11: VaComm1.Baudrate:=br57600;
+        12: VaComm1.Baudrate:=br115200;
+        13: VaComm1.Baudrate:=br128000;
+        14: VaComm1.Baudrate:=br256000;
+        end;
+        VaComm1.PortNum:=config.comPort;
+        //VaComm1.Close;
         VaComm1.Open;
         if (config.isCF) then Lcd:=TLCD_CF.Create()
         else if (config.isMO) then Lcd:=TLCD_MO.Create();
-      except
+      end;
+    except
+      on E: Exception do begin
+        showmessage('Failed to open device: ' + E.Message);
         Lcd:=TLCD.Create();
       end;
     end;
+  end;
 
     if not (config.isCF or config.isMO or config.isHD) then Lcd:=TLCD.Create();
 
@@ -513,9 +526,9 @@ begin
     end;
 
     //
-    // Enable the threads...
+    // Enable the timers...
     //
-    if (config.isMO) or (config.isCF) then begin
+    if (not config.isHD) and (not config.isHD2) then begin
       timer1.enabled:=true;
       timer2.enabled:=true;
       timer3.enabled:=true;
@@ -526,15 +539,13 @@ begin
       timer10.enabled:=true;
       timer12.enabled:=true;
       timer13.enabled:=true;
-    end;
-
-    if (config.isHD) or (config.isHD2) then begin
+    end else begin
+      // HD/HD2 have a delay start - they will setup the above timers later.
       if config.bootDriverDelay=0 then timer11.interval:=10
       else timer11.interval:=config.bootDriverDelay*1000;
       timer11.enabled:=true;
     end;
 
-  end;
 end;
 
 procedure TForm1.doInteractions;
@@ -770,8 +781,7 @@ begin
     for teller:= 1 to config.height do begin
       //Application.ProcessMessages;
       regel:=config.screen[activeScreen][teller].text;
-      Data.qstattemp:=teller;
-      regel:=Data.change(regel);
+      regel:=Data.change(regel, teller);
 
       // Center the line if requested.
       if config.screen[activeScreen][teller].center then begin
@@ -893,25 +903,53 @@ begin
   teller:=0;
   try
     assignfile(initfile,extractfilepath(application.exename)+'actions.cfg');
-    reset (initfile);
-    while not eof(initfile) do begin
-      readln(initfile,regel);
-      teller:=teller+1;
-      actionsarray[teller,1]:=copy(regel,1,pos('¿',regel)-1);
-      actionsarray[teller,2]:=copy(regel,pos('¿',regel)+1,1);
-      actionsarray[teller,3]:=copy(regel,pos('¿¿',regel)+2,pos('¿¿¿',regel)-pos('¿¿',regel)-2);
-      actionsarray[teller,4]:=copy(regel,pos('¿¿¿',regel)+3,length(regel));
+    try
+      reset (initfile);
+      while not eof(initfile) do begin
+        readln(initfile,regel);
+        teller:=teller+1;
+        actionsarray[teller,1]:=copy(regel,1,pos('¿',regel)-1);
+        actionsarray[teller,2]:=copy(regel,pos('¿',regel)+1,1);
+        actionsarray[teller,3]:=copy(regel,pos('¿¿',regel)+2,pos('¿¿¿',regel)-pos('¿¿',regel)-2);
+        actionsarray[teller,4]:=copy(regel,pos('¿¿¿',regel)+3,length(regel));
+      end;
+    finally
+      closefile(initfile);
     end;
-    closefile(initfile);
   except
-    try closefile(initfile); except end;
   end;
   totalactions:=teller;
 end;
 
 procedure TForm1.Timer2Timer(Sender: TObject);
 begin
-  Data.checkIfNewsUpdatesRequired();
+  if (data.lcdSmartieUpdate) then begin
+    data.lcdSmartieUpdate:=False;
+
+    timer1.enabled:=false;
+    timer2.enabled:=false;
+    timer3.enabled:=false;
+    timer4.enabled:=false;
+    timer5.enabled:=false;
+    timer6.enabled:=false;
+    timer7.enabled:=false;
+    timer8.enabled:=false;
+    timer9.enabled:=false;
+    if MessageDlg('A new version of LCD Smartie is detected. '+chr(13)+data.lcdSmartieUpdateText+chr(13)+'Go to download page?', mtConfirmation, [mbYes, mbNo], 0) = mrYes then begin
+      ShellExecute(0, Nil, pchar('http://lcdsmartie.sourceforge.net/'), Nil, Nil, SW_NORMAL);
+      Form1.close;
+    end else begin
+      timer1.enabled:=true;
+      timer2.enabled:=true;
+      timer3.enabled:=true;
+      timer6.enabled:=true;
+      timer7.enabled:=true;
+      timer8.enabled:=true;
+      timer9.enabled:=true;
+    end;
+  end;
+
+  Data.UpdateHTTP;
   timer2.Interval:=config.newsRefresh*1000*60;
 end;
 
@@ -1128,7 +1166,7 @@ begin
   end;
 
   try
-    if (Lcd <> nil) Then Lcd.Destory();
+    if (Lcd <> nil) Then Lcd.Destroy();
   except
   end;
 
@@ -1156,7 +1194,7 @@ end;
 
 procedure TForm1.Timer8Timer(Sender: TObject);
 begin
-  Data.updateGameStats(Sender);
+  Data.updateGameStats;
   timer8.Interval:=config.gameRefresh*60000;
 end;
 
@@ -1535,7 +1573,7 @@ procedure TForm1.Timer9Timer(Sender: TObject);
 //MAILS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 begin
   timer9.Interval:=config.emailPeriod*60000;
-  Data.checkEmails();
+  Data.UpdateEmail;
 end;
 
 procedure TForm1.BacklightOn1Click(Sender: TObject);
@@ -1645,7 +1683,7 @@ opnieuwscreen:
     Panel5.Caption:='Theme:' + IntToStr(activetheme+1) + ' Screen:' + IntToStr(tmpScreen)+'  ';
   end else begin
     panel5.left:=90;
-    panel5.width:=23;
+    panel5.width:=33;
     Panel5.Caption:=IntToStr(activetheme+1) + ' | ' + IntToStr(tmpScreen) + '  ';
   end;
 

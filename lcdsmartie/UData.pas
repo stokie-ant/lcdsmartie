@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.2 $ $Date: 2004/11/14 22:35:25 $
+ *  $Revision: 1.3 $ $Date: 2004/11/16 19:44:33 $
  *****************************************************************************}
 
 
@@ -116,21 +116,23 @@ type
 
   TData = Class(TObject)
     public
-      qstattemp: integer;
+      lcdSmartieUpdate: Boolean;
+      lcdSmartieUpdateText: String;
       mbmactive:boolean;
       dllcancheck: Boolean;
       isconnected: Boolean;
       gotEmail: Boolean;
-      function change(regel:string):string;
-      procedure checkEmails;
-      procedure updateGameStats(Sender: TObject);
+      function change(regel:string; qstattemp: Integer=1):string;
       procedure refres(Sender: TObject);
       procedure updateNetworkStats(Sender: TObject);
-      procedure checkIfNewsUpdatesRequired;
       procedure updateMBMStats(Sender: TObject);
+      procedure UpdateHTTP;
+      procedure UpdateGameStats;
+      procedure UpdateEmail;
       constructor Create;
       destructor Destroy;   override;
     private
+      doHTTPUpdate, doGameUpdate, doEmailUpdate: Boolean;
       STUsername, STComputername, STCPUType, STCPUSpeed: string;
       STPageFree,STPageTotal:Integer;
       STMemFree, STMemTotal: Integer;
@@ -140,7 +142,7 @@ type
       CPUUsagePos: Cardinal;
       STCPUUsage: Cardinal;
       lastCpuUpdate: LongWord;
-      pop3Thread, HTTPThread: TMyThread;
+      dataThread: TMyThread;
       koeregel,screenResolution:string;
       netadaptername: array[0..9] of String;
       nettotaldown,nettotalup,netunicastdown,netunicastup,
@@ -182,20 +184,21 @@ type
       srvr:string;
       System1:Tsystem;
       qstatreg4: array[1..20,1..4] of string;
-      HTTPthreadisrunning: Boolean;
       DoNewsUpdate: Array [1..9] of Boolean;
       newsAttempts: Array [1..9] of Byte;
-      pop3threadisrunning: Boolean;
       mail: Array [0..9] of TEmail;
       setiNumResults,setiCpuTime,setiAvgCpu,setiLastResult,setiUserTime,
       setiTotalUsers,setiRank,setiShareRank,setiMoreWU:string;
       foldMemSince, foldLastWU, foldActProcsWeek, foldTeam, foldScore, foldRank, foldWU:string;
       rss: Array [1..maxRss] of TRss;
       rssEntries: Cardinal;
+      procedure emailUpdate;
+      procedure fetchHTTPUpdates;
+      procedure httpUpdate;
+      procedure gameUpdate;
+      procedure doDataThread;
       function ReadMBM5Data : Boolean;
       function GetCpuSpeedRegistry(proc: Byte): string;
-      procedure checkHTTPUpdates;
-      procedure checkEmailUpdates;
       function getRss(Url: String;var titles, descs: array of string; maxitems:Cardinal; maxfreq:Cardinal=0): Cardinal;
       function decodeArgs(str: String; funcName: String; maxargs: Cardinal;
          var args: array of String; var prefix: String; var postfix: String; var numArgs:Cardinal):Boolean;
@@ -284,79 +287,57 @@ end;
 
 procedure TMyThread.Execute;
 begin
-  try
     method();
-  except
-  end;
 end;
 
 constructor TData.Create;
 begin
   inherited;
 
-  qstattemp:=1;
   CPUUsagePos:=1;
   isconnected:=false;
   totaldlls:=0;
+  lcdSmartieUpdate:=False;
   distributedlog:=config.distLog;
 
   // Get CPU speed once:
   STCPUSpeed:=GetCpuSpeedRegistry(0);
   if (STCPUSpeed='') then STCPUSpeed:=cxCpu[0].Speed.Normalised.FormatMhz;
 
-  checkIfNewsUpdatesRequired();
+  doEmailUpdate:=True;
+  doHTTPUpdate:=True;
+  doGameUpdate:=True;
+
+  // Start data collection thread
+  dataThread:= TMyThread.Create(self.doDataThread);
+  dataThread.Resume;
 end;
 
 destructor TData.Destroy;
 begin
-  try
-    if HTTPthreadisrunning=true then begin
-      assert(Assigned(HTTPThread));
-      HTTPThread.Terminate;
-      HTTPThread.WaitFor;
-    end;
-    if (Assigned(HTTPThread)) then HTTPThread.Destroy;
-
-  except
+  if (Assigned(dataThread)) then begin
+    if (not dataThread.Terminated) then dataThread.Terminate;
+    dataThread.WaitFor;
+    dataThread.Destroy;
   end;
 
-  try
-    if pop3threadisrunning=true then  begin
-      assert(Assigned(pop3thread));
-      pop3thread.Terminate;
-      pop3thread.WaitFor;
-    end;
-    if (Assigned(pop3Thread)) then pop3thread.Destroy;
-  except
-  end;
   inherited;
 end;
 
 
-procedure TData.checkEmails;
-begin
-  if pop3threadisrunning=false then begin
-    if Assigned(pop3Thread) then begin
-      try
-        pop3Thread.WaitFor;
-        pop3Thread.Destroy;
-      except
-      end;
-    end;
-    pop3Thread:= TMyThread.Create(self.checkEmailUpdates);
-    pop3Thread.Resume;
-  end;
-end;
-
 function TData.changeWinamp(regel: String):String;
+const
+  maxArgs = 10;
 var
   tempstr: String;
-  p: Cardinal;
   barLength: Cardinal;
   barPosition: Integer;
   trackLength, trackPosition, t: Integer;
   i: Integer;
   m, h, s: Integer;
+  args: Array [1..maxArgs] of String;
+  prefix, postfix: String;
+  numArgs: Cardinal;
 
 begin
     trackLength:=form1.winampctrl1.TrackLength;
@@ -387,22 +368,27 @@ begin
         regel:= StringReplace(regel,'$WinampStat','[unknown]',[rfReplaceAll]);
       end;
     end;
-    while pos('$WinampPosition(',regel) <> 0 do begin
-      try
-        p:=pos('$WinampPosition(',regel)+16;
-        tempstr:=copy(regel,p,length(regel));
-        barlength:=strtoint(copy(tempstr,1,pos(')',tempstr)-1));
 
-        barPosition:=round(((trackPosition / 1000)*barLength) /trackLength);
+    while decodeArgs(regel, '$WinampPosition', maxArgs, args, prefix, postfix, numargs) do begin
+      assert(numargs=1);
+      try
+        barlength:=strtoint(args[1]);
+
+        if (trackLength>0) then
+          barPosition:=round(((trackPosition / 1000)*barLength) /trackLength)
+        else
+          barPosition:=0;
+
         tempstr:='';
 
         for i:=1 to barPosition-1 do tempstr:=tempstr+ '-';
         tempstr:=tempstr+ '+';
         for i:=barPosition+1 to barlength do tempstr:=tempstr+ '-';
         tempstr:=copy(tempstr,1,barlength);
-        regel:=StringReplace(regel,'$WinampPosition('+inttostr(barlength)+')', tempstr,[]);
+
+        regel:=prefix+tempstr+postfix;
       except
-        regel:=StringReplace(regel,'$WinampPosition(','error',[]);
+        on E: Exception do regel:=prefix+'[WinampPosition: '+E.Message+']'+postfix;
       end;
     end;
 
@@ -585,39 +571,35 @@ var
 
 begin
     while decodeArgs(regel, '$NetAdapter', maxArgs, args, prefix, postfix, numargs) do begin
-      assert(numargs=1);
       try
         adapterNum:=StrToInt(args[1]);
         regel:=prefix+netadaptername[adapterNum]+postfix;
       except
-        regel:=prefix+'[Error:NetAdapter]'+postfix;
+        on E: Exception do regel:=prefix+'[NetAdapter: '+E.Message+']'+postfix;
       end;
     end;
     while decodeArgs(regel, '$NetDownK', maxArgs, args, prefix, postfix, numargs) do begin
-      assert(numargs=1);
       try
         adapterNum:=StrToInt(args[1]);
         regel:=prefix+floatToStr(Round(nettotaldown[adapterNum]/1024*10)/10)+postfix;
       except
-        regel:=prefix+'[Error:NetDownK]'+postfix;
+        on E: Exception do regel:=prefix+'[NetDownK: '+E.Message+']'+postfix;
       end;
     end;
     while decodeArgs(regel, '$NetUpK', maxArgs, args, prefix, postfix, numargs) do begin
-      assert(numargs=1);
       try
         adapterNum:=StrToInt(args[1]);
         regel:=prefix+floatToStr(Round(nettotalup[adapterNum]/1024*10)/10)+postfix;
       except
-        regel:=prefix+'[Error:NetUpK]'+postfix;
+        on E: Exception do regel:=prefix+'[NetUpK: '+E.Message+']'+postfix;
       end;
     end;
     while decodeArgs(regel, '$NetDownM', maxArgs, args, prefix, postfix, numargs) do begin
-      assert(numargs=1);
       try
         adapterNum:=StrToInt(args[1]);
         regel:=prefix+floatToStr(Round(nettotaldown[adapterNum]/1024/1024*10)/10)+postfix;
       except
-        regel:=prefix+'[Error:NetDownM]'+postfix;
+        on E: Exception do regel:=prefix+'[NetDownM: '+E.Message+']'+postfix;
       end;
     end;
     while decodeArgs(regel, '$NetUpM', maxArgs, args, prefix, postfix, numargs) do begin
@@ -626,7 +608,7 @@ begin
         adapterNum:=StrToInt(args[1]);
         regel:=prefix+floatToStr(Round(nettotalup[adapterNum]/1024/1024*10)/10)+postfix;
       except
-        regel:=prefix+'[Error:NetUpM]'+postfix;
+        on E: Exception do regel:=prefix+'[NetUpM: '+E.Message+']'+postfix;
       end;
     end;
     while decodeArgs(regel, '$NetDownG', maxArgs, args, prefix, postfix, numargs) do begin
@@ -635,7 +617,7 @@ begin
         adapterNum:=StrToInt(args[1]);
         regel:=prefix+floatToStr(Round(nettotaldown[adapterNum]/1024/1024/1024*10)/10)+postfix;
       except
-        regel:=prefix+'[Error:NetDownG]'+postfix;
+        on E: Exception do regel:=prefix+'[NetDownG: '+E.Message+']'+postfix;
       end;
     end;
     while decodeArgs(regel, '$NetUpG', maxArgs, args, prefix, postfix, numargs) do begin
@@ -644,7 +626,7 @@ begin
         adapterNum:=StrToInt(args[1]);
         regel:=prefix+floatToStr(Round(nettotalup[adapterNum]/1024/1024/1024*10)/10)+postfix;
       except
-        regel:=prefix+'[Error:NetUpG]'+postfix;
+        on E: Exception do regel:=prefix+'[NetUpG: '+E.Message+']'+postfix;
       end;
     end;
     while decodeArgs(regel, '$NetErrDown', maxArgs, args, prefix, postfix, numargs) do begin
@@ -653,7 +635,7 @@ begin
         adapterNum:=StrToInt(args[1]);
         regel:=prefix+FloatToStr(netErrorsDown[adapterNum])+postfix;
       except
-        regel:=prefix+'[Error:NetErrDown]'+postfix;
+        on E: Exception do regel:=prefix+'[NetErrDown: '+E.Message+']'+postfix;
       end;
     end;
     while decodeArgs(regel, '$NetErrUp', maxArgs, args, prefix, postfix, numargs) do begin
@@ -662,7 +644,7 @@ begin
         adapterNum:=StrToInt(args[1]);
         regel:=prefix+FloatToStr(netErrorsUp[adapterNum])+postfix;
       except
-        regel:=prefix+'[Error:NetErrUp]'+postfix;
+        on E: Exception do regel:=prefix+'[NetErrUp: '+E.Message+']'+postfix;
       end;
     end;
     while decodeArgs(regel, '$NetErrTot', maxArgs, args, prefix, postfix, numargs) do begin
@@ -671,7 +653,7 @@ begin
         adapterNum:=StrToInt(args[1]);
         regel:=prefix+FloatToStr(netErrorsDown[adapterNum]+netErrorsUp[adapterNum])+postfix;
       except
-        regel:=prefix+'[Error:NetErrTot]'+postfix;
+        on E: Exception do regel:=prefix+'[NetErrTot: '+E.Message+']'+postfix;
       end;
     end;
     while decodeArgs(regel, '$NetUniDown', maxArgs, args, prefix, postfix, numargs) do begin
@@ -680,7 +662,7 @@ begin
         adapterNum:=StrToInt(args[1]);
         regel:=prefix+FloatToStr(netunicastdown[adapterNum])+postfix;
       except
-        regel:=prefix+'[Error:NetUniDown]'+postfix;
+        on E: Exception do regel:=prefix+'[NetUniDown: '+E.Message+']'+postfix;
       end;
     end;
     while decodeArgs(regel, '$NetUniUp', maxArgs, args, prefix, postfix, numargs) do begin
@@ -689,7 +671,7 @@ begin
         adapterNum:=StrToInt(args[1]);
         regel:=prefix+FloatToStr(netunicastup[adapterNum])+postfix;
       except
-        regel:=prefix+'[Error:NetUniUp]'+postfix;
+        on E: Exception do regel:=prefix+'[NetUniUp: '+E.Message+']'+postfix;
       end;
     end;
     while decodeArgs(regel, '$NetUniTot', maxArgs, args, prefix, postfix, numargs) do begin
@@ -698,7 +680,7 @@ begin
         adapterNum:=StrToInt(args[1]);
         regel:=prefix+FloatToStr(netunicastup[adapterNum]+netunicastdown[adapterNum])+postfix;
       except
-        regel:=prefix+'[Error:NetUniTot]'+postfix;
+        on E: Exception do regel:=prefix+'[NetUniTot: '+E.Message+']'+postfix;
       end;
     end;
     while decodeArgs(regel, '$NetNuniDown', maxArgs, args, prefix, postfix, numargs) do begin
@@ -707,7 +689,7 @@ begin
         adapterNum:=StrToInt(args[1]);
         regel:=prefix+FloatToStr(netnunicastdown[adapterNum])+postfix;
       except
-        regel:=prefix+'[Error:NetNuniDown]'+postfix;
+        on E: Exception do regel:=prefix+'[NetNuniDown: '+E.Message+']'+postfix;
       end;
     end;
     while decodeArgs(regel, '$NetNuniUp', maxArgs, args, prefix, postfix, numargs) do begin
@@ -716,7 +698,7 @@ begin
         adapterNum:=StrToInt(args[1]);
         regel:=prefix+FloatToStr(netnunicastup[adapterNum])+postfix;
       except
-        regel:=prefix+'[Error:NetNuniUp]'+postfix;
+        on E: Exception do regel:=prefix+'[NetNuniUp: '+E.Message+']'+postfix;
       end;
     end;
     while decodeArgs(regel, '$NetNuniTot', maxArgs, args, prefix, postfix, numargs) do begin
@@ -725,7 +707,7 @@ begin
         adapterNum:=StrToInt(args[1]);
         regel:=prefix+FloatToStr(netnunicastup[adapterNum]+netnunicastdown[adapterNum])+postfix;
       except
-        regel:=prefix+'[Error:NetNuniTot]'+postfix;
+        on E: Exception do regel:=prefix+'[NetNuniTot: '+E.Message+']'+postfix;
       end;
     end;
     while decodeArgs(regel, '$NetPackTot', maxArgs, args, prefix, postfix, numargs) do begin
@@ -734,7 +716,7 @@ begin
          adapterNum:=StrToInt(args[1]);
         regel:=prefix+FloatToStr(netnunicastup[adapterNum]+netnunicastdown[adapterNum]+netunicastdown[adapterNum]+netunicastup[adapterNum])+postfix;
       except
-        regel:=prefix+'[Error:NetPackTot]'+postfix;
+        on E: Exception do regel:=prefix+'[NetPackTot: '+E.Message+']'+postfix;
       end;
     end;
     while decodeArgs(regel, '$NetDiscDown', maxArgs, args, prefix, postfix, numargs) do begin
@@ -743,7 +725,7 @@ begin
         adapterNum:=StrToInt(args[1]);
         regel:=prefix+FloatToStr(netDiscardsdown[adapterNum])+postfix;
       except
-        regel:=prefix+'[Error:NetDiscDown]'+postfix;
+        on E: Exception do regel:=prefix+'[NetDiscDown: '+E.Message+']'+postfix;
       end;
     end;
     while decodeArgs(regel, '$NetDiscUp', maxArgs, args, prefix, postfix, numargs) do begin
@@ -752,7 +734,7 @@ begin
         adapterNum:=StrToInt(args[1]);
         regel:=prefix+FloatToStr(netDiscardsup[adapterNum])+postfix;
       except
-        regel:=prefix+'[Error:NetDiscUp]'+postfix;
+        on E: Exception do regel:=prefix+'[NetDiscUp: '+E.Message+']'+postfix;
       end;
     end;
 
@@ -762,7 +744,7 @@ begin
         adapterNum:=StrToInt(args[1]);
         regel:=prefix+FloatToStr(netDiscardsup[adapterNum]+netDiscardsdown[adapterNum])+postfix;
       except
-        regel:=prefix+'[Error:NetDiscTot]'+postfix;
+        on E: Exception do regel:=prefix+'[NetDiscTot: '+E.Message+']'+postfix;
       end;
     end;
 
@@ -772,7 +754,7 @@ begin
         adapterNum:=StrToInt(args[1]);
         regel:=prefix+FloatToStr(netSpeeddownK[adapterNum])+postfix;
       except
-        regel:=prefix+'[Error:NetSpDownK]'+postfix;
+        on E: Exception do regel:=prefix+'[NetSpDownK: '+E.Message+']'+postfix;
       end;
     end;
 
@@ -782,7 +764,7 @@ begin
         adapterNum:=StrToInt(args[1]);
         regel:=prefix+FloatToStr(netSpeedupK[adapterNum])+postfix;
       except
-        regel:=prefix+'[Error:NetSpUpK]'+postfix;
+        on E: Exception do regel:=prefix+'[NetSpUpK: '+E.Message+']'+postfix;
       end;
     end;
 
@@ -792,7 +774,7 @@ begin
         adapterNum:=StrToInt(args[1]);
         regel:=prefix+FloatToStr(netSpeeddownM[adapterNum])+postfix;
       except
-        regel:=prefix+'[Error:NetSpDownM]'+postfix;
+        on E: Exception do regel:=prefix+'[NetSpDownM: '+E.Message+']'+postfix;
       end;
     end;
 
@@ -802,7 +784,7 @@ begin
         adapterNum:=StrToInt(args[1]);
         regel:=prefix+FloatToStr(netSpeedupM[adapterNum])+postfix;
       except
-        regel:=prefix+'[Error:NetSpUpM]'+postfix;
+        on E: Exception do regel:=prefix+'[NetSpUpM: '+E.Message+']'+postfix;
       end;
     end;
 
@@ -811,7 +793,7 @@ end;
 
 
 
-function TData.change(regel:string):string;
+function TData.change(regel:string; qstattemp: Integer=1):string;
 const
   maxArgs = 10;
 
@@ -835,8 +817,9 @@ var
   found: Boolean;
 
 begin
-    hdteller:=0;
+  try
 
+    hdteller:=0;
     while decodeArgs(regel, '$LogFile', maxArgs, args, prefix, postfix, numargs) do begin
       assert(numargs=2);
       hdteller:=hdteller+1;
@@ -885,7 +868,7 @@ begin
         closefile(bestand3);
         regel:=prefix+regel3+postfix;
       except
-       on E: Exception do regel:=prefix+'[File: '+E.Message+']'+postfix;
+        on E: Exception do regel:=prefix+'[File: '+E.Message+']'+postfix;
       end;
     end;
 
@@ -989,7 +972,7 @@ begin
         tempst:=formatdatetime(regel2,now);
         regel:=StringReplace(regel,'$Time('+regel2+')',tempst,[]);
       except
-        regel:=StringReplace(regel,'$Time(','error',[]);
+        on E: Exception do regel:=StringReplace(regel,'$Time(','[Time: '+E.Message+']',[]);
       end;
     end;
 
@@ -1003,197 +986,169 @@ begin
     if pos('$PageU%',regel) <> 0 then regel:=StringReplace(regel,'$PageU%', IntToStr(round(100/STPageTotal*(STPageTotal-STPagefree))),[rfReplaceAll]);
 
     while decodeArgs(regel, '$HDFreg', maxArgs, args, prefix, postfix, numargs) do begin
-      assert(numargs=1);
       try
         letter:=ord(upcase(args[1][1]));
         regel:=prefix+IntToStr(round(STHDFree[letter]/1024))+postfix;
       except
-        regel:=prefix+'[Error:HDFreg]'+postfix;
+        on E: Exception do regel:=prefix+'[HDFreg: '+E.Message+']'+postfix;
       end;
     end;
 
     while decodeArgs(regel, '$HDFree', maxArgs, args, prefix, postfix, numargs) do begin
-      assert(numargs=1);
       try
         letter:=ord(upcase(args[1][1]));
         regel:=prefix+IntToStr(STHDFree[letter])+postfix;
       except
-        regel:=prefix+'[Error:HDFree]'+postfix;
+        on E: Exception do regel:=prefix+'[HDFree: '+E.Message+']'+postfix;
       end;
     end;
 
 
     while decodeArgs(regel, '$HDUseg', maxArgs, args, prefix, postfix, numargs) do begin
-      assert(numargs=1);
       try
         letter:=ord(upcase(args[1][1]));
         regel2:=IntToStr(round((STHDTotal[letter]-STHDFree[letter])/1024));
         regel:=prefix+regel2+postfix;
       except
-        regel:=prefix+'[Error:HDUseg]'+postfix;
+        on E: Exception do regel:=prefix+'[HDUseg: '+E.Message+']'+postfix;
       end;
     end;
 
     while decodeArgs(regel, '$HDUsed', maxArgs, args, prefix, postfix, numargs) do begin
-      assert(numargs=1);
       try
         letter:=ord(upcase(args[1][1]));
         regel2:=IntToStr(round(STHDTotal[letter]-STHDFree[letter]));
         regel:=prefix+regel2+postfix;
       except
-        regel:=prefix+'[Error:HDUsed]'+postfix;
+        on E: Exception do regel:=prefix+'[HDUsed: '+E.Message+']'+postfix;
       end;
     end;
 
     while decodeArgs(regel, '$HDF%', maxArgs, args, prefix, postfix, numargs) do begin
-      assert(numargs=1);
       try
         letter:=ord(upcase(args[1][1]));
         regel2:=intToStr(round(100/STHDTotal[letter]*STHDFree[letter]));
         regel:=prefix+regel2+postfix;
       except
-        regel:=prefix+'[Error:HDF%]'+postfix;
+        on E: Exception do regel:=prefix+'[HDF%: '+E.Message+']'+postfix;
       end;
     end;
 
     while decodeArgs(regel, '$HDU%', maxArgs, args, prefix, postfix, numargs) do begin
-      assert(numargs=1);
       try
         letter:=ord(upcase(args[1][1]));
         regel2:=intToStr(round(100/STHDTotal[letter]*(STHDTotal[letter]-STHDFree[letter])));
         regel:=prefix+regel2+postfix;
       except
-        regel:=prefix+'[Error:HDU%]'+postfix;
+        on E: Exception do regel:=prefix+'[HDU%: '+E.Message+']'+postfix;
       end;
     end;
 
     while decodeArgs(regel, '$HDTotag', maxArgs, args, prefix, postfix, numargs) do begin
-      assert(numargs=1);
       try
         letter:=ord(upcase(args[1][1]));
         regel:=prefix+IntToStr(round(STHDTotal[letter]/1024))+postfix;
       except
-        regel:=prefix+'[Error:HDTotag]'+postfix;
+        on E: Exception do regel:=prefix+'[HDTotag: '+E.Message+']'+postfix;
       end;
     end;
 
     while decodeArgs(regel, '$HDTotal', maxArgs, args, prefix, postfix, numargs) do begin
-      assert(numargs=1);
       try
         letter:=ord(upcase(args[1][1]));
         regel:=prefix+IntToStr(STHDTotal[letter])+postfix;
       except
-        regel:=prefix+'[Error:HDTotal]'+postfix;
+        on E: Exception do regel:=prefix+'[HDTotal: '+E.Message+']'+postfix;
       end;
     end;
 
     if decodeArgs(regel, '$MObutton', maxArgs, args, prefix, postfix, numargs) then begin
-      assert(numargs=1);
       if UMain.kar=args[1] then spacecount:=1 else spacecount:=0;
       regel:=prefix+intToStr(spacecount)+postfix;
     end;
 
     if decodeArgs(regel, '$Chr', maxArgs, args, prefix, postfix, numargs) then begin
-      assert(numargs=1);
       try
         regel:=prefix+Chr(StrToInt(args[1]))+postfix;
       except
-        regel:=prefix+'[Error:Chr]'+postfix;
+        on E: Exception do regel:=prefix+'[Chr]'+postfix;
       end;
     end;
 
-    while pos('$dll(',regel) <> 0 do begin
-      try
-        totaldlls:=totaldlls+1;
-        if dllcancheck=true then begin
-          try
-            tempst:=copy(regel, pos('$dll(',regel),length(regel));
-            tempst:=copy(tempst, pos('$dll(',tempst)+5,pos(',',tempst)-pos('$dll(',tempst)-5);
-            if templib <> tempst then hlib:=LoadLibrary(pchar(extractfilepath(application.exename)+'plugins\'+tempst));
-            templib:=tempst;
-
-            tempst:=copy(regel, pos('$dll(',regel)+5,length(regel));
-            tempst:=copy(tempst,pos(',',tempst)+1,length(tempst));
-
-            nlib:=StrToInt(copy(tempst,1,1));
-            tempst:=copy(tempst,3,length(tempst));
-            plib:=copy(tempst,1,pos(',',tempst)-1);
-            tlib:=copy(tempst,pos(',',tempst)+1,pos(')',tempst)-pos(',',tempst)-1);
-            tempst:=copy(regel,pos('$dll(',regel),length(regel));
-            tempst:=copy(tempst,1,pos(')',tempst));
-            if nlib = 1 then begin
-              @function1:=getprocaddress(hlib,'function1');
-              if @function1 <> nil then dllsarray[totaldlls]:=function1(pchar(plib), pchar(tlib));
-            end;
-            if nlib = 2 then begin
-              @function2:=getprocaddress(hlib,'function2');
-              if @function2 <> nil then dllsarray[totaldlls]:=function2(pchar(plib), pchar(tlib));
-            end;
-            if nlib = 3 then begin
-              @function3:=getprocaddress(hlib,'function3');
-              if @function3 <> nil then dllsarray[totaldlls]:=function3(pchar(plib), pchar(tlib));
-            end;
-            if nlib = 4 then begin
-              @function4:=getprocaddress(hlib,'function4');
-              if @function4 <> nil then dllsarray[totaldlls]:=function4(pchar(plib), pchar(tlib));
-            end;
-            if nlib = 5 then begin
-              @function5:=getprocaddress(hlib,'function5');
-              if @function5 <> nil then dllsarray[totaldlls]:=function5(pchar(plib), pchar(tlib));
-            end;
-            if nlib = 6 then begin
-              @function6:=getprocaddress(hlib,'function6');
-              if @function6 <> nil then dllsarray[totaldlls]:=function6(pchar(plib), pchar(tlib));
-            end;
-            if nlib = 7 then begin
-              @function7:=getprocaddress(hlib,'function7');
-              if @function7 <> nil then dllsarray[totaldlls]:=function7(pchar(plib), pchar(tlib));
-            end;
-            if nlib = 8 then begin
-              @function8:=getprocaddress(hlib,'function8');
-              if @function8 <> nil then dllsarray[totaldlls]:=function8(pchar(plib), pchar(tlib));
-            end;
-            if nlib = 9 then begin
-              @function9:=getprocaddress(hlib,'function9');
-              if @function9 <> nil then dllsarray[totaldlls]:=function9(pchar(plib), pchar(tlib));
-            end;
-            if nlib = 0 then begin
-              @function10:=getprocaddress(hlib,'function10');
-              if @function10 <> nil then dllsarray[totaldlls]:=function10(pchar(plib), pchar(tlib));
-            end;
-          except end;
-        end;
-      finally
-        tempst:=copy(regel,pos('$dll(',regel),length(regel));
-        tempst:=copy(tempst,1,pos(')',tempst));
+    while decodeArgs(regel, '$dll', maxArgs, args, prefix, postfix, numargs) do begin
+      totaldlls:=totaldlls+1;
+      if dllcancheck=true then begin
         try
-          if pos('$dll(',tempst)<>0 then begin
-            regel:=StringReplace(regel,tempst,dllsarray[totaldlls],[]);
+          tempst:=args[1];
+          if templib <> tempst then hlib:=LoadLibrary(pchar(extractfilepath(application.exename)+'plugins\'+tempst));
+          templib:=tempst;
+
+          nlib:=StrToInt(args[2]);
+          plib:=args[3];
+          tlib:=args[4];
+
+          if nlib = 1 then begin
+            @function1:=getprocaddress(hlib,'function1');
+            if @function1 <> nil then dllsarray[totaldlls]:=function1(pchar(plib), pchar(tlib));
           end;
+          if nlib = 2 then begin
+            @function2:=getprocaddress(hlib,'function2');
+            if @function2 <> nil then dllsarray[totaldlls]:=function2(pchar(plib), pchar(tlib));
+          end;
+          if nlib = 3 then begin
+            @function3:=getprocaddress(hlib,'function3');
+            if @function3 <> nil then dllsarray[totaldlls]:=function3(pchar(plib), pchar(tlib));
+          end;
+          if nlib = 4 then begin
+            @function4:=getprocaddress(hlib,'function4');
+            if @function4 <> nil then dllsarray[totaldlls]:=function4(pchar(plib), pchar(tlib));
+          end;
+          if nlib = 5 then begin
+            @function5:=getprocaddress(hlib,'function5');
+            if @function5 <> nil then dllsarray[totaldlls]:=function5(pchar(plib), pchar(tlib));
+          end;
+          if nlib = 6 then begin
+            @function6:=getprocaddress(hlib,'function6');
+            if @function6 <> nil then dllsarray[totaldlls]:=function6(pchar(plib), pchar(tlib));
+          end;
+          if nlib = 7 then begin
+            @function7:=getprocaddress(hlib,'function7');
+            if @function7 <> nil then dllsarray[totaldlls]:=function7(pchar(plib), pchar(tlib));
+          end;
+          if nlib = 8 then begin
+            @function8:=getprocaddress(hlib,'function8');
+            if @function8 <> nil then dllsarray[totaldlls]:=function8(pchar(plib), pchar(tlib));
+          end;
+          if nlib = 9 then begin
+            @function9:=getprocaddress(hlib,'function9');
+            if @function9 <> nil then dllsarray[totaldlls]:=function9(pchar(plib), pchar(tlib));
+          end;
+          if nlib = 0 then begin
+            @function10:=getprocaddress(hlib,'function10');
+            if @function10 <> nil then dllsarray[totaldlls]:=function10(pchar(plib), pchar(tlib));
+          end;
+          regel:=prefix+dllsarray[totaldlls]+postfix;
         except
-          regel:=StringReplace(regel,'$dll(',dllsarray[totaldlls],[]);
+          on E: Exception do regel:=prefix+'[dll: '+E.Message+']'+postfix;
         end;
+      end else begin
+        regel:=prefix+dllsarray[totaldlls]+postfix;
       end;
     end;
 
-    hdteller:=0;
-    while pos('$Count(',regel) <> 0 do begin
+    while decodeArgs(regel, '$Count', maxArgs, args, prefix, postfix, numargs) do begin
       ccount:=0;
       try
-        hdteller:=hdteller+1;
-        if hdteller>10 then regel:=StringReplace(regel,'$Count(','error',[rfReplaceAll]);
-        tempst:=copy(regel,pos('$Count(',regel)+7,length(regel));
-        tempst:=copy(tempst,1,pos(')',tempst)-1);
+        tempst:=args[1];
         while pos('#',tempst) <> 0 do begin
           ccount:=ccount+StrToInt(copy(tempst,1,pos('#',tempst)-1));
           tempst:=copy(tempst,pos('#',tempst)+1,length(tempst));
         end;
         ccount:=ccount+StrToInt(copy(tempst,1,length(tempst)));
-        tempst:=copy(regel,pos('$Count(',regel)+7,length(regel));
-        tempst:=copy(tempst,1,pos(')',tempst)-1);
-        regel:=StringReplace(regel,'$Count('+ tempst+')',FloatToStr(ccount),[]);
-     except
-        regel:=StringReplace(regel,'$Count(','error',[]);
+
+        regel:=prefix+FloatToStr(ccount)+postfix;
+      except
+        on E: Exception do regel:=prefix+'[Count: '+E.Message+']'+postfix;
       end;
     end;
 
@@ -1204,7 +1159,9 @@ begin
         customchar(regel2);
         regel:=StringReplace(regel,'$CustomChar('+regel2+')','', []);
       except
-        regel:=StringReplace(regel,'$CustomChar(','ERROR', []);
+        on E: Exception do regel:=StringReplace(regel,
+                                      '$CustomChar(',
+                                      '[CustomChar: '+E.Message+']', []);
       end;
     end;
 
@@ -1213,8 +1170,6 @@ begin
     //   NUM is 1 for item 1, etc. 0 means all (default). [when TYPR is b, then 0 is used]
     //   FREQ is the number of hours that must past before checking stream again.
    while decodeArgs(regel, '$Rss', maxArgs, args, prefix, postfix, numargs) do begin
-      assert((numargs>=2) and (numargs<=4));
-
       if (numargs<3) then begin
         args[3]:='0';
       end;
@@ -1227,16 +1182,20 @@ begin
         if (rss[jj].url = args[1]) then found:=true;
       until (jj>=rssEntries) or (found);
 
-      if (found) and (rss[jj].items>0) and (Cardinal(StrToInt(args[3]))<=rss[jj].items) then begin
-        if (args[2]='t') then begin
-          regel:=prefix+rss[jj].title[StrToInt(args[3])]+postfix;
-        end else if (args[2]='d') then begin
-          regel:=prefix+rss[jj].desc[StrToInt(args[3])]+postfix;
-        end else if (args[2]='b') then begin
-          regel:=prefix+rss[jj].whole+postfix;
-        end else regel:=prefix+'[Error: Rss: bad arg 2]'+postfix;
-      end
-      else regel:=prefix+'[Error: Rss]'+postfix;
+      try
+        if (found) and (rss[jj].items>0) and (Cardinal(StrToInt(args[3]))<=rss[jj].items) then begin
+          if (args[2]='t') then begin
+            regel:=prefix+rss[jj].title[StrToInt(args[3])]+postfix;
+          end else if (args[2]='d') then begin
+            regel:=prefix+rss[jj].desc[StrToInt(args[3])]+postfix;
+          end else if (args[2]='b') then begin
+            regel:=prefix+rss[jj].whole+postfix;
+          end else regel:=prefix+'[Error: Rss: bad arg 2]'+postfix;
+        end
+        else regel:=prefix+'[Rss: Data Not Available]'+postfix;
+      except
+        on E: Exception do regel:=prefix+'[Rss: '+E.Message+']'+postfix;
+      end;
    end;
 
    while decodeArgs(regel, '$Bar', maxArgs, args, prefix, postfix, numargs) do begin
@@ -1258,7 +1217,7 @@ begin
 
         regel:=prefix+STHDBar+postfix;
       except
-        regel:=prefix+'[Error:Bar]'+postfix;
+        on E: Exception do regel:=prefix+'[Bar: '+E.Message+']'+postfix;
       end;
     end;
 
@@ -1278,7 +1237,9 @@ begin
         else
           regel:=StringReplace(regel,'$Flash(','ERROR', []);
       except
-        regel:=StringReplace(regel,'$Flash(','ERROR', []);
+        on E: Exception do regel:=StringReplace(regel,
+                                          '$Flash(',
+                                          '[Flash: '+E.Message+']', []);
       end;
     end;
 
@@ -1297,12 +1258,11 @@ begin
         spaceline:=spaceline+regel2;
         regel:=StringReplace(regel,'$Right('+regel2+',$'+IntToStr(spacecount)+'%)',spaceline, []);
       except
-        regel:=StringReplace(regel,'$Right(','error', []);
+        on E: Exception do regel:=StringReplace(regel,'$Right(','[Right: '+E.Message+']', []);
       end;
     end;
 
     while decodeArgs(regel, '$Fill', maxArgs, args, prefix, postfix, numargs) do begin
-      assert(numargs=1);
       try
         spacecount:=StrToInt(args[1]);
         spaceline:='';
@@ -1313,10 +1273,15 @@ begin
         end;
         regel:=prefix+spaceline+postfix;
       except
-        regel:=prefix+'[Error:Fill]'+postfix;
+        on E: Exception do regel:=prefix+'[Fill: '+E.Message+']'+postfix;
       end;
-
     end;
+  except
+    on E: Exception do regel:='[Unhandled Exception: '+E.Message+']';
+  end;
+
+  regel:=StringReplace(regel,Chr($A),'',[rfReplaceAll]);
+  regel:=StringReplace(regel,Chr($D),'',[rfReplaceAll]);
   result:=regel;
 end;
 
@@ -1333,33 +1298,15 @@ var
   w, d, h, m, s : Cardinal;
   total, y: Cardinal;
   rawcpu: Double;
-  runThread: Boolean;
 
 begin
-try
-  runThread:=False;
-  for y:=1 to 9 do begin
-    if (donewsupdate[y]) then runThread := true;
-  end;
-
-  if (runThread) and (HTTPthreadisrunning =false) then begin
-    if Assigned(HTTPThread) then begin
-      try
-        HTTPThread.WaitFor;
-        HTTPThread.Destroy;
-      except
-      end;
-    end;
-    HTTPThread:=TMyThread.Create(self.checkHTTPUpdates);
-    HTTPThread.Resume;
-  end;
-
+//try
   //cpuusage!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   //Application.ProcessMessages;
   t:=GetTickCount;
   if (t - lastCpuUpdate > (ticksperseconde div 4)) then begin
     lastCpuUpdate := t;
-    try
+    //try
       {  CPUUsage[CPUUsagePos]:=cxCpu[0].Usage.Value.AsNumber;}
       CollectCPUData;
       rawcpu:= adCpuUsage.GetCPUUsage(0);
@@ -1370,8 +1317,9 @@ try
         if (CPUUsagePos>5) then CPUUsagePos:=1;
         if (CPUUsageCount<5) then Inc(CPUUsageCount);
       end;
-    except
-    end;
+    //except
+    //end;
+
     total:=0;
     for y:=1 to CPUUsageCount do total:=total+CPUUsage[y];
     if (CPUUsageCount>0) then STCPUUsage:=total div CPUUsageCount;
@@ -1407,8 +1355,8 @@ try
 
   distributedlog:=config.distLog;
 
-except
-end;
+//except
+//end;
 
 end;
 
@@ -1486,96 +1434,6 @@ begin
 end;
 
 
- 
-procedure TData.updateGameStats(Sender: TObject);
-//GAMESTATS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-var
-  tempregel,tempregel2,tempregel4,regel:string;
-  tempregel1:array [1..80] of String;
-  tempregel3:array [1..20] of array [1..4] of string;
-  teller,teller2:integer;
-  bestand2,bestand:textfile;
-  z, y:Integer;
-  screenline: String;
-
-begin
-
-
-  assignfile(bestand,extractfilepath(application.exename)+'servers.cfg');
-  reset (bestand);
-  for z:=1 to 20 do begin
-    for y:=1 to 4 do begin
-      readln(bestand, tempregel3[z,y]);
-    end;
-    //application.ProcessMessages;
-  end;
-  closefile(bestand);
-
-  for z:=1 to 20 do begin
-    for y:=1 to 4 do begin
-      //application.ProcessMessages;
-      screenline:=config.screen[z][y].text;
-      if ((pos('$Unreal', screenline) <> 0) or (pos('$QuakeIII', screenline) <> 0) or (pos('$QuakeII', screenline) <> 0) or (pos('$Half-life', screenline) <> 0)) and (copy(screenline,pos('¿',screenline)+1,1)='1') then begin
-        teller:=1;
-        try
-          if pos('$Half-life', screenline) <> 0 then srvr:='-hls';
-          if pos('$QuakeII', screenline) <> 0 then srvr:='-q2s';
-          if pos('$QuakeIII', screenline) <> 0 then srvr:='-q3s';
-          if pos('$Unreal', screenline) <> 0 then srvr:='-uns';
-          //application.ProcessMessages;
-          winexec(PChar(extractfilepath(application.exename) + 'qstat.exe -P -of txt'+intToStr(z)+'-'+intToStr(y)+'.txt -sort F '+ srvr +' '+ tempregel3[z,y]),sw_hide);
-
-          tempregel:='';
-          //application.ProcessMessages;
-          sleep(1000);
-          //application.ProcessMessages;
-
-          assignfile (bestand2,extractfilepath(application.exename)+'txt'+IntToStr(z)+'-'+IntToStr(y)+'.txt');
-          reset (bestand2);
-          teller:=1;
-          while (not eof(bestand2)) and (teller<80) do begin
-            readln (bestand2, tempregel1[teller]);
-            teller:=teller+1;
-          end;
-          closefile(bestand2);
-        except
-          try CloseFile(bestand2); except end;
-        end;
-
-        if (pos('$Unreal1', screenline) <> 0) or (pos('$QuakeIII1', screenline) <> 0) or (pos('$QuakeII1', screenline) <> 0) or (pos('$Half-life1', screenline) <> 0) then begin
-          qstatreg1[z,y]:=copy(tempregel1[2],pos(' / ',tempregel1[2])+3,length(tempregel1[2]));
-          qstatreg1[z,y]:=stripspaces(copy(qstatreg1[z,y],pos(' ',qstatreg1[z,y])+1,length(qstatreg1[z,y])));
-        end;
-
-        if (pos('$Unreal2', screenline) <> 0) or (pos('$QuakeIII2', screenline) <> 0) or (pos('$QuakeII2', screenline) <> 0) or (pos('$Half-life2', screenline) <> 0) then begin
-          qstatreg2[z,y]:=copy(tempregel1[2],pos(':',tempregel1[2]),length(tempregel1[2]));
-          qstatreg2[z,y]:=copy(qstatreg2[z,y],pos('/',qstatreg2[z,y])+4,length(qstatreg2[z,y]));
-          qstatreg2[z,y]:=copy(qstatreg2[z,y],1,pos('/',qstatreg2[z,y])-5);
-          qstatreg2[z,y]:=stripspaces(copy(qstatreg2[z,y],pos(' ',qstatreg2[z,y])+1,length(qstatreg2[z,y])));
-        end;
-
-        if (pos('$Unreal3', screenline) <> 0) or (pos('$QuakeIII3', screenline) <> 0) or (pos('$QuakeII3', screenline) <> 0) or (pos('$Half-life3', screenline) <> 0) then begin
-          qstatreg3[z,y]:=stripspaces(copy(tempregel1[2],pos(' ',tempregel1[2]),length(tempregel1[2])));
-          qstatreg3[z,y]:=stripspaces(copy(qstatreg3[z,y],1,pos('/',qstatreg3[z,y])+3));
-        end;
-
-        if (pos('$Unreal4', screenline) <> 0) or (pos('$QuakeIII4', screenline) <> 0) or (pos('$QuakeII4', screenline) <> 0) or (pos('$Half-life4', screenline) <> 0) then begin
-          qstatreg4[z,y]:='';
-          for teller2:=1 to teller-3 do begin
-            regel:=stripspaces(tempregel1[teller2+2]);
-            tempregel2:=stripspaces(copy(copy(regel,pos('s ', regel)+1,length(regel)),pos('s ', regel)+2,length(regel)));
-            tempregel4:=stripspaces(copy(regel,2,pos(' frags ',regel)-1));
-            regel:=tempregel2 + ': '+ tempregel4 + ', ';
-            qstatreg4[z,y]:=qstatreg4[z,y]+regel;
-            //application.ProcessMessages;
-          end;
-          //application.ProcessMessages;
-        end;
-      end;
-    end;
-  end;
-end;
-
 
 procedure TData.updateNetworkStats(Sender: TObject);
 //NETWORKS STATS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1644,47 +1502,6 @@ if netwerk=1 then begin
 end;
 end;
 
-
-procedure TData.checkIfNewsUpdatesRequired;
-const
-  maxArgs = 10;
-var
-  screenline:String;
-  z,y: Integer;
-  args: array [1..maxArgs] of String;
-  prefix: String;
-  postfix: String;
-  numargs: Cardinal;
-  myRssCount: Cardinal;
-begin
-  for y:= 1 to 9 do
-    newsAttempts[y]:=0;
-
-  // TODO: this should only be done when the config changes...
-  myRssCount:=0;
-  DoNewsUpdate[6]:=config.checkUpdates;;
-  for z:= 1 to 20 do begin
-    for y:= 1 to 4 do begin
-      if (config.screen[z][y].enabled) then begin
-        screenline:=config.screen[z][y].text;
-        while decodeArgs(screenline, '$Rss', maxArgs, args, prefix, postfix, numargs) do begin
-          Inc(myRssCount);
-          if (rss[myRssCount].url <> args[1]) then begin
-            rss[myRssCount].url := args[1];
-            rss[myRssCount].whole:='';
-            rss[myRssCount].items:=0;
-          end;
-          if (numargs>=4) then rss[myRssCount].maxfreq := StrToInt(args[4])*60;
-          screenline:=prefix+postfix;
-        end;
-        if (pos('$SETI',screenline) <> 0) then DoNewsUpdate[7]:=true;
-        if (pos('$FOLD',screenline) <> 0) then DoNewsUpdate[9]:=true;
-      end;
-    end;
-  end;
-  rssEntries:=myRssCount;
-  if (myRssCount>0) then  DoNewsUpdate[1]:=true;
-end;
 
 
 procedure TData.updateMBMStats(Sender: TObject);
@@ -1760,8 +1577,9 @@ end;
 
 //cputype!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 try
-STCPUType:=cxCpu[0].Name.AsString;
+  STCPUType:=cxCpu[0].Name.AsString;
 except
+  on E: Exception do STCPUType:='[CPUType: '+E.Message+']';
 end;
 
 //SCREENRESO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1924,7 +1742,11 @@ begin
       until (ANode = nil) or (items >= maxItems);
     end;
   except
-    items:=0;
+    on E: Exception do begin
+      items:=0;
+      titles[0]:='[Rss: '+E.Message+']';
+      descs[0]:='[Rss: '+E.Message+']';
+    end;
   end;
 
   Result:=items;
@@ -1940,7 +1762,7 @@ begin
       sl.LoadFromFile(filename);
       Result:=sl.Text;
     except
-      Result:='';
+      on E: Exception do Result:='[Exception: '+E.Message+']';
     end;
   finally
     sl.Free;
@@ -1985,62 +1807,265 @@ begin
       setiMoreWU:=FloatToStr(100-StrToFloat(ANode.ChildNodes['top_rankpct'].Text));
     end;
   except
-      setiNumResults:='[Seti: Error]';
-      setiCpuTime:='[Seti: Error]';
-      setiAvgCpu:='[Seti: Error]';
-      setiLastResult:='[Seti: Error]';
-      setiUserTime:='[Seti: Error]';
-      setiTotalUsers:='[Seti: Error]';
-      setiRank:='[Seti: Error]';
-      setiShareRank:='[Seti: Error]';
-      setiMoreWU:='[Seti: Error]';
+    on E: Exception do begin
+      setiNumResults:='[Seti: '+E.Message+']';
+      setiCpuTime:='[Seti: '+E.Message+']';
+      setiAvgCpu:='[Seti: '+E.Message+']';
+      setiLastResult:='[Seti: '+E.Message+']';
+      setiUserTime:='[Seti: '+E.Message+']';
+      setiTotalUsers:='[Seti: '+E.Message+']';
+      setiRank:='[Seti: '+E.Message+']';
+      setiShareRank:='[Seti: '+E.Message+']';
+      setiMoreWU:='[Seti: '+E.Message+']';
+    end;
   end;
 end;
 
 
-// Runs in a thread
-procedure TData.checkHTTPUpdates;
+function stripspaces(Fstring:string): string;
+begin
+  FString:=StringReplace(FString,chr(10),'',[rfReplaceAll]);
+  FString:=StringReplace(FString,chr(13),'',[rfReplaceAll]);
+  FString:=StringReplace(FString,chr(9),' ',[rfReplaceAll]);
+
+  while copy(fstring,1,1) = ' ' do begin
+    fstring:=copy(fstring,2,length(fstring));
+  end;
+  while copy(fstring,length(fstring),1) = ' ' do begin
+    fstring:=copy(fstring,1,length(fstring)-1);
+  end;
+
+  result:=fstring;
+end;
+
+
+
+
+procedure TData.UpdateHTTP;
+begin
+  doHTTPUpdate:=True;
+end;
+
+procedure TData.UpdateGameStats;
+begin
+  doGameUpdate:=True;
+end;
+
+procedure TData.UpdateEmail;
+begin
+  doEmailUpdate:=True;
+end;
+
+// Runs in data thread
+procedure TData.doDataThread;
+begin
+  coinitialize(nil);
+
+  while (not dataThread.Terminated) do begin
+    if (not dataThread.Terminated) and (doHTTPUpdate) then httpUpdate;
+    if (not dataThread.Terminated) and (doEmailUpdate) then emailUpdate;
+    if (not dataThread.Terminated) and (doGameUpdate) then gameUpdate;
+    if (not dataThread.Terminated) then sleep(1000);
+  end;
+
+  CoUninitialize;
+end;
+
+
+// Runs in data thread
+procedure TData.gameUpdate;
+//GAMESTATS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+var
+  tempregel,tempregel2,tempregel4,regel:string;
+  tempregel1:array [1..80] of String;
+  teller,teller2:integer;
+  bestand2:textfile;
+  z, y:Integer;
+  screenline: String;
+
+begin
+  doGameUpdate:=False;
+
+  for z:=1 to 20 do begin
+    for y:=1 to 4 do begin
+      try
+        screenline:=config.screen[z][y].text;
+        if (config.screen[z][y].enabled) and
+                  ((pos('$Unreal', screenline) <> 0) or
+                  (pos('$QuakeIII', screenline) <> 0) or
+                  (pos('$QuakeII', screenline) <> 0) or
+                  (pos('$Half-life', screenline) <> 0)) then
+        begin
+
+          if (dataThread.Terminated) then Exit;
+
+          if pos('$Half-life', screenline) <> 0 then srvr:='-hls';
+          if pos('$QuakeII', screenline) <> 0 then srvr:='-q2s';
+          if pos('$QuakeIII', screenline) <> 0 then srvr:='-q3s';
+          if pos('$Unreal', screenline) <> 0 then srvr:='-uns';
+          winexec(PChar(extractfilepath(application.exename) + 'qstat.exe -P -of txt'+intToStr(z)+'-'+intToStr(y)+'.txt -sort F '+ srvr +' '+ config.gameServer[z,y]),sw_hide);
+
+          tempregel:='';
+          sleep(1000);
+
+          assignfile (bestand2,extractfilepath(application.exename)+'txt'+IntToStr(z)+'-'+IntToStr(y)+'.txt');
+          try
+            reset (bestand2);
+            teller:=1;
+            while (not eof(bestand2)) and (teller<80) do begin
+              readln (bestand2, tempregel1[teller]);
+              teller:=teller+1;
+            end;
+          finally
+            closefile(bestand2);
+          end;
+
+          if (pos('$Unreal1', screenline) <> 0) or
+               (pos('$QuakeIII1', screenline) <> 0) or
+               (pos('$QuakeII1', screenline) <> 0) or
+               (pos('$Half-life1', screenline) <> 0) then
+          begin
+            qstatreg1[z,y]:=copy(tempregel1[2],pos(' / ',tempregel1[2])+3,length(tempregel1[2]));
+            qstatreg1[z,y]:=stripspaces(copy(qstatreg1[z,y],pos(' ',qstatreg1[z,y])+1,length(qstatreg1[z,y])));
+          end;
+
+          if (pos('$Unreal2', screenline) <> 0) or
+                (pos('$QuakeIII2', screenline) <> 0) or
+                (pos('$QuakeII2', screenline) <> 0) or
+                (pos('$Half-life2', screenline) <> 0) then
+          begin
+            qstatreg2[z,y]:=copy(tempregel1[2],pos(':',tempregel1[2]),length(tempregel1[2]));
+            qstatreg2[z,y]:=copy(qstatreg2[z,y],pos('/',qstatreg2[z,y])+4,length(qstatreg2[z,y]));
+            qstatreg2[z,y]:=copy(qstatreg2[z,y],1,pos('/',qstatreg2[z,y])-5);
+            qstatreg2[z,y]:=stripspaces(copy(qstatreg2[z,y],pos(' ',qstatreg2[z,y])+1,length(qstatreg2[z,y])));
+          end;
+
+          if (pos('$Unreal3', screenline) <> 0) or
+              (pos('$QuakeIII3', screenline) <> 0) or
+              (pos('$QuakeII3', screenline) <> 0) or
+              (pos('$Half-life3', screenline) <> 0) then
+          begin
+            qstatreg3[z,y]:=stripspaces(copy(tempregel1[2],pos(' ',tempregel1[2]),length(tempregel1[2])));
+            qstatreg3[z,y]:=stripspaces(copy(qstatreg3[z,y],1,pos('/',qstatreg3[z,y])+3));
+          end;
+
+          if (pos('$Unreal4', screenline) <> 0) or
+              (pos('$QuakeIII4', screenline) <> 0) or
+              (pos('$QuakeII4', screenline) <> 0) or
+              (pos('$Half-life4', screenline) <> 0) then
+          begin
+            qstatreg4[z,y]:='';
+            for teller2:=1 to teller-3 do begin
+              regel:=stripspaces(tempregel1[teller2+2]);
+              tempregel2:=stripspaces(copy(copy(regel,pos('s ', regel)+1,length(regel)),pos('s ', regel)+2,length(regel)));
+              tempregel4:=stripspaces(copy(regel,2,pos(' frags ',regel)-1));
+              regel:=tempregel2 + ': '+ tempregel4 + ', ';
+              qstatreg4[z,y]:=qstatreg4[z,y]+regel;
+            end;
+          end;
+        end;
+      except
+        on E: Exception do begin
+          qstatreg1[z,y]:='[Exception: '+E.Message+']';
+          qstatreg2[z,y]:='[Exception: '+E.Message+']';
+          qstatreg3[z,y]:='[Exception: '+E.Message+']';
+          qstatreg4[z,y]:='[Exception: '+E.Message+']';
+        end
+      end;
+    end;
+  end;
+end;
+
+// Runs in data thread
+procedure TData.httpUpdate;
+const
+  maxArgs = 10;
+var
+  screenline:String;
+  z,y: Integer;
+  args: array [1..maxArgs] of String;
+  prefix: String;
+  postfix: String;
+  numargs: Cardinal;
+  myRssCount: Cardinal;
+  updateNeeded: Boolean;
+begin
+  doHTTPUpdate:=False;
+
+  for y:= 1 to 9 do
+    newsAttempts[y]:=0;
+
+  // TODO: this should only be done when the config changes...
+  myRssCount:=0;
+  DoNewsUpdate[6]:=config.checkUpdates;;
+  for z:= 1 to 20 do begin
+    for y:= 1 to 4 do begin
+      if (config.screen[z][y].enabled) then begin
+        screenline:=config.screen[z][y].text;
+        while decodeArgs(screenline, '$Rss', maxArgs, args, prefix, postfix, numargs) do begin
+          Inc(myRssCount);
+          if (rss[myRssCount].url <> args[1]) then begin
+            rss[myRssCount].url := args[1];
+            rss[myRssCount].whole:='';
+            rss[myRssCount].items:=0;
+          end;
+          if (numargs>=4) then rss[myRssCount].maxfreq := StrToInt(args[4])*60;
+          screenline:=prefix+postfix;
+        end;
+        if (pos('$SETI',screenline) <> 0) then DoNewsUpdate[7]:=true;
+        if (pos('$FOLD',screenline) <> 0) then DoNewsUpdate[9]:=true;
+      end;
+    end;
+  end;
+  rssEntries:=myRssCount;
+  if (myRssCount>0) then  DoNewsUpdate[1]:=true;
+
+  updateNeeded:=False;
+  for y:=1 to 9 do begin
+    if (donewsupdate[y]) then updateNeeded := true;
+  end;
+  if (updateNeeded) then fetchHTTPUpdates;
+end;
+
+// Runs in data thread
+procedure TData.fetchHTTPUpdates;
 var
   teller,teller2:integer;
   versionregel: String;
   titles, descs, whole: String;
   filename: String;
+  tempstr, tempstr2: String;
 
 begin
-  HTTPthreadisrunning:=true;
+  if DoNewsUpdate[1] then begin
+    DoNewsUpdate[1]:=False;
 
-  coinitialize(nil);
-  try
+    for teller:=1 to rssEntries do begin
+      if (rss[teller].url <> '') then begin
+        if (dataThread.Terminated) then Exit;
 
-    if DoNewsUpdate[1] then begin
-      DoNewsUpdate[1]:=False;
+        rss[teller].items := getRss(rss[teller].url, rss[teller].title,
+                                  rss[teller].desc, maxRssItems, rss[teller].maxfreq);
+        titles:=''; descs:=''; whole:='';
+        for teller2:=1 to rss[teller].items do begin
+          titles:=titles+rss[teller].title[teller2]+' | ';
+          descs:=descs+rss[teller].desc[teller2]+' | ';
+          whole:=whole+rss[teller].title[teller2]+': '+rss[teller].desc[teller2]+' | ';
 
-      for teller:=1 to rssEntries do begin
-        if (rss[teller].url <> '') then begin
-          if (HTTPThread.Terminated) then Exit;
-
-          rss[teller].items := getRss(rss[teller].url, rss[teller].title,
-                                    rss[teller].desc, maxRssItems, rss[teller].maxfreq);
-          titles:=''; descs:=''; whole:='';
-          for teller2:=1 to rss[teller].items do begin
-            titles:=titles+rss[teller].title[teller2]+' | ';
-            descs:=descs+rss[teller].desc[teller2]+' | ';
-            whole:=whole+rss[teller].title[teller2]+': '+rss[teller].desc[teller2]+' | ';
-
-            if (HTTPThread.Terminated) then Exit;
-          end;
-          rss[teller].whole:=whole;
-          rss[teller].title[0]:=titles;
-          rss[teller].desc[0]:=descs;
+          if (dataThread.Terminated) then Exit;
         end;
+        rss[teller].whole:=whole;
+        rss[teller].title[0]:=titles;
+        rss[teller].desc[0]:=descs;
       end;
     end;
+  end;
 
 
   if (DoNewsUpdate[6]) then begin
     DoNewsUpdate[6]:=False;
     if (config.checkUpdates) then begin
-      if (HTTPThread.Terminated) then Exit;
+      if (dataThread.Terminated) then Exit;
       try
         filename:=getUrl('http://lcdsmartie.sourceforge.net/version.txt', 96*60);
         versionregel:=fileToString(filename);
@@ -2052,26 +2077,9 @@ begin
       if copy(versionregel,1,1) = '5' then
         isconnected:=true;
       if (length(versionregel) < 72) and (copy(versionregel,1,7) <> '5.3.0.1') and (versionregel <> '') then begin
-        Form1.timer1.enabled:=false;
-        Form1.timer2.enabled:=false;
-        Form1.timer3.enabled:=false;
-        Form1.timer4.enabled:=false;
-        Form1.timer5.enabled:=false;
-        Form1.timer6.enabled:=false;
-        Form1.timer7.enabled:=false;
-        Form1.timer8.enabled:=false;
-        Form1.timer9.enabled:=false;
-        if MessageDlg('A new version of LCD Smartie is detected. '+chr(13)+copy(versionregel,8,62)+chr(13)+'Go to download page?', mtConfirmation, [mbYes, mbNo], 0) = mrYes then begin
-          ShellExecute(0, Nil, pchar('http://lcdsmartie.sourceforge.net/'), Nil, Nil, SW_NORMAL);
-          Form1.close;
-        end else begin
-          Form1.timer1.enabled:=true;
-          Form1.timer2.enabled:=true;
-          Form1.timer3.enabled:=true;
-          Form1.timer6.enabled:=true;
-          Form1.timer7.enabled:=true;
-          Form1.timer8.enabled:=true;
-          Form1.timer9.enabled:=true;
+        if (lcdSmartieUpdateText<>copy(versionregel,8,62)) then begin
+          lcdSmartieUpdateText:=copy(versionregel,8,62);
+          lcdSmartieUpdate:=True;
         end;
       end;
     end;
@@ -2079,85 +2087,80 @@ begin
 
   if DoNewsUpdate[7] then begin
     DoNewsUpdate[7]:=False;
-    if (HTTPThread.Terminated) then Exit;
+    if (dataThread.Terminated) then Exit;
     doSeti();
   end;
 
   if DoNewsUpdate[9] then begin
     DoNewsUpdate[9]:=False;
-    if (HTTPThread.Terminated) then Exit;
+    if (dataThread.Terminated) then Exit;
 
     try
       filename:=getUrl('http://vspx27.stanford.edu/cgi-bin/main.py?qtype=userpage&username='+config.foldUsername, config.newsRefresh);
-      foldWU:=fileToString(filename);
+      tempstr:=fileToString(filename);
+
+      tempstr:=StringReplace(tempstr,'&amp','&',[rfReplaceAll]);
+      tempstr:=StringReplace(tempstr,chr(10),'',[rfReplaceAll]);
+      tempstr:=StringReplace(tempstr,chr(13),'',[rfReplaceAll]);
+
+      foldMemSince:='[FOLDmemsince: not supported]';
+
+      tempstr2:=copy(tempstr,pos('Date of last work unit', tempstr)+22, 500);
+      tempstr2:=copy(tempstr2,1,pos('</TR>',tempstr2)-1);
+      foldLastWU:=stripspaces(stripHtml(tempstr2));
+
+      tempstr2:=copy(tempstr,pos('Total score', tempstr)+11, 100);
+      tempstr2:=copy(tempstr2,1,pos('</TR>',tempstr2)-1);
+      foldScore:=stripspaces(stripHtml(tempstr2));
+
+      tempstr2:=copy(tempstr,pos('Overall rank (if points are combined)', tempstr)+37, 100);
+      tempstr2:=copy(tempstr2,1,pos('of',tempstr2)-1);
+      foldRank:=stripspaces(stripHtml(tempstr2));
+
+      tempstr2:=copy(tempstr,pos('Active processors (within 7 days)', tempstr)+33, 100);
+      tempstr2:=copy(tempstr2,1,pos('</TR>',tempstr2)-1);
+      foldActProcsWeek:=stripspaces(stripHtml(tempstr2));
+
+      tempstr2:=copy(tempstr,pos('Team', tempstr)+4, 500);
+      tempstr2:=copy(tempstr2,1,pos('</TR>',tempstr2)-1);
+      foldTeam:=stripspaces(stripHtml(foldTeam));
+
+      tempstr2:=copy(tempstr,pos('WU', tempstr)+2, 500);
+      tempstr2:=copy(tempstr2,1,pos('</TR>',tempstr2)-1);
+      if (pos('(', tempstr2)<>0) then tempstr2:=copy(tempstr2,1,pos('(',tempstr2)-1);
+      foldWU:=stripspaces(stripHtml(tempstr2));
+
     except
-      if newsAttempts[9]<4 then begin
-        newsAttempts[9]:=newsAttempts[9]+1;
-        DoNewsUpdate[9]:=True;
-      end else begin
-        foldMemSince:='Connection Time-Out';
-        foldLastWU:='Connection Time-Out';
-        foldActProcsWeek:='Connection Time-Out';
-        foldTeam:='Connection Time-Out';
-        foldScore:='Connection Time-Out';
-        foldRank:='Connection Time-Out';
-        foldWU:='Connection Time-Out';
+      on E: Exception do begin
+        if newsAttempts[9]<4 then begin
+          newsAttempts[9]:=newsAttempts[9]+1;
+          DoNewsUpdate[9]:=True;
+        end else begin
+          foldMemSince:='[fold: '+E.Message+']';
+          foldLastWU:='[fold: '+E.Message+']';
+          foldActProcsWeek:='[fold: '+E.Message+']';
+          foldTeam:='[fold: '+E.Message+']';
+          foldScore:='[fold: '+E.Message+']';
+          foldRank:='[fold: '+E.Message+']';
+          foldWU:='[fold: '+E.Message+']';
+        end;
       end;
     end;
-
-    foldWU:=StringReplace(foldWU,'&amp','&',[rfReplaceAll]);
-    foldWU:=StringReplace(foldWU,chr(10),'',[rfReplaceAll]);
-    foldWU:=StringReplace(foldWU,chr(13),'',[rfReplaceAll]);
-
-    foldMemSince:='[FOLDmemsince: not supported]';
-
-    foldLastWU:=copy(foldWU,pos('Date of last work unit', foldWU)+22, 500);
-    foldLastWU:=copy(foldLastWU,1,pos('</TR>',foldLastWU)-1);
-    foldLastWU:=stripspaces(stripHtml(foldLastWU));
-
-    foldScore:=copy(foldWU,pos('Total score', foldWU)+11, 100);
-    foldScore:=copy(foldScore,1,pos('</TR>',foldScore)-1);
-    foldScore:=stripspaces(stripHtml(foldScore));
-
-    foldRank:=copy(foldWU,pos('Overall rank (if points are combined)', foldWU)+37, 100);
-    foldRank:=copy(foldRank,1,pos('of',foldRank)-1);
-    foldRank:=stripspaces(stripHtml(foldRank));
-
-    foldActProcsWeek:=copy(foldWU,pos('Active processors (within 7 days)', foldWU)+33, 100);
-    foldActProcsWeek:=copy(foldActProcsWeek,1,pos('</TR>',foldActProcsWeek)-1);
-    foldActProcsWeek:=stripspaces(stripHtml(foldActProcsWeek));
-
-    foldTeam:=copy(foldWU,pos('Team', foldWU)+4, 500);
-    foldTeam:=copy(foldTeam,1,pos('</TR>',foldTeam)-1);
-    foldTeam:=stripspaces(stripHtml(foldTeam));
-
-    foldWU:=copy(foldWU,pos('WU', foldWU)+2, 500);
-    foldWU:=copy(foldWU,1,pos('</TR>',foldWU)-1);
-    if (pos('(', foldWU)<>0) then foldWU:=copy(foldWU,1,pos('(',foldWU)-1);
-    foldWU:=stripspaces(stripHtml(foldWU));
   end;
-
-
-  finally
-    CoUninitialize;
-    HTTPthreadisrunning:=false;
-  end;
-
 end;
 
-
-procedure TData.checkEmailUpdates;
+// Runs in data thread
+procedure TData.emailUpdate;
 var
   mailz: array[0..9] of integer;
   z, y, x: Integer;
   screenline: String;
   pop3: TIdPOP3;
   msg: TIdMessage;
+  myGotEmail: Boolean;
 
 begin
-  pop3threadisrunning:=true;
-
-  try
+  doEmailUpdate:=False;
 
   for y:= 0 to 9 do mailz[y]:=0;
 
@@ -2168,16 +2171,17 @@ begin
         for x:=0 to 9 do begin
           if (pos('$Email'+IntToStr(x),screenline) <> 0) then mailz[x]:=1;
           if (pos('$EmailSub'+IntToStr(x),screenline) <> 0) then mailz[x]:=1;
+          if (pos('$EmailFrom'+IntToStr(x),screenline) <> 0) then mailz[x]:=1;
         end;
       end;
     end;
   end;
 
-  gotEmail:=False;
+  myGotEmail:=False;
 
   for y:=0 to 9 do begin
     if mailz[y]=1 then begin
-      if (pop3Thread.Terminated) then Exit;
+      if (dataThread.Terminated) then Exit;
       try
           pop3:=TIdPOP3.Create(nil);
           msg:=TIdMessage.Create(nil);
@@ -2206,36 +2210,19 @@ begin
           msg.Free;
         end;
 
-        if (mail[y].messages>0) then gotEmail:= true;
+        if (mail[y].messages>0) then myGotEmail:= true;
       except
-        mail[y].messages:=0;
-        mail[y].lastSubject :='[error]';
-        mail[y].lastFrom :='[error]';
+        on E: Exception do begin
+          mail[y].messages:=0;
+          mail[y].lastSubject :='[email: '+E.Message+']';
+          mail[y].lastFrom :='[email: '+E.Message+']';
+        end;
       end;
     end;
   end;
 
-  finally
-    pop3threadisrunning:=false;
-  end;
+  gotEmail:=myGotEmail;
 end;
-
-function stripspaces(Fstring:string): string;
-begin
-  FString:=StringReplace(FString,chr(10),'',[rfReplaceAll]);
-  FString:=StringReplace(FString,chr(13),'',[rfReplaceAll]);
-  FString:=StringReplace(FString,chr(9),' ',[rfReplaceAll]);
-
-  while copy(fstring,1,1) = ' ' do begin
-    fstring:=copy(fstring,2,length(fstring));
-  end;
-  while copy(fstring,length(fstring),1) = ' ' do begin
-    fstring:=copy(fstring,1,length(fstring)-1);
-  end;
-
-  result:=fstring;
-end;
-
 
 
 end.
