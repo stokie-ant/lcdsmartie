@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.37 $ $Date: 2005/01/07 15:19:33 $
+ *  $Revision: 1.38 $ $Date: 2005/01/09 23:27:41 $
  *****************************************************************************}
 
 
@@ -39,6 +39,7 @@ const
   maxRssItems = 20;
   MAXNETSTATS = 10;
   maxArgs = 10;
+  iMaxPluginFuncs = 20;
 
 type
   EExiting = Class(Exception);
@@ -111,11 +112,15 @@ type
   PPop3 = ^TIdPop3;
 
   TMyProc = function(param1: pchar; param2: pchar): Pchar; stdcall;
+  TBridgeProc = function(iBridgeId: Integer; iFunc: Integer; param1: pchar; param2: pchar): Pchar; stdcall;
 
   TDll = Record
     sName: String;
     hDll: HMODULE;
-    functions: Array [1..20] of TMyProc;
+    bBridge: Boolean;
+    iBridgeId: Integer;
+    functions: Array [1..iMaxPluginFuncs] of TMyProc;
+    bridgeFunc: TBridgeProc;
   end;
 
   TData = Class(TObject)
@@ -1033,13 +1038,16 @@ begin
 end;
 
 procedure TData.LoadPlugin(sDllName: String; bDotNet: Boolean = false);
+type
+  TBridgeInit = function(dll: PChar; var error: Integer): PChar; stdcall;
 var
   uiDll: Cardinal;
   i: Integer;
   initFunc:  procedure; stdcall;
-  bridgeInitFunc:  procedure(dll: String); stdcall;
+  bridgeInitFunc: TBridgeInit;
   bFound: Boolean;
   sLibraryPath: String;
+  sResult: String;
 begin
   bFound := false;
 
@@ -1049,8 +1057,9 @@ begin
   SetLength(dlls, uiTotalDlls);
   dlls[uiDll].sName := sDllName;
 
+  dlls[uiDll].bBridge := bDotNet;
   if (bDotNet) then
-    sLibraryPath := 'Bridge.dll'
+    sLibraryPath := 'DNBridge.dll'
   else
     sLibraryPath := 'plugins\' + sDllName;
 
@@ -1065,51 +1074,61 @@ begin
 
     if (Assigned(initFunc)) then
     begin
-      bFound := True;
       try
         initFunc();
       except
         on E: Exception do
-          showmessage('Plugin '+sDllName+' had an exception during Init: '
+          raise Exception.Create('Plugin '+sDllName+' had an exception during Init: '
             + E.Message);
       end;
     end;
 
     if (bDotNet) then
     begin
-      bridgeInitFunc := getprocaddress(dlls[uiDll].hDll, PChar('_BridgeInit@4'));
-      if (not Assigned(bridgeInitFunc)) then
-        showmessage('Could not init bridge')
-      else
-      begin
-        bFound := True;
-        try
-          bridgeInitFunc(dlls[uiDll].sName);
-        except
-          on E: Exception do
-            showmessage('Bridge Init for '+dlls[uiDll].sName+' had an exception: '
-              + E.Message);
-        end;
+      @bridgeInitFunc := getprocaddress(dlls[uiDll].hDll, PChar('_BridgeInit@8'));
+      if (@bridgeInitFunc = nil) then
+        raise Exception.Create('Could not init bridge');
+
+      try
+        sResult := bridgeInitFunc(PChar(dlls[uiDll].sName), i);
+        dlls[uiDll].iBridgeId := i;
+      except
+        on E: Exception do
+          raise Exception.Create('Bridge Init for '+dlls[uiDll].sName+' had an exception: '
+            + E.Message);
       end;
+      if (i = -1) or (sResult <> '') then
+         raise Exception.Create('Bridge Init for '+dlls[uiDll].sName+' failed with: '
+            + sResult);
     end;
 
-    for i:= 1 to 20 do
+    if (bDotNet) then
     begin
-      @dlls[uiDll].functions[i] := getprocaddress(dlls[uiDll].hDll,
-        PChar('function' + IntToStr(i)));
-      if (@dlls[uiDll].functions[i] = nil) then
+      @dlls[uiDll].BridgeFunc := getprocaddress(dlls[uiDll].hDll,
+        PChar('_BridgeFunc@16'));
+      if (@dlls[uiDll].BridgeFunc = nil) then
+        raise Exception.Create('No Bridge function found.');
+    end
+    else
+    begin
+      for i:= 1 to iMaxPluginFuncs do
+      begin
         @dlls[uiDll].functions[i] := getprocaddress(dlls[uiDll].hDll,
-          PChar('_function' + IntToStr(i)+'@8'));
-      if (@dlls[uiDll].functions[i] <> nil) then
-        bFound := True;
-    end;
+          PChar('function' + IntToStr(i)));
+        if (@dlls[uiDll].functions[i] = nil) then
+          @dlls[uiDll].functions[i] := getprocaddress(dlls[uiDll].hDll,
+            PChar('_function' + IntToStr(i)+'@8'));
+        if (@dlls[uiDll].functions[i] <> nil) then
+          bFound := True;
+      end;
 
-    if (not bFound) and (not bDotNet) then
-    begin
-      if (dlls[uiDll].hDll <> 0) then FreeLibrary(dlls[uiDll].hDll);
-      dlls[uiDll].hDll := 0;
-      Dec(uiTotalDlls);
-      LoadPlugin(dlls[uiDll].sName, true);
+      if (not bFound) then
+      begin
+        if (dlls[uiDll].hDll <> 0) then FreeLibrary(dlls[uiDll].hDll);
+        dlls[uiDll].hDll := 0;
+        Dec(uiTotalDlls);
+        LoadPlugin(dlls[uiDll].sName, true);
+      end;
     end;
   end;
 end;
@@ -1130,29 +1149,38 @@ begin
 
   if (uiDll >= uiTotalDlls) then
   begin // we havent seen this one before - load it
-    LoadPlugin(sDllName);
+    try
+      LoadPlugin(sDllName);
+    except
+      on E: Exception do
+        showmessage('Load of plugin failed: ' + e.Message)
+    end;
   end;
 
   if (dlls[uiDll].hDll <> 0) then
   begin
-    if (iFunc >= 0) and (iFunc <= 20) then
+    if (iFunc >= 0) and (iFunc <= iMaxPluginFuncs) then
     begin
       if (iFunc = 0) then iFunc := 10;
-
-      if @dlls[uiDll].functions[iFunc] <> nil then
-      begin
-        try
+      try
+        if (dlls[uiDll].bBridge) then
+        begin
+          if (@dlls[uiDll].bridgeFunc = nil) then
+            raise Exception.Create('No Bridge Func');
+          Result := dlls[uiDll].bridgeFunc( dlls[uiDll].iBridgeId, iFunc,
+             pchar(sParam1), pchar(sParam2) );
+        end
+        else if @dlls[uiDll].functions[iFunc] <> nil then
           Result := dlls[uiDll].functions[iFunc]( pchar(sParam1), pchar(sParam2) )
-        except
-          on E: Exception do
-            Result := '[Dll: ' + CleanString(E.Message) + ']';
-        end;
-      end
-      else
-        Result := '[Dll: Function not found]';
+        else
+          Result := '[Dll: Function not found]';
+      except
+        on E: Exception do
+          Result := '[Dll: ' + CleanString(E.Message) + ']';
+      end;
     end
     else
-      Result := '[Dll: out of range]';
+      Result := '[Dll: function number out of range]';
   end
   else
     Result := '[Dll: Can not load plugin]';
