@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.7 $ $Date: 2004/11/18 17:02:45 $
+ *  $Revision: 1.8 $ $Date: 2004/11/19 10:34:09 $
  *****************************************************************************}
 
 
@@ -1201,15 +1201,32 @@ begin
 
       try
         if (found) and (rss[jj].items>0) and (Cardinal(StrToInt(args[3]))<=rss[jj].items) then begin
+
+          // What Rss data do they want: t=title, d=description, b=both
           if (args[2]='t') then begin
             regel:=prefix+rss[jj].title[StrToInt(args[3])]+postfix;
           end else if (args[2]='d') then begin
             regel:=prefix+rss[jj].desc[StrToInt(args[3])]+postfix;
           end else if (args[2]='b') then begin
             regel:=prefix+rss[jj].whole+postfix;
-          end else regel:=prefix+'[Error: Rss: bad arg 2]'+postfix;
-        end
-        else regel:=prefix+'[Rss: Data Not Available]'+postfix;
+          end else regel:=prefix+'[Error: Rss: bad arg #2]'+postfix;
+
+        end else if (found) then begin
+
+          // We know about the Rss entry but have no data...
+          if (copy(rss[jj].whole, 1, 5) = '[Rss:') then begin
+            // Assume an error message is in whole
+            regel:=prefix+rss[jj].whole+postfix;
+          end else begin
+            regel:=prefix+'[Rss: No Data]'+postfix;
+          end;
+
+        end else begin
+
+          // Nothing known yet - waiting for data thread...
+          regel:=prefix+'[Rss: Waiting for data]'+postfix;
+          
+        end;
       except
         on E: Exception do regel:=prefix+'[Rss: '+E.Message+']'+postfix;
       end;
@@ -1711,6 +1728,12 @@ begin
       HTTP.Free;
     end;
   except
+    on E: EIdHTTPProtocolException do begin
+        if (E.ReplyErrorCode<>304) then // 304=Not Modified.
+          raise;
+    end;
+
+    else raise;
   end;
 
   // Even if we fail to download - give the filename so they can use the old data.
@@ -1725,6 +1748,7 @@ var
   XMLDoc : IXMLDocument;
   items: Cardinal;
   rssFilename: String;
+  x: Integer;
 
 begin
   items:=0;
@@ -1738,31 +1762,42 @@ begin
   if (maxfreq=0) then maxfreq:=config.newsRefresh;
   RssFileName:=getUrl(Url, maxfreq);
 
-
   // Parse the Xml data
-  try
-    if FileExists(RssFilename) then begin
-      XMLDoc := LoadXMLDocument(RssFilename);
-      //XMLDoc.Options  := [doNodeAutoCreate,  doNodeAutoIndent, doAttrNull, doAutoPrefix, doNamespaceDecl];
-      //XMLDoc.FileName := 'bbc.xml';
-      //XMLDoc.Active:=True;
+  if FileExists(RssFilename) then begin
+    XMLDoc := LoadXMLDocument(RssFilename);
+    //XMLDoc.Options  := [doNodeAutoCreate,  doNodeAutoIndent, doAttrNull, doAutoPrefix, doNamespaceDecl];
+    //XMLDoc.FileName := 'bbc.xml';
+    //XMLDoc.Active:=True;
 
-      StartItemNode:=XMLDoc.DocumentElement.ChildNodes.First.ChildNodes.FindNode('item');
-      ANode := StartItemNode;
+    // This only works with some RSS feeds
+    StartItemNode:=XMLDoc.DocumentElement.ChildNodes.First.ChildNodes.FindNode('item');
+    if (StartItemNode=nil) then begin
+      // Would like to use FindNode at top level but it wasn't working so
+      // we'll do it long hand.
+      with XMLDoc.DocumentElement.ChildNodes do begin
+        x:=0;
+        while (x<Count) and (Get(x).NodeName<>'item') do Inc(x);
+        if (x<Count) then StartItemNode:=Get(x);
+      end;
+    end;
+    if (StartItemNode=nil) then raise Exception.Create('unable to parse Rss');
 
-      repeat
-        Inc(items);
-        titles[items]:=stripHtml(ANode.ChildNodes['title'].Text);
-        descs[items]:=stripHtml(ANode.ChildNodes['description'].Text);
-        ANode := ANode.NextSibling;
-      until (ANode = nil) or (items >= maxItems);
-    end;
-  except
-    on E: Exception do begin
-      items:=0;
-      titles[0]:='[Rss: '+E.Message+']';
-      descs[0]:='[Rss: '+E.Message+']';
-    end;
+    ANode := StartItemNode;
+
+    repeat
+      Inc(items);
+      if (ANode.ChildNodes['title']<>nil) then
+        titles[items]:=stripHtml(ANode.ChildNodes['title'].Text)
+      else
+        titles[items]:='Unknown';
+
+      if (ANode.ChildNodes['title']<>nil) then
+        descs[items]:=stripHtml(ANode.ChildNodes['description'].Text)
+      else
+        descs[items]:='Unknown';
+
+      ANode := ANode.NextSibling;
+    until (ANode = nil) or (items >= maxItems);
   end;
 
   Result:=items;
@@ -1795,10 +1830,10 @@ var
 begin
 
   // Fetch the Rss data  (but not more oftern than 24 hours)
-  FileName:=getUrl('http://setiathome2.ssl.berkeley.edu/fcgi-bin/fcgi?cmd=user_xml&email=' + config.setiEmail, 12*60);
-
-  // Parse the Xml data
   try
+    FileName:=getUrl('http://setiathome2.ssl.berkeley.edu/fcgi-bin/fcgi?cmd=user_xml&email=' + config.setiEmail, 12*60);
+
+    // Parse the Xml data
     if FileExists(Filename) then begin
       XMLDoc := LoadXMLDocument(Filename);
 
@@ -2060,19 +2095,29 @@ begin
       if (rss[teller].url <> '') then begin
         if (dataThread.Terminated) then Exit;
 
-        rss[teller].items := getRss(rss[teller].url, rss[teller].title,
+        try
+          rss[teller].items := getRss(rss[teller].url, rss[teller].title,
                                   rss[teller].desc, maxRssItems, rss[teller].maxfreq);
-        titles:=''; descs:=''; whole:='';
-        for teller2:=1 to rss[teller].items do begin
-          titles:=titles+rss[teller].title[teller2]+' | ';
-          descs:=descs+rss[teller].desc[teller2]+' | ';
-          whole:=whole+rss[teller].title[teller2]+': '+rss[teller].desc[teller2]+' | ';
 
-          if (dataThread.Terminated) then Exit;
+          titles:=''; descs:=''; whole:='';
+          for teller2:=1 to rss[teller].items do begin
+            titles:=titles+rss[teller].title[teller2]+' | ';
+            descs:=descs+rss[teller].desc[teller2]+' | ';
+            whole:=whole+rss[teller].title[teller2]+': '+rss[teller].desc[teller2]+' | ';
+
+            if (dataThread.Terminated) then Exit;
+          end;
+          rss[teller].whole:=whole;
+          rss[teller].title[0]:=titles;
+          rss[teller].desc[0]:=descs;
+        except
+          on E: Exception do begin
+            rss[teller].items:=0;
+            rss[teller].title[0]:='[Rss: '+E.Message+']';
+            rss[teller].desc[0]:='[Rss: '+E.Message+']';
+            rss[teller].whole:='[Rss: '+E.Message+']';
+          end;
         end;
-        rss[teller].whole:=whole;
-        rss[teller].title[0]:=titles;
-        rss[teller].desc[0]:=descs;
       end;
     end;
   end;
