@@ -25,6 +25,8 @@ state if this build works for you. Together we will get full USB Palm support!
 
 Changes
 =======
+5.3Alpha5
+	- Removed delay when applying settings.
 5.3Alpha4
 	- Fixed bug [1073921] Exception: Range Check (Rss)
 	- Removed limit on the number of Rss feeds.

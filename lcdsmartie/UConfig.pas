@@ -19,7 +19,7 @@ unit UConfig;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UConfig.pas,v $
- *  $Revision: 1.16 $ $Date: 2004/11/29 23:28:06 $
+ *  $Revision: 1.17 $ $Date: 2004/12/02 09:40:22 $
  *****************************************************************************}
 
 interface
@@ -479,6 +479,8 @@ var
 begin
 
   try
+    // We can't use the faster TMemINIFile - because it leaves quoted strings
+    // with their quotes...
     initfile := TINIFile.Create(ExtractFilePath(Application.EXEName) +
       'config.ini');
   except
@@ -649,12 +651,12 @@ end;
 
 procedure TConfig.saveINI;
 var
-  initfile : TINIFile;
+  initfile : TMemINIFile;
   sScreen, sLine, sPOPAccount, sGameLine: String;
   x, y: Integer;
 
 begin
-  initfile := TINIFile.Create(ExtractFilePath(Application.EXEName) +
+  initfile := TMemINIFile.Create(ExtractFilePath(Application.EXEName) +
     'config.ini');
 
   initfile.WriteString('Versions', 'ConfigFileFormat',
@@ -789,6 +791,7 @@ begin
       'Action', actionsArray[x, 4]);
   end;
 
+  initfile.UpdateFile;
   initfile.Free;
 
 end;
