@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.17 $ $Date: 2004/11/24 16:00:00 $
+ *  $Revision: 1.18 $ $Date: 2004/11/28 21:34:31 $
  *****************************************************************************}
 
 
@@ -34,7 +34,6 @@ const
   ticksperhour = 3600000;
   ticksperminute = 60000;
   ticksperseconde = 1000;
-  maxRss = 10;
   maxRssItems = 20;
   MAXNETSTATS = 10;
 
@@ -192,7 +191,7 @@ type
       setiTotalUsers, setiRank, setiShareRank, setiMoreWU: String;
     foldMemSince, foldLastWU, foldActProcsWeek, foldTeam, foldScore,
       foldRank, foldWU: String;
-    rss: Array [1..maxRss] of TRss;
+    rss: Array of TRss;
     rssEntries: Cardinal;
     procedure emailUpdate;
     procedure fetchHTTPUpdates;
@@ -1507,10 +1506,13 @@ begin
       // locate entry
       jj := 0;
       found := false;
-      repeat
-        Inc(jj);
-        if (rss[jj].url = args[1]) then found := true;
-      until (jj >= rssEntries) or (found);
+      while (jj < rssEntries) and (not found) do
+      begin
+        if (rss[jj].url = args[1]) then found := true
+        else Inc(jj);
+      end;
+
+
 
       try
         if (found) and (rss[jj].items > 0) and (Cardinal(StrToInt(args[3])) <=
@@ -2504,13 +2506,14 @@ const
   maxArgs = 10;
 var
   screenline: String;
-  z, y: Integer;
+  z, y, x: Integer;
   args: Array [1..maxArgs] of String;
   prefix: String;
   postfix: String;
   numargs: Cardinal;
-  myRssCount: Cardinal;
+  myRssCount: Integer;
   updateNeeded: Boolean;
+  iFound: Integer;
 begin
   doHTTPUpdate := False;
 
@@ -2519,7 +2522,7 @@ begin
   // TODO: this should only be done when the config changes...
   myRssCount := 0;
   DoNewsUpdate[6] := config.checkUpdates;
-  ;
+
   for z := 1 to 20 do
   begin
     for y := 1 to 4 do
@@ -2530,15 +2533,48 @@ begin
         while decodeArgs(screenline, '$Rss', maxArgs, args, prefix, postfix,
           numargs) do
         begin
-          Inc(myRssCount);
-          if (rss[myRssCount].url <> args[1]) then
+          // check if we have already seen this url:
+          iFound := -1;
+          for x := 0 to myRssCount-1 do
+            if (rss[x].url = args[1]) then iFound := x;
+
+          if (iFound = -1) then
           begin
-            rss[myRssCount].url := args[1];
-            rss[myRssCount].whole := '';
-            rss[myRssCount].items := 0;
+            // not found - add details:
+            if (myRssCount + 1 >= Length(rss)) then
+              SetLength(rss, myRssCount + 10);
+            if (rss[myRssCount].url <> args[1]) then
+            begin
+              rss[myRssCount].url := args[1];
+              rss[myRssCount].whole := '';
+              rss[myRssCount].items := 0;
+            end;
+
+            rss[myRssCount].maxfreq := 0;
+            if (numargs >= 4) then
+            begin
+              try
+                rss[myRssCount].maxfreq := StrToInt(args[4]) * 60
+              except 
+              end;
+            end;
+
+            Inc(myRssCount);
+          end
+          else
+          begin
+            // seen this one before - raise the maxfreq if this one is higher.
+            if (numargs >= 4)
+              and (rss[iFound].maxfreq < Cardinal(StrToInt(args[4]) * 60)) then
+            begin
+              try
+                rss[iFound].maxfreq := StrToInt(args[4]) * 60;
+              except
+              end;
+            end;
           end;
-          if (numargs >= 4) then rss[myRssCount].maxfreq := StrToInt(args[4])
-            * 60;
+
+          // remove this Rss, and continue to parse the rest
           screenline := prefix + postfix;
         end;
         if (pos('$SETI', screenline) <> 0) then DoNewsUpdate[7] := true;
@@ -2571,7 +2607,7 @@ begin
   begin
     DoNewsUpdate[1] := False;
 
-    for counter := 1 to rssEntries do
+    for counter := 0 to rssEntries-1 do
     begin
       if (rss[counter].url <> '') then
       begin
