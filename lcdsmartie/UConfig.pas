@@ -19,7 +19,7 @@ unit UConfig;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UConfig.pas,v $
- *  $Revision: 1.18 $ $Date: 2004/12/03 19:49:58 $
+ *  $Revision: 1.19 $ $Date: 2004/12/03 20:14:17 $
  *****************************************************************************}
 
 interface
@@ -470,6 +470,7 @@ var
   x, y: Integer;
   sConfigFileFormatVersion, sScreenTextSyntaxVersion: String;
   sScreen, sLine, sPOPAccount, sGameLine: String;
+  iTemp: Integer;
 begin
 
   try
@@ -489,8 +490,18 @@ begin
 
   baudrate := initfile.ReadInteger('Communication Settings', 'Baudrate', 8);
   comPort := initfile.ReadInteger('Communication Settings', 'COMPort', 1);
-  isUsbPalm := initfile.ReadInteger('Communication Settings',
-    'USBPalm', 0) > 0;
+
+  iTemp := initfile.ReadInteger('Communication Settings', 'USBPalm', -1);
+  if (iTemp <> -1) then
+  begin
+    isUsbPalm := (iTemp > 0);
+  end
+  else
+  begin
+    // If they were using a previous version then this value was used for USB Palms
+    isUsbPalm :=
+      (initfile.ReadString('Communication Settings', 'USBPalmDevice', '') <> '');
+  end;
 
   refreshRate := initfile.ReadInteger('General Settings', 'RefreshRate', 75);
   winampLocation := initfile.ReadString('General Settings', 'WinAmpLocation',
