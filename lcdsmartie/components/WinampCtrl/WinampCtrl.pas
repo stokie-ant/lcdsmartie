@@ -22,7 +22,24 @@ type
 
   TWinampCtrl = class(TComponent)
   private
-    { Private declarations }
+    // Cached results:
+    lastresult_TrackLength: int64;
+    lasttime_TrackLength: Cardinal;
+    lastresult_TrackPosition: int64;
+    lasttime_TrackPosition: Cardinal;
+    lastresult_GetCurrSongTitle: String;
+    lasttime_GetCurrSongTitle: Cardinal;
+    lastresult_GetSongInfo: Array [0..2] of Integer;
+    lasttime_GetSongInfo: Array [0..2] of Cardinal;
+    lastresult_GetState: Integer;
+    lasttime_GetState: Cardinal;
+    lastresult_GetListPos: Integer;
+    lasttime_GetListPos: Cardinal;
+    lastresult_GetListCount: Integer;
+    lasttime_GetListCount: Cardinal;
+
+    hwndWinamp : HWND;
+    lastFoundHwnd: Cardinal;
     FWinampLocation: TFileName;
     FParams: String;
     RunThread: TRunThread;
@@ -36,6 +53,8 @@ type
     PlaylistPos: integer;
     FOnSongChanged: TNotifyEvent;
     procedure SetWinampLocation(Value: TFileName);
+    function GetWAhwnd: Integer;
+    Function MySendMessage(Msg: Cardinal; wParam: Integer; IParam: Integer): Integer;
   protected
     { Protected declarations }
     procedure LoadFileNameList;
@@ -130,10 +149,10 @@ type
 
     property OnSongChanged: TNotifyEvent read FOnSongChanged write FOnSongChanged;
   end;
-  
+
 implementation
 
-var hwnd_winamp : integer;
+
 
 const
   WinampClassName = 'winamp v1.x';
@@ -158,247 +177,243 @@ end;
 
 // WM_COMMAND messages ---------------------------------------------------------
 
+Function TWinampCtrl.GetWAhwnd(): Integer;
+var
+  now: Cardinal;
+begin
+  now := GetTickCount();
+  if (abs(now - lastFoundHwnd) > 250) then
+  begin
+    lastFoundHwnd := now;
+    hwndWinamp := FindWindow(WinampClassName,nil);
+  end;
+  result := hwndWinamp;
+end;
+
+Function TWinampCtrl.MySendMessage(Msg: Cardinal; wParam: Integer; IParam: Integer): Integer;
+var
+  winamp: HWND;
+begin
+  winamp := GetWAhwnd();
+  if (winamp <> 0) then
+    Result := SendMessage(winamp, Msg, wParam, IParam)
+  else
+    Result := 0;
+end;
+
 Procedure TWinampCtrl.Previous;
 begin
-  hwnd_winamp := FindWindow(WinampClassName,nil);
-  SendMessage(hwnd_winamp,WM_COMMAND,40044,0);
+  MySendMessage(WM_COMMAND,40044,0);
 end;
 
 Procedure TWinampCtrl.Play;
 begin
-  hwnd_winamp := FindWindow(WinampClassName,nil);
-  sendMessage(hwnd_winamp,WM_COMMAND,40045,0);
+  MySendMessage(WM_COMMAND,40045,0);
 end;
 
 Procedure TWinampCtrl.Pause;
 begin
-  hwnd_winamp := FindWindow(WinampClassName,nil);
-  SendMessage(hwnd_winamp,WM_COMMAND,40046,0);
+  MySendMessage(WM_COMMAND,40046,0);
 end;
 
 Procedure TWinampCtrl.Stop;
 begin
-  hwnd_winamp := FindWindow(WinampClassName,nil);
-  SendMessage(hwnd_winamp,WM_COMMAND,40047,0);
+  MySendMessage(WM_COMMAND,40047,0);
 end;
 
 Procedure TWinampCtrl.Next;
 begin
-  hwnd_winamp := FindWindow(WinampClassName,nil);
-  SendMessage(hwnd_winamp,WM_COMMAND,40048,0);
+  MySendMessage(WM_COMMAND,40048,0);
 end;
 
 procedure TWinampCtrl.FastForward_5s;
 begin
-     hwnd_winamp := FindWindow(WinampClassName,nil);
-     SendMessage(hwnd_winamp,WM_COMMAND,40060,0);
+     MySendMessage(WM_COMMAND,40060,0);
 end;
 
 procedure TWinampCtrl.Rewind_5s;
 begin
-     hwnd_winamp := FindWindow(WinampClassName,nil);
-     SendMessage(hwnd_winamp,WM_COMMAND,40061,0);
+     MySendMessage(WM_COMMAND,40061,0);
 end;
 
 // start of playlist
 procedure TWinampCtrl.Previous_Ctrl;
 begin
-     hwnd_winamp := FindWindow(WinampClassName,nil);
-     SendMessage(hwnd_winamp,WM_COMMAND,40154,0);
+     MySendMessage(WM_COMMAND,40154,0);
 end;
 
 // open location
 procedure TWinampCtrl.Play_Ctrl;
 begin
-     hwnd_winamp := FindWindow(WinampClassName,nil);
-     SendMessage(hwnd_winamp,WM_COMMAND,40155,0);
+     MySendMessage(WM_COMMAND,40155,0);
 end;
 
 // end of playlist
 procedure TWinampCtrl.Next_Ctrl;
 begin
-     hwnd_winamp := FindWindow(WinampClassName,nil);
-     SendMessage(hwnd_winamp,WM_COMMAND,40158,0);
+     MySendMessage(WM_COMMAND,40158,0);
 end;
 
 // rewind 5 seconds
 procedure TWinampCtrl.Previous_Shift;
 begin
-     hwnd_winamp := FindWindow(WinampClassName,nil);
-     SendMessage(hwnd_winamp,WM_COMMAND,40144,0);
+     MySendMessage(WM_COMMAND,40144,0);
 end;
 
 // open file(s)
 procedure TWinampCtrl.Play_Shift;
 begin
-     hwnd_winamp := FindWindow(WinampClassName,nil);
-     SendMessage(hwnd_winamp,WM_COMMAND,40145,0);
+     MySendMessage(WM_COMMAND,40145,0);
 end;
 
 // fade out and stop
 procedure TWinampCtrl.Stop_Shift;
 begin
-     hwnd_winamp := FindWindow(WinampClassName,nil);
-     SendMessage(hwnd_winamp,WM_COMMAND,40147,0);
+     MySendMessage(WM_COMMAND,40147,0);
 end;
 
 // fast forward 5 sec0nds
 procedure TWinampCtrl.Next_Shift;
 begin
-     hwnd_winamp := FindWindow(WinampClassName,nil);
-     SendMessage(hwnd_winamp,WM_COMMAND,40148,0);
+     MySendMessage(WM_COMMAND,40148,0);
 end;
 
 procedure TWinampCtrl.StopAfterCurrTrack;
 begin
-     hwnd_winamp := FindWindow(WinampClassName,nil);
-     SendMessage(hwnd_winamp,WM_COMMAND,40157,0);
+     MySendMessage(WM_COMMAND,40157,0);
 end;
 
 procedure TWinampCtrl.ToggleEQ;
 begin
-     hwnd_winamp := FindWindow(WinampClassName,nil);
-     SendMessage(hwnd_winamp,WM_COMMAND,40036,0);
+     MySendMessage(WM_COMMAND,40036,0);
 end;
 
 procedure TWinampCtrl.TogglePlaylist;
 begin
-     hwnd_winamp := FindWindow(WinampClassName,nil);
-     SendMessage(hwnd_winamp,WM_COMMAND,40040,0);
+     MySendMessage(WM_COMMAND,40040,0);
 end;
 
 procedure TWinampCtrl.VolumeUp;
 begin
-     hwnd_winamp := FindWindow(WinampClassName,nil);
-     SendMessage(hwnd_winamp,WM_COMMAND,40058,0);
+     MySendMessage(WM_COMMAND,40058,0);
 end;
 
 procedure TWinampCtrl.VolumeDown;
 begin
-     hwnd_winamp := FindWindow(WinampClassName,nil);
-     SendMessage(hwnd_winamp,WM_COMMAND,40059,0);
+     MySendMessage(WM_COMMAND,40059,0);
 end;
 
 procedure TWinampCtrl.ToggleAlwaysOnTop;
 begin
-     hwnd_winamp := FindWindow(WinampClassName,nil);
-     SendMessage(hwnd_winamp,WM_COMMAND,40019,0);
+     MySendMessage(WM_COMMAND,40019,0);
 end;
 
 procedure TWinampCtrl.PopUpPrefs;
 begin
-     hwnd_winamp := FindWindow(WinampClassName,nil);
-     SendMessage(hwnd_winamp,WM_COMMAND,40012,0);
+     MySendMessage(WM_COMMAND,40012,0);
 end;
 
 procedure TWinampCtrl.OpenFileInfoBox;
 begin
-     hwnd_winamp := FindWindow(WinampClassName,nil);
-     SendMessage(hwnd_winamp,WM_COMMAND,40188,0);
+     MySendMessage(WM_COMMAND,40188,0);
 end;
 
 procedure TWinampCtrl.LoadFiles;
 begin
-     hwnd_winamp := FindWindow(WinampClassName,nil);
-     SendMessage(hwnd_winamp,WM_COMMAND,40029,0);
+     MySendMessage(WM_COMMAND,40029,0);
 end;
 
 procedure TWinampCtrl.SetTimeDisplay(Remaining: Boolean);
 begin
-     hwnd_winamp := FindWindow(WinampClassName,nil);
-     SendMessage(hwnd_winamp,WM_COMMAND,40037+Integer(Remaining),0)
+     MySendMessage(WM_COMMAND,40037+Integer(Remaining),0)
 end;
 
 procedure TWinampCtrl.ToggleAutoscrolling;
 begin
-     hwnd_winamp := FindWindow(WinampClassName,nil);
-     SendMessage(hwnd_winamp,WM_COMMAND,40189,0);
+     MySendMessage(WM_COMMAND,40189,0);
 end;
 
 procedure TWinampCtrl.ToggleWindowShade;
 begin
-     hwnd_winamp := FindWindow(WinampClassName,nil);
-     SendMessage(hwnd_winamp,WM_COMMAND,40064,0);
+     MySendMessage(WM_COMMAND,40064,0);
 end;
 
 procedure TWinampCtrl.TogglePlayListWindowShade;
 begin
-     hwnd_winamp := FindWindow(WinampClassName,nil);
-     SendMessage(hwnd_winamp,WM_COMMAND,40266,0);
+     MySendMessage(WM_COMMAND,40266,0);
 end;
 
 procedure TWinampCtrl.ToggleDoubleSize;
 begin
-     hwnd_winamp := FindWindow(WinampClassName,nil);
-     SendMessage(hwnd_winamp,WM_COMMAND,40165,0);
+     MySendMessage(WM_COMMAND,40165,0);
 end;
 
 procedure TWinampCtrl.ToggleMainVisible;
 begin
-     hwnd_winamp := FindWindow(WinampClassName,nil);
-     SendMessage(hwnd_winamp,WM_COMMAND,40258,0);
+     MySendMessage(WM_COMMAND,40258,0);
 end;
 
 procedure TWinampCtrl.ToggleMiniBrowser;
 begin
-     hwnd_winamp := FindWindow(WinampClassName,nil);
-     SendMessage(hwnd_winamp,WM_COMMAND,40298,0);
+     MySendMessage(WM_COMMAND,40298,0);
 end;
 
 procedure TWinampCtrl.ToggleEasyMove;
 begin
-     hwnd_winamp := FindWindow(WinampClassName,nil);
-     SendMessage(hwnd_winamp,WM_COMMAND,40186,0);
+     MySendMessage(WM_COMMAND,40186,0);
 end;
 
 procedure TWinampCtrl.ToggleRepeat;
 begin
-     hwnd_winamp := FindWindow(WinampClassName,nil);
-     SendMessage(hwnd_winamp,WM_COMMAND,40022,0);
+     MySendMessage(WM_COMMAND,40022,0);
 end;
 
 procedure TWinampCtrl.ToggleShufflE;
 begin
-     hwnd_winamp := FindWindow(WinampClassName,nil);
-     SendMessage(hwnd_winamp,WM_COMMAND,40023,0);
+     MySendMessage(WM_COMMAND,40023,0);
 end;
 
 procedure TWinampCtrl.JumpToFile;
 begin
-     hwnd_winamp := FindWindow(WinampClassName,nil);
-     SendMessage(hwnd_winamp,WM_COMMAND,40194,0);
+     MySendMessage(WM_COMMAND,40194,0);
 end;
 
 procedure TWinampCtrl.JumpToTime;
 begin
-     hwnd_winamp := FindWindow(WinampClassName,nil);
-     SendMessage(hwnd_winamp,WM_COMMAND,40193,0);
+     MySendMessage(WM_COMMAND,40193,0);
 end;
 
 procedure TWinampCtrl.CloseWinAmp;
 begin
-     hwnd_winamp := FindWindow(WinampClassName,nil);
-     SendMessage(hwnd_winamp,WM_COMMAND,40001,0);
+     MySendMessage(WM_COMMAND,40001,0);
 end;
 
 // WM_USER messages ------------------------------------------------------------
 
 procedure TWinampCtrl.StartPlay;
 begin
-     hwnd_winamp := FindWindow(WinampClassName,nil);
-     SendMessage(hwnd_winamp,WM_USER,0,102);
+     MySendMessage(WM_USER,0,102);
 end;
 
 procedure TWinampCtrl.Seek(Offset: Integer);
 begin
-     hwnd_winamp := FindWindow(WinampClassName,nil);
-     SendMessage(hwnd_winamp,WM_USER,Offset,106);
+     MySendMessage(WM_USER,Offset,106);
 end;
 
 function TWinampCtrl.GetState: Integer;
+var
+  now: Cardinal;
 begin
-     hwnd_winamp := FindWindow(WinampClassName,nil);
-     Result:=SendMessage(hwnd_winamp,WM_USER,0,104);
+  now := GetTickCount();
+
+  if (abs(now - lasttime_GetState) > 250) then
+  begin
+    lasttime_GetState := now;
+
+    lastresult_GetState := MySendMessage(WM_USER,0,104);
+  end;
+
+  Result := lastresult_GetState;
      {  States :
          0: Stopped
          1: Playing
@@ -406,21 +421,38 @@ begin
 end;
 
 function TWinampCtrl.GetListCount: Integer;
+var
+  now: Cardinal;
 begin
-     hwnd_winamp := FindWindow(WinampClassName,nil);
-     Result:=SendMessage(hwnd_winamp,WM_USER,0,124);
+  now := GetTickCount();
+  if (abs(now - lasttime_GetListCount) > 250) then
+  begin
+    lasttime_GetListCount := now;
+
+    lastresult_GetListCount := MySendMessage(WM_USER,0,124);
+  end;
+
+  Result := lastresult_GetListCount;
 end;
 
 function TWinampCtrl.GetListPos: integer;
+var
+  now: Cardinal;
 begin
-     hwnd_winamp := FindWindow(WinampClassName,nil);
-     Result:=SendMessage(hwnd_winamp,WM_USER,0,125);
+  now := GetTickCount();
+
+  if (abs(now - lasttime_GetListPos) > 250) then
+  begin
+    lasttime_GetListPos := now;
+    lastresult_GetListPos := MySendMessage(WM_USER,0,125);
+  end;
+
+  Result := lastresult_GetListPos;
 end;
 
 function TWinampCtrl.GetOutputTime(TimeMode : Integer) : Int64;
 begin
-     hwnd_winamp := FindWindow(WinampClassName,nil);
-     Result:=SendMessage(hwnd_winamp,WM_USER,TimeMode,105);
+     Result:=MySendMessage(WM_USER,TimeMode,105);
      { TimeMode :
         0 : Position in milliseconds
         1 : Length in seconds }
@@ -429,54 +461,71 @@ end;
 // available only from an internal dll -----------------------------------------
 // an alternative method is used just a bit down to get the Playlist info ------
 function TWinampCtrl.GetSongFileName(Position: Integer) : String;
+var
+  res: Integer;
 begin
-     hwnd_winamp := FindWindow(WinampClassName,nil);
-     Result:=PChar(SendMessage(hwnd_winamp,WM_USER,Position,211));
+     res := MySendMessage(WM_USER,Position,211);
+     if (res <> 0) then
+        Result := PChar(res)
+     else
+        Result := '';
 end;
 
 function TWinampCtrl.GetSongTitle(Position: Integer) : String;
+var
+  res: Integer;
 begin
-     hwnd_winamp := FindWindow(WinampClassName,nil);
-     Result:=PChar(SendMessage(hwnd_winamp,WM_USER,Position,212));
+     res := MySendMessage(WM_USER,Position,212);
+     if (res <> 0) then
+        Result := PChar(res)
+     else
+        Result := '';
 end;
 // all other things work O.K. --------------------------------------------------
 
 procedure TWinampCtrl.SetVolume(Volume : Byte);
 begin
-     hwnd_winamp := FindWindow(WinampClassName,nil);
-     SendMessage(hwnd_winamp,WM_USER,Volume,122);
+     MySendMessage(WM_USER,Volume,122);
 end;
 
 procedure TWinampCtrl.SetPanning(Panning : Byte);
 begin
-     hwnd_winamp := FindWindow(WinampClassName,nil);
      if FUseBalanceCorrection then begin// some strange logic for the Balance ?
         if Panning in[0..127] then Panning:=Panning+128 else// so correct it
         if Panning in[128..255] then Panning:=Panning-128;
      end;
-     SendMessage(hwnd_winamp,WM_USER,Panning,123);
+     MySendMessage(WM_USER,Panning,123);
 end;
 
 procedure TWinampCtrl.SetListPos(Position : Integer);
 begin
-     hwnd_winamp := FindWindow(WinampClassName,nil);
-     SendMessage(hwnd_winamp,WM_USER,Position,121);
+     MySendMessage(WM_USER,Position,121);
 end;
 
 function TWinampCtrl.GetSongInfo(InfoMode : Integer): Integer;
+var
+  now: Cardinal;
 begin
-     hwnd_winamp := FindWindow(WinampClassName,nil);
-     Result:=SendMessage(hwnd_winamp,WM_USER,InfoMode,126);
      { InfoMode
      0 : SampleRate
      1 : BitRate
      2 : Channels }
+
+  now := GetTickCount();
+
+  if (abs(now - lasttime_GetSongInfo[InfoMode]) > 250) then
+  begin
+    lasttime_GetSongInfo[InfoMode] := now;
+
+     lastresult_GetSongInfo[InfoMode] := MySendMessage(WM_USER,InfoMode,126);
+  end;
+
+  Result := lastresult_GetSongInfo[InfoMode];
 end;
 
 function TWinampCtrl.GetEQData(Position : Integer) : Integer;
 begin
-     hwnd_winamp := FindWindow(WinampClassName,nil);
-     Result:=SendMessage(hwnd_winamp,WM_USER,Position,127);
+     Result:=MySendMessage(WM_USER,Position,127);
      { Position :
       0-9 : the ten EQ bands from left to right : Result = 0-63 ( +20 - -20 dB )
       10 : the preamplifier value : Result = 0-63 ( +20 - -20 dB )
@@ -487,21 +536,37 @@ end;
 
 procedure TWinampCtrl.SetEQData(Position,Value : Integer);
 begin
-     hwnd_winamp := FindWindow(WinampClassName,nil);
-     SendMessage(hwnd_winamp,WM_USER,Position,127);
-     SendMessage(hwnd_winamp,WM_USER,Value,128);
+     MySendMessage(WM_USER,Position,127);
+     MySendMessage(WM_USER,Value,128);
 end;
 
 // some Additional functions (separated from existing functions)
 
 function TWinampCtrl.TrackLength: int64;
+var
+  now: Cardinal;
 begin
-     Result:=GetOutputTime(1);
+     now := GetTickCount();
+     if (abs(now - lasttime_TrackLength) > 250) then
+     begin
+       lasttime_TrackLength := now;
+       lastresult_TrackLength := GetOutputTime(1);
+     end;
+     Result:=lastresult_TrackLength;
 end;
 
+
 function TWinampCtrl.TrackPosition: int64;
+var
+  now: Cardinal;
 begin
-     Result:=GetOutputTime(0);
+     now := GetTickCount();
+     if (abs(now - lasttime_TrackPosition) > 250) then
+     begin
+       lasttime_TrackPosition := now;
+       lastresult_TrackPosition := GetOutputTime(0);
+     end;
+     Result:=lastresult_TrackPosition;
 end;
 
 function TWinampCtrl.Frequency: integer;
@@ -536,8 +601,7 @@ procedure TWinampCtrl.LoadFileNameList;
 var P: Integer;
 begin
      if not FileExists(FWinAmpLocation) then Exit;
-     hwnd_winamp := FindWindow(WinampClassName,nil);
-     SendMessage(hwnd_winamp,WM_USER,0,120);
+     MySendMessage(WM_USER,0,120);
      FFileNameList.LoadFromFile(ExtractFilePath(FWinampLocation)+'winamp.m3u');
      FFileNameList.Delete(0);
      for P:=FFileNameList.Count-1 downto 0 do
@@ -551,8 +615,7 @@ var P,L: Integer;
     S: String;
 begin
      if not FileExists(FWinAmpLocation) then Exit;
-     hwnd_winamp := FindWindow(WinampClassName,nil);
-     SendMessage(hwnd_winamp,WM_USER,0,120);
+     MySendMessage(WM_USER,0,120);
      FTitleList.LoadFromFile(ExtractFilePath(FWinampLocation)+'winamp.m3u');
      FTitleList.Delete(0);
      for P:=FTitleList.Count-1 downto 0 do
@@ -571,8 +634,7 @@ var P,L,X: Integer;
     S: String;
 begin
      if not FileExists(FWinAmpLocation) then Exit;
-     hwnd_winamp := FindWindow(WinampClassName,nil);
-     SendMessage(hwnd_winamp,WM_USER,0,120);
+     MySendMessage(WM_USER,0,120);
      FLengthList.LoadFromFile(ExtractFilePath(FWinampLocation)+'winamp.m3u');
      FLengthList.Delete(0);
      for P:=FLengthList.Count-1 downto 0 do
@@ -591,10 +653,10 @@ end;
 // Songs FileName --------------------------------------------------------------
 function TWinampCtrl.PlayListGetSongFileName(Position: Integer):String;
 begin
-     hwnd_winamp := FindWindow(WinampClassName,nil);
+
      if FFreeLists and (FFileNameList=NIL) then FFileNameList:=TStringList.Create;
 
-     if ((FFileNameList.Count * 2)+1 <> SendMessage(hwnd_winamp,WM_USER,0,124))
+     if ((FFileNameList.Count * 2)+1 <> MySendMessage(WM_USER,0,124))
      or FAlwaysLoadList then LoadFileNameList;
 
      if Position >= FFileNameList.Count then Position:=FFileNameList.Count-1;
@@ -606,10 +668,10 @@ end;
 // Songs Title -----------------------------------------------------------------
 function TWinampCtrl.PlayListGetSongTitle(Position: Integer):String;
 begin
-     hwnd_winamp := FindWindow(WinampClassName,nil);
+
      if FFreeLists and (FTitleList=NIL) then FTitleList:=TStringList.Create;
 
-     if ((FTitleList.Count * 2)+1 <> SendMessage(hwnd_winamp,WM_USER,0,124))
+     if ((FTitleList.Count * 2)+1 <> MySendMessage(WM_USER,0,124))
      or FAlwaysLoadList then LoadTitleList;
 
      if Position >= FTitleList.Count then Position:=FTitleList.Count-1;
@@ -621,10 +683,10 @@ end;
 // Songs Length in seconds -----------------------------------------------------
 function TWinampCtrl.PlayListGetSongLength(Position: Integer):Integer;
 begin
-     hwnd_winamp := FindWindow(WinampClassName,nil);
+
      if FFreeLists and (FLengthList=NIL) then FLengthList:=TStringList.Create;
 
-     if ((FLengthList.Count * 2)+1 <> SendMessage(hwnd_winamp,WM_USER,0,124))
+     if ((FLengthList.Count * 2)+1 <> MySendMessage(WM_USER,0,124))
      or FAlwaysLoadList then LoadLengthList;
 
      if Position >= FLengthList.Count then Position:=FLengthList.Count-1;
@@ -655,22 +717,24 @@ end;
 procedure TWinampCtrl.Hide;
 var
   WP : TWindowPlaceMent;
+  h: HWND;
 begin
-  hwnd_winamp := FindWindow(WinampClassName,nil);
+  h := GetWAHwnd();
   wp.length := SizeOf(TWindowPlaceMent);
   wp.showCmd := SW_HIDE;
-  SetWindowPlacement(hwnd_winamp,@wp);
+  SetWindowPlacement(h,@wp);
 end;
 
 // show manually ---------------------------------------------------------------
 procedure TWinampCtrl.Show;
 var
   WP : TWindowPlaceMent;
+  h: HWND;
 begin
-  hwnd_winamp := FindWindow(WinampClassName,nil);
+  h := GetWAHwnd();
   wp.length := SizeOf(TWindowPlaceMent);
   wp.showCmd := SW_SHOW;
-  SetWindowPlacement(hwnd_winamp,@wp);
+  SetWindowPlacement(h,@wp);
 end;
 
 // here we read the WinAmp Title :-) -------------------------------------------
@@ -679,25 +743,42 @@ var WATitle: PChar;
     Stringica: String;
     I,Sizica: Integer;
     s: string;
+    h: HWND;
+    now: Cardinal;
 begin
-     hwnd_winamp := FindWindow(WinampClassName,nil);
-     if hwnd_winamp=0 then exit;
-     Sizica:=GetWindowTextLength(hwnd_winamp);
-     WATitle:=StrAlloc(Sizica+1);// allocte the memory for the buffer
-     GetWindowText(hwnd_Winamp,WATitle,Sizica+1);
-     Stringica:=StrPas(WATitle);
-     StrDispose(WATitle);// free the memory
-     for I:=1 to Length(Stringica) do begin
-         s:=Copy(Stringica,I,8);
-         if LowerCase(s)='- winamp' then break;
+     now := GetTickCount();
+
+     if (abs(now - lasttime_GetCurrSongTitle) > 250) then
+     begin
+       lasttime_GetCurrSongTitle := now;
+
+       h := GetWAHwnd();
+       if h<>0 then
+       begin
+         Sizica:=GetWindowTextLength(h);
+         WATitle:=StrAlloc(Sizica+1);// allocte the memory for the buffer
+         GetWindowText(h,WATitle,Sizica+1);
+         Stringica:=StrPas(WATitle);
+         StrDispose(WATitle);// free the memory
+         for I:=1 to Length(Stringica) do begin
+             s:=Copy(Stringica,I,8);
+             if LowerCase(s)='- winamp' then break;
+         end;
+         lastresult_GetCurrSongTitle := Copy(Stringica,1,I-1);
+       end
+       else
+         lastresult_GetCurrSongTitle := '';
      end;
-     Result:=Copy(Stringica,1,I-1);
+
+     Result := lastresult_GetCurrSongTitle;
 end;
 
 procedure TWinampCtrl.CheckIfSongChanged;//(var Msg: TWMSetText);
+var
+  h: HWND;
 begin
-     hwnd_winamp := FindWindow(WinampClassName,nil);
-     if hwnd_winamp=0 then exit;
+     h := GetWAHwnd();
+     if h=0 then exit;
      if PlaylistPos<>GetListPos then begin
         PlaylistPos:=GetListPos;
         if Assigned(FOnSongChanged) then FOnSongChanged(Self);
