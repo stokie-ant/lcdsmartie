@@ -3,7 +3,7 @@ object Form4: TForm4
   Top = 174
   BorderIcons = []
   BorderStyle = bsNone
-  Caption = 'LCD Smartie 5.3 Info'
+  Caption = 'LCD Smartie Info'
   ClientHeight = 208
   ClientWidth = 285
   Color = clBtnFace

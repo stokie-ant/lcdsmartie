@@ -18,15 +18,13 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/Attic/Unit5.pas,v $
- *  $Revision: 1.2 $ $Date: 2004/10/25 22:52:48 $
+ *  $Revision: 1.3 $ $Date: 2004/11/05 13:16:21 $
  *****************************************************************************}
 unit Unit5;
 
 interface
 
-uses
-  Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
-  ComCtrls, StdCtrls;
+uses Forms, StdCtrls, ComCtrls, Classes, Controls;
 
 type
   TForm5 = class(TForm)
@@ -51,7 +49,7 @@ var
 
 implementation
 
-uses Unit2,unit1;
+uses Unit1, Unit2;
 
 {$R *.DFM}
 
@@ -63,22 +61,24 @@ end;
 
 procedure TForm5.FormShow(Sender: TObject);
 begin
-  trackbar1.position:=strtoint(copy(configarray[3],pos('¿3',configarray[3])+2,pos('¿4',configarray[3])-pos('¿3',configarray[3])-2));
-  trackbar2.position:=strtoint(copy(configarray[3],pos('¿4',configarray[3])+2,3));
+  trackbar1.position:=config.CF_contrast;
+  trackbar2.position:=config.CF_brightness;
 end;
 
+// CF options - contrast bar.
 procedure TForm5.TrackBar1Change(Sender: TObject);
 begin
   Form1.VaComm2.WriteChar(chr(15));
   Form1.VaComm2.WriteChar(chr(trackbar1.Position));
-  configarray[3]:=copy(configarray[3],1,pos('¿3',configarray[3])+1)+inttostr(trackbar1.position)+copy(configarray[3],pos('¿4',configarray[3]),length(configarray[3]));
+  config.CF_contrast:=trackbar1.Position;
 end;
 
+// CF options - brightness bar.
 procedure TForm5.TrackBar2Change(Sender: TObject);
 begin
   Form1.VaComm2.WriteChar(chr(14));
   Form1.VaComm2.WriteChar(chr(trackbar2.Position));
-  configarray[3]:=copy(configarray[3],1,pos('¿4',configarray[3])+1)+inttostr(trackbar2.position);
+  config.CF_brightness:=trackbar2.Position;
 end;
 
 procedure TForm5.Button1Click(Sender: TObject);

@@ -52,15 +52,9 @@ object Form5: TForm5
     Height = 25
     LineSize = 2
     Max = 100
-    Orientation = trHorizontal
     Frequency = 4
-    Position = 0
-    SelEnd = 0
-    SelStart = 0
     TabOrder = 2
     ThumbLength = 15
-    TickMarks = tmBottomRight
-    TickStyle = tsAuto
     OnChange = TrackBar2Change
   end
   object TrackBar1: TTrackBar
@@ -70,15 +64,9 @@ object Form5: TForm5
     Height = 25
     LineSize = 2
     Max = 100
-    Orientation = trHorizontal
     Frequency = 4
-    Position = 0
-    SelEnd = 0
-    SelStart = 0
     TabOrder = 3
     ThumbLength = 15
-    TickMarks = tmBottomRight
-    TickStyle = tsAuto
     OnChange = TrackBar1Change
   end
   object Button1: TButton

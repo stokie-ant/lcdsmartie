@@ -57,15 +57,9 @@ object Form3: TForm3
     Width = 149
     Height = 25
     Max = 255
-    Orientation = trHorizontal
     Frequency = 10
-    Position = 0
-    SelEnd = 0
-    SelStart = 0
     TabOrder = 2
     ThumbLength = 15
-    TickMarks = tmBottomRight
-    TickStyle = tsAuto
     OnChange = TrackBar1Change
   end
   object GroupBox1: TGroupBox
@@ -88,15 +82,9 @@ object Form3: TForm3
     Width = 149
     Height = 25
     Max = 255
-    Orientation = trHorizontal
     Frequency = 10
-    Position = 0
-    SelEnd = 0
-    SelStart = 0
     TabOrder = 5
     ThumbLength = 15
-    TickMarks = tmBottomRight
-    TickStyle = tsAuto
     OnChange = TrackBar2Change
   end
   object CheckBox1: TCheckBox

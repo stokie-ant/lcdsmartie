@@ -1,6 +1,6 @@
 object Form2: TForm2
-  Left = 174
-  Top = 263
+  Left = 229
+  Top = 118
   Anchors = []
   BiDiMode = bdLeftToRight
   BorderIcons = []
@@ -29,7 +29,7 @@ object Form2: TForm2
     Top = 0
     Width = 233
     Height = 409
-    ActivePage = TabSheet1
+    ActivePage = TabSheet13
     Font.Charset = ANSI_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
@@ -1564,7 +1564,12 @@ object Form2: TForm2
             'COM1'
             'COM2'
             'COM3'
-            'COM4')
+            'COM4'
+            'COM5'
+            'COM6'
+            'COM7'
+            'COM8'
+            'COM9')
         end
         object ComboBox5: TComboBox
           Left = 144

@@ -1,6 +1,6 @@
 object Form6: TForm6
-  Left = 332
-  Top = 345
+  Left = 783
+  Top = 188
   BorderIcons = []
   BorderStyle = bsToolWindow
   Caption = 'Parallel Settings'

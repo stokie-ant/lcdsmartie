@@ -1,3 +1,4 @@
+unit Unit2;
 {******************************************************************************
  *
  *  LCD Smartie - LCD control software.
@@ -18,15 +19,13 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/Attic/Unit2.pas,v $
- *  $Revision: 1.2 $ $Date: 2004/10/25 22:52:48 $
+ *  $Revision: 1.3 $ $Date: 2004/11/05 13:16:21 $
  *****************************************************************************}
-unit Unit2;
 
 interface
 
-uses
-  Registry, unit1, Controls, StdCtrls, ExtCtrls, Spin, Classes, Windows, Messages, SysUtils, Graphics, Forms, Dialogs, VaComm,
-  ComCtrls, Buttons, ShellApi, Grids;
+uses Dialogs, Grids, StdCtrls, Controls, Spin, Buttons, ComCtrls,
+  Classes, Forms;
 
 type
   TForm2 = class(TForm)
@@ -249,9 +248,8 @@ type
     procedure Edit7KeyDown(Sender: TObject; var Key: Word;
       Shift: TShiftState);
   private
-    { Private declarations }
-  public
-    { Public shit declarations }
+    procedure SaveScreen(scr: Integer);
+    procedure LoadScreen(scr: Integer);
   end;
 
 var
@@ -261,7 +259,8 @@ var
 
 implementation
 
-uses parport, Unit3, Unit5, Unit6, Unit7;
+uses Windows, ShellApi, graphics, sysutils, parport, Unit1, Unit3, Unit5,
+  Unit6, Unit7, UConfig;
 
 {$R *.DFM}
 
@@ -292,7 +291,6 @@ var
   laatstepacket:boolean;
   ch:char;
 
-
 label
   nextpacket;
 
@@ -307,19 +305,13 @@ begin
   form1.timer10.enabled:=false;
   pagecontrol2.ActivePage:=tabsheet11;
   if pagecontrol1.activepage = tabsheet13 then pagecontrol1.ActivePage:=tabsheet1;
-   tabsheet13.Enabled:=false;
+  tabsheet13.Enabled:=false;
 
   GPOsaan:=0;
   unit1.setupbutton:=1;
   setupscreen:=1;
 
   try
-    assignfile(bestand, extractfilepath(application.exename)+'config.cfg');
-    reset(bestand);
-    for blaat:=1 to 100 do
-      readln(bestand,configarray[blaat]);
-    closefile(bestand);
-
     assignfile(bestand, extractfilepath(application.exename)+'servers.cfg');
     reset(bestand);
     for blaat:=1 to 80 do
@@ -354,170 +346,69 @@ begin
     try closefile(bestand); except end;
   end;
 
-  assignfile(bestand,extractfilepath(application.exename)+'config.cfg');
-   application.ProcessMessages;
-    reset (bestand);
-   readln (bestand, regel);
-     form2.spinEdit1.text:=copy(regel,1,pos('¿',regel)-1);
-     form2.edit15.text:=copy(regel,pos('¿',regel)+1,length(regel));
-   readln (bestand,regel);
-     form6.spinEdit1.text:=copy(regel,1,pos('¿',regel)-1);
-     edit1.text:=copy(regel,pos('¿',regel)+1,length(regel));
-   readln (bestand, regel);
-     regel:=copy(regel,1,pos('¿1',regel)-1);
-     combobox2.itemindex:=strToInt(regel)-1;
-   readln (bestand,regel);
-  closefile(bestand);
+  //application.ProcessMessages;
 
-  tempscreen:=0;
   combobox3.itemindex:=0;
-  regel:=configarray[combobox3.itemindex*4+4];
-  if copy(regel,pos('¿',regel)+1,1)='1' then checkbox1.checked:=true else checkbox1.checked:=false;
-  spinedit7.value:=StrToInt(copy(regel,pos('¿',regel)+5,1))+1;
-  spinedit2.value:=StrToInt(copy(regel,pos('¿',regel)+9,length(regel)));
-  Combobox7.itemindex:=StrToInt(copy(regel,pos('¿',regel)+2,1));
-  form7.ComboBox10.itemindex:=StrToInt(copy(regel,pos('¿',regel)+6,1));
-      if form7.combobox10.ItemIndex=0 then
-        form7.spinedit1.Enabled:=False
-      else
-        form7.spinedit1.Enabled:=True;
-  form7.Spinedit1.text:=copy(regel,pos('¿',regel)+7,2);
+  tempscreen:=0;
+  LoadScreen( 1 );
+  welkescreen:=1;
 
-  checkbox3.checked:=false;
-  checkbox4.checked:=false;
-  checkbox5.checked:=false;
-  checkbox6.checked:=false;
-  checkbox7.checked:=false;
-  checkbox8.checked:=false;
-  checkbox9.checked:=false;
-  checkbox3.enabled:=true;
-  checkbox3.checked:=false;
-  edit6.enabled:=true;
-  checkbox4.enabled:=true;
-  checkbox4.checked:=false;
-  edit7.enabled:=true;
-  checkbox5.enabled:=true;
-  checkbox5.checked:=false;
-  edit8.enabled:=true;
+  form2.spinEdit1.text:=IntToStr(config.refreshRate);
+  form2.edit15.text:=config.winampLocation;
+  combobox1.itemindex:=config.colorOption;
 
-  edit5.color:=$00A1D7A4;
-  edit6.color:=clWhite;
-  edit7.color:=clWhite;
-  edit8.color:=clWhite;
-  unit1.setupbutton:=1;
-  edit10.text:=serversarray[combobox3.itemindex*4+1];
 
-  regel:=configarray[combobox3.itemindex*4+4];
-  if copy(regel,pos('¿',regel)+3,1)='1' then checkbox3.checked:=true;
-  if copy(regel,pos('¿',regel)+4,1)='1' then begin
-    checkbox7.checked:=true;
-    checkbox3.Checked:=true;
-    checkbox3.enabled:=false;
-    edit6.enabled:=false;
-    edit6.color:=$00BBBBFF;
-  end;
-  if copy(regel,1,3)='%c%' then begin
-    edit5.text:=copy(regel,4,pos('¿',regel)-4);;
-    checkbox10.Checked:=true;
-  end else begin
-    edit5.text:=copy(regel,1,pos('¿',regel)-1);;
-    checkbox10.Checked:=false;
-  end;
-  regel:=configarray[combobox3.itemindex*4+5];
-  if copy(regel,pos('¿',regel)+3,1)='1' then checkbox4.checked:=true;
-  if copy(regel,pos('¿',regel)+4,1)='1' then begin
-    checkbox8.checked:=true;
-    checkbox4.Checked:=true;
-    checkbox4.enabled:=false;
-    edit7.enabled:=false;
-    edit7.color:=$00BBBBFF;
-  end;
-  if copy(regel,1,3)='%c%' then begin
-    edit6.text:=copy(regel,4,pos('¿',regel)-4);;
-    checkbox11.Checked:=true;
-  end else begin
-    edit6.text:=copy(regel,1,pos('¿',regel)-1);;
-    checkbox11.Checked:=false;
-  end;
-  regel:=configarray[combobox3.itemindex*4+6];
-  if copy(regel,pos('¿',regel)+3,1)='1' then checkbox5.checked:=true;
-  if copy(regel,pos('¿',regel)+4,1)='1' then begin
-    checkbox9.checked:=true;
-    checkbox5.Checked:=true;
-    checkbox5.enabled:=false;
-    edit8.enabled:=false;
-    edit8.color:=$00BBBBFF;
-  end;
-  if copy(regel,1,3)='%c%' then begin
-    edit7.text:=copy(regel,4,pos('¿',regel)-4);;
-    checkbox12.Checked:=true;
-  end else begin
-    edit7.text:=copy(regel,1,pos('¿',regel)-1);;
-    checkbox12.Checked:=false;
-  end;
-  regel:=configarray[combobox3.itemindex*4+7];
-  if copy(regel,pos('¿',regel)+3,1)='1' then checkbox6.checked:=true;
-  if copy(regel,1,3)='%c%' then begin
-    edit8.text:=copy(regel,4,pos('¿',regel)-4);;
-    checkbox13.Checked:=true;
-  end else begin
-    edit8.text:=copy(regel,1,pos('¿',regel)-1);;
-    checkbox13.Checked:=false;
-  end;
+  form6.spinEdit1.text:=IntToStr(config.bootDriverDelay);
+  edit1.text:=config.setiEmail;
 
-  edit14.text:=configarray[88];
-  regel:=configarray[89];
-    spinedit4.text:=copy(regel,1,pos('¿',regel)-1);
-    spinedit8.text:=copy(regel,pos('¿',regel)+1,pos('¿¿',regel)-pos('¿',regel)-1);
-    spinedit9.text:=copy(regel,pos('¿¿',regel)+2,length(regel));
-  form6.edit1.text:=intToHex(StrToInt(configarray[91]),3);
- if copy(configarray[92],1,1)='1' then checkbox2.checked:=true else checkbox2.checked:=false;
- if copy(configarray[92],2,1)='1' then form3.checkbox1.checked:=true else form3.checkbox1.checked:=false;
-  proxytemp1:=configarray[93];
-  edit3.text:=configarray[93];
-  edit4.text:=configarray[94];
-  proxytemp2:=configarray[94];
+  edit14.text:=config.distLog;
+
+  spinedit4.text:=IntToStr(config.emailPeriod);
+  spinedit8.text:=IntToStr(config.dllPeriod);
+  spinedit9.text:=IntToStr(config.scrollPeriod);
+
+  form6.edit1.text:=intToHex(config.parallelPort,3);
+
+  checkbox2.checked:=config.alwaysOnTop;
+  form3.checkbox1.checked:=config.mx3Usb;
+
+  proxytemp1:=config.httpProxy;
+  edit3.text:=config.httpProxy;
+  proxytemp2:=IntToStr(config.httpProxyPort);
+  edit4.text:=proxytemp2;
   combobox8.itemindex:=0;
-  regel:=configarray[95];
-   edit11.text:=copy(regel,1,pos('¿', regel)-1);
-  regel:=configarray[96];
-   edit12.text:=copy(regel,1,pos('¿', regel)-1);
-  regel:=configarray[97];
-   edit13.text:=copy(regel,1,pos('¿', regel)-1);
-  regel:=configarray[98];
-  if (regel='1') or (regel='4') then begin
+  edit11.text:=config.pop[1].server;
+  edit12.text:=config.pop[1].user;
+  edit13.text:=config.pop[1].pword;
+
+  button4.enabled:=false;
+  button5.enabled:=false;
+  button6.enabled:=false;
+  combobox5.enabled:=false;
+  combobox4.enabled:=false;
+
+  if (config.isHD) or (config.isHD2) then begin
     radiobutton1.checked:=true;
     button6.enabled:=true;
-    combobox4.enabled:=false;
-    combobox5.enabled:=false;
-    button4.enabled:=false;
-    button5.enabled:=false;
   end;
-  if regel='4' then begin
-    radiobutton4.checked:=true;
-  end;
-  if regel='2' then begin
+  if config.isMO then begin
     radiobutton2.checked:=true;
-    button6.enabled:=false;
-    combobox4.enabled:=true;
-    combobox5.enabled:=true;
     button4.enabled:=true;
-    button5.enabled:=false;
-  end;
-  if regel='3' then begin
-    radiobutton3.checked:=true;
-    button6.enabled:=false;
+
     combobox4.enabled:=true;
     combobox5.enabled:=true;
-    button4.enabled:=false;
-    button5.enabled:=true;
   end;
-  regel:=configarray[99];
-  if regel='1' then combobox4.ItemIndex:=0;
-  if regel='2' then combobox4.ItemIndex:=1;
-  if regel='3' then combobox4.ItemIndex:=2;
-  if regel='4' then combobox4.ItemIndex:=3;
-  combobox5.ItemIndex:=StrToInt(configarray[100]);
+  if config.isCF then begin
+    radiobutton3.checked:=true;
+    button5.enabled:=true;
+
+    combobox4.enabled:=true;
+    combobox5.enabled:=true;
+  end;
+
+  combobox4.ItemIndex:=config.comPort-1;
+  combobox5.ItemIndex:=config.baudrate;
+  combobox2.itemindex:=config.sizeOption-1;
 
  if combobox2.itemindex<5 then begin
    checkbox7.checked:=false;
@@ -564,17 +455,17 @@ begin
    checkbox13.visible:=true;
  end;
 
- spinedit3.text:=copy(configarray[84],2,length(configarray[84]));
- if copy(configarray[84],1,1) = '1' then checkbox14.checked:=true else checkbox14.checked:=false;
- spinedit5.text:=copy(configarray[85],pos('¿', configarray[85])+1,length(configarray[85]));
- edit2.text:=copy(configarray[85],1,pos('¿', configarray[85])-1);
- spinedit6.text:=copy(configarray[86],2,length(configarray[86]));
- if copy(configarray[86],1,1) = '1' then checkbox15.checked:=true else checkbox15.checked:=false;
+ spinedit3.text:=IntToStr(config.newsRefresh);
+ checkbox14.checked:=config.randomScreens;
+ spinedit5.text:=IntToStr(config.gameRefresh);
+ edit2.text:=config.foldUsername;
+ spinedit6.text:=IntToStr(config.mbmRefresh);
+ checkbox15.checked:=config.checkUpdates;
 
 
 
   for i:=1 to 24 do listbox12.Items.Delete(1);
-  if (radiobutton2.checked) then begin
+  if (config.isMO) then begin
     tabsheet13.Enabled:=true;
     listbox12.Items.Add('FanSpeed(1,1) (nr, devider)');
 
@@ -671,58 +562,61 @@ begin
 end;
 
 
-procedure TForm2.ComboBox3Change(Sender: TObject);
-  label opnieuwscreen;
+procedure TForm2.SaveScreen(scr: Integer);
 var
-  bestand:textfile;
-  regel:string;
-  x,teller:integer;
+  y: Integer;
 
 begin
-  if form2.checkbox1.checked = true then regel:='¿1' else regel := '¿0';
-  regel:=regel+IntToStr(combobox7.itemindex);
-   edit5.text:=StringReplace(edit5.text,'¿','?',[rfReplaceAll]);
-   edit6.text:=StringReplace(edit6.text,'¿','?',[rfReplaceAll]);
-   edit7.text:=StringReplace(edit7.text,'¿','?',[rfReplaceAll]);
-   edit8.text:=StringReplace(edit8.text,'¿','?',[rfReplaceAll]);
-  if checkbox10.checked=true then configarray[(tempscreen*4)+4]:='%c%' else configarray[(tempscreen*4)+4]:='';
-  if checkbox11.checked=true then configarray[(tempscreen*4)+5]:='%c%' else configarray[(tempscreen*4)+5]:='';
-  if checkbox12.checked=true then configarray[(tempscreen*4)+6]:='%c%' else configarray[(tempscreen*4)+6]:='';
-  if checkbox13.checked=true then configarray[(tempscreen*4)+7]:='%c%' else configarray[(tempscreen*4)+7]:='';
 
-  if checkbox3.checked=true then configarray[(tempscreen*4)+4]:=configarray[(tempscreen*4)+4]+edit5.text+regel+'1' else configarray[(tempscreen*4)+4]:=configarray[(tempscreen*4)+4]+edit5.text+regel+'0';
-  if checkbox4.checked=true then configarray[(tempscreen*4)+5]:=configarray[(tempscreen*4)+5]+edit6.text+regel+'1' else configarray[(tempscreen*4)+5]:=configarray[(tempscreen*4)+5]+edit6.text+regel+'0';
-  if checkbox5.checked=true then configarray[(tempscreen*4)+6]:=configarray[(tempscreen*4)+6]+edit7.text+regel+'1' else configarray[(tempscreen*4)+6]:=configarray[(tempscreen*4)+6]+edit7.text+regel+'0';
-  if checkbox6.checked=true then configarray[(tempscreen*4)+7]:=configarray[(tempscreen*4)+7]+edit8.text+regel+'1' else configarray[(tempscreen*4)+7]:=configarray[(tempscreen*4)+7]+edit8.text+regel+'0';
+  config.screen[scr][1].text:=edit5.text;
+  config.screen[scr][2].text:=edit6.text;
+  config.screen[scr][3].text:=edit7.text;
+  config.screen[scr][4].text:=edit8.text;
 
-  form7spinedit:=form7.spinedit1.text;
-  if copy(form7spinedit,1,1) = '0' then form7spinedit:=copy(form7spinedit,2,1);
-  if StrToInt(form7spinedit) < 10 then form7spinedit:='0'+form7spinedit;
+  for y:=1 to 4 do begin
+    config.screen[scr][y].enabled:=checkbox1.checked;
+    config.screen[scr][y].skip:=combobox7.itemindex;
+    config.screen[scr][y].theme:=spinedit7.value-1;
+    config.screen[scr][y].interaction:=form7.Combobox10.itemindex;
+    config.screen[scr][y].interactionTime:=StrToInt(form7.spinedit1.text);
+    config.screen[scr][y].showTime:=spinedit2.value;
 
-  if checkbox7.checked=true then configarray[(tempscreen*4)+4]:=configarray[(tempscreen*4)+4]+'1' + intToStr(spinedit7.value-1) + IntToStr(form7.Combobox10.itemindex) + Form7Spinedit + intToStr(form2.spinedit2.value) else configarray[(tempscreen*4)+4]:=configarray[(tempscreen*4)+4]+'0' + intToStr(spinedit7.value-1) +IntToStr(form7.Combobox10.itemindex) + Form7Spinedit + intToStr(form2.spinedit2.value);
-  if checkbox8.checked=true then configarray[(tempscreen*4)+5]:=configarray[(tempscreen*4)+5]+'1' + intToStr(spinedit7.value-1) + IntToStr(form7.Combobox10.itemindex) + Form7Spinedit + intToStr(form2.spinedit2.value) else configarray[(tempscreen*4)+5]:=configarray[(tempscreen*4)+5]+'0' + intToStr(spinedit7.value-1) +IntToStr(form7.Combobox10.itemindex) + Form7Spinedit + intToStr(form2.spinedit2.value);
-  if checkbox9.checked=true then configarray[(tempscreen*4)+6]:=configarray[(tempscreen*4)+6]+'1' + intToStr(spinedit7.value-1) + IntToStr(form7.Combobox10.itemindex) + Form7Spinedit + intToStr(form2.spinedit2.value) else configarray[(tempscreen*4)+6]:=configarray[(tempscreen*4)+6]+'0' + intToStr(spinedit7.value-1) +IntToStr(form7.Combobox10.itemindex) + Form7Spinedit + intToStr(form2.spinedit2.value);
-  configarray[(tempscreen*4)+7]:=configarray[(tempscreen*4)+7]+'0' + intToStr(spinedit7.value-1) + IntToStr(form7.Combobox10.itemindex) + Form7Spinedit + intToStr(form2.spinedit2.value);
+    // ensure no ¿s occur in the text.
+    config.screen[scr][y].text:=StringReplace(config.screen[scr][y].text,'¿','?',[rfReplaceAll]);
+  end;
 
-  assignfile(bestand,extractfilepath(application.exename)+'config.cfg');
-  rewrite(bestand);
-  for x:=1 to 100 do writeln(bestand,configarray[x]);
-  closefile(bestand);
+  config.screen[scr][1].center:=checkbox10.checked;
+  config.screen[scr][2].center:=checkbox11.checked;
+  config.screen[scr][3].center:=checkbox12.checked;
+  config.screen[scr][4].center:=checkbox13.checked;
 
-  setupscreen :=combobox3.itemindex +1;
-  tempscreen :=combobox3.itemindex;
+  config.screen[scr][1].noscroll:=checkbox3.checked;
+  config.screen[scr][2].noscroll:=checkbox4.checked;
+  config.screen[scr][3].noscroll:=checkbox5.checked;
+  config.screen[scr][4].noscroll:=checkbox6.checked;
 
-  regel:=configarray[combobox3.itemindex*4+4];
-  if copy(regel,pos('¿',regel)+1,1)='1' then checkbox1.checked:=true else checkbox1.checked:=false;
-  spinedit7.value:=StrToInt(copy(regel,pos('¿',regel)+5,1))+1;
-  spinedit2.value:=StrToInt(copy(regel,pos('¿',regel)+9,length(regel)));
-  Combobox7.itemindex:=StrToInt(copy(regel,pos('¿',regel)+2,1));
-  form7.ComboBox10.itemindex:=StrToInt(copy(regel,pos('¿',regel)+6,1));
-      if form7.combobox10.ItemIndex=0 then
-        form7.spinedit1.Enabled:=False
-      else
-        form7.spinedit1.Enabled:=True;
-  form7.Spinedit1.text:=copy(regel,pos('¿',regel)+7,2);
+  config.screen[scr][1].contNextLine:=checkbox7.checked;
+  config.screen[scr][2].contNextLine:=checkbox8.checked;
+  config.screen[scr][3].contNextLine:=checkbox9.checked;
+  config.screen[scr][4].contNextLine:=False;
+end;
+
+procedure TForm2.LoadScreen(scr: Integer);
+var
+  ascreen: TScreenLine;
+begin
+  ascreen:=config.screen[scr][1];
+  checkbox1.checked:=ascreen.enabled;
+  combobox7.itemindex:=ascreen.skip;
+  spinedit7.value:=ascreen.theme+1;
+  form7.Combobox10.itemindex:=ascreen.interaction;
+  form7.spinedit1.text:=IntToStr(ascreen.interactionTime);
+  spinedit2.value:=ascreen.showTime;
+
+  if form7.combobox10.ItemIndex=0 then
+     form7.spinedit1.Enabled:=False
+  else
+     form7.spinedit1.Enabled:=True;
 
   checkbox3.checked:=false;
   checkbox4.checked:=false;
@@ -746,94 +640,70 @@ begin
   edit7.color:=clWhite;
   edit8.color:=clWhite;
   unit1.setupbutton:=1;
-  edit10.text:=serversarray[combobox3.itemindex*4+1];
+  edit10.text:=serversarray[(scr-1)*4+1];
 
-  regel:=configarray[combobox3.itemindex*4+4];
-  if copy(regel,pos('¿',regel)+3,1)='1' then checkbox3.checked:=true;
-  if copy(regel,pos('¿',regel)+4,1)='1' then begin
+  ascreen:=config.screen[scr][1];
+  checkbox3.checked:=ascreen.noscroll;
+  if ascreen.contNextLine then begin
     checkbox7.checked:=true;
     checkbox3.Checked:=true;
     checkbox3.enabled:=false;
     edit6.enabled:=false;
     edit6.color:=$00BBBBFF;
   end;
-  if copy(regel,1,3)='%c%' then begin
-    edit5.text:=copy(regel,4,pos('¿',regel)-4);;
-    checkbox10.Checked:=true;
-  end else begin
-    edit5.text:=copy(regel,1,pos('¿',regel)-1);;
-    checkbox10.Checked:=false;
-  end;
-  regel:=configarray[combobox3.itemindex*4+5];
-  if copy(regel,pos('¿',regel)+3,1)='1' then checkbox4.checked:=true;
-  if copy(regel,pos('¿',regel)+4,1)='1' then begin
+  edit5.text:=ascreen.text;
+  checkbox10.Checked:=ascreen.center;
+
+  ascreen:=config.screen[scr][2];
+  checkbox4.checked:=ascreen.noscroll;
+  if ascreen.contNextLine then begin
     checkbox8.checked:=true;
     checkbox4.Checked:=true;
     checkbox4.enabled:=false;
     edit7.enabled:=false;
     edit7.color:=$00BBBBFF;
   end;
-  if copy(regel,1,3)='%c%' then begin
-    edit6.text:=copy(regel,4,pos('¿',regel)-4);;
-    checkbox11.Checked:=true;
-  end else begin
-    edit6.text:=copy(regel,1,pos('¿',regel)-1);;
-    checkbox11.Checked:=false;
-  end;
-  regel:=configarray[combobox3.itemindex*4+6];
-  if copy(regel,pos('¿',regel)+3,1)='1' then checkbox5.checked:=true;
-  if copy(regel,pos('¿',regel)+4,1)='1' then begin
+  edit6.text:=ascreen.text;
+  checkbox11.Checked:=ascreen.center;
+
+  ascreen:=config.screen[scr][3];
+  checkbox5.checked:=ascreen.noscroll;
+  if ascreen.contNextLine then begin
     checkbox9.checked:=true;
     checkbox5.Checked:=true;
     checkbox5.enabled:=false;
     edit8.enabled:=false;
     edit8.color:=$00BBBBFF;
   end;
-  if copy(regel,1,3)='%c%' then begin
-    edit7.text:=copy(regel,4,pos('¿',regel)-4);;
-    checkbox12.Checked:=true;
-  end else begin
-    edit7.text:=copy(regel,1,pos('¿',regel)-1);;
-    checkbox12.Checked:=false;
-  end;
-  regel:=configarray[combobox3.itemindex*4+7];
-  if copy(regel,pos('¿',regel)+3,1)='1' then checkbox6.checked:=true;
-  if copy(regel,1,3)='%c%' then begin
-    edit8.text:=copy(regel,4,pos('¿',regel)-4);;
-    checkbox13.Checked:=true;
-  end else begin
-    edit8.text:=copy(regel,1,pos('¿',regel)-1);;
-    checkbox13.Checked:=false;
-  end;
+  edit7.text:=ascreen.text;
+  checkbox12.Checked:=ascreen.center;
 
-  x:=0;
-opnieuwscreen:
-  x:=x+1;
-  welkescreen:=welkescreen+aantalscreensheenweer;
-  if welkescreen=21 then welkescreen:=1;
-  if welkescreen=0 then welkescreen:=20;
-  regel:= configarray[(welkescreen-1)*4+4];
+  ascreen:=config.screen[scr][4];
+  checkbox6.checked:=ascreen.noscroll;
+  edit8.text:=ascreen.text;
+  checkbox13.Checked:=ascreen.center;
+end;
 
-  if x> 25 then begin
-    configarray[4]:=copy(configarray[4],1,pos('¿',configarray[4]))+'100'+copy(configarray[4],pos('¿',configarray[4])+3,length(configarray[4]));
-    configarray[5]:=copy(configarray[5],1,pos('¿',configarray[5]))+'100'+copy(configarray[5],pos('¿',configarray[5])+3,length(configarray[5]));
-    configarray[6]:=copy(configarray[6],1,pos('¿',configarray[6]))+'100'+copy(configarray[6],pos('¿',configarray[6])+3,length(configarray[6]));
-    configarray[7]:=copy(configarray[7],1,pos('¿',configarray[7]))+'100'+copy(configarray[7],pos('¿',configarray[7])+3,length(configarray[7]));
-    welkescreen:=1;
-    assignfile(bestand,extractfilepath(application.exename)+'config.cfg');
-    rewrite(bestand);
-    for teller:= 1 to 100 do writeln(bestand,configarray[teller]);
-    regel:='check your config file¿10001';
-    closefile(bestand);
-  end;
+procedure TForm2.ComboBox3Change(Sender: TObject);
+  label opnieuwscreen;
 
-  if welkescreen <> combobox3.itemindex + 1 then goto opnieuwscreen;
+begin
 
-  scrollline1:=StrToInt(copy(configarray[(welkescreen-1)*4+4],pos('¿',configarray[(welkescreen-1)*4+4])+3,1));
-  scrollline2:=StrToInt(copy(configarray[(welkescreen-1)*4+5],pos('¿',configarray[(welkescreen-1)*4+5])+3,1));
-  scrollline3:=StrToInt(copy(configarray[(welkescreen-1)*4+6],pos('¿',configarray[(welkescreen-1)*4+6])+3,1));
-  scrollline4:=StrToInt(copy(configarray[(welkescreen-1)*4+7],pos('¿',configarray[(welkescreen-1)*4+7])+3,1));
-  scrollline5:=0;
+  SaveScreen(tempscreen+1);
+
+  setupscreen :=combobox3.itemindex +1;
+  tempscreen :=combobox3.itemindex;
+
+  LoadScreen(tempscreen+1);
+
+  welkescreen:=tempscreen+1;
+
+  scrollline1:=config.screen[welkescreen][1].noscroll;
+  scrollline2:=config.screen[welkescreen][2].noscroll;
+  scrollline3:=config.screen[welkescreen][3].noscroll;
+  scrollline4:=config.screen[welkescreen][4].noscroll;
+  scrollline5:=false;
+
   aantalscreensheenweer:=1;
 end;
 
@@ -1623,53 +1493,16 @@ begin
 end;
 
 procedure TForm2.ComboBox8Change(Sender: TObject);
-var
-  templine1, templine2, templine3, templine4, templine5, templine6: string;
-  xx:integer;
 
 begin
-  for xx:= 1 to 9 do begin
-    if combobox8temp = xx then begin
-      templine1:=copy(configarray[95],1,pos('¿'+ intToStr(xx-1), configarray[95])+1);
-      templine4:=copy(configarray[95],pos('¿'+ intToStr(xx), configarray[95]), length(configarray[95]));
-      templine2:=copy(configarray[96],1,pos('¿'+ intToStr(xx-1), configarray[96])+1);
-      templine5:=copy(configarray[96],pos('¿'+ intToStr(xx), configarray[96]), length(configarray[96]));
-      templine3:=copy(configarray[97],1,pos('¿'+ intToStr(xx-1), configarray[97])+1);
-      templine6:=copy(configarray[97],pos('¿'+ intToStr(xx), configarray[97]), length(configarray[97]));
-    end;
-  end;
-  if combobox8temp = 0 then begin
-    templine1:='';
-    templine4:=copy(configarray[95],pos('¿'+ intToStr(0), configarray[95]), length(configarray[95]));
-    templine2:='';
-    templine5:=copy(configarray[96],pos('¿'+ intToStr(0), configarray[96]), length(configarray[96]));
-    templine3:='';
-    templine6:=copy(configarray[97],pos('¿'+ intToStr(0), configarray[97]), length(configarray[97]));
-  end;
-  configarray[95]:= templine1+edit11.text+templine4;
-  configarray[96]:= templine2+edit12.text+templine5;
-  configarray[97]:= templine3+edit13.text+templine6;
+  config.pop[combobox8temp+1].server:= edit11.text;
+  config.pop[combobox8temp+1].user:= edit12.text;
+  config.pop[combobox8temp+1].pword:= edit13.text;
 
-templine1:=configarray[95];
-templine2:=configarray[96];
-templine3:=configarray[97];
-if combobox8.itemindex > -1 then begin
-  edit11.text:=copy(templine1,1,pos('¿', templine1)-1);
-  edit12.text:=copy(templine2,1,pos('¿', templine2)-1);
-  edit13.text:=copy(templine3,1,pos('¿', templine3)-1);
-end;
-for xx:= 0 to 8 do begin
-  if combobox8.itemindex > xx then begin
-    templine1:=copy(templine1,pos('¿', templine1)+2,length(templine1));
-    edit11.text:=copy(templine1,1,pos('¿', templine1)-1);
-    templine2:=copy(templine2,pos('¿', templine2)+2,length(templine2));
-    edit12.text:=copy(templine2,1,pos('¿', templine2)-1);
-    templine3:=copy(templine3,pos('¿', templine3)+2,length(templine3));
-    edit13.text:=copy(templine3,1,pos('¿', templine3)-1);
-  end;
-end;
-combobox8temp:=combobox8.itemindex;
-
+  combobox8temp:=combobox8.itemindex;
+  edit11.text:=config.pop[combobox8temp+1].server;
+  edit12.text:=config.pop[combobox8temp+1].user;
+  edit13.text:=config.pop[combobox8temp+1].pword;
 end;
 
 procedure TForm2.CheckBox7Click(Sender: TObject);
@@ -1962,16 +1795,18 @@ var
   end;
 end;
 
+
+// Apply pressed.
 procedure TForm2.Button7Click(Sender: TObject);
 var
   bestand:textfile;
   regel:string;
   relood:boolean;
-  xx, x:integer;
-  Tempradio, Tempcombobox4, Tempcombobox5, Tempedit2:string;
-  templine1,templine2,templine3,templine4,templine5,templine6:string;
+  x:integer;
 
 begin
+  relood:=false;
+
   try
     assignfile(bestand, extractfilepath(application.exename)+'servers.cfg');
     rewrite(bestand);
@@ -2004,166 +1839,85 @@ begin
     try closefile(bestand); except end;
   end;
 
-  assignfile(bestand,extractfilepath(application.exename)+'config.cfg');
-  reset (bestand);
-    readln (bestand);
-    readln (bestand);
-    readln (bestand);
-    for x:= 4 to 94 do readln (bestand, configarray[x]);
-    readln (bestand);
-    readln (bestand);
-    readln (bestand);
-    for x:= 98 to 100 do readln (bestand, configarray[x]);
-  rewrite(bestand);
-   regel:=Form2.spinEdit1.text+'¿'+edit15.text;
-   form1.WinampCtrl1.WinampLocation:=edit15.text;
-  writeln(bestand, regel);
-   regel:=form6.spinedit1.text+'¿'+edit1.text;
-  writeln(bestand, regel);
-   regel:=IntToStr(combobox2.itemindex+1)+copy(configarray[3],pos('¿',configarray[3]),length(configarray[3]));
-  writeln(bestand, regel);
+  if (config.parallelPort<> StrToInt('$'+form6.edit1.text)) then relood:=true;
+  if (config.comPort<>(combobox4.itemindex+1)) then relood:=true;
+  if (config.baudrate<>combobox5.itemindex) then relood:=true;
+  if (radiobutton1.checked) and (not config.isHD) then relood:=true;
+  if (radiobutton2.checked) and (not config.isMO) then relood:=true;
+  if (radiobutton3.checked) and (not config.isCF) then relood:=true;
+  if (radiobutton4.checked) and (not config.isHD2) then relood:=true;
 
-  for x := 1 to combobox3.itemindex*4 do writeln(bestand,configarray[x+3]);
-  regel:='';
-  if form2.checkbox1.checked = true then regel:='¿1' else regel := '¿0';
-  regel:=regel+IntToStr(combobox7.itemindex);
-   edit5.text:=StringReplace(edit5.text,'¿','?',[rfReplaceAll]);
-   edit6.text:=StringReplace(edit6.text,'¿','?',[rfReplaceAll]);
-   edit7.text:=StringReplace(edit7.text,'¿','?',[rfReplaceAll]);
-   edit8.text:=StringReplace(edit8.text,'¿','?',[rfReplaceAll]);
-
-  if checkbox10.checked=true then templine1:='%c%' else templine1:='';
-  if checkbox11.checked=true then templine2:='%c%' else templine2:='';
-  if checkbox12.checked=true then templine3:='%c%' else templine3:='';
-  if checkbox13.checked=true then templine4:='%c%' else templine4:='';
-  if checkbox3.checked=true then templine1:=templine1+edit5.text+regel+'1' else templine1:=templine1+edit5.text+regel+'0';
-  if checkbox4.checked=true then templine2:=templine2+edit6.text+regel+'1' else templine2:=templine2+edit6.text+regel+'0';
-  if checkbox5.checked=true then templine3:=templine3+edit7.text+regel+'1' else templine3:=templine3+edit7.text+regel+'0';
-  if checkbox6.checked=true then templine4:=templine4+edit8.text+regel+'1' else templine4:=templine4+edit8.text+regel+'0';
-
-  form7spinedit:=form7.spinedit1.text;
-  if copy(form7spinedit,1,1) = '0' then form7spinedit:=copy(form7spinedit,2,1);
-  if StrToInt(form7spinedit) < 10 then form7spinedit:='0'+form7spinedit;
-
-  if checkbox7.checked=true then templine1:=templine1+'1' + intToStr(spinedit7.value-1) + IntToStr(form7.Combobox10.itemindex) + Form7Spinedit + intToStr(form2.spinedit2.value) else templine1:=templine1+'0' + intToStr(spinedit7.value-1) +IntToStr(form7.Combobox10.itemindex) + Form7Spinedit + intToStr(form2.spinedit2.value);
-  if checkbox8.checked=true then templine2:=templine2+'1' + intToStr(spinedit7.value-1) + IntToStr(form7.Combobox10.itemindex) + Form7Spinedit + intToStr(form2.spinedit2.value) else templine2:=templine2+'0' + intToStr(spinedit7.value-1) +IntToStr(form7.Combobox10.itemindex) + Form7Spinedit + intToStr(form2.spinedit2.value);
-  if checkbox9.checked=true then templine3:=templine3+'1' + intToStr(spinedit7.value-1) + IntToStr(form7.Combobox10.itemindex) + Form7Spinedit + intToStr(form2.spinedit2.value) else templine3:=templine3+'0' + intToStr(spinedit7.value-1) +IntToStr(form7.Combobox10.itemindex) + Form7Spinedit + intToStr(form2.spinedit2.value);
-  templine4:=templine4+'0' + intToStr(spinedit7.value-1) + IntToStr(form7.Combobox10.itemindex) + Form7Spinedit + intToStr(form2.spinedit2.value);
-
-  writeln(bestand,templine1);
-  writeln(bestand,templine2);
-  writeln(bestand,templine3);
-  writeln(bestand,templine4);
-
-  for x := (combobox3.itemindex+1)*4+1 to 80 do
-    writeln(bestand,configarray[x+3]);
-    if checkbox14.checked=true then regel:='1'+spinedit3.text;
-    if checkbox14.checked=false then regel:='0'+spinedit3.text;
-  writeln(bestand,regel);
-   form1.timer2.interval:=1000;
-   regel:=edit2.text+'¿'+spinedit5.text;
-  writeln(bestand,regel);
-   form1.timer8.interval:=1000;
-   if checkbox15.checked=true then regel:='1';
-   if checkbox15.checked=false then regel:='0';
-  writeln(bestand, regel+spinedit6.text);
-   form1.timer6.interval:=1000;
-  if combobox1.itemindex <> -1 then begin
-    writeln(bestand, IntToStr(combobox1.itemindex));
-  end else begin
-    writeln(bestand,configarray[87]);
+  if relood=true then begin
+    form1.timer1.enabled:=false;
+    form1.timer2.enabled:=false;
+    form1.timer3.enabled:=false;
+    form1.timer4.enabled:=false;
+    form1.timer5.enabled:=false;
+    form1.timer6.enabled:=false;
+    form1.timer7.enabled:=false;
+    form1.timer8.enabled:=false;
+    form1.timer9.enabled:=false;
+    form1.timer10.enabled:=false;
   end;
-  writeln(bestand, edit14.text);
-    configarray[88]:=edit14.text;
-  writeln(bestand, SpinEdit4.text+'¿'+SpinEdit8.text+'¿¿'+Spinedit9.text);
-   form1.timer13.interval:=SpinEdit8.value;
-   form1.timer12.interval:=SpinEdit9.value;
-   form1.timer9.interval:=800;
-  writeln(bestand, configarray[90]);
-   Tempedit2:=IntToStr(StrToInt('$'+form6.edit1.text));
-  writeln(bestand, IntToStr(StrToInt('$'+form6.edit1.text)));
 
-  if form3.checkbox1.checked=true then regel:='1';
-  if form3.checkbox1.checked=false then regel:='0';
-  if checkbox2.checked=true then writeln(bestand, '1'+regel)
-    else writeln(bestand, '0'+regel);
+
+  form1.WinampCtrl1.WinampLocation:=edit15.text;
+  config.winampLocation:=edit15.text;
+  config.refreshRate:=StrToInt(spinEdit1.text);
+  config.setiEmail:=edit1.text;
+  config.bootDriverDelay:=StrToInt(form6.spinedit1.text);
+  config.sizeOption:= combobox2.itemindex+1;
+  config.randomScreens:=checkbox14.checked;
+  config.newsRefresh:=StrToInt(spinedit3.text);
+  config.foldUsername:=edit2.text;
+  config.gameRefresh:=StrToInt(spinedit5.text);
+  config.checkUpdates:=checkbox15.checked;
+  config.mbmRefresh:=StrToInt(spinedit6.text);
+  config.colorOption:=combobox1.itemindex;
+  config.distLog:=edit14.text;
+  config.dllPeriod:= SpinEdit8.value;
+  config.emailPeriod:= StrToInt(SpinEdit4.text);
+  config.scrollPeriod:= SpinEdit9.value;
+  config.parallelPort:=StrToInt('$'+form6.edit1.text);
+  config.mx3Usb:=form3.checkbox1.checked;
+  config.alwaysOnTop:=checkbox2.checked;
+  config.comPort:=combobox4.itemindex+1;
+  config.baudrate:=combobox5.itemindex;
+  config.pop[combobox8.itemindex+1].server:=edit11.text;
+  config.pop[combobox8.itemindex+1].user:=edit12.text;
+  config.pop[combobox8.itemindex+1].pword:=edit13.text;
+
+  config.isHD:=radiobutton1.checked;
+  config.isMO:=radiobutton2.checked;
+  config.isCF:=radiobutton3.checked;
+  config.isHD2:=radiobutton4.checked;
+
   if edit4.text='' then edit4.text:='0';
   if (edit3.text <> proxytemp1) or (edit4.text <> proxytemp2) then showmessage('You have to restart LCD Smartie for this option!');
-  writeln(bestand, edit3.text);
-  writeln(bestand, edit4.text);
+  config.httpProxy:=edit3.text;
+  config.httpProxyPort:=StrToInt(edit4.text);
 
-  for xx:= 1 to 9 do begin
-    if combobox8.itemindex = xx then begin
-      templine1:=copy(configarray[95],1,pos('¿'+ intToStr(xx-1), configarray[95])+1);
-      templine4:=copy(configarray[95],pos('¿'+ intToStr(xx), configarray[95]), length(configarray[95]));
-      templine2:=copy(configarray[96],1,pos('¿'+ intToStr(xx-1), configarray[96])+1);
-      templine5:=copy(configarray[96],pos('¿'+ intToStr(xx), configarray[96]), length(configarray[97]));
-      templine3:=copy(configarray[97],1,pos('¿'+ intToStr(xx-1), configarray[97])+1);
-      templine6:=copy(configarray[97],pos('¿'+ intToStr(xx), configarray[97]), length(configarray[97]));
-    end;
-  end;
-  if combobox8.itemindex = 0 then begin
-    templine1:='';
-    templine4:=copy(configarray[95],pos('¿'+ intToStr(0), configarray[95]), length(configarray[95]));
-    templine2:='';
-    templine5:=copy(configarray[96],pos('¿'+ intToStr(0), configarray[96]), length(configarray[96]));
-    templine3:='';
-    templine6:=copy(configarray[97],pos('¿'+ intToStr(0), configarray[97]), length(configarray[97]));
-  end;
-  writeln(bestand, templine1+edit11.text+templine4);
-  writeln(bestand, templine2+edit12.text+templine5);
-  writeln(bestand, templine3+edit13.text+templine6);
+  SaveScreen(combobox3.itemindex+1);
+  form1.timer2.interval:=1000;
+  form1.timer8.interval:=1000;
+  form1.timer6.interval:=1000;
+  form1.timer13.interval:=config.dllPeriod;
+  form1.timer12.interval:=config.scrollPeriod;
+  form1.timer9.interval:=800;
 
-  if radiobutton1.checked=true then begin
-    writeln(bestand, '1');
-    tempradio:='1';
-  end;
-  if radiobutton2.checked=true then begin
-    writeln(bestand, '2');
-    tempradio:='2';
-  end;
-  if radiobutton3.checked=true then begin
-    writeln(bestand, '3');
-    tempradio:='3';
-  end;
-  if radiobutton4.checked=true then begin
-    writeln(bestand, '4');
-    tempradio:='4';
-  end;
-  if combobox4.itemindex=0 then begin
-    writeln(bestand, '1');
-    tempcombobox4:='1';
-  end;
-  if combobox4.itemindex=1 then begin
-    writeln(bestand, '2');
-    tempcombobox4:='2';
-  end;
-  if combobox4.itemindex=2 then begin
-    writeln(bestand, '3');
-    tempcombobox4:='3';
-  end;
-  if combobox4.itemindex=3 then begin
-    writeln(bestand, '4');
-    tempcombobox4:='4';
-  end;
-  writeln(bestand, intToStr(combobox5.itemindex));
-  tempcombobox5:=intToStr(combobox5.itemindex);
-  application.ProcessMessages;
- relood:=false;
- if (configarray[91]<>tempedit2) or (configarray[98]<>tempradio) or (configarray[99]<>tempcombobox4) or (configarray[100]<>TempComboBox5) then begin
-   tempradio:=configarray[98];
-   relood:=true;
- end;
+  config.save();
 
- reset(bestand);
- for x:= 1 to 100 do
-   readln(bestand,configarray[x]);
- closefile(bestand);
+  //application.ProcessMessages;
 
- try
-   assignfile(bestand,extractfilepath(application.exename)+'actions.cfg');
-   reset (bestand);
-   x:=0;
+  if relood=true then begin
+    showmessage('You have to restart LCD Smartie when you change driver or driver settings!');
+    form1.close;
+  end;
+
+  x:=0;
+  try
+    assignfile(bestand,extractfilepath(application.exename)+'actions.cfg');
+    reset (bestand);
    while not eof(bestand) do begin
      readln(bestand,regel);
      x:=x+1;
@@ -2175,25 +1929,8 @@ begin
    closefile(bestand);
  except
    try closefile(bestand); except end;
-   totalactions:=x;
  end;
  totalactions:=x;
-
- if relood=true then begin
-   form1.timer1.enabled:=false;
-   form1.timer2.enabled:=false;
-   form1.timer3.enabled:=false;
-   form1.timer4.enabled:=false;
-   form1.timer5.enabled:=false;
-   form1.timer6.enabled:=false;
-   form1.timer7.enabled:=false;
-   form1.timer8.enabled:=false;
-   form1.timer9.enabled:=false;
-   form1.timer10.enabled:=false;
-   showmessage('You have to restart LCD Smartie when you change driver or driver settings!');
-   configarray[98]:=tempradio;
-   form1.close;
- end;
 end;
 
 procedure TForm2.Button1Click(Sender: TObject);

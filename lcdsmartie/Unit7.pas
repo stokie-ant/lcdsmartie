@@ -18,15 +18,13 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/Attic/Unit7.pas,v $
- *  $Revision: 1.2 $ $Date: 2004/10/25 22:52:48 $
+ *  $Revision: 1.3 $ $Date: 2004/11/05 13:16:21 $
  *****************************************************************************}
 unit Unit7;
 
 interface
 
-uses
-  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, StdCtrls, Spin;
+uses Forms, StdCtrls, Spin, Controls, Classes;
 
 type
   TForm7 = class(TForm)
@@ -51,7 +49,7 @@ var
 
 implementation
 
-uses Unit6, Unit2;
+uses SysUtils, Unit2;
 
 {$R *.dfm}
 

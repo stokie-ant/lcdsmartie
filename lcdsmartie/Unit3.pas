@@ -18,15 +18,14 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/Attic/Unit3.pas,v $
- *  $Revision: 1.2 $ $Date: 2004/10/25 22:52:48 $
+ *  $Revision: 1.3 $ $Date: 2004/11/05 13:16:21 $
  *****************************************************************************}
 unit Unit3;
 
 interface
 
 uses
-  Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
-  StdCtrls, Spin, unit1, ComCtrls;
+  StdCtrls, ComCtrls, Classes, Controls, Forms;
 
 type
   TForm3 = class(TForm)
@@ -56,7 +55,7 @@ var
 
 implementation
 
-uses Unit2;
+uses Unit2, Unit1;
 
 {$R *.DFM}
 
@@ -90,16 +89,17 @@ end;
 
 procedure TForm3.FormShow(Sender: TObject);
 begin
-  trackbar1.position:=strtoint(copy(configarray[3],pos('¿1',configarray[3])+2,pos('¿2',configarray[3])-pos('¿1',configarray[3])-2));
-  trackbar2.position:=strtoint(copy(configarray[3],pos('¿2',configarray[3])+2,pos('¿3',configarray[3])-pos('¿2',configarray[3])-2));
+  trackbar1.position:=config.contrast;
+  trackbar2.position:=config.brightness;
 end;
 
+// MO options - contrast bar.
 procedure TForm3.TrackBar1Change(Sender: TObject);
 begin
   form1.VaComm1.WriteChar(Chr($0FE));
   form1.VaComm1.WriteChar('P');
   form1.VaComm1.WriteChar(chr(trackbar1.position));
-  configarray[3]:=copy(configarray[3],1,pos('¿1',configarray[3])+1)+inttostr(trackbar1.position)+copy(configarray[3],pos('¿2',configarray[3]),length(configarray[3]));
+  config.contrast:=trackbar1.position;
 end;
 
 procedure TForm3.FormClose(Sender: TObject; var Action: TCloseAction);
@@ -107,12 +107,13 @@ begin
   button2.click;
 end;
 
+// MO options - brightness bar.
 procedure TForm3.TrackBar2Change(Sender: TObject);
 begin
   form1.VaComm1.WriteChar(Chr($0FE));
   form1.VaComm1.WriteChar(Chr($099));
-  form1.VaComm1.WriteChar(chr(trackbar1.position));
-  configarray[3]:=copy(configarray[3],1,pos('¿2',configarray[3])+1)+inttostr(trackbar2.position)+copy(configarray[3],pos('¿3',configarray[3]),length(configarray[3]));
+  form1.VaComm1.WriteChar(chr(trackbar2.position));
+  config.brightness:=trackbar2.position;
 end;
 
 end.

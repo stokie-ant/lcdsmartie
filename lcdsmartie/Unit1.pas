@@ -1,3 +1,4 @@
+unit Unit1;
 {******************************************************************************
  *
  *  LCD Smartie - LCD control software.
@@ -18,24 +19,15 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/Attic/Unit1.pas,v $
- *  $Revision: 1.3 $ $Date: 2004/10/29 19:03:57 $
+ *  $Revision: 1.4 $ $Date: 2004/11/05 13:16:21 $
  *****************************************************************************}
- 
-
-unit Unit1;
 
 interface
 
-uses
-  cxCpu2kConst, cxCpu2kAPI, cxCpu2kDefault, cxCpu2kIntel, cxCpu2kAMD,
-  cxCpu2kCyrix, cxCpu2kIDT, cxCpu2kNexGen, cxCpu2kUMC, cxCpu2kRise,
-  Registry, Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
-  ExtCtrls, StdCtrls, WinampCtrl, system2, CoolTrayIcon,
-  ImgList, Menus, Buttons, adCpuUsage, parport,ShellAPI,
-  VaClasses, VaComm, IpExport, IpHlpApi, IpTypes, IpIfConst, IpRtrMib,
-  IdBaseComponent, IdComponent, IdTCPConnection, IdTCPClient, IdHTTP,
-  OleCtrls, isp3, AppEvnts, IdMessageClient, IdPOP3, IdAntiFreezeBase,
-  IdAntiFreeze, mmsystem,winsock,math;
+uses Messages, IdHTTP, IdBaseComponent, IdComponent, IdTCPConnection,
+  IdTCPClient, IdMessageClient, IdPOP3, VaClasses, VaComm, CoolTrayIcon,
+  Menus, WinampCtrl, ExtCtrls, Controls, StdCtrls, Buttons, Classes, Forms,
+  parport, system2, UConfig;
 
 const
   WM_ICONTRAY = WM_USER + 1;   // User-defined message
@@ -106,68 +98,20 @@ type
     procedure Execute; override;
   end;
 
-
-
-  type
-   TNewsItem = class(TObject)
-    ID,Reacties: Integer;
-    Titel,Editor,Categorie,Bron,Link,Tijd,Timestamp: String;
-  end;
-  Tinfo = record
-    line1: pchar;
-    line2: pchar;
-    line3: pchar;
-    line4: pchar;
-    line5: pchar;
-    line6: pchar;
-    line7: pchar;
-    line8: pchar;
-    line9: pchar;
-    line10: pchar;
-    line1name: pchar;
-    line2name: pchar;
-    line3name: pchar;
-    line4name: pchar;
-    line5name: pchar;
-    line6name: pchar;
-    line7name: pchar;
-    line8name: pchar;
-    line9name: pchar;
-    line10name: pchar;
-  end;
-  TTestFunction = function(): Tinfo;
-  TTestname = function(): pchar;
-  TTesttime = function(): integer;
-  TTime = type TDateTime;
   TForm1 = class(TForm)
-    Timer1: TTimer;
-    Timer2: TTimer;
-    WinampCtrl1: TWinampCtrl;
     PopupMenu1: TPopupMenu;
     Showwindow1: TMenuItem;
-    N1: TMenuItem;
     Close1: TMenuItem;
-    Image1: TImage;
-    Timer4: TTimer;
-    Timer5: TTimer;
     Button2: TButton;
-    Timer6: TTimer;
-    Timer7: TTimer;
+    Image1: TImage;
     SpeedButton10: TSpeedButton;
     Button1: TButton;
-    Timer8: TTimer;
     CoolTrayIcon1: TCoolTrayIcon;
     Panel2: TPanel;
     Panel3: TPanel;
     Panel4: TPanel;
     Configure1: TMenuItem;
-    VaComm1: TVaComm;
-    Timer3: TTimer;
-    Timer9: TTimer;
-    VaComm2: TVaComm;
     BacklightOn1: TMenuItem;
-    Timer10: TTimer;
-    Timer11: TTimer;
     Commands1: TMenuItem;
     Freeze1: TMenuItem;
     NextTheme1: TMenuItem;
@@ -210,15 +154,26 @@ type
     IdHTTP7: TIdHTTP;
     IdHTTP8: TIdHTTP;
     IdHTTP9: TIdHTTP;
-    Timer13: TTimer;
     Panel1: TPanel;
     Timertrans: TTimer;
+    VaComm2: TVaComm;
+    VaComm1: TVaComm;
+    Timer1: TTimer;
+    Timer2: TTimer;
+    Timer3: TTimer;
+    Timer4: TTimer;
+    Timer5: TTimer;
+    Timer6: TTimer;
+    Timer7: TTimer;
+    Timer8: TTimer;
+    Timer9: TTimer;
+    Timer10: TTimer;
+    Timer11: TTimer;
     Timer12: TTimer;
-    procedure refres(Sender: TObject);
+    Timer13: TTimer;
+    WinampCtrl1: TWinampCtrl;
     procedure FormCreate(Sender: TObject);
-    procedure backlit(Sender: TObject);
     procedure FormShow(Sender: TObject);
-    procedure kleur(Sender: TObject);
     procedure Showwindow1Click(Sender: TObject);
     procedure Close1Click(Sender: TObject);
     procedure Image1Click(Sender: TObject);
@@ -226,8 +181,6 @@ type
     procedure SpeedButton10Click(Sender: TObject);
     procedure Button1Click(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
-    procedure SetPos(const Column,Row: byte);
-    procedure dogpo(const ftemp1,ftemp2:integer);
     procedure Configure1Click(Sender: TObject);
     procedure BacklightOn1Click(Sender: TObject);
     procedure Timer1Timer(Sender: TObject);
@@ -248,7 +201,6 @@ type
     procedure Image1DblClick(Sender: TObject);
     procedure Freeze1Click(Sender: TObject);
     procedure FormKeyPress(Sender: TObject; var Key: Char);
-    procedure freeze();
     procedure Image12MouseUp(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
     procedure Image12MouseDown(Sender: TObject; Button: TMouseButton;
@@ -305,149 +257,140 @@ type
     procedure Timer13Timer(Sender: TObject);
     procedure TimertransTimer(Sender: TObject);
     procedure Timer12Timer(Sender: TObject);
-  private
     procedure WMQueryEndSession (var M: TWMQueryEndSession); message WM_QUERYENDSESSION;
-  public
-    poort1: TParPort; //dit is dus je pointer naar het 'parport' object, welke de aanstuur code bevat..
-    //poort2: TParPort; //en een eventuele tweede poort
-  end;
+    procedure refres(Sender: TObject);
+  private
+    poort1: TParPort;
+    function1:TmyProc;
+    function2:TmyProc;
+    function3:TmyProc;
+    function4:TmyProc;
+    function5:TmyProc;
+    function6:TmyProc;
+    function7:TmyProc;
+    function8:TmyProc;
+    function9:TmyProc;
+    function10:TmyProc;
+    aantregelsoud,foo2, gpoflash ,flash, backlight:integer;
+    whatgpo:integer;
+    didMOFan,didWAShuffle,didbltoggle,didgpotoggle,didbl,didwavolup,didwavoldown,didwaplay,didwastop, didwapause,
+    didgotoscreen,didgototheme,didfreeze,didrefreshall,didnexttheme,didlasttheme,didnextscreen,didlastscreen,
+    didgpo,didgpoflash,didwanexttrack,didwalasttrack,didflash,didsound,didexec:array [1..99] of boolean;
+    System1:Tsystem;
+    nextline1,nextline2,nextline3,nextline4:Boolean;
+    parameter1, parameter2, parameter3, parameter4, file1,distributedlog:string;
+    kleuren:Integer;
+    koeregel2,koeregel1,uptimereg,uptimeregs:string;
+    qstatreg1: array[1..20,1..4] of string;
+    qstatreg2: array[1..20,1..4] of string;
+    qstatreg3: array[1..20,1..4] of string;
+    qstatreg4: array[1..20,1..4] of string;
+    qstattemp: integer;
+    srvr:string;
+    koeregel,resoregel,winampregel,winampregel3,winampregel4:string;
+    regelz: array [1..4] of string;
+    temp:array[1..4] of integer;
+    regel2scroll:integer;
+    tmpregel1, tmpregel2, tmpregel3, tmpregel4:string;
+    forgroundcoloroff,forgroundcoloron,backgroundcoloroff,backgroundcoloron:integer;
+    Oldline:array[1..4] of string;
+    Newline:array[1..4] of string;
+    oldnewline:array[1..8] of string;
+    Gotnewlines:boolean;
+    transActietemp,transActietemp2,counter,timertransIntervaltemp:integer;
+    gokjesarray:array[1..4,1..40] of boolean;
+    dllsarray:array[0..40] of string;
+    totaldlls: integer;
+    gpo: array [1..8] of boolean;
+    doesgpoflash, doesflash: boolean;
+    activetheme:integer;
+    kar:char;
+    STUsername, STComputername, STCPUType, STCPUSpeed, STCPUUsage,STCPUUsageBar:string;
+    STMemFree,STMemTotal,STPageFree,STPageTotal:string;
+    STHDFree,STHDTotal:array[67..90] of string;
+    STHDBar:string;
+    templib:string;
+    hlib: cardinal;
+    nlib: string;
+    plib: string;
+    tlib: string;
+    canscroll,dllcancheck:boolean;
+    mbmactive:boolean;
+    netadaptername: array[0..9] of String;
+    nettotaldown,nettotalup,netunicastdown,netunicastup,
+    netnunicastDown,netnunicastUp,netDiscardsDown,netDiscardsUp,
+    netErrorsDown,netErrorsUp,netSpeedDownK,netSpeedUpK, netSpeedDownM,
+    netSpeedUpM,nettotaldownold,nettotalupold:array[0..9] of double;
+    ipaddress:string;
+    pop3Thread:Tpop3Thread;
+    HTTPThread:THTTPThread;
+    Temperature       : array [1..11]  of double;
+    Voltage           : array [1..11]  of double;
+    Fan               : array [1..11]  of double;
+    CPU               : array [1..5]   of double;
+    TempName          : array[1..11] of String;
+    VoltName          : array[1..11] of String;
+    FanName           : array[1..11] of String;
+    SharedData   : PSharedData;
+    function ReadMBM5Data : Boolean;
+    function doguess(regel:integer): integer;
+    procedure checkIfNewsUpdatesRequired;
+    procedure SetPos(const Column,Row: byte);
+    procedure freeze();
+    procedure doGPO(const ftemp1,ftemp2:integer);
+    procedure kleur();
+    procedure backlit();
+    function scroll(scrollvar:string;nummer,speed:integer):string;
+    function change(regel:string):string;
+    function GetCpuSpeedRegistry(proc: Byte): string;
+end;
 
 var
-  function1:TmyProc;
-  function2:TmyProc;
-  function3:TmyProc;
-  function4:TmyProc;
-  function5:TmyProc;
-  function6:TmyProc;
-  function7:TmyProc;
-  function8:TmyProc;
-  function9:TmyProc;
-  function10:TmyProc;
-
-  oldfilemode,filemode:byte;
-
-  aantregelsoud,foo2,setupbutton, gpoflash ,flash, backlight:integer;
-  whatgpo:integer;
-  
-  didMOFan,didWAShuffle,didbltoggle,didgpotoggle,didbl,didwavolup,didwavoldown,didwaplay,didwastop, didwapause,
-  didgotoscreen,didgototheme,didfreeze,didrefreshall,didnexttheme,didlasttheme,didnextscreen,didlastscreen,
-  didgpo,didgpoflash,didwanexttrack,didwalasttrack,didflash,didsound,didexec:array [1..99] of boolean;
-
-  cpuinfo:tcpuinfo;
-  System1:Tsystem;
   Form1: TForm1;
-  nextline1,nextline2,nextline3,nextline4:integer;
-  combobox8temp, DoNewsUpdate1,DoNewsUpdate2,DoNewsUpdate3,DoNewsUpdate4,DoNewsUpdate5,DoNewsUpdate6,DoNewsUpdate7,DoNewsUpdate8,DoNewsUpdate9:integer;
-  versionregel, parameter1, parameter2, parameter3, parameter4, file1,file2,distributedlog, kleuren:string;
-  weather2:string;
-  koeregel2,koeregel1,uptimereg,uptimeregs:string;
-  qstatreg1: array[1..10,1..4] of string;
-  qstatreg2: array[1..10,1..4] of string;
-  qstatreg3: array[1..10,1..4] of string;
-  qstatreg4: array[1..10,1..4] of string;
-  qstattemp: integer;
-  locationnumber,srvr:string;
-  setireg1,setireg2,setireg3,setireg4,setireg5,setireg6,setireg7,setireg8,setireg9:string;
-  foldreg1, foldreg2, foldreg3, foldreg4, foldreg5, foldreg6, foldreg7:string;
-  scrollline1,scrollline2,scrollline3,scrollline4, scrollline5:integer;
-  CNNregel,aexregel,techregel,weerregel,tnetregel,timeregel:string;
-  dateregel,koeregel,resoregel,winampregel,winampregel2,winampregel3,winampregel4:string;
-  mailregel1, mailregel2, mailregel3, mailregel4, mailregel5, mailregel6, mailregel7, mailregel8, mailregel9, mailregel0:string;
-  extraregel:array[1..4] of string;
-  extraregeltemp:array[1..4] of string;
-  regelz: array [1..4] of string;
-  temp:array[1..4] of integer;
-  news1,news2,news3,news4,news5,news7,news8,news9:integer;
-  dontscan,setupscreen,welkescreen, regel2scroll,tnetregels,maxlength:integer;
-  tmpregel1, tmpregel2, tmpregel3, tmpregel4:string;
-  bregel1, bregel2, bregel3, bregel4:string;
-
-  forgroundcoloroff,forgroundcoloron,backgroundcoloroff,backgroundcoloron:integer;
-
-  Oldline:array[1..4] of string;
-  Newline:array[1..4] of string;
-  oldnewline:array[1..8] of string;
-  Gotnewlines:boolean;
-  transActietemp,transActietemp2,counter,timertransIntervaltemp:integer;
-
-  gokjesarray:array[1..4,1..40] of boolean;
-  configarray:array[1..100] of string;
+  config: TConfig;
+  frozen: Boolean;
+  setupbutton: Integer;
+  setupscreen: Integer;
+  tempscreen: Integer;
+  welkescreen : Integer;
   serversarray:array[1..80] of string;
   actionsarray:array[1..99,1..4] of string;
-  dllsarray:array[0..40] of string;
-  totaldlls: integer;
-
-  form7spinedit:string;
-  totalactions:integer;
-  knop: array [1..28] of string;
-  gpo: array [1..8] of boolean;
-  isconnected, doesgpoflash, doesflash, bootdelay, frozen: boolean;
-  activetheme:integer;
-  kar,kar2:char;
-  STUsername, STComputername, STCPUType, STCPUSpeed, STCPUUsage,STCPUUsageBar:string;
-  STMemFree,STMemTotal,STPageFree,STPageTotal:string;
-  STHDFree,STHDTotal:array[67..90] of string;
-  STHDBar:string;
-
-  templib:string;
-  hlib: cardinal;
-  nlib: string;
-  plib: string;
-  tlib: string;
-  canscroll,dllcancheck:boolean;
-  mbmactive:boolean;
-
-  netadaptername, nettotaldown,nettotalup,netunicastdown,netunicastup,
-  netnunicastDown,netnunicastUp,netDiscardsDown,netDiscardsUp,
-  netErrorsDown,netErrorsUp,netSpeedDownK,netSpeedUpK, netSpeedDownM,
-  netSpeedUpM,nettotaldownold,nettotalupold:array[0..9] of string;
-  ipaddress:string;
-
-  pop3Thread:Tpop3Thread;
-  HTTPThread:THTTPThread;
-
-  pop3threadisrunning:boolean;
-  HTTPthreadisrunning:boolean;
-
-  News: TList;
-  variabel,aantalscreensheenweer, tempscreen,x, ti: Integer;
-  NewsItem: TNewsItem;
-  CPUMhz            : Integer;
-  CPUNr             : Byte;
-  Temperature       : array [1..11]  of double;
-  Voltage           : array [1..11]  of double;
-  Fan               : array [1..11]  of double;
-  CPU               : array [1..5]   of double;
-  TempName          : array[1..11] of String;
-  VoltName          : array[1..11] of String;
-  FanName           : array[1..11] of String;
-  CPUName           : String;
-  CPUUsageName      : String;
-  SharedIndex  : TSharedIndex;
-  SharedSensor : TSharedSensor;
-  SharedInfo   : TSharedInfo;
-  SharedData   : PSharedData;
-
-function ReadMBM5Data : Boolean;
-function dneGetVendor(AProcessor: Byte): LongInt;
-function cxGetProcessorName(AProcessor: Byte): String;
-function stripspaces(Fstring:string): string;
-function doguess(regel:integer): integer;
-
+  scrollline1,scrollline2,scrollline3,scrollline4, scrollline5:Boolean;
+  aantalscreensheenweer: Integer;
+  combobox8temp: Integer;
+  totalactions: Integer;
+  HTTPthreadisrunning: Boolean;
+  DoNewsUpdate1,DoNewsUpdate2,DoNewsUpdate3,DoNewsUpdate4,DoNewsUpdate5,
+  DoNewsUpdate6,DoNewsUpdate7,DoNewsUpdate8,DoNewsUpdate9:integer;
+  CNNregel,aexregel,techregel,weerregel,tnetregel,timeregel: String;
+  news1,news2,news3,news4,news5,news7,news8,news9: Integer;
+  isconnected: Boolean;
+  setireg1,setireg2,setireg3,setireg4,setireg5,setireg6,setireg7,setireg8,setireg9:string;
+  foldreg1, foldreg2, foldreg3, foldreg4, foldreg5, foldreg6, foldreg7:string;
+  weather2: String;
+  locationnumber: String;
+  pop3threadisrunning: Boolean;
+  mailregel1, mailregel2, mailregel3, mailregel4, mailregel5, mailregel6,
+  mailregel7, mailregel8, mailregel9, mailregel0:string;
+  function stripspaces(Fstring: String): String;
 
 implementation
 
-uses Unit2, Unit4, Unit3;
+uses
+  Registry, Windows, SysUtils, Graphics,  Dialogs,
+  ShellAPI, IpHlpApi,  IpIfConst, IpRtrMib,
+  mmsystem, winsock, cxCpu40, Unit2, Unit4;
 
-function doguess(regel:integer): integer;
+function TForm1.doguess(regel:integer): integer;
 var
   goedgokje:boolean;
   gokje:integer;
 
 begin
   goedgokje:=false;
+  gokje:=0;
   while goedgokje = false do begin
-    gokje:=round(random(maxlength)+1);
+    gokje:=round(random(config.width)+1);
     if gokjesarray[regel,gokje]=false then begin
       gokjesarray[regel,gokje]:=true;
       goedgokje:=true;
@@ -471,11 +414,11 @@ begin
   end;
   waarde[7]:=StrToInt(copy(fregel,1,length(fregel)));
 
-  if configarray[98]='1' then begin
+  if config.isHD then begin
     form1.poort1.definechar(character-1, waarde);
     form1.poort1.definechar2(character-1, waarde);
   end;
-  if configarray[98]='2' then begin
+  if config.isMO then begin
     Form1.VaComm1.WriteChar(Chr($0FE));     //command prefix
     Form1.VaComm1.WriteChar(Chr($04E));     //this starts the custom characters
     Form1.VaComm1.WriteChar(Chr(character-1));  //00 to 07 for 8 custom characters.
@@ -488,7 +431,7 @@ begin
     Form1.VaComm1.WriteChar(Chr(waarde[6]));
     Form1.VaComm1.WriteChar(Chr(waarde[7]));
   end;
-  if configarray[98]='3' then begin
+  if config.isCF then begin
     Form1.VaComm2.WriteChar(chr(25));    //this starts the custom characters
     Form1.VaComm2.WriteChar(chr(character-1));     //00 to 07 for 8 custom characters.
     Form1.VaComm2.WriteChar(chr(waarde[0]));
@@ -526,57 +469,7 @@ begin
   result:=fstring;
 end;
 
-function cxGetProcessorName(AProcessor: Byte): String;
-var
-  iVendor: LongInt;
-begin
-  iVendor := dneGetVendor(USE_DEFAULT);
-  case iVendor of
-    1:     Result := cxCpu2kIntel.GetCPUName(AProcessor);
-    2:     Result := cxCpu2kAMD.GetCPUName(AProcessor);
-    3:     Result := cxCpu2kCyrix.GetCPUName(AProcessor);
-    4:     Result := cxCpu2kIDT.GetCPUName(AProcessor);
-    5:     Result := cxCpu2kNexGen.GetCPUName(AProcessor);
-    6:     Result := cxCpu2kUMC.GetCPUName(AProcessor);
-    7:     Result := cxCpu2kRise.GetCPUName(AProcessor);
-  else
-    Result := cxCpu2kDefault.GetCPUName;
-  end;
-end;
-
-function dneGetVendor(AProcessor: Byte): LongInt;
-var
-  sVendor: String;
-
-begin
-  system1.GetCPUInfo(CPUinfo);
-  sVendor := cpuInfo.VendorIDString;
-  if (sVendor = 'GenuineIntel') then
-    Result := 1
-  else
-    if (sVendor = 'AuthenticAMD') then
-      Result := 2
-    else
-      if (sVendor = 'CyrixInstead') then
-        Result := 3
-      else
-        if (sVendor = 'CentaurHauls') then
-          Result := 4
-        else
-          if (sVendor = 'NexGenDriven') then
-            Result := 5
-          else
-            if (sVendor = 'UMC UMC UMC ') then
-              Result := 6
-            else
-              if (sVendor = 'RiseRiseRise') then
-                Result := 7
-              else
-                Result := 0;
-end;
-
-
-function ReadMBM5Data : Boolean;
+function TForm1.ReadMBM5Data : Boolean;
   var     myHandle, B, TotalCount : Integer;
           temptemp,tempfan,tempmhz,tempvolt:integer;
 begin
@@ -627,23 +520,23 @@ begin
   CloseHandle(myHandle);
 end;
 
-function scroll(scrollvar:string;nummer,speed:integer):string;
+function TForm1.scroll(scrollvar:string;nummer,speed:integer):string;
 var
   scrolltext:string;
 
 begin
-  if length(stripspaces(scrollvar)) > maxlength then begin
+  if length(stripspaces(scrollvar)) > config.width then begin
     if (temp[nummer] < length(scrollvar)) and (temp[nummer] <> 0) then temp[nummer]:=temp[nummer]+speed else temp[nummer]:=1;
-    scrolltext:=copy(scrollvar,temp[nummer],maxlength);
-    if length(scrolltext) < maxlength then begin
-      scrolltext:=scrolltext+copy(scrollvar,1,maxlength);
-      scrolltext:=copy(scrolltext,1,maxlength);
+    scrolltext:=copy(scrollvar,temp[nummer], config.width);
+    if length(scrolltext) < config.width then begin
+      scrolltext:=scrolltext+copy(scrollvar,1,config.width);
+      scrolltext:=copy(scrolltext,1,config.width);
     end;
   end else scrolltext:=copy(scrollvar,1,length(scrollvar));
   result:=scrolltext;
 end;
 
-function change(regel:string):string;
+function TForm1.change(regel:string):string;
 const
   ticksperweek    : integer = 3600000*24*7;
   ticksperdag     : integer = 3600000*24;
@@ -662,7 +555,6 @@ var
   ccount:double;
   templine:array[1..20] of string;
   hdteller:integer;
-  winampctrl1:Twinampctrl;
   td,ttD,ttF,tg,ttG,th,ttH,ti,ttI,
   tj,tl,tm,ttM,tn,ts,tw,ttY,ty: string;
 
@@ -705,8 +597,6 @@ begin
       fileloc:=copy(spaceline, 1,pos('"',spaceline)-1);
       fileline:=copy(spaceline,pos('",',spaceline)+2,pos(')',spaceline)-pos('",',spaceline)-2);
 
-      oldfilemode:=filemode;
-      filemode:=0;
       try
         assignfile(bestand3, fileloc);
         reset(bestand3);
@@ -718,27 +608,26 @@ begin
         regel:=StringReplace(regel,fileloc,'', []);
         regel:=StringReplace(regel,'$File("','', []);
       end;
-      filemode:=oldfilemode;
     end;
 
     if pos('$WinampTitle',regel) <> 0 then begin
-      ss:=winampctrl1.GetCurrSongTitle;
+      ss:=form1.winampctrl1.GetCurrSongTitle;
       regel:=StringReplace(regel,'$WinampTitle',copy(ss,pos('. ',ss)+2,length(ss)-pos('. ',ss)-2),[rfReplaceAll]);
     end;
     if pos('$WinampChannels',regel) <> 0 then begin
-      if winampctrl1.GetSongInfo(2)>1 then winampregel3:='stereo' else winampregel3:='mono';
+      if form1.winampctrl1.GetSongInfo(2)>1 then winampregel3:='stereo' else winampregel3:='mono';
       regel:=StringReplace(regel,'$WinampChannels',winampregel3,[rfReplaceAll]);
     end;
     if pos('$WinampKBPS',regel) <> 0 then begin
-      regel:=StringReplace(regel,'$WinampKBPS',IntToStr(winampctrl1.GetSongInfo(1)),[rfReplaceAll]);
+      regel:=StringReplace(regel,'$WinampKBPS',IntToStr(form1.winampctrl1.GetSongInfo(1)),[rfReplaceAll]);
     end;
     if pos('$WinampFreq',regel) <> 0 then begin
-      regel:=StringReplace(regel,'$WinampFreq',IntToStr(winampctrl1.GetSongInfo(0)),[rfReplaceAll]);
+      regel:=StringReplace(regel,'$WinampFreq',IntToStr(form1.winampctrl1.GetSongInfo(0)),[rfReplaceAll]);
     end;
     if pos('$WinampStat',regel) <> 0 then begin
-      if winampctrl1.GetState = 1 then regel:=StringReplace(regel,'$WinampStat','playing',[rfReplaceAll]);
-      if winampctrl1.GetState = 0 then regel:=StringReplace(regel,'$WinampStat','stopped',[rfReplaceAll]);
-      if winampctrl1.GetState = 3 then regel:=StringReplace(regel,'$WinampStat','paused',[rfReplaceAll]);
+      if form1.winampctrl1.GetState = 1 then regel:=StringReplace(regel,'$WinampStat','playing',[rfReplaceAll]);
+      if form1.winampctrl1.GetState = 0 then regel:=StringReplace(regel,'$WinampStat','stopped',[rfReplaceAll]);
+      if form1.winampctrl1.GetState = 3 then regel:=StringReplace(regel,'$WinampStat','paused',[rfReplaceAll]);
     end;
     while pos('$WinampPosition(',regel) <> 0 do begin
       try
@@ -746,7 +635,7 @@ begin
         winampregel4:=copy(regel,letter,length(regel));
         spacecount:=strtoint(copy(winampregel4,1,pos(')',winampregel4)-1));
         winampregel4:='';
-        winamppositie:=round((winampctrl1.TrackPosition / 1000 -0.4) /winampctrl1.TrackLength * spacecount);
+        winamppositie:=round((form1.winampctrl1.TrackPosition / 1000 -0.4) /form1.winampctrl1.TrackLength * spacecount);
         for teller2:=1 to winamppositie -1 do winampregel4:=winampregel4+ '-';
         winampregel4:=winampregel4+ '+';
         for teller2:=winamppositie +1 to spacecount do winampregel4:=winampregel4+ '-';
@@ -758,8 +647,8 @@ begin
     end;
 
     if pos('$WinampPolo',regel) <> 0 then begin
-      t:=Winampctrl1.TrackPosition;
-      if t/1000> winampctrl1.TrackLength then t:=0;
+      t:=form1.Winampctrl1.TrackPosition;
+      if t/1000> form1.winampctrl1.TrackLength then t:=0;
       h := t div ticksperhour;
       t:=t -h * ticksperhour;
       m := t div ticksperminute;
@@ -781,8 +670,8 @@ begin
       regel:=StringReplace(regel,'$WinampPolo',winamptimereg,[rfReplaceAll]);
     end;
     if pos('$WinampRelo',regel) <> 0 then begin
-      t:=Winampctrl1.TrackLength*1000 - WinampCtrl1.TrackPosition;
-      if t/1000> winampctrl1.TrackLength then t:=0;
+      t:=form1.Winampctrl1.TrackLength*1000 - form1.WinampCtrl1.TrackPosition;
+      if t/1000> form1.winampctrl1.TrackLength then t:=0;
       h := t div ticksperhour;
       t:=t -h * ticksperhour;
       m := t div ticksperminute;
@@ -804,8 +693,8 @@ begin
       regel:=StringReplace(regel,'$WinampRelo',winamptimereg,[rfReplaceAll]);
     end;
     if pos('$WinampPosh',regel) <> 0 then begin
-      t:=Winampctrl1.TrackPosition;
-      if t/1000> winampctrl1.TrackLength then t:=0;
+      t:=form1.Winampctrl1.TrackPosition;
+      if t/1000> form1.winampctrl1.TrackLength then t:=0;
       h := t div ticksperhour;
       t:=t -h * ticksperhour;
       m := t div ticksperminute;
@@ -827,8 +716,8 @@ begin
       regel:=StringReplace(regel,'$WinampPosh',winamptimereg,[rfReplaceAll]);
     end;
     if pos('$WinampResh',regel) <> 0 then begin
-      t:=Winampctrl1.TrackLength*1000 - WinampCtrl1.TrackPosition;
-      if t /1000 > winampctrl1.TrackLength then t:=0;
+      t:=form1.Winampctrl1.TrackLength*1000 - form1.WinampCtrl1.TrackPosition;
+      if t /1000 > form1.winampctrl1.TrackLength then t:=0;
       h := t div ticksperhour;
       t:=t -h * ticksperhour;
       m := t div ticksperminute;
@@ -850,17 +739,17 @@ begin
       regel:=StringReplace(regel,'$WinampResh',winamptimereg,[rfReplaceAll]);
     end;
     if pos('$Winamppos',regel) <> 0 then begin
-      t:=round(winampctrl1.TrackPosition / 1000-0.4);
-      if t> winampctrl1.TrackLength then t:=0;
+      t:=round(form1.winampctrl1.TrackPosition / 1000-0.4);
+      if t> form1.winampctrl1.TrackLength then t:=0;
       regel:=StringReplace(regel,'$Winamppos',IntToStr(t),[rfReplaceAll]);
     end;
     if pos('$WinampRem',regel) <> 0 then begin
-      t:=round(winampctrl1.tracklength-winampctrl1.TrackPosition / 1000-0.4);
-      if t> winampctrl1.TrackLength then t:=0;
+      t:=round(form1.winampctrl1.tracklength-form1.winampctrl1.TrackPosition / 1000-0.4);
+      if t> form1.winampctrl1.TrackLength then t:=0;
       regel:=StringReplace(regel,'$WinampRem',IntToStr(t),[rfReplaceAll]);
     end;
     if pos('$WinampLengtl',regel) <> 0 then begin
-      t:=Winampctrl1.TrackLength*1000;
+      t:=form1.Winampctrl1.TrackLength*1000;
       h := t div ticksperhour;
       t:=t -h * ticksperhour;
       m := t div ticksperminute;
@@ -882,7 +771,7 @@ begin
       regel:=StringReplace(regel,'$WinampLengtl',winamptimereg,[rfReplaceAll]);
     end;
     if pos('$WinampLengts',regel) <> 0 then begin
-      t:=Winampctrl1.TrackLength*1000;
+      t:=form1.Winampctrl1.TrackLength*1000;
       h := t div ticksperhour;
       t:=t -h * ticksperhour;
       m := t div ticksperminute;
@@ -904,14 +793,14 @@ begin
       regel:=StringReplace(regel,'$WinampLengts',winamptimereg,[rfReplaceAll]);
     end;
     if pos('$WinampLength',regel) <> 0 then begin
-      regel:=StringReplace(regel,'$WinampLength',IntToStr(winampctrl1.TrackLength),[rfReplaceAll]);
+      regel:=StringReplace(regel,'$WinampLength',IntToStr(form1.winampctrl1.TrackLength),[rfReplaceAll]);
     end;
 
     if pos('$WinampTracknr',regel) <> 0 then begin
-      regel:=StringReplace(regel,'$WinampTracknr',IntToStr(winampctrl1.GetListPos +1),[rfReplaceAll]);
+      regel:=StringReplace(regel,'$WinampTracknr',IntToStr(form1.winampctrl1.GetListPos +1),[rfReplaceAll]);
     end;
     if pos('$WinampTotalTracks',regel) <> 0 then begin
-      regel:=StringReplace(regel,'$WinampTotalTracks',IntToStr(winampctrl1.GetListCount),[rfReplaceAll]);
+      regel:=StringReplace(regel,'$WinampTotalTracks',IntToStr(form1.winampctrl1.GetListCount),[rfReplaceAll]);
     end;
 
     regel:=StringReplace(regel,'$UpTime',uptimereg,[rfReplaceAll]);
@@ -1072,7 +961,7 @@ begin
     while pos('$NetDownK(',regel) <> 0 do begin
       try
         spacecount:=StrToInt(copy(regel,pos('$NetDownK(',regel)+10,1));
-        regel:=StringReplace(regel,'$NetDownK('+intToStr(spacecount)+')',floatToStr(Round(StrToFloat(nettotaldown[spacecount])/1024*10)/10),[]);
+        regel:=StringReplace(regel,'$NetDownK('+intToStr(spacecount)+')',floatToStr(Round(nettotaldown[spacecount]/1024*10)/10),[]);
       except
         regel:=StringReplace(regel,'$NetDownK(','error',[]);
       end;
@@ -1080,7 +969,7 @@ begin
     while pos('$NetUpK(',regel) <> 0 do begin
       try
         spacecount:=StrToInt(copy(regel,pos('$NetUpK(',regel)+8,1));
-        regel:=StringReplace(regel,'$NetUpK('+intToStr(spacecount)+')',floatToStr(Round(StrToFloat(nettotalup[spacecount])/1024*10)/10),[]);
+        regel:=StringReplace(regel,'$NetUpK('+intToStr(spacecount)+')',floatToStr(Round(nettotalup[spacecount]/1024*10)/10),[]);
       except
         regel:=StringReplace(regel,'$NetUpK(','error',[]);
       end;
@@ -1088,7 +977,7 @@ begin
     while pos('$NetDownM(',regel) <> 0 do begin
       try
         spacecount:=StrToInt(copy(regel,pos('$NetDownM(',regel)+10,1));
-        regel:=StringReplace(regel,'$NetDownM('+intToStr(spacecount)+')',floatToStr(Round(StrToFloat(nettotaldown[spacecount])/1024/1024*10)/10),[]);
+        regel:=StringReplace(regel,'$NetDownM('+intToStr(spacecount)+')',floatToStr(Round(nettotaldown[spacecount]/1024/1024*10)/10),[]);
       except
         regel:=StringReplace(regel,'$NetDownM(','error',[]);
       end;
@@ -1096,7 +985,7 @@ begin
     while pos('$NetUpM(',regel) <> 0 do begin
       try
         spacecount:=StrToInt(copy(regel,pos('$NetUpM(',regel)+8,1));
-        regel:=StringReplace(regel,'$NetUpM('+intToStr(spacecount)+')',floatToStr(Round(StrToFloat(nettotalup[spacecount])/1024/1024*10)/10),[]);
+        regel:=StringReplace(regel,'$NetUpM('+intToStr(spacecount)+')',floatToStr(Round(nettotalup[spacecount]/1024/1024*10)/10),[]);
       except
         regel:=StringReplace(regel,'$NetUpM(','error',[]);
       end;
@@ -1104,7 +993,7 @@ begin
     while pos('$NetDownG(',regel) <> 0 do begin
       try
         spacecount:=StrToInt(copy(regel,pos('$NetDownG(',regel)+10,1));
-        regel:=StringReplace(regel,'$NetDownG('+intToStr(spacecount)+')',floatToStr(Round(StrToFloat(nettotaldown[spacecount])/1024/1024/1024*10)/10),[]);
+        regel:=StringReplace(regel,'$NetDownG('+intToStr(spacecount)+')',floatToStr(Round(nettotaldown[spacecount]/1024/1024/1024*10)/10),[]);
       except
         regel:=StringReplace(regel,'$NetDownG(','error',[]);
       end;
@@ -1112,7 +1001,7 @@ begin
     while pos('$NetUpG(',regel) <> 0 do begin
       try
         spacecount:=StrToInt(copy(regel,pos('$NetUpG(',regel)+8,1));
-        regel:=StringReplace(regel,'$NetUpG('+intToStr(spacecount)+')',floatToStr(Round(StrToFloat(nettotalup[spacecount])/1024/1024/1024*10)/10),[]);
+        regel:=StringReplace(regel,'$NetUpG('+intToStr(spacecount)+')',floatToStr(Round(nettotalup[spacecount]/1024/1024/1024*10)/10),[]);
       except
         regel:=StringReplace(regel,'$NetUpG(','error',[]);
       end;
@@ -1120,7 +1009,7 @@ begin
     while pos('$NetErrDown(',regel) <> 0 do begin
       try
         spacecount:=StrToInt(copy(regel,pos('$NetErrDown(',regel)+12,1));
-        regel:=StringReplace(regel,'$NetErrDown('+intToStr(spacecount)+')',netErrorsDown[spacecount],[]);
+        regel:=StringReplace(regel,'$NetErrDown('+intToStr(spacecount)+')',FloatToStr(netErrorsDown[spacecount]),[]);
       except
         regel:=StringReplace(regel,'$NetErrDown(','error',[]);
       end;
@@ -1128,7 +1017,7 @@ begin
     while pos('$NetErrUp(',regel) <> 0 do begin
       try
         spacecount:=StrToInt(copy(regel,pos('$NetErrUp(',regel)+10,1));
-        regel:=StringReplace(regel,'$NetErrUp('+intToStr(spacecount)+')',netErrorsUp[spacecount],[]);
+        regel:=StringReplace(regel,'$NetErrUp('+intToStr(spacecount)+')',FloatToStr(netErrorsUp[spacecount]),[]);
       except
         regel:=StringReplace(regel,'$NetErrUp(','error',[]);
       end;
@@ -1136,7 +1025,7 @@ begin
     while pos('$NetErrTot(',regel) <> 0 do begin
       try
         spacecount:=StrToInt(copy(regel,pos('$NetErrTot(',regel)+11,1));
-        regel:=StringReplace(regel,'$NetErrTot('+intToStr(spacecount)+')',IntToStr(StrToInt(netErrorsDown[spacecount])+StrToInt(netErrorsUp[spacecount])),[]);
+        regel:=StringReplace(regel,'$NetErrTot('+intToStr(spacecount)+')',FloatToStr(netErrorsDown[spacecount]+netErrorsUp[spacecount]),[]);
       except
         regel:=StringReplace(regel,'$NetErrTot(','error',[]);
       end;
@@ -1144,7 +1033,7 @@ begin
     while pos('$NetUniDown(',regel) <> 0 do begin
       try
         spacecount:=StrToInt(copy(regel,pos('$NetUniDown(',regel)+12,1));
-        regel:=StringReplace(regel,'$NetUniDown('+intToStr(spacecount)+')',netunicastdown[spacecount],[]);
+        regel:=StringReplace(regel,'$NetUniDown('+intToStr(spacecount)+')',FloatToStr(netunicastdown[spacecount]),[]);
       except
         regel:=StringReplace(regel,'$NetUniDown(','error',[]);
       end;
@@ -1152,7 +1041,7 @@ begin
     while pos('$NetUniUp(',regel) <> 0 do begin
       try
         spacecount:=StrToInt(copy(regel,pos('$NetUniUp(',regel)+10,1));
-        regel:=StringReplace(regel,'$NetUniUp('+intToStr(spacecount)+')',netunicastup[spacecount],[]);
+        regel:=StringReplace(regel,'$NetUniUp('+intToStr(spacecount)+')',FloatToStr(netunicastup[spacecount]),[]);
       except
         regel:=StringReplace(regel,'$NetUniUp(','error',[]);
       end;
@@ -1160,7 +1049,7 @@ begin
     while pos('$NetUniTot(',regel) <> 0 do begin
       try
         spacecount:=StrToInt(copy(regel,pos('$NetUniTot(',regel)+11,1));
-        regel:=StringReplace(regel,'$NetUniTot('+intToStr(spacecount)+')',IntToStr(StrToInt(netunicastup[spacecount])+StrToInt(netunicastdown[spacecount])),[]);
+        regel:=StringReplace(regel,'$NetUniTot('+intToStr(spacecount)+')',FloatToStr(netunicastup[spacecount]+netunicastdown[spacecount]),[]);
       except
         regel:=StringReplace(regel,'$NetUniTot(','error',[]);
       end;
@@ -1168,7 +1057,7 @@ begin
     while pos('$NetNuniDown(',regel) <> 0 do begin
       try
         spacecount:=StrToInt(copy(regel,pos('$NetNuniDown(',regel)+13,1));
-        regel:=StringReplace(regel,'$NetNuniDown('+intToStr(spacecount)+')',netnunicastdown[spacecount],[]);
+        regel:=StringReplace(regel,'$NetNuniDown('+intToStr(spacecount)+')',FloatToStr(netnunicastdown[spacecount]),[]);
       except
         regel:=StringReplace(regel,'$NetNuniDown(','error',[]);
       end;
@@ -1176,7 +1065,7 @@ begin
     while pos('$NetNuniUp(',regel) <> 0 do begin
       try
         spacecount:=StrToInt(copy(regel,pos('$NetNuniUp(',regel)+11,1));
-        regel:=StringReplace(regel,'$NetNuniUp('+intToStr(spacecount)+')',netnunicastup[spacecount],[]);
+        regel:=StringReplace(regel,'$NetNuniUp('+intToStr(spacecount)+')',FloatToStr(netnunicastup[spacecount]),[]);
       except
         regel:=StringReplace(regel,'$NetNuniUp(','error',[]);
       end;
@@ -1184,7 +1073,7 @@ begin
     while pos('$NetNuniTot(',regel) <> 0 do begin
       try
         spacecount:=StrToInt(copy(regel,pos('$NetNuniTot(',regel)+12,1));
-        regel:=StringReplace(regel,'$NetNuniTot('+intToStr(spacecount)+')',IntToStr(StrToInt(netnunicastup[spacecount])+StrToInt(netnunicastdown[spacecount])),[]);
+        regel:=StringReplace(regel,'$NetNuniTot('+intToStr(spacecount)+')',FloatToStr(netnunicastup[spacecount]+netnunicastdown[spacecount]),[]);
       except
         regel:=StringReplace(regel,'$NetNuniTot(','error',[]);
       end;
@@ -1192,7 +1081,7 @@ begin
     while pos('$NetPackTot(',regel) <> 0 do begin
       try
         spacecount:=StrToInt(copy(regel,pos('$NetPackTot(',regel)+12,1));
-        regel:=StringReplace(regel,'$NetPackTot('+intToStr(spacecount)+')',IntToStr(StrToInt(netnunicastup[spacecount])+StrToInt(netnunicastdown[spacecount])+StrToInt(netunicastdown[spacecount])+StrToInt(netunicastup[spacecount])),[]);
+        regel:=StringReplace(regel,'$NetPackTot('+intToStr(spacecount)+')',FloatToStr(netnunicastup[spacecount]+netnunicastdown[spacecount]+netunicastdown[spacecount]+netunicastup[spacecount]),[]);
       except
         regel:=StringReplace(regel,'$NetPackTot(','error',[]);
       end;
@@ -1200,7 +1089,7 @@ begin
     while pos('$NetDiscDown(',regel) <> 0 do begin
       try
         spacecount:=StrToInt(copy(regel,pos('$NetDiscDown(',regel)+13,1));
-        regel:=StringReplace(regel,'$NetDiscDown('+intToStr(spacecount)+')',netDiscardsdown[spacecount],[]);
+        regel:=StringReplace(regel,'$NetDiscDown('+intToStr(spacecount)+')',FloatToStr(netDiscardsdown[spacecount]),[]);
       except
         regel:=StringReplace(regel,'$NetDiscDown(','error',[]);
       end;
@@ -1208,7 +1097,7 @@ begin
     while pos('$NetDiscUp(',regel) <> 0 do begin
       try
         spacecount:=StrToInt(copy(regel,pos('$NetDiscUp(',regel)+11,1));
-        regel:=StringReplace(regel,'$NetDiscUp('+intToStr(spacecount)+')',netDiscardsup[spacecount],[]);
+        regel:=StringReplace(regel,'$NetDiscUp('+intToStr(spacecount)+')',FloatToStr(netDiscardsup[spacecount]),[]);
       except
         regel:=StringReplace(regel,'$NetDiscUp(','error',[]);
       end;
@@ -1216,7 +1105,7 @@ begin
     while pos('$NetDiscTot(',regel) <> 0 do begin
       try
         spacecount:=StrToInt(copy(regel,pos('$NetDiscTot(',regel)+12,1));
-        regel:=StringReplace(regel,'$NetDiscTot('+intToStr(spacecount)+')',IntToStr(StrToInt(netDiscardsup[spacecount])+StrToInt(netDiscardsdown[spacecount])),[]);
+        regel:=StringReplace(regel,'$NetDiscTot('+intToStr(spacecount)+')',FloatToStr(netDiscardsup[spacecount]+netDiscardsdown[spacecount]),[]);
       except
         regel:=StringReplace(regel,'$NetDiscTot(','error',[]);
       end;
@@ -1224,7 +1113,7 @@ begin
     while pos('$NetSpDownK(',regel) <> 0 do begin
       try
         spacecount:=StrToInt(copy(regel,pos('$NetSpDownK(',regel)+12,1));
-        regel:=StringReplace(regel,'$NetSpDownK('+intToStr(spacecount)+')',netSpeeddownK[spacecount],[]);
+        regel:=StringReplace(regel,'$NetSpDownK('+intToStr(spacecount)+')',FloatToStr(netSpeeddownK[spacecount]),[]);
       except
         regel:=StringReplace(regel,'$NetSpDownK(','error',[]);
       end;
@@ -1232,7 +1121,7 @@ begin
     while pos('$NetSpUpK(',regel) <> 0 do begin
       try
         spacecount:=StrToInt(copy(regel,pos('$NetSpUpK(',regel)+10,1));
-        regel:=StringReplace(regel,'$NetSpUpK('+intToStr(spacecount)+')',netSpeedupK[spacecount],[]);
+        regel:=StringReplace(regel,'$NetSpUpK('+intToStr(spacecount)+')',FloatToStr(netSpeedupK[spacecount]),[]);
       except
         regel:=StringReplace(regel,'$NetSpUpK(','error',[]);
       end;
@@ -1240,7 +1129,7 @@ begin
     while pos('$NetSpDownM(',regel) <> 0 do begin
       try
         spacecount:=StrToInt(copy(regel,pos('$NetSpDownM(',regel)+12,1));
-        regel:=StringReplace(regel,'$NetSpDownM('+intToStr(spacecount)+')',netSpeeddownM[spacecount],[]);
+        regel:=StringReplace(regel,'$NetSpDownM('+intToStr(spacecount)+')',FloatToStr(netSpeeddownM[spacecount]),[]);
       except
         regel:=StringReplace(regel,'$NetSpDownM(','error',[]);
       end;
@@ -1248,7 +1137,7 @@ begin
     while pos('$NetSpUpM(',regel) <> 0 do begin
       try
         spacecount:=StrToInt(copy(regel,pos('$NetSpUpM(',regel)+10,1));
-        regel:=StringReplace(regel,'$NetSpUpM('+intToStr(spacecount)+')',netSpeedupM[spacecount],[]);
+        regel:=StringReplace(regel,'$NetSpUpM('+intToStr(spacecount)+')',FloatToStr(netSpeedupM[spacecount]),[]);
       except
         regel:=StringReplace(regel,'$NetSpUpM(','error',[]);
       end;
@@ -1554,26 +1443,37 @@ begin
         regel:=StringReplace(regel,'$Fill('+IntToStr(spacecount)+')',spaceline, []);
       end;
     end;
-    if copy(regel,1,3) = '%c%' then begin
-      regel:=copy(regel,4,length(regel));
-      if length(regel) < maxlength-1 then begin
-        for h:=1 to round((maxlength - length(regel))/2 - 0.4) do begin
-          regel:=' '+regel+' ';
-        end;
-      end;
-    end;
   result:=regel;
 end;
 {$R *.DFM}
 
+function TForm1.GetCpuSpeedRegistry(proc: Byte): string;
+var
+  Reg: TRegistry;
+begin
+  Reg := TRegistry.Create;
+  try
+    Reg.RootKey := HKEY_LOCAL_MACHINE;
+    if Reg.OpenKey('Hardware\Description\System\CentralProcessor\'+IntToStr(proc), False) then
+    begin
+      Result := IntToStr(Reg.ReadInteger('~MHz'));
+      Reg.CloseKey;
+    end else begin
+      Result := '';
+    end;
+  finally
+    Reg.Free;
+  end;
+end;
+
 procedure TForm1.FormCreate(Sender: TObject);
 var
   Reg: TRegistry;
-  x,teller:integer;
-  regel2,regel:string;
+  regel:string;
   initfile:textfile;
 
 begin
+  qstattemp:=1;
   Randomize;
 //SetWindowLong(Application.Handle, GWL_EXSTYLE, GetWindowLong(Application.Handle, GWL_EXSTYLE) or WS_EX_TOOLWINDOW and not WS_EX_APPWINDOW );
   try
@@ -1609,23 +1509,22 @@ begin
     timer9.enabled:=false;
     timer10.enabled:=false;
     timer11.enabled:=false;
-    showmessage('are you missing some pictures?');
+    showmessage('Error: unable to access images subdirectory.');
     application.terminate;
   end;
   form1.color:=$00BFBFBF;
   isconnected:=false;
   totaldlls:=0;
-  scrollline1:=0;
-  scrollline2:=0;
-  scrollline3:=0;
-  scrollline4:=0;
-  news1:=0;
-  news2:=0;
-  news3:=0;
-  news4:=0;
-  news5:=0;
-  news7:=0;
-  news8:=0;
+  scrollline1:=False;
+  scrollline2:=False;
+  scrollline3:=False;
+  scrollline4:=False;
+
+  // Get CPU speed once:
+
+  STCPUSpeed:=GetCpuSpeedRegistry(0);
+  if (STCPUSpeed='') then STCPUSpeed:=cxCpu[0].Speed.Normalised.FormatMhz;
+
   parameter1:=lowercase(paramstr(1));
   parameter2:=lowercase(paramstr(2));
   parameter3:=lowercase(paramstr(3));
@@ -1674,13 +1573,14 @@ begin
     timer9.enabled:=false;
     timer10.enabled:=false;
     timer11.enabled:=false;
-    showmessage('Fatal Error SUCKER!!!  Can`t find \images\colors.cfg');
+    showmessage('Fatal Error:  Can`t find images\colors.cfg');
     application.Terminate;
   end;
-  try
-    assignfile(initfile, extractfilepath(application.exename)+'config.cfg');
-    reset(initfile);
-  except
+
+  config:=TConfig.Create();
+
+  if (config.load() = false) then
+  begin
     timer1.enabled:=false;
     timer2.enabled:=false;
     timer3.enabled:=false;
@@ -1692,109 +1592,76 @@ begin
     timer9.enabled:=false;
     timer10.enabled:=false;
     timer11.enabled:=false;
-    showmessage('Fatal Error SUCKER!!!  Can`t find config.cfg');
+    showmessage('Fatal Error:  Can`t load config.cfg');
     application.Terminate;
   end;
-  for x:= 1 to 100 do
-    readln(initfile,configarray[x]);
-  form1.WinampCtrl1.WinampLocation:=copy(regel,pos('¿',configarray[1])+1,length(configarray[1]));
-  file1:=configarray[88];
-  file2:=configarray[89];
-  IDHTTP1.ProxyParams.ProxyServer:=configarray[93];
-  IDHTTP1.ProxyParams.ProxyPort:=StrToInt(configarray[94]);
-  IDHTTP2.ProxyParams.ProxyServer:=configarray[93];
-  IDHTTP2.ProxyParams.ProxyPort:=StrToInt(configarray[94]);
-  IDHTTP3.ProxyParams.ProxyServer:=configarray[93];
-  IDHTTP3.ProxyParams.ProxyPort:=StrToInt(configarray[94]);
-  IDHTTP4.ProxyParams.ProxyServer:=configarray[93];
-  IDHTTP4.ProxyParams.ProxyPort:=StrToInt(configarray[94]);
-  IDHTTP5.ProxyParams.ProxyServer:=configarray[93];
-  IDHTTP5.ProxyParams.ProxyPort:=StrToInt(configarray[94]);
-  IDHTTP6.ProxyParams.ProxyServer:=configarray[93];
-  IDHTTP6.ProxyParams.ProxyPort:=StrToInt(configarray[94]);
-  IDHTTP7.ProxyParams.ProxyServer:=configarray[93];
-  IDHTTP7.ProxyParams.ProxyPort:=StrToInt(configarray[94]);
-  IDHTTP8.ProxyParams.ProxyServer:=configarray[93];
-  IDHTTP8.ProxyParams.ProxyPort:=StrToInt(configarray[94]);
-  IDHTTP9.ProxyParams.ProxyServer:=configarray[93];
-  IDHTTP9.ProxyParams.ProxyPort:=StrToInt(configarray[94]);
 
 
-  welkescreen:=0;
-  reset(initfile);
-  readln (initfile);
-  readln (initfile);
-  readln(initfile,regel);
-  regel:=copy(regel,1,pos('¿1',regel)-1);
+  form1.WinampCtrl1.WinampLocation:=config.winampLocation;
+  file1:=config.distLog;
+  IDHTTP1.ProxyParams.ProxyServer:=config.httpProxy;
+  IDHTTP1.ProxyParams.ProxyPort:=config.httpProxyPort;
+  IDHTTP2.ProxyParams.ProxyServer:=config.httpProxy;
+  IDHTTP2.ProxyParams.ProxyPort:=config.httpProxyPort;
+  IDHTTP3.ProxyParams.ProxyServer:=config.httpProxy;
+  IDHTTP3.ProxyParams.ProxyPort:=config.httpProxyPort;
+  IDHTTP4.ProxyParams.ProxyServer:=config.httpProxy;
+  IDHTTP4.ProxyParams.ProxyPort:=config.httpProxyPort;
+  IDHTTP5.ProxyParams.ProxyServer:=config.httpProxy;
+  IDHTTP5.ProxyParams.ProxyPort:=config.httpProxyPort;
+  IDHTTP6.ProxyParams.ProxyServer:=config.httpProxy;
+  IDHTTP6.ProxyParams.ProxyPort:=config.httpProxyPort;
+  IDHTTP7.ProxyParams.ProxyServer:=config.httpProxy;
+  IDHTTP7.ProxyParams.ProxyPort:=config.httpProxyPort;
+  IDHTTP8.ProxyParams.ProxyServer:=config.httpProxy;
+  IDHTTP8.ProxyParams.ProxyPort:=config.httpProxyPort;
+  IDHTTP9.ProxyParams.ProxyServer:=config.httpProxy;
+  IDHTTP9.ProxyParams.ProxyPort:=config.httpProxyPort;
 
-  if regel='1' then regel2:='1';
-  if regel='2' then regel2:='1';
-  if regel='3' then regel2:='1';
-  if regel='4' then regel2:='1';
-  if regel='5' then regel2:='1';
-  if regel='6' then regel2:='2';
-  if regel='7' then regel2:='2';
-  if regel='8' then regel2:='2';
-  if regel='9' then regel2:='2';
-  if regel='10' then regel2:='4';
-  if regel='11' then regel2:='4';
-  if regel='12' then regel2:='4';
-  aantregelsoud:=strtoint(regel2);
-    panel2.visible:=false;
-    panel3.visible:=false;
-    panel4.visible:=false;
-      image4.enabled:=false;
-      image5.enabled:=false;
-      image6.enabled:=false;
-      image8.enabled:=false;
-      image9.enabled:=false;
-      image10.enabled:=false;
-    if StrToInt(regel2)>1 then begin
-      panel2.visible:=true;
-      image4.enabled:=true;
-      image8.enabled:=true;
-    end;
-    if StrToInt(regel2)>2 then begin
-      panel3.visible:=true;
-        image5.enabled:=true;
-        image9.enabled:=true;
-    end;
-    if StrToInt(regel2)>3 then begin
-      panel4.visible:=true;
-      image6.enabled:=true;
-      image10.enabled:=true;
-    end;
 
-  timer2.Interval:=(StrToInt(copy(configarray[84],2,length(configarray[84])))*60000);
-  DoNewsUpdate6:=1;
-  for teller:= 1 to 80 do begin
-    readln (initfile, regel);
-    if (pos('$T.netHL',configarray[teller+3]) <> 0) and (copy(configarray[teller+3],pos('¿',configarray[teller+3])+1,1)='1') then DoNewsUpdate1:=1;
-    if (pos('$DutchWeather',configarray[teller+3]) <> 0) and (copy(configarray[teller+3],pos('¿',configarray[teller+3])+1,1)='1') then DoNewsUpdate2:=1;
-    if (pos('$TomsHW',configarray[teller+3]) <> 0) and (copy(configarray[teller+3],pos('¿',configarray[teller+3])+1,1)='1') then DoNewsUpdate3:=1;
-    if (pos('$Stocks',configarray[teller+3]) <> 0) and (copy(configarray[teller+3],pos('¿',configarray[teller+3])+1,1)='1') then DoNewsUpdate4:=1;
-    if (pos('$CNN',configarray[teller+3]) <> 0) and (copy(configarray[teller+3],pos('¿',configarray[teller+3])+1,1)='1') then DoNewsUpdate5:=1;
-    if (pos('$SETI',configarray[teller+3]) <> 0) and (copy(configarray[teller+3],pos('¿',configarray[teller+3])+1,1)='1') then DoNewsUpdate7:=1;
-    if (pos('$FOLD',configarray[teller+3]) <> 0) and (copy(configarray[teller+3],pos('¿',configarray[teller+3])+1,1)='1') then DoNewsUpdate9:=1;
-    if (pos('$Weather.com(',configarray[teller+3]) <> 0) and (copy(configarray[teller+3],pos('¿',configarray[teller+3])+1,1)='1') then begin
-      DoNewsUpdate8:=1;
-      locationnumber:=copy(configarray[teller+3],pos('(',configarray[teller+3])+1,pos(')',configarray[teller+3])-pos('(',configarray[teller+3])-1);
-    end;
+  welkescreen:=1;
+
+  aantregelsoud:=config.height;
+
+  panel2.visible:=false;
+  panel3.visible:=false;
+  panel4.visible:=false;
+  image4.enabled:=false;
+  image5.enabled:=false;
+  image6.enabled:=false;
+  image8.enabled:=false;
+  image9.enabled:=false;
+  image10.enabled:=false;
+  if config.height>1 then begin
+    panel2.visible:=true;
+    image4.enabled:=true;
+    image8.enabled:=true;
   end;
-  readln (initfile);
-  readln (initfile);
-  readln(initfile,regel);
+  if config.height>2 then begin
+    panel3.visible:=true;
+    image5.enabled:=true;
+    image9.enabled:=true;
+  end;
+  if config.height>3 then begin
+    panel4.visible:=true;
+    image6.enabled:=true;
+    image10.enabled:=true;
+  end;
 
-  readln(initfile,regel);
-    kleuren:=regel;
-    backlight:=1;
-  readln(initfile,regel);
-   distributedlog:=regel;
-  closefile(initfile);
-  kleur(self);
+  checkIfNewsUpdatesRequired();
+
+
+
+  kleuren:=config.colorOption;
+
+  backlight:=1;
+
+  distributedlog:=config.distLog;
+
+  kleur();
 
   if (parameter1 <> '-nolcd') AND (parameter2 <> '-nolcd') AND (parameter3 <> '-nolcd') AND (parameter4 <> '-nolcd') then begin
-    if (configarray[98] = '1') or (configarray[98] = '4') then begin
+    if (config.isHD) or (config.isHD2) then begin
       timer1.enabled:=false;
       timer2.enabled:=false;
       timer3.enabled:=false;
@@ -1806,27 +1673,27 @@ begin
       timer9.enabled:=false;
       timer10.enabled:=false;
       timer11.enabled:=false;
-      if copy(configarray[2],1,pos('¿',configarray[2])-1) = '0' then timer11.interval:=10
-      else timer11.interval:=StrToInt(copy(configarray[2],1,pos('¿',configarray[2])-1))*1000;
+      if config.bootDriverDelay=0 then timer11.interval:=10
+      else timer11.interval:=config.bootDriverDelay*1000;
       timer11.enabled:=true;
     end;
-    if (configarray[98] = '2') then begin
-      if configarray[100]='0' then VaComm1.Baudrate:=br110;
-      if configarray[100]='1' then VaComm1.Baudrate:=br300;
-      if configarray[100]='2' then VaComm1.Baudrate:=br600;
-      if configarray[100]='3' then VaComm1.Baudrate:=br1200;
-      if configarray[100]='4' then VaComm1.Baudrate:=br2400;
-      if configarray[100]='5' then VaComm1.Baudrate:=br4800;
-      if configarray[100]='6' then VaComm1.Baudrate:=br9600;
-      if configarray[100]='7' then VaComm1.Baudrate:=br14400;
-      if configarray[100]='8' then VaComm1.Baudrate:=br19200;
-      if configarray[100]='9' then VaComm1.Baudrate:=br38400;
-      if configarray[100]='10' then VaComm1.Baudrate:=br56000;
-      if configarray[100]='11' then VaComm1.Baudrate:=br57600;
-      if configarray[100]='12' then VaComm1.Baudrate:=br115200;
-      if configarray[100]='13' then VaComm1.Baudrate:=br128000;
-      if configarray[100]='14' then VaComm1.Baudrate:=br256000;
-      VaComm1.PortNum:=StrToInt(configarray[99]);
+    if (config.isMO) then begin
+      if config.baudrate=0 then VaComm1.Baudrate:=br110;
+      if config.baudrate=1 then VaComm1.Baudrate:=br300;
+      if config.baudrate=2 then VaComm1.Baudrate:=br600;
+      if config.baudrate=3 then VaComm1.Baudrate:=br1200;
+      if config.baudrate=4 then VaComm1.Baudrate:=br2400;
+      if config.baudrate=5 then VaComm1.Baudrate:=br4800;
+      if config.baudrate=6 then VaComm1.Baudrate:=br9600;
+      if config.baudrate=7 then VaComm1.Baudrate:=br14400;
+      if config.baudrate=8 then VaComm1.Baudrate:=br19200;
+      if config.baudrate=9 then VaComm1.Baudrate:=br38400;
+      if config.baudrate=10 then VaComm1.Baudrate:=br56000;
+      if config.baudrate=11 then VaComm1.Baudrate:=br57600;
+      if config.baudrate=12 then VaComm1.Baudrate:=br115200;
+      if config.baudrate=13 then VaComm1.Baudrate:=br128000;
+      if config.baudrate=14 then VaComm1.Baudrate:=br256000;
+      VaComm1.PortNum:=config.comPort;
       VaComm1.Close;
       try
         VaComm1.Open;
@@ -1855,11 +1722,11 @@ begin
 
       VaComm1.WriteChar(Chr($0FE));
       VaComm1.WriteChar('P');
-      VaComm1.WriteChar(chr(strtoint(copy(configarray[3],pos('¿1',configarray[3])+2,pos('¿2',configarray[3])-pos('¿1',configarray[3])-2))));
+      VaComm1.WriteChar(chr(config.contrast));
 
       VaComm1.WriteChar(Chr($0FE));
       VaComm1.WriteChar(Chr($098));
-      VaComm1.WriteChar(chr(strtoint(copy(configarray[3],pos('¿2',configarray[3])+2,pos('¿3',configarray[3])-pos('¿2',configarray[3])-2))));
+      VaComm1.WriteChar(chr(config.brightness));
 
       VaComm1.WriteChar(chr($0FE));   //Cursor blink off
       VaComm1.WriteChar('T');
@@ -1894,24 +1761,26 @@ begin
       timer8.enabled:=true;
       timer9.enabled:=true;
       timer10.enabled:=true;
+      timer12.enabled:=true;
+      timer13.enabled:=true;
     end;
-    if (configarray[98] = '3') then begin
-      if configarray[100]='0' then VaComm2.Baudrate:=br110;
-      if configarray[100]='1' then VaComm2.Baudrate:=br300;
-      if configarray[100]='2' then VaComm2.Baudrate:=br600;
-      if configarray[100]='3' then VaComm2.Baudrate:=br1200;
-      if configarray[100]='4' then VaComm2.Baudrate:=br2400;
-      if configarray[100]='5' then VaComm2.Baudrate:=br4800;
-      if configarray[100]='6' then VaComm2.Baudrate:=br9600;
-      if configarray[100]='7' then VaComm2.Baudrate:=br14400;
-      if configarray[100]='8' then VaComm2.Baudrate:=br19200;
-      if configarray[100]='9' then VaComm2.Baudrate:=br38400;
-      if configarray[100]='10' then VaComm2.Baudrate:=br56000;
-      if configarray[100]='11' then VaComm2.Baudrate:=br57600;
-      if configarray[100]='12' then VaComm2.Baudrate:=br115200;
-      if configarray[100]='13' then VaComm2.Baudrate:=br128000;
-      if configarray[100]='14' then VaComm2.Baudrate:=br256000;
-      VaComm2.PortNum:=StrToInt(configarray[99]);
+    if (config.isCF) then begin
+      if config.baudrate=0 then VaComm2.Baudrate:=br110;
+      if config.baudrate=1 then VaComm2.Baudrate:=br300;
+      if config.baudrate=2 then VaComm2.Baudrate:=br600;
+      if config.baudrate=3 then VaComm2.Baudrate:=br1200;
+      if config.baudrate=4 then VaComm2.Baudrate:=br2400;
+      if config.baudrate=5 then VaComm2.Baudrate:=br4800;
+      if config.baudrate=6 then VaComm2.Baudrate:=br9600;
+      if config.baudrate=7 then VaComm2.Baudrate:=br14400;
+      if config.baudrate=8 then VaComm2.Baudrate:=br19200;
+      if config.baudrate=9 then VaComm2.Baudrate:=br38400;
+      if config.baudrate=10 then VaComm2.Baudrate:=br56000;
+      if config.baudrate=11 then VaComm2.Baudrate:=br57600;
+      if config.baudrate=12 then VaComm2.Baudrate:=br115200;
+      if config.baudrate=13 then VaComm2.Baudrate:=br128000;
+      if config.baudrate=14 then VaComm2.Baudrate:=br256000;
+      VaComm2.PortNum:=config.comPort;
       VaComm2.Close;
       VaComm2.Open;
 
@@ -1927,10 +1796,10 @@ begin
       customchar('8,14,17,1,13,21,21,14,0');
 
       Form1.VaComm2.WriteChar(chr(14));
-      Form1.VaComm2.WriteChar(chr(strtoint(copy(configarray[3],pos('¿4',configarray[3])+2,3))));
+      Form1.VaComm2.WriteChar(chr(config.CF_brightness));
 
       Form1.VaComm2.WriteChar(chr(15));
-      Form1.VaComm2.WriteChar(chr(strtoint(copy(configarray[3],pos('¿3',configarray[3])+2,pos('¿4',configarray[3])-pos('¿3',configarray[3])-2))));
+      Form1.VaComm2.WriteChar(chr(config.CF_contrast));
 
       timer1.enabled:=true;
       timer2.enabled:=true;
@@ -1940,6 +1809,8 @@ begin
       timer8.enabled:=true;
       timer9.enabled:=true;
       timer10.enabled:=true;
+      timer12.enabled:=true;
+      timer13.enabled:=true;
     end;
   end;
 end;
@@ -1962,10 +1833,9 @@ const
 
 var
   t: longword;
-  letter,spacecount,x,i,ii,w, d, h, m, s : integer;
-  winamppositie, teller:integer;
-  winamptimereg,fileline,fileloc,spaceline,winamptitle, ss,regel,regel2,regel3:string;
-  bestand,bestand3:textfile;
+  w, d, h, m, s : integer;
+  teller:integer;
+  regel:string;
 
 begin
 try
@@ -2008,16 +1878,12 @@ if ((donewsupdate1 = 1) or
 //cpuusage!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 STCPUUsage:='';
 STCPUUsageBar:='';
-Application.ProcessMessages;
+//Application.ProcessMessages;
 try
-  system1.getCpuInfo(cpuinfo);
-  CollectCPUData;
-  STCPUSpeed:=inttostr(cpuInfo.Frequency_Info.Raw_Freq);
-  STCPUUsage:=STCPUUsage+IntToStr(round(GetCPUUsage(0)*100));
-  if STCPUUsage<'0' then STCPUUsage:='0'; 
+  STCPUUsage:=cxCpu[0].Usage.Value.AsString;
+  if STCPUUsage<'0' then STCPUUsage:='0';
 except
-  STCPUSpeed:=IntToStr(CPUMhz);
-  STCPUUsage:=IntToStr(round(CPU[1]*100));
+  STCPUUsage:='Unknown';
 end;
 
 //time/uptime!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -2045,22 +1911,9 @@ uptimeregs:=uptimeregs+IntToStr(m);
 
 winampregel:='';
 
-  timer1.Interval:=StrToInt(copy(configarray[1],1,pos('¿',configarray[1])-1));
-  regel:=configarray[3];
-  regel:=copy(regel,1,pos('¿1',regel)-1);
-  if regel='1' then regel2:='10';
-  if regel='2' then regel2:='16';
-  if regel='3' then regel2:='20';
-  if regel='4' then regel2:='24';
-  if regel='5' then regel2:='40';
-  if regel='6' then regel2:='16';
-  if regel='7' then regel2:='20';
-  if regel='8' then regel2:='24';
-  if regel='9' then regel2:='40';
-  if regel='10' then regel2:='16';
-  if regel='11' then regel2:='20';
-  if regel='12' then regel2:='40';
-  if (regel='12') or (regel='9') or (regel='5') then begin
+  timer1.Interval:=config.refreshRate;
+
+  if (config.width=40) then begin
     form1.Width:=389;
     image1.left:=356;
     image11.left:=368;
@@ -2076,7 +1929,7 @@ winampregel:='';
     panel4.width:=321;
     image15.width:=220;
   end else begin
-    if (regel='4') or (regel='8') then begin
+    if (config.width=24) then begin
       form1.Width:=261;
       image1.left:=228;
       image11.left:=240;
@@ -2109,22 +1962,10 @@ winampregel:='';
     end;
   end;
 
-maxlength:=strtoint(regel2);
-  if regel='1' then regel2:='1';
-  if regel='2' then regel2:='1';
-  if regel='3' then regel2:='1';
-  if regel='4' then regel2:='1';
-  if regel='5' then regel2:='1';
-  if regel='6' then regel2:='2';
-  if regel='7' then regel2:='2';
-  if regel='8' then regel2:='2';
-  if regel='9' then regel2:='2';
-  if regel='10' then regel2:='4';
-  if regel='11' then regel2:='4';
-  if regel='12' then regel2:='4';
-  if StrToInt(regel2)<>aantregelsoud then
+
+  if config.height<>aantregelsoud then
   begin
-    aantregelsoud:=StrToInt(regel2);
+    aantregelsoud:=config.height;
     panel2.visible:=false;
     panel3.visible:=false;
     panel4.visible:=false;
@@ -2134,46 +1975,52 @@ maxlength:=strtoint(regel2);
     image8.visible:=false;
     image9.visible:=false;
     image10.visible:=false;
-    if StrToInt(regel2)>1 then begin
+    if config.height>1 then begin
       panel2.visible:=true;
       image4.Visible:=true;
       image8.Visible:=true;
     end;
-    if StrToInt(regel2)>2 then begin
+    if config.height>2 then begin
       panel3.visible:=true;
       image5.Visible:=true;
       image9.Visible:=true;
     end;
-    if StrToInt(regel2)>3 then begin
+    if config.height>3 then begin
       panel4.visible:=true;
       image6.Visible:=true;
       image10.Visible:=true;
     end;
   end;
-  i:=0;
+
   totaldlls:=0;
-  nextline1:=0;
-  nextline2:=0;
-  nextline3:=0;
-  nextline4:=0;
-  for teller:= 1 to (welkescreen-1)*4 do i:=i+1;
-    if copy(configarray[i+4],pos('¿',configarray[i+4])+4,1) = '1' then nextline1:=1;
-    if copy(configarray[i+5],pos('¿',configarray[i+5])+4,1) = '1' then nextline2:=1;
-    if copy(configarray[i+6],pos('¿',configarray[i+6])+4,1) = '1' then nextline3:=1;
-    if copy(configarray[i+7],pos('¿',configarray[i+7])+4,1) = '1' then nextline4:=1;
+
+  nextline1:=config.screen[welkescreen][1].contNextLine;
+  nextline2:=config.screen[welkescreen][2].contNextLine;
+  nextline3:=config.screen[welkescreen][3].contNextLine;
+  nextline4:=config.screen[welkescreen][4].contNextLine;
+
   for teller:= 1 to aantregelsoud do begin
-    Application.ProcessMessages;
-    i:=i+1;
-    regel:=copy(configarray[i+3],1,pos('¿',configarray[i+3])-1);
+    //Application.ProcessMessages;
+    regel:=config.screen[welkescreen][teller].text;
     qstattemp:=teller;
-    regelz[teller]:=change(regel);
+    regel:=change(regel);
+
+    if config.screen[welkescreen][teller].center then begin
+      if length(regel) < config.width-1 then begin
+        for h:=1 to round((config.width - length(regel))/2 - 0.4) do begin
+          regel:=' '+regel+' ';
+        end;
+      end;
+    end;
+
+    regelz[teller]:=regel;
   end;
   dllcancheck:=false;
   if (canscroll) then begin
     if (doesflash) then doesflash:=false else doesflash:=true;
     if (flash > 0) then begin
       flash := flash -1;
-      backlit(self)
+      backlit()
     end;
     if (doesgpoflash) then doesgpoflash:=false else doesgpoflash:=true;
     if (gpoflash > 0) then begin
@@ -2182,14 +2029,13 @@ maxlength:=strtoint(regel2);
     end;
   end;
 
-  regel:=configarray[87];
-  if kleuren <> regel then
+  if kleuren <> config.colorOption then
   begin
-    kleuren:=regel;
-    kleur(self);
+    kleuren:=config.colorOption;
+    kleur();
   end;
-  distributedlog:=configarray[88];
-  if (copy(configarray[92],1,1)='1') and (not form2.Visible) and (not form4.Visible) then begin
+  distributedlog:=config.distLog;
+  if (config.alwaysOnTop) and (not form2.Visible) and (not form4.Visible) then begin
     form1.formStyle:=fsStayOnTop;
   end else begin
     form1.formStyle:=fsNormal;
@@ -2213,59 +2059,59 @@ gokreg:array[1..4] of string;
 
 begin
 if ((gotnewlines=false) OR (timertrans.enabled=false))then refres(self);
-Application.ProcessMessages;
+//Application.ProcessMessages;
 
 if timertrans.Enabled=false then begin
-  if scrollline5=0 then begin
-    Panel1.Caption:=StringReplace(copy(regelz[1],1,maxlength),'&','&&',[rfReplaceAll]);
-    panel2.Caption:=StringReplace(copy(regelz[2],1,maxlength),'&','&&',[rfReplaceAll]);
-    panel3.Caption:=StringReplace(copy(regelz[3],1,maxlength),'&','&&',[rfReplaceAll]);
-    panel4.Caption:=StringReplace(copy(regelz[4],1,maxlength),'&','&&',[rfReplaceAll]);
-    if nextline1=1 then begin
-      panel2.Caption:=copy(regelz[1],1+maxlength,2*maxlength);
-      regelz[2]:=copy(regelz[1],1+maxlength,length(regelz[1]));
+  if not scrollline5 then begin
+    Panel1.Caption:=StringReplace(copy(regelz[1],1,config.width),'&','&&',[rfReplaceAll]);
+    panel2.Caption:=StringReplace(copy(regelz[2],1,config.width),'&','&&',[rfReplaceAll]);
+    panel3.Caption:=StringReplace(copy(regelz[3],1,config.width),'&','&&',[rfReplaceAll]);
+    panel4.Caption:=StringReplace(copy(regelz[4],1,config.width),'&','&&',[rfReplaceAll]);
+    if nextline1 then begin
+      panel2.Caption:=copy(regelz[1],1+config.width,2*config.width);
+      regelz[2]:=copy(regelz[1],1+config.width,length(regelz[1]));
     end;
-    if nextline2=1 then begin
-      panel3.Caption:=copy(regelz[2],1+maxlength,2*maxlength);
-      regelz[3]:=copy(regelz[2],1+maxlength,length(regelz[2]));
+    if nextline2 then begin
+      panel3.Caption:=copy(regelz[2],1+config.width,2*config.width);
+      regelz[3]:=copy(regelz[2],1+config.width,length(regelz[2]));
     end;
-    if nextline3=1 then begin
-      panel4.Caption:=copy(regelz[3],1+maxlength,2*maxlength);
-      regelz[4]:=copy(regelz[3],1+maxlength,length(regelz[3]));
+    if nextline3 then begin
+      panel4.Caption:=copy(regelz[3],1+config.width,2*config.width);
+      regelz[4]:=copy(regelz[3],1+config.width,length(regelz[3]));
     end;
   end;
 
-if (canscroll=true) then begin
+if (canscroll) then begin
   canscroll:=false;
-  if scrollline1=0 then Panel1.Caption:=StringReplace(scroll(regelz[1],1,1),'&','&&',[rfReplaceAll]);
-  if scrollline2=0 then Panel2.Caption:=StringReplace(scroll(regelz[2],2,1),'&','&&',[rfReplaceAll]);
-  if scrollline3=0 then panel3.Caption:=StringReplace(scroll(regelz[3],3,1),'&','&&',[rfReplaceAll]);
-  if scrollline4=0 then panel4.Caption:=StringReplace(scroll(regelz[4],4,1),'&','&&',[rfReplaceAll]);
+  if not scrollline1 then Panel1.Caption:=StringReplace(scroll(regelz[1],1,1),'&','&&',[rfReplaceAll]);
+  if not scrollline2 then Panel2.Caption:=StringReplace(scroll(regelz[2],2,1),'&','&&',[rfReplaceAll]);
+  if not scrollline3 then panel3.Caption:=StringReplace(scroll(regelz[3],3,1),'&','&&',[rfReplaceAll]);
+  if not scrollline4 then panel4.Caption:=StringReplace(scroll(regelz[4],4,1),'&','&&',[rfReplaceAll]);
 end else begin
-  if scrollline1=0 then Panel1.Caption:=StringReplace(scroll(regelz[1],1,0),'&','&&',[rfReplaceAll]);
-  if scrollline2=0 then Panel2.Caption:=StringReplace(scroll(regelz[2],2,0),'&','&&',[rfReplaceAll]);
-  if scrollline3=0 then panel3.Caption:=StringReplace(scroll(regelz[3],3,0),'&','&&',[rfReplaceAll]);
-  if scrollline4=0 then panel4.Caption:=StringReplace(scroll(regelz[4],4,0),'&','&&',[rfReplaceAll]);
+  if not scrollline1 then Panel1.Caption:=StringReplace(scroll(regelz[1],1,0),'&','&&',[rfReplaceAll]);
+  if not scrollline2 then Panel2.Caption:=StringReplace(scroll(regelz[2],2,0),'&','&&',[rfReplaceAll]);
+  if not scrollline3 then panel3.Caption:=StringReplace(scroll(regelz[3],3,0),'&','&&',[rfReplaceAll]);
+  if not scrollline4 then panel4.Caption:=StringReplace(scroll(regelz[4],4,0),'&','&&',[rfReplaceAll]);
 end;
 
 end else begin
   for x:=1 to 4 do begin
-    oldline[x]:=copy(oldline[x]+'                                        ',1,maxlength);
-    newline[x]:=copy(newline[x]+'                                        ',1,maxlength);
+    oldline[x]:=copy(oldline[x]+'                                        ',1,config.width);
+    newline[x]:=copy(newline[x]+'                                        ',1,config.width);
   end;
   if transActietemp=1 then begin  //left-->right
     counter:=counter+1;
-    Panel1.Caption:=StringReplace(copy(newline[1]+oldline[1],maxlength-round(counter*(maxlength/(timertrans.interval/(timer1.interval*1.14)))),maxlength),'&','&&',[rfReplaceAll]);
-    Panel2.Caption:=StringReplace(copy(newline[2]+oldline[2],maxlength-round(counter*(maxlength/(timertrans.interval/(timer1.interval*1.14)))),maxlength),'&','&&',[rfReplaceAll]);
-    Panel3.Caption:=StringReplace(copy(newline[3]+oldline[3],maxlength-round(counter*(maxlength/(timertrans.interval/(timer1.interval*1.14)))),maxlength),'&','&&',[rfReplaceAll]);
-    Panel4.Caption:=StringReplace(copy(newline[4]+oldline[4],maxlength-round(counter*(maxlength/(timertrans.interval/(timer1.interval*1.14)))),maxlength),'&','&&',[rfReplaceAll]);
+    Panel1.Caption:=StringReplace(copy(newline[1]+oldline[1],config.width-round(counter*(config.width/(timertrans.interval/(timer1.interval*1.14)))),config.width),'&','&&',[rfReplaceAll]);
+    Panel2.Caption:=StringReplace(copy(newline[2]+oldline[2],config.width-round(counter*(config.width/(timertrans.interval/(timer1.interval*1.14)))),config.width),'&','&&',[rfReplaceAll]);
+    Panel3.Caption:=StringReplace(copy(newline[3]+oldline[3],config.width-round(counter*(config.width/(timertrans.interval/(timer1.interval*1.14)))),config.width),'&','&&',[rfReplaceAll]);
+    Panel4.Caption:=StringReplace(copy(newline[4]+oldline[4],config.width-round(counter*(config.width/(timertrans.interval/(timer1.interval*1.14)))),config.width),'&','&&',[rfReplaceAll]);
   end;
   if transActietemp=2 then begin  //right-->left
     counter:=counter+1;
-    Panel1.Caption:=StringReplace(copy(oldline[1]+newline[1],round(counter*(maxlength/(timertrans.interval/(timer1.interval*1.13)))),maxlength),'&','&&',[rfReplaceAll]);
-    Panel2.Caption:=StringReplace(copy(oldline[2]+newline[2],round(counter*(maxlength/(timertrans.interval/(timer1.interval*1.13)))),maxlength),'&','&&',[rfReplaceAll]);
-    Panel3.Caption:=StringReplace(copy(oldline[3]+newline[3],round(counter*(maxlength/(timertrans.interval/(timer1.interval*1.13)))),maxlength),'&','&&',[rfReplaceAll]);
-    Panel4.Caption:=StringReplace(copy(oldline[4]+newline[4],round(counter*(maxlength/(timertrans.interval/(timer1.interval*1.13)))),maxlength),'&','&&',[rfReplaceAll]);
+    Panel1.Caption:=StringReplace(copy(oldline[1]+newline[1],round(counter*(config.width/(timertrans.interval/(timer1.interval*1.13)))),config.width),'&','&&',[rfReplaceAll]);
+    Panel2.Caption:=StringReplace(copy(oldline[2]+newline[2],round(counter*(config.width/(timertrans.interval/(timer1.interval*1.13)))),config.width),'&','&&',[rfReplaceAll]);
+    Panel3.Caption:=StringReplace(copy(oldline[3]+newline[3],round(counter*(config.width/(timertrans.interval/(timer1.interval*1.13)))),config.width),'&','&&',[rfReplaceAll]);
+    Panel4.Caption:=StringReplace(copy(oldline[4]+newline[4],round(counter*(config.width/(timertrans.interval/(timer1.interval*1.13)))),config.width),'&','&&',[rfReplaceAll]);
   end;
   if transActietemp=3 then begin  //top-->bottum
     counter:=counter+1;
@@ -2304,22 +2150,22 @@ end else begin
     Panel4.Caption:=StringReplace(oldnewline[4+round(counter*(aantregelsoud/(timertrans.interval/(timer1.interval*1.13))))],'&','&&',[rfReplaceAll]);
   end;
   if transActietemp=5 then begin  //random blocks
-    gokreg[1]:=copy(Panel1.caption+'                                        ',1,maxlength);
-    gokreg[2]:=copy(Panel2.caption+'                                        ',1,maxlength);
-    gokreg[3]:=copy(Panel3.caption+'                                        ',1,maxlength);
-    gokreg[4]:=copy(Panel4.caption+'                                        ',1,maxlength);
+    gokreg[1]:=copy(Panel1.caption+'                                        ',1,config.width);
+    gokreg[2]:=copy(Panel2.caption+'                                        ',1,config.width);
+    gokreg[3]:=copy(Panel3.caption+'                                        ',1,config.width);
+    gokreg[4]:=copy(Panel4.caption+'                                        ',1,config.width);
 
-    for x:= 1 to round(maxlength/(timertrans.interval/(timer1.interval))) do begin
+    for x:= 1 to round(config.width/(timertrans.interval/(timer1.interval))) do begin
       counter:=counter+1;
-      if counter<=maxlength then begin
+      if counter<=config.width then begin
         gokje:=doguess(1);
-        gokreg[1]:=copy(gokreg[1],1,gokje-1)+copy(newline[1],gokje,1)+copy(gokreg[1],gokje+1,maxlength-gokje);
+        gokreg[1]:=copy(gokreg[1],1,gokje-1)+copy(newline[1],gokje,1)+copy(gokreg[1],gokje+1,config.width-gokje);
         gokje:=doguess(2);
-        gokreg[2]:=copy(gokreg[2],1,gokje-1)+copy(newline[2],gokje,1)+copy(gokreg[2],gokje+1,maxlength-gokje);
+        gokreg[2]:=copy(gokreg[2],1,gokje-1)+copy(newline[2],gokje,1)+copy(gokreg[2],gokje+1,config.width-gokje);
         gokje:=doguess(3);
-        gokreg[3]:=copy(gokreg[3],1,gokje-1)+copy(newline[3],gokje,1)+copy(gokreg[3],gokje+1,maxlength-gokje);
+        gokreg[3]:=copy(gokreg[3],1,gokje-1)+copy(newline[3],gokje,1)+copy(gokreg[3],gokje+1,config.width-gokje);
         gokje:=doguess(4);
-        gokreg[4]:=copy(gokreg[4],1,gokje-1)+copy(newline[4],gokje,1)+copy(gokreg[4],gokje+1,maxlength-gokje);
+        gokreg[4]:=copy(gokreg[4],1,gokje-1)+copy(newline[4],gokje,1)+copy(gokreg[4],gokje+1,config.width-gokje);
       end;
     end;
     Panel1.caption:=StringReplace(gokreg[1],'&','&&',[rfReplaceAll]);
@@ -2328,8 +2174,8 @@ end else begin
     Panel4.caption:=StringReplace(gokreg[4],'&','&&',[rfReplaceAll]);
   end;
   if transActietemp=6 then begin  //contrast fade off
-    if (configarray[98] = '2') and (foo2<>1) then begin
-      x:=strtoint(copy(configarray[3],pos('¿1',configarray[3])+2,pos('¿2',configarray[3])-pos('¿1',configarray[3])-2));
+    if (config.isMO) and (foo2<>1) then begin
+      x:=config.contrast;
       counter:=counter+1;
       form1.VaComm1.WriteChar(Chr($0FE));
       form1.VaComm1.WriteChar('P');
@@ -2338,8 +2184,8 @@ end else begin
       form1.VaComm1.WriteChar(chr(foo));
       if foo < 25 then foo2:=1;
     end;
-    if (configarray[98] = '3') and (foo2<>1) then begin
-      x:=strtoint(copy(configarray[3],pos('¿3',configarray[3])+2,pos('¿4',configarray[3])-pos('¿3',configarray[3])-2));
+    if (config.isCF) and (foo2<>1) then begin
+      x:=config.CF_contrast;
       counter:=counter+1;
       form1.VaComm1.WriteChar(Chr(15));
       foo:=round(x-(counter*x/(timertrans.Interval/2.1/timer1.Interval)));
@@ -2353,8 +2199,8 @@ end else begin
       Panel3.Caption:=newline[3];
       Panel4.Caption:=newline[4];
     end;
-    if (configarray[98] = '2') and (foo2=1) then begin
-      x:=strtoint(copy(configarray[3],pos('¿1',configarray[3])+2,pos('¿2',configarray[3])-pos('¿1',configarray[3])-2));
+    if (config.isMO) and (foo2=1) then begin
+      x:=config.contrast;
       counter:=counter-1;
       form1.VaComm1.WriteChar(Chr($0FE));
       form1.VaComm1.WriteChar('P');
@@ -2362,8 +2208,8 @@ end else begin
       if foo > x then foo:=x;
       form1.VaComm1.WriteChar(chr(foo));
     end;
-    if (configarray[98] = '3') and (foo2=1) then begin
-      x:=strtoint(copy(configarray[3],pos('¿3',configarray[3])+2,pos('¿4',configarray[3])-pos('¿3',configarray[3])-2));
+    if (config.isCF) and (foo2=1) then begin
+      x:=config.CF_contrast;
       counter:=counter-1;
       form1.VaComm1.WriteChar(Chr(15));
       foo:=round(x-(counter*x/(timertrans.Interval/1.8/timer1.Interval)));
@@ -2395,10 +2241,10 @@ end;
 
 
 if (parameter1 <> '-nolcd') and (parameter2 <> '-nolcd') and (parameter3 <> '-nolcd') and (parameter4 <> '-nolcd') then begin
-  if tmpregel1<>copy(panel1.Caption + '                                        ',1,maxlength) then begin
-    tmpregel1:=copy(StringReplace(panel1.Caption,'&&','&',[rfReplaceAll]) + '                                        ',1,maxlength);
-    Application.ProcessMessages;
-    if configarray[98] = '2' then begin
+  if tmpregel1<>copy(panel1.Caption + '                                        ',1,config.width) then begin
+    tmpregel1:=copy(StringReplace(panel1.Caption,'&&','&',[rfReplaceAll]) + '                                        ',1,config.width);
+    //Application.ProcessMessages;
+    if config.isMO then begin
       tmpregel1:=StringReplace(tmpregel1,'\','/',[rfReplaceAll]);
       tmpregel1:=StringReplace(tmpregel1,'°',chr(0),[rfReplaceAll]);
       tmpregel1:=StringReplace(tmpregel1,'ž',chr(1),[rfReplaceAll]);
@@ -2411,7 +2257,7 @@ if (parameter1 <> '-nolcd') and (parameter2 <> '-nolcd') and (parameter3 <> '-no
       setpos(1,1);
       VaComm1.WriteText(tmpregel1);
     end;
-    if configarray[98] = '1' then begin
+    if config.isHD then begin
       tmpregel1:=StringReplace(tmpregel1,'°',chr(0),[rfReplaceAll]);
       tmpregel1:=StringReplace(tmpregel1,'ž',chr(1),[rfReplaceAll]);
       tmpregel1:=StringReplace(tmpregel1,chr(131),chr(2),[rfReplaceAll]);
@@ -2421,10 +2267,10 @@ if (parameter1 <> '-nolcd') and (parameter2 <> '-nolcd') and (parameter3 <> '-no
       tmpregel1:=StringReplace(tmpregel1,chr(135),chr(6),[rfReplaceAll]);
       tmpregel1:=StringReplace(tmpregel1,chr(136),chr(7),[rfReplaceAll]);
       poort1.setcursor(1, 1);          //zet de cursor op kolom: 1 en rij: 1
-      Application.ProcessMessages;
+     //Application.ProcessMessages;
       poort1.writestring(tmpregel1);   //schrijft een string weg
     end;
-    if configarray[98] = '3' then begin
+    if config.isCF then begin
       tmpregel1:=StringReplace(tmpregel1,'°',chr(128),[rfReplaceAll]);
       tmpregel1:=StringReplace(tmpregel1,'ž',chr(129),[rfReplaceAll]);
       tmpregel1:=StringReplace(tmpregel1,chr(131),chr(130),[rfReplaceAll]);
@@ -2458,10 +2304,10 @@ if (parameter1 <> '-nolcd') and (parameter2 <> '-nolcd') and (parameter3 <> '-no
     end;
   end;
   if aantregelsoud > 1 then begin
-    if tmpregel2<>copy(panel2.Caption + '                                        ',1,maxlength) then begin
-      tmpregel2:=copy(StringReplace(panel2.Caption,'&&','&',[rfReplaceAll]) + '                                        ',1,maxlength);
-      Application.ProcessMessages;
-      if configarray[98] = '2' then begin
+    if tmpregel2<>copy(panel2.Caption + '                                        ',1,config.width) then begin
+      tmpregel2:=copy(StringReplace(panel2.Caption,'&&','&',[rfReplaceAll]) + '                                        ',1,config.width);
+      //Application.ProcessMessages;
+      if config.isMO then begin
         tmpregel2:=StringReplace(tmpregel2,'\','/',[rfReplaceAll]);
       tmpregel2:=StringReplace(tmpregel2,'°',chr(0),[rfReplaceAll]);
       tmpregel2:=StringReplace(tmpregel2,'ž',chr(1),[rfReplaceAll]);
@@ -2474,7 +2320,7 @@ if (parameter1 <> '-nolcd') and (parameter2 <> '-nolcd') and (parameter3 <> '-no
         setpos(1,2);
         VaComm1.WriteText(tmpregel2);
       end;
-      if configarray[98] = '1' then begin
+      if config.isHD then begin
       tmpregel2:=StringReplace(tmpregel2,'°',chr(0),[rfReplaceAll]);
       tmpregel2:=StringReplace(tmpregel2,'ž',chr(1),[rfReplaceAll]);
       tmpregel2:=StringReplace(tmpregel2,chr(131),chr(2),[rfReplaceAll]);
@@ -2484,10 +2330,10 @@ if (parameter1 <> '-nolcd') and (parameter2 <> '-nolcd') and (parameter3 <> '-no
       tmpregel2:=StringReplace(tmpregel2,chr(135),chr(6),[rfReplaceAll]);
       tmpregel2:=StringReplace(tmpregel2,chr(136),chr(7),[rfReplaceAll]);
         poort1.setcursor(1, 2);
-        Application.ProcessMessages;
+        //Application.ProcessMessages;
         poort1.writestring(tmpregel2);
       end;
-      if configarray[98] = '3' then begin
+      if config.isCF then begin
       tmpregel2:=StringReplace(tmpregel2,'°',chr(128),[rfReplaceAll]);
       tmpregel2:=StringReplace(tmpregel2,'ž',chr(129),[rfReplaceAll]);
       tmpregel2:=StringReplace(tmpregel2,chr(131),chr(130),[rfReplaceAll]);
@@ -2517,10 +2363,10 @@ if (parameter1 <> '-nolcd') and (parameter2 <> '-nolcd') and (parameter3 <> '-no
     end;
   end;
   if aantregelsoud > 2 then begin
-    if tmpregel3<>copy(panel3.Caption + '                                        ',1,maxlength) then begin
-      tmpregel3:=copy(StringReplace(panel3.Caption,'&&','&',[rfReplaceAll]) + '                                        ',1,maxlength);
-      Application.ProcessMessages;
-      if configarray[98] = '2' then begin
+    if tmpregel3<>copy(panel3.Caption + '                                        ',1,config.width) then begin
+      tmpregel3:=copy(StringReplace(panel3.Caption,'&&','&',[rfReplaceAll]) + '                                        ',1,config.width);
+      //Application.ProcessMessages;
+      if config.isMO then begin
         tmpregel3:=StringReplace(tmpregel3,'\','/',[rfReplaceAll]);
       tmpregel3:=StringReplace(tmpregel3,'°',chr(0),[rfReplaceAll]);
       tmpregel3:=StringReplace(tmpregel3,'ž',chr(1),[rfReplaceAll]);
@@ -2533,7 +2379,7 @@ if (parameter1 <> '-nolcd') and (parameter2 <> '-nolcd') and (parameter3 <> '-no
         setpos(1,3);
         VaComm1.WriteText(tmpregel3);
       end;
-      if configarray[98] = '1' then begin
+      if config.isHD then begin
       tmpregel3:=StringReplace(tmpregel3,'°',chr(0),[rfReplaceAll]);
       tmpregel3:=StringReplace(tmpregel3,'ž',chr(1),[rfReplaceAll]);
       tmpregel3:=StringReplace(tmpregel3,chr(131),chr(2),[rfReplaceAll]);
@@ -2543,10 +2389,10 @@ if (parameter1 <> '-nolcd') and (parameter2 <> '-nolcd') and (parameter3 <> '-no
       tmpregel3:=StringReplace(tmpregel3,chr(135),chr(6),[rfReplaceAll]);
       tmpregel3:=StringReplace(tmpregel3,chr(136),chr(7),[rfReplaceAll]);
         poort1.setcursor(1, 3);
-        Application.ProcessMessages;
+        //Application.ProcessMessages;
         poort1.writestring(tmpregel3);
       end;
-      if configarray[98] = '3' then begin
+      if config.isCF then begin
       tmpregel3:=StringReplace(tmpregel3,'°',chr(128),[rfReplaceAll]);
       tmpregel3:=StringReplace(tmpregel3,'ž',chr(129),[rfReplaceAll]);
       tmpregel3:=StringReplace(tmpregel3,chr(131),chr(130),[rfReplaceAll]);
@@ -2576,10 +2422,10 @@ if (parameter1 <> '-nolcd') and (parameter2 <> '-nolcd') and (parameter3 <> '-no
     end;
   end;
   if aantregelsoud > 3 then begin
-    if tmpregel4<>copy(panel4.Caption + '                                        ',1,maxlength) then begin
-      tmpregel4:=copy(StringReplace(panel4.Caption,'&&','&',[rfReplaceAll]) + '                                        ',1,maxlength);
-      Application.ProcessMessages;
-      if configarray[98] = '2' then begin
+    if tmpregel4<>copy(panel4.Caption + '                                        ',1,config.width) then begin
+      tmpregel4:=copy(StringReplace(panel4.Caption,'&&','&',[rfReplaceAll]) + '                                        ',1,config.width);
+      //Application.ProcessMessages;
+      if config.isMO then begin
         tmpregel4:=StringReplace(tmpregel4,'\','/',[rfReplaceAll]);
       tmpregel4:=StringReplace(tmpregel4,'°',chr(0),[rfReplaceAll]);
       tmpregel4:=StringReplace(tmpregel4,'ž',chr(1),[rfReplaceAll]);
@@ -2592,7 +2438,7 @@ if (parameter1 <> '-nolcd') and (parameter2 <> '-nolcd') and (parameter3 <> '-no
         setpos(1,4);
         VaComm1.WriteText(tmpregel4);
       end;
-      if configarray[98] = '1' then begin
+      if config.isHD then begin
       tmpregel4:=StringReplace(tmpregel4,'°',chr(0),[rfReplaceAll]);
       tmpregel4:=StringReplace(tmpregel4,'ž',chr(1),[rfReplaceAll]);
       tmpregel4:=StringReplace(tmpregel4,chr(131),chr(2),[rfReplaceAll]);
@@ -2602,10 +2448,10 @@ if (parameter1 <> '-nolcd') and (parameter2 <> '-nolcd') and (parameter3 <> '-no
       tmpregel4:=StringReplace(tmpregel4,chr(135),chr(6),[rfReplaceAll]);
       tmpregel4:=StringReplace(tmpregel4,chr(136),chr(7),[rfReplaceAll]);
         poort1.setcursor(1, 4);
-        Application.ProcessMessages;
+        //Application.ProcessMessages;
         poort1.writestring(tmpregel4);
       end;
-      if configarray[98] = '3' then begin
+      if config.isCF then begin
       tmpregel4:=StringReplace(tmpregel4,'°',chr(128),[rfReplaceAll]);
       tmpregel4:=StringReplace(tmpregel4,'ž',chr(129),[rfReplaceAll]);
       tmpregel4:=StringReplace(tmpregel4,chr(131),chr(130),[rfReplaceAll]);
@@ -2638,20 +2484,20 @@ end;
 
 end;
 
-procedure TForm1.backlit(Sender: TObject);
+procedure TForm1.backlit;
 var
 Reg: TRegistry;
 
 begin
   if backlight=1 then
    begin
-    Application.ProcessMessages;
-    if configarray[98] = '1' then poort1.setbacklight(false);
-    if configarray[98] = '2' then begin
+    //Application.ProcessMessages;
+    if config.isHD then poort1.setbacklight(false);
+    if config.isMO then begin
       VaComm1.WriteChar(chr($0FE));
       VaComm1.WriteChar('F');
     end;
-    if configarray[98] = '3' then begin
+    if config.isCF then begin
       VaComm2.WriteChar(chr(14));
       VaComm2.WriteChar(chr(0));
     end;
@@ -2660,14 +2506,14 @@ begin
    end
   else
    begin
-   Application.ProcessMessages;
-    if configarray[98] = '1' then poort1.setbacklight(true);
-    if configarray[98] = '2' then begin
+   //Application.ProcessMessages;
+    if config.isHD then poort1.setbacklight(true);
+    if config.isMO then begin
       VaComm1.WriteChar(chr($0FE));
       VaComm1.WriteChar('B');
       VaComm1.WriteChar(chr($00));
     end;
-    if configarray[98] = '3' then begin
+    if config.isCF then begin
       VaComm2.WriteChar(chr(14));
       VaComm2.WriteChar(chr(100));
     end;
@@ -2688,65 +2534,34 @@ if (parameter1 = '-register') or (parameter2 = '-register') or (parameter3 = '-r
    inherited;
   end;
 end;
-kleur(self);
+kleur();
 end;
 
 procedure TForm1.FormShow(Sender: TObject);
 var
   initfile:textfile;
-  regel2,regel:string;
   teller:integer;
+  regel: String;
 
 begin
-assignfile(initfile,extractfilepath(application.exename)+'config.cfg');
-reset(initfile);
-readln (initfile, regel);
-  timer1.Interval:=StrToInt(copy(regel,1,pos('¿',regel)-1));
-readln (initfile);
-readln (initfile, regel);
-  regel:=copy(regel,1,pos('¿1',regel)-1);
-  if regel='1' then regel2:='10';
-  if regel='2' then regel2:='16';
-  if regel='3' then regel2:='20';
-  if regel='4' then regel2:='24';
-  if regel='5' then regel2:='40';
-  if regel='6' then regel2:='16';
-  if regel='7' then regel2:='20';
-  if regel='8' then regel2:='24';
-  if regel='9' then regel2:='40';
-  if regel='10' then regel2:='16';
-  if regel='11' then regel2:='20';
-  if regel='12' then regel2:='40';
-maxlength:=strtoint(regel2);
-  if regel='1' then regel2:='1';
-  if regel='2' then regel2:='1';
-  if regel='3' then regel2:='1';
-  if regel='4' then regel2:='1';
-  if regel='5' then regel2:='1';
-  if regel='6' then regel2:='2';
-  if regel='7' then regel2:='2';
-  if regel='8' then regel2:='2';
-  if regel='9' then regel2:='2';
-  if regel='10' then regel2:='4';
-  if regel='11' then regel2:='4';
-  if regel='12' then regel2:='4';
-  if StrToInt(regel2)<>aantregelsoud then begin
-    aantregelsoud:=StrToInt(regel2);
+  timer1.Interval:=config.refreshRate;
+
+  if config.height<>aantregelsoud then begin
+    aantregelsoud:=config.height;
     panel1.visible:=false;
     panel2.visible:=false;
     panel3.visible:=false;
     panel4.visible:=false;
-    if StrToInt(regel2)>0 then panel1.visible:=true;
-    if StrToInt(regel2)>1 then panel2.visible:=true;
-    if StrToInt(regel2)>2 then panel3.visible:=true;
-    if StrToInt(regel2)>3 then panel4.visible:=true;
+    if config.height>0 then panel1.visible:=true;
+    if config.height>1 then panel2.visible:=true;
+    if config.height>2 then panel3.visible:=true;
+    if config.height>3 then panel4.visible:=true;
   end;
-  closefile(initfile);
 
+  teller:=0;
   try
     assignfile(initfile,extractfilepath(application.exename)+'actions.cfg');
     reset (initfile);
-    teller:=0;
     while not eof(initfile) do begin
       readln(initfile,regel);
       teller:=teller+1;
@@ -2762,13 +2577,11 @@ maxlength:=strtoint(regel2);
   totalactions:=teller;
 end;
 
-
-procedure TForm1.Timer2Timer(Sender: TObject);
+procedure TForm1.checkIfNewsUpdatesRequired;
 var
-  teller:integer;
-
+  screenline:String;
+  z,y: Integer;
 begin
-  timer2.Interval:=strToInt(configarray[84])*60000;
   news1:=0;
   news2:=0;
   news3:=0;
@@ -2776,27 +2589,39 @@ begin
   news5:=0;
   news7:=0;
   news8:=0;
-  news9:=0;
-  for teller:= 1 to 80 do begin
-    if (pos('$T.netHL',configarray[teller+3]) <> 0) and (copy(configarray[teller+3],pos('¿',configarray[teller+3])+1,1)='1') then DoNewsUpdate1:=1;
-    if (pos('$DutchWeather',configarray[teller+3]) <> 0)and (copy(configarray[teller+3],pos('¿',configarray[teller+3])+1,1)='1') then DoNewsUpdate2:=1;
-    if (pos('$TomsHW',configarray[teller+3]) <> 0) and (copy(configarray[teller+3],pos('¿',configarray[teller+3])+1,1)='1') then DoNewsUpdate3:=1;
-    if (pos('$Stocks',configarray[teller+3]) <> 0) and (copy(configarray[teller+3],pos('¿',configarray[teller+3])+1,1)='1') then DoNewsUpdate4:=1;
-    if (pos('$CNN',configarray[teller+3]) <> 0)and (copy(configarray[teller+3],pos('¿',configarray[teller+3])+1,1)='1') then DoNewsUpdate5:=1;
-    if (pos('$SETI',configarray[teller+3]) <> 0)and (copy(configarray[teller+3],pos('¿',configarray[teller+3])+1,1)='1') then DoNewsUpdate7:=1;
-    if (pos('$FOLD',configarray[teller+3]) <> 0) and (copy(configarray[teller+3],pos('¿',configarray[teller+3])+1,1)='1') then DoNewsUpdate9:=1;
-    if (pos('$Weather.com(',configarray[teller+3]) <> 0)and (copy(configarray[teller+3],pos('¿',configarray[teller+3])+1,1)='1') then begin
-      DoNewsUpdate8:=1;
-      locationnumber:=copy(configarray[teller+3],pos('(',configarray[teller+3])+1,pos(')',configarray[teller+3])-pos('(',configarray[teller+3])-1);
+
+  timer2.Interval:=config.newsRefresh*60000;
+  DoNewsUpdate6:=1;
+  for z:= 1 to 20 do begin
+    for y:= 1 to 4 do begin
+      if (config.screen[z][y].enabled) then begin
+        screenline:=config.screen[z][y].text;
+        if (pos('$T.netHL',screenline) <> 0) then DoNewsUpdate1:=1;
+        if (pos('$DutchWeather',screenline) <> 0) then DoNewsUpdate2:=1;
+        if (pos('$TomsHW',screenline) <> 0) then DoNewsUpdate3:=1;
+        if (pos('$Stocks',screenline) <> 0) then DoNewsUpdate4:=1;
+        if (pos('$CNN',screenline) <> 0) then DoNewsUpdate5:=1;
+        if (pos('$SETI',screenline) <> 0) then DoNewsUpdate7:=1;
+        if (pos('$FOLD',screenline) <> 0) then DoNewsUpdate9:=1;
+        if (pos('$Weather.com(',screenline) <> 0) then begin
+          DoNewsUpdate8:=1;
+          locationnumber:=copy(screenline,pos('(',screenline)+1,pos(')',screenline)-pos('(',screenline)-1);
+        end;
+      end;
     end;
   end;
 end;
 
-procedure TForm1.kleur(Sender: TObject);
+procedure TForm1.Timer2Timer(Sender: TObject);
+begin
+  checkIfNewsUpdatesRequired();
+end;
+
+procedure TForm1.kleur;
 begin
 if backlight=1 then
  begin
-   if kleuren ='0' then
+   if kleuren =0 then
    begin
      panel1.color:=$0001FFA8;
      panel2.color:=$0001FFA8;
@@ -2808,7 +2633,7 @@ if backlight=1 then
      panel3.Font.Color:=clBlack;
      panel4.Font.Color:=clBlack;
    end;
-   if kleuren ='1' then
+   if kleuren =1 then
    begin
      panel1.color:=$00FDF103;
      panel2.color:=$00FDF103;
@@ -2820,7 +2645,7 @@ if backlight=1 then
      panel3.Font.Color:=clBlack;
      panel4.Font.Color:=clBlack;
    end;
-   if kleuren ='2' then
+   if kleuren =2 then
    begin
      panel1.color:=clyellow;
      panel2.color:=clyellow;
@@ -2832,7 +2657,7 @@ if backlight=1 then
      panel3.Font.Color:=clBlack;
      panel4.Font.Color:=clBlack;
    end;
-   if kleuren ='3' then
+   if kleuren =3 then
    begin
      panel1.color:=clwhite;
      panel2.color:=clwhite;
@@ -2844,7 +2669,7 @@ if backlight=1 then
      panel3.Font.Color:=clBlack;
      panel4.Font.Color:=clBlack;
    end;
-   if kleuren ='4' then
+   if kleuren =4 then
    begin
      panel1.color:=backgroundcoloron;
      panel2.color:=backgroundcoloron;
@@ -2859,7 +2684,7 @@ if backlight=1 then
  end
 else
  begin
-   if kleuren ='0' then
+   if kleuren =0 then
    begin
      panel1.color:=clgreen;
      panel2.color:=clgreen;
@@ -2871,7 +2696,7 @@ else
      panel3.Font.Color:=clBlack;
      panel4.Font.Color:=clBlack;
    end;
-   if kleuren ='1' then
+   if kleuren =1 then
    begin
      panel1.color:=$00C00000;
      panel2.color:=$00C00000;
@@ -2883,7 +2708,7 @@ else
      panel3.Font.Color:=clWhite;
      panel4.Font.Color:=clWhite;
    end;
-   if kleuren ='2' then
+   if kleuren =2 then
    begin
      panel1.color:=clOlive;
      panel2.color:=clOlive;
@@ -2895,7 +2720,7 @@ else
      panel3.Font.Color:=clBlack;
      panel4.Font.Color:=clBlack;
    end;
-   if kleuren ='3' then
+   if kleuren =3 then
    begin
      panel1.color:=clsilver;
      panel2.color:=clsilver;
@@ -2907,7 +2732,7 @@ else
      panel3.Font.Color:=clBlack;
      panel4.Font.Color:=clBlack;
    end;
-   if kleuren ='4' then
+   if kleuren =4 then
    begin
      panel1.color:=backgroundcoloroff;
      panel2.color:=backgroundcoloroff;
@@ -2930,7 +2755,7 @@ begin
     form1.Show;
     form1.BringToFront;
     form1.SetFocus;
-    Application.ProcessMessages;
+    //Application.ProcessMessages;
   end;
 end;
 
@@ -2951,9 +2776,9 @@ begin
 if regel2scroll=1 then begin
   panel1.caption:=StringReplace(scroll(regelz[1],1,1),'&','&&',[rfReplaceAll]);
   if (parameter1 <> '-nolcd') and (parameter2 <> '-nolcd') and (parameter3 <> '-nolcd') then begin
-    tmpregel1:=copy(panel1.caption + '                                        ',1,maxlength-1);
-    Application.ProcessMessages;
-    if configarray[98] = '2' then begin
+    tmpregel1:=copy(panel1.caption + '                                        ',1,config.width-1);
+    //Application.ProcessMessages;
+    if config.isMO then begin
       tmpregel1:=StringReplace(tmpregel1,'°',chr(0),[rfReplaceAll]);
       tmpregel1:=StringReplace(tmpregel1,'ž',chr(1),[rfReplaceAll]);
       tmpregel1:=StringReplace(tmpregel1,chr(131),chr(2),[rfReplaceAll]);
@@ -2965,7 +2790,7 @@ if regel2scroll=1 then begin
       setpos(1,1);
       VaComm1.WriteText(tmpregel1);
     end;
-    if configarray[98] = '1' then begin
+    if config.isHD then begin
       tmpregel1:=StringReplace(tmpregel1,'°',chr(0),[rfReplaceAll]);
       tmpregel1:=StringReplace(tmpregel1,'ž',chr(1),[rfReplaceAll]);
       tmpregel1:=StringReplace(tmpregel1,chr(131),chr(2),[rfReplaceAll]);
@@ -2977,7 +2802,7 @@ if regel2scroll=1 then begin
       poort1.setcursor(1, 1); //zet de cursor op kolom: 1 en rij: 1
       poort1.writestring(tmpregel1); //schrijft een string weg
     end;
-    if configarray[98] = '3' then begin
+    if config.isCF then begin
       tmpregel1:=StringReplace(tmpregel1,'°',chr(128),[rfReplaceAll]);
       tmpregel1:=StringReplace(tmpregel1,'ž',chr(129),[rfReplaceAll]);
       tmpregel1:=StringReplace(tmpregel1,chr(131),chr(130),[rfReplaceAll]);
@@ -3000,9 +2825,9 @@ end;
 if regel2scroll=2 then begin
   panel2.caption:=StringReplace(scroll(regelz[2],2,1),'&','&&',[rfReplaceAll]);
   if (parameter1 <> '-nolcd') and (parameter2 <> '-nolcd') and (parameter3 <> '-nolcd') then begin
-   tmpregel2:=copy(panel2.caption + '                                        ',1,maxlength-1);
-   Application.ProcessMessages;
-      if configarray[98] = '2' then begin
+   tmpregel2:=copy(panel2.caption + '                                        ',1,config.width-1);
+   //Application.ProcessMessages;
+      if config.isMO then begin
       tmpregel2:=StringReplace(tmpregel2,'°',chr(0),[rfReplaceAll]);
       tmpregel2:=StringReplace(tmpregel2,'ž',chr(1),[rfReplaceAll]);
       tmpregel2:=StringReplace(tmpregel2,chr(131),chr(2),[rfReplaceAll]);
@@ -3014,7 +2839,7 @@ if regel2scroll=2 then begin
         setpos(1,2);
         VaComm1.WriteText(tmpregel2);
       end;
-      if configarray[98] = '1' then begin
+      if config.isHD then begin
       tmpregel2:=StringReplace(tmpregel2,'°',chr(0),[rfReplaceAll]);
       tmpregel2:=StringReplace(tmpregel2,'ž',chr(1),[rfReplaceAll]);
       tmpregel2:=StringReplace(tmpregel2,chr(131),chr(2),[rfReplaceAll]);
@@ -3024,10 +2849,10 @@ if regel2scroll=2 then begin
       tmpregel2:=StringReplace(tmpregel2,chr(135),chr(6),[rfReplaceAll]);
       tmpregel2:=StringReplace(tmpregel2,chr(136),chr(7),[rfReplaceAll]);
         poort1.setcursor(1, 2);
-        Application.ProcessMessages;
+        //Application.ProcessMessages;
         poort1.writestring(tmpregel2);
       end;
-      if configarray[98] = '3' then begin
+      if config.isCF then begin
       tmpregel2:=StringReplace(tmpregel2,'°',chr(128),[rfReplaceAll]);
       tmpregel2:=StringReplace(tmpregel2,'ž',chr(129),[rfReplaceAll]);
       tmpregel2:=StringReplace(tmpregel2,chr(131),chr(130),[rfReplaceAll]);
@@ -3050,9 +2875,9 @@ end;
 if regel2scroll=3 then begin
   panel3.caption:=StringReplace(scroll(regelz[3],3,1),'&','&&',[rfReplaceAll]);
   if (parameter1 <> '-nolcd') and (parameter2 <> '-nolcd') and (parameter3 <> '-nolcd') then begin
-    tmpregel3:=copy(panel3.caption + '                                        ',1,maxlength-1);
-    Application.ProcessMessages;
-      if configarray[98] = '2' then begin
+    tmpregel3:=copy(panel3.caption + '                                        ',1,config.width-1);
+    //Application.ProcessMessages;
+      if config.isMO then begin
       tmpregel3:=StringReplace(tmpregel3,'°',chr(0),[rfReplaceAll]);
       tmpregel3:=StringReplace(tmpregel3,'ž',chr(1),[rfReplaceAll]);
       tmpregel3:=StringReplace(tmpregel3,chr(131),chr(2),[rfReplaceAll]);
@@ -3064,7 +2889,7 @@ if regel2scroll=3 then begin
         setpos(1,3);
         VaComm1.WriteText(tmpregel3);
       end;
-      if configarray[98] = '1' then begin
+      if config.isHD then begin
       tmpregel3:=StringReplace(tmpregel3,'°',chr(0),[rfReplaceAll]);
       tmpregel3:=StringReplace(tmpregel3,'ž',chr(1),[rfReplaceAll]);
       tmpregel3:=StringReplace(tmpregel3,chr(131),chr(2),[rfReplaceAll]);
@@ -3074,10 +2899,10 @@ if regel2scroll=3 then begin
       tmpregel3:=StringReplace(tmpregel3,chr(135),chr(6),[rfReplaceAll]);
       tmpregel3:=StringReplace(tmpregel3,chr(136),chr(7),[rfReplaceAll]);
         poort1.setcursor(1, 3);
-        Application.ProcessMessages;
+        //Application.ProcessMessages;
         poort1.writestring(tmpregel3);
       end;
-      if configarray[98] = '3' then begin
+      if config.isCF then begin
       tmpregel3:=StringReplace(tmpregel3,'°',chr(128),[rfReplaceAll]);
       tmpregel3:=StringReplace(tmpregel3,'ž',chr(129),[rfReplaceAll]);
       tmpregel3:=StringReplace(tmpregel3,chr(131),chr(130),[rfReplaceAll]);
@@ -3100,9 +2925,9 @@ end;
 if regel2scroll=4 then begin
   panel4.caption:=StringReplace(scroll(regelz[4],4,1),'&','&&',[rfReplaceAll]);
   if (parameter1 <> '-nolcd') and (parameter2 <> '-nolcd') and (parameter3 <> '-nolcd') then begin
-    tmpregel4:=copy(panel4.caption + '                                        ',1,maxlength-1);
-    Application.ProcessMessages;
-      if configarray[98] = '2' then begin
+    tmpregel4:=copy(panel4.caption + '                                        ',1,config.width-1);
+    //Application.ProcessMessages;
+      if config.isMO then begin
       tmpregel4:=StringReplace(tmpregel4,'°',chr(0),[rfReplaceAll]);
       tmpregel4:=StringReplace(tmpregel4,'ž',chr(1),[rfReplaceAll]);
       tmpregel4:=StringReplace(tmpregel4,chr(131),chr(2),[rfReplaceAll]);
@@ -3114,7 +2939,7 @@ if regel2scroll=4 then begin
         setpos(1,4);
         VaComm1.WriteText(tmpregel4);
       end;
-      if configarray[98] = '1' then begin
+      if config.isHD then begin
       tmpregel4:=StringReplace(tmpregel4,'°',chr(0),[rfReplaceAll]);
       tmpregel4:=StringReplace(tmpregel4,'ž',chr(1),[rfReplaceAll]);
       tmpregel4:=StringReplace(tmpregel4,chr(131),chr(2),[rfReplaceAll]);
@@ -3124,10 +2949,10 @@ if regel2scroll=4 then begin
       tmpregel4:=StringReplace(tmpregel4,chr(135),chr(6),[rfReplaceAll]);
       tmpregel4:=StringReplace(tmpregel4,chr(136),chr(7),[rfReplaceAll]);
         poort1.setcursor(1, 4);
-        Application.ProcessMessages;
+        //Application.ProcessMessages;
         poort1.writestring(tmpregel4);
       end;
-      if configarray[98] = '3' then begin
+      if config.isCF then begin
       tmpregel4:=StringReplace(tmpregel4,'°',chr(128),[rfReplaceAll]);
       tmpregel4:=StringReplace(tmpregel4,'ž',chr(129),[rfReplaceAll]);
       tmpregel4:=StringReplace(tmpregel4,chr(131),chr(130),[rfReplaceAll]);
@@ -3154,9 +2979,9 @@ begin
 if regel2scroll=1 then begin
   panel1.caption:=StringReplace(scroll(regelz[1],1,-1),'&','&&',[rfReplaceAll]);
   if (parameter1 <> '-nolcd') and (parameter2 <> '-nolcd') and (parameter3 <> '-nolcd') then begin
-    tmpregel1:=copy(panel1.caption + '                                        ',1,maxlength-1);
-    Application.ProcessMessages;
-    if configarray[98] = '2' then begin
+    tmpregel1:=copy(panel1.caption + '                                        ',1,config.width-1);
+    //Application.ProcessMessages;
+    if config.isMO then begin
       tmpregel1:=StringReplace(tmpregel1,'°',chr(0),[rfReplaceAll]);
       tmpregel1:=StringReplace(tmpregel1,'ž',chr(1),[rfReplaceAll]);
       tmpregel1:=StringReplace(tmpregel1,chr(131),chr(2),[rfReplaceAll]);
@@ -3168,7 +2993,7 @@ if regel2scroll=1 then begin
       setpos(1,1);
       VaComm1.WriteText(tmpregel1);
     end;
-    if configarray[98] = '1' then begin
+    if config.isHD then begin
       tmpregel1:=StringReplace(tmpregel1,'°',chr(0),[rfReplaceAll]);
       tmpregel1:=StringReplace(tmpregel1,'ž',chr(1),[rfReplaceAll]);
       tmpregel1:=StringReplace(tmpregel1,chr(131),chr(2),[rfReplaceAll]);
@@ -3180,7 +3005,7 @@ if regel2scroll=1 then begin
       poort1.setcursor(1, 1); //zet de cursor op kolom: 1 en rij: 1
       poort1.writestring(tmpregel1); //schrijft een string weg
     end;
-    if configarray[98] = '3' then begin
+    if config.isCF then begin
       tmpregel1:=StringReplace(tmpregel1,'°',chr(128),[rfReplaceAll]);
       tmpregel1:=StringReplace(tmpregel1,'ž',chr(129),[rfReplaceAll]);
       tmpregel1:=StringReplace(tmpregel1,chr(131),chr(130),[rfReplaceAll]);
@@ -3203,9 +3028,9 @@ end;
 if regel2scroll=2 then begin
   panel2.caption:=StringReplace(scroll(regelz[2],2,-1),'&','&&',[rfReplaceAll]);
   if (parameter1 <> '-nolcd') and (parameter2 <> '-nolcd') and (parameter3 <> '-nolcd') then begin
-    tmpregel2:=copy(panel2.caption + '                                        ',1,maxlength-1);
-    Application.ProcessMessages;
-      if configarray[98] = '2' then begin
+    tmpregel2:=copy(panel2.caption + '                                        ',1,config.width-1);
+    //Application.ProcessMessages;
+      if config.isMO then begin
       tmpregel2:=StringReplace(tmpregel2,'°',chr(0),[rfReplaceAll]);
       tmpregel2:=StringReplace(tmpregel2,'ž',chr(1),[rfReplaceAll]);
       tmpregel2:=StringReplace(tmpregel2,chr(131),chr(2),[rfReplaceAll]);
@@ -3217,7 +3042,7 @@ if regel2scroll=2 then begin
         setpos(1,2);
         VaComm1.WriteText(tmpregel2);
       end;
-      if configarray[98] = '1' then begin
+      if config.isHD then begin
       tmpregel2:=StringReplace(tmpregel2,'°',chr(0),[rfReplaceAll]);
       tmpregel2:=StringReplace(tmpregel2,'ž',chr(1),[rfReplaceAll]);
       tmpregel2:=StringReplace(tmpregel2,chr(131),chr(2),[rfReplaceAll]);
@@ -3227,10 +3052,10 @@ if regel2scroll=2 then begin
       tmpregel2:=StringReplace(tmpregel2,chr(135),chr(6),[rfReplaceAll]);
       tmpregel2:=StringReplace(tmpregel2,chr(136),chr(7),[rfReplaceAll]);
         poort1.setcursor(1, 2);
-        Application.ProcessMessages;
+        //Application.ProcessMessages;
         poort1.writestring(tmpregel2);
       end;
-      if configarray[98] = '3' then begin
+      if config.isCF then begin
       tmpregel2:=StringReplace(tmpregel2,'°',chr(128),[rfReplaceAll]);
       tmpregel2:=StringReplace(tmpregel2,'ž',chr(129),[rfReplaceAll]);
       tmpregel2:=StringReplace(tmpregel2,chr(131),chr(130),[rfReplaceAll]);
@@ -3253,9 +3078,9 @@ end;
 if regel2scroll=3 then begin
   panel3.caption:=StringReplace(scroll(regelz[3],3,-1),'&','&&',[rfReplaceAll]);
   if (parameter1 <> '-nolcd') and (parameter2 <> '-nolcd') and (parameter3 <> '-nolcd') then begin
-    tmpregel3:=copy(panel3.caption + '                                        ',1,maxlength-1);
-    Application.ProcessMessages;
-      if configarray[98] = '2' then begin
+    tmpregel3:=copy(panel3.caption + '                                        ',1,config.width-1);
+    //Application.ProcessMessages;
+      if config.isMO then begin
       tmpregel3:=StringReplace(tmpregel3,'°',chr(0),[rfReplaceAll]);
       tmpregel3:=StringReplace(tmpregel3,'ž',chr(1),[rfReplaceAll]);
       tmpregel3:=StringReplace(tmpregel3,chr(131),chr(2),[rfReplaceAll]);
@@ -3267,7 +3092,7 @@ if regel2scroll=3 then begin
         setpos(1,3);
         VaComm1.WriteText(tmpregel3);
       end;
-      if configarray[98] = '1' then begin
+      if config.isHD then begin
       tmpregel3:=StringReplace(tmpregel3,'°',chr(0),[rfReplaceAll]);
       tmpregel3:=StringReplace(tmpregel3,'ž',chr(1),[rfReplaceAll]);
       tmpregel3:=StringReplace(tmpregel3,chr(131),chr(2),[rfReplaceAll]);
@@ -3277,10 +3102,10 @@ if regel2scroll=3 then begin
       tmpregel3:=StringReplace(tmpregel3,chr(135),chr(6),[rfReplaceAll]);
       tmpregel3:=StringReplace(tmpregel3,chr(136),chr(7),[rfReplaceAll]);
         poort1.setcursor(1, 3);
-        Application.ProcessMessages;
+        //Application.ProcessMessages;
         poort1.writestring(tmpregel3);
       end;
-      if configarray[98] = '3' then begin
+      if config.isCF then begin
       tmpregel3:=StringReplace(tmpregel3,'°',chr(128),[rfReplaceAll]);
       tmpregel3:=StringReplace(tmpregel3,'ž',chr(129),[rfReplaceAll]);
       tmpregel3:=StringReplace(tmpregel3,chr(131),chr(130),[rfReplaceAll]);
@@ -3303,9 +3128,9 @@ end;
 if regel2scroll=4 then begin
   panel4.caption:=StringReplace(scroll(regelz[4],4,-1),'&','&&',[rfReplaceAll]);
   if (parameter1 <> '-nolcd') and (parameter2 <> '-nolcd') and (parameter3 <> '-nolcd') then begin
-    tmpregel4:=copy(panel4.caption + '                                        ',1,maxlength-1);
-    Application.ProcessMessages;
-    if configarray[98] = '2' then begin
+    tmpregel4:=copy(panel4.caption + '                                        ',1,config.width-1);
+    //Application.ProcessMessages;
+    if config.isMO then begin
       tmpregel4:=StringReplace(tmpregel4,'°',chr(0),[rfReplaceAll]);
       tmpregel4:=StringReplace(tmpregel4,'ž',chr(1),[rfReplaceAll]);
       tmpregel4:=StringReplace(tmpregel4,chr(131),chr(2),[rfReplaceAll]);
@@ -3317,7 +3142,7 @@ if regel2scroll=4 then begin
       setpos(1,4);
       VaComm1.WriteText(tmpregel4);
     end;
-    if configarray[98] = '1' then begin
+    if config.isHD then begin
       tmpregel4:=StringReplace(tmpregel4,'°',chr(0),[rfReplaceAll]);
       tmpregel4:=StringReplace(tmpregel4,'ž',chr(1),[rfReplaceAll]);
       tmpregel4:=StringReplace(tmpregel4,chr(131),chr(2),[rfReplaceAll]);
@@ -3327,10 +3152,10 @@ if regel2scroll=4 then begin
       tmpregel4:=StringReplace(tmpregel4,chr(135),chr(6),[rfReplaceAll]);
       tmpregel4:=StringReplace(tmpregel4,chr(136),chr(7),[rfReplaceAll]);
       poort1.setcursor(1, 4);
-      Application.ProcessMessages;
+      //Application.ProcessMessages;
       poort1.writestring(tmpregel4);
     end;
-    if configarray[98] = '3' then begin
+    if config.isCF then begin
       tmpregel4:=StringReplace(tmpregel4,'°',chr(128),[rfReplaceAll]);
       tmpregel4:=StringReplace(tmpregel4,'ž',chr(129),[rfReplaceAll]);
       tmpregel4:=StringReplace(tmpregel4,chr(131),chr(130),[rfReplaceAll]);
@@ -3365,47 +3190,57 @@ procedure TForm1.Timer6Timer(Sender: TObject);
 var
   letter:integer;
   letter2:array [67..90] of integer;
+  x:integer;
   bestand:textfile;
   koez,hd,mbm,teller:integer;
   regel:string;
-  cpuinfo:tcpuinfo;
+{  cpuinfo:tcpuinfo;    }
+  z, y: Integer;
+  screenline: String;
 
 begin
-  timer6.Interval:=StrToInt(copy(configarray[86],2,length(configarray[86])))*1000;
-hd:=0;
-mbm:=0;
-koez:=0;
+  timer6.Interval:=config.mbmRefresh*1000;
+  hd:=0;
+  mbm:=0;
+  koez:=0;
 
-for teller:= 1 to 80 do begin
-  if (pos('$Fan',configarray[teller+3]) <> 0) and (copy(configarray[teller+3],pos('¿',configarray[teller+3])+1,1)='1') then mbm:=1;
-  if (pos('$Volt',configarray[teller+3]) <> 0) and (copy(configarray[teller+3],pos('¿',configarray[teller+3])+1,1)='1') then mbm:=1;
-  if (pos('$Temp',configarray[teller+3]) <> 0) and (copy(configarray[teller+3],pos('¿',configarray[teller+3])+1,1)='1') then mbm:=1;
-  if (pos('$HD', configarray[teller+3]) <> 0) and (copy(configarray[teller+3],pos('¿',configarray[teller+3])+1,1)='1') then hd:=1;
-  if (pos('$Dnet', configarray[teller+3]) <> 0) and (copy(configarray[teller+3],pos('¿',configarray[teller+3])+1,1)='1') then koez:=1;
-end;
+  for z:= 1 to 20 do begin
+    for y:= 1 to 4 do begin
+      if (config.screen[z][y].enabled) then begin
+        screenline:=config.screen[z][y].text;
+        if (pos('$Fan',screenline) <> 0) then mbm:=1;
+        if (pos('$Volt',screenline) <> 0) then mbm:=1;
+        if (pos('$Temp',screenline) <> 0) then mbm:=1;
+        if (pos('$HD', screenline) <> 0) then hd:=1;
+        if (pos('$Dnet', screenline) <> 0) then koez:=1;
+      end;
+    end;
+  end;
 
 
-STComputername:=system1.Computername;
-STUsername:=system1.Username;
+  STComputername:=system1.Computername;
+  STUsername:=system1.Username;
 
-    STMemfree:=intToStr(round(system1.availPhysmemory / 1024 / 1023.5));
-    STMemTotal:=intToSTr(round(system1.totalPhysmemory / 1024 /1023));
-    STPageTotal:=intToSTr(round(system1.totalPageFile / 1024 /1024));
-    STPageFree:=intToSTr(round(system1.AvailPageFile / 1024 /1024));
+  STMemfree:=intToStr(round(system1.availPhysmemory / 1024 / 1023.5));
+  STMemTotal:=intToSTr(round(system1.totalPhysmemory / 1024 /1023));
+  STPageTotal:=intToSTr(round(system1.totalPageFile / 1024 /1024));
+  STPageFree:=intToSTr(round(system1.AvailPageFile / 1024 /1024));
 
 // HD space!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 if hd=1 then begin
   for letter:= 67 to 90 do
     letter2[letter]:=0;
-  for teller:= 1 to 80 do begin
-    regel:=configarray[teller+3];
-    while pos('$HD',regel) <> 0 do begin
-      try
-        regel:=copy(regel,pos('$HD',regel),length(regel));
-        letter2[ord(upcase(copy(regel,pos('(',regel)+1,1)[1]))]:=1;
-        regel:=stringreplace(regel,'$HD','',[]);
-      except
-        regel:=stringreplace(regel,'$HD','',[]);
+  for z:= 1 to 20 do begin
+    for y:= 1 to 4 do begin
+      screenline:=config.screen[z][y].text;
+      while pos('$HD',screenline) <> 0 do begin
+        try
+          screenline:=copy(screenline,pos('$HD',screenline),length(screenline));
+          letter2[ord(upcase(copy(screenline,pos('(',screenline)+1,1)[1]))]:=1;
+          screenline:=stringreplace(screenline,'$HD','',[]);
+        except
+          screenline:=stringreplace(screenline,'$HD','',[]);
+        end;
       end;
     end;
   end;
@@ -3424,8 +3259,7 @@ end;
 
 //cputype!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 try
-system1.GetCPUInfo(CPUinfo);
-STCPUType:=cpuInfo.VendorIDString+' '+cxGetProcessorName(0);
+STCPUType:=cxCpu[0].Name.AsString;
 except
 end;
 
@@ -3443,8 +3277,8 @@ end;
 if koez=1 then begin
   x:=0;
   koeregel:='file not found';
-  if FileExists(configarray[88])=true then begin
-    assignfile(bestand,configarray[88]);
+  if FileExists(config.distLog)=true then begin
+    assignfile(bestand,config.distLog);
     reset (bestand);
     while not eof(bestand) do begin
       readln (bestand);
@@ -3503,10 +3337,6 @@ begin
 end;
 
 procedure TForm1.FormClose(Sender: TObject; var Action: TCloseAction);
-var
-  ECode:DWORD;
-//  errorr:integer;
-
 begin
   try
     while timer1.enabled=true do timer1.enabled:=false;
@@ -3525,7 +3355,7 @@ begin
     if pop3threadisrunning=true then pop3thread.Terminate;
   except
   end;
-  if configarray[98] = '1' then begin
+  if config.isHD then begin
     try
       poort1.clear;
     except end;
@@ -3533,7 +3363,7 @@ begin
       poort1.Free;
     except end;
   end;
-  if configarray[98] = '2' then begin
+  if config.isMO then begin
     try
       try
         VaComm1.WriteChar(chr($0FE));  //clear screen
@@ -3567,7 +3397,7 @@ begin
 
         VaComm1.WriteChar(chr($0FE));  //clear screen
         VaComm1.WriteChar('X');
-        application.ProcessMessages;
+        //application.ProcessMessages;
       finally
         sleep(500);
         Vacomm1.close;
@@ -3577,7 +3407,7 @@ begin
     end;
   end;
 
-  if configarray[98] = '3' then begin
+  if config.isCF then begin
     try
       VaComm2.WriteChar(chr(14));
       VaComm2.WriteChar(chr(0));
@@ -3593,83 +3423,86 @@ procedure TForm1.Timer8Timer(Sender: TObject);
 //GAMESTATS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 var
   tempregel,tempregel2,tempregel4,regel:string;
-  tempregel1, tempregel3:array [1..80] of string;
-  teller,teller2,teller3:integer;
-  eerste, tweede:integer;
+  tempregel1:array [1..80] of String;
+  tempregel3:array [1..20] of array [1..4] of string;
+  teller,teller2:integer;
   bestand2,bestand:textfile;
+  z, y:Integer;
+  screenline: String;
 
 begin
-  timer8.Interval:=StrToInt(copy(configarray[85],pos('¿', configarray[85])+1,length(configarray[85])))*60000;
+  timer8.Interval:=config.gameRefresh*60000;
 
   assignfile(bestand,extractfilepath(application.exename)+'servers.cfg');
   reset (bestand);
-  for teller3:=1 to 80 do begin
-    readln(bestand, tempregel3[teller3]);
-    application.ProcessMessages;
+  for z:=1 to 20 do begin
+    for y:=1 to 4 do begin
+      readln(bestand, tempregel3[z,y]);
+    end;
+    //application.ProcessMessages;
   end;
   closefile(bestand);
-  for teller3:=1 to 80 do begin
-    application.ProcessMessages;
-    if ((pos('$Unreal', configarray[teller3+3]) <> 0) or (pos('$QuakeIII', configarray[teller3+3]) <> 0) or (pos('$QuakeII', configarray[teller3+3]) <> 0) or (pos('$Half-life', configarray[teller3+3]) <> 0)) and (copy(configarray[teller3+3],pos('¿',configarray[teller3+3])+1,1)='1') then begin
-      try
-        if pos('$Half-life', configarray[teller3+3]) <> 0 then srvr:='-hls';
-        if pos('$QuakeII', configarray[teller3+3]) <> 0 then srvr:='-q2s';
-        if pos('$QuakeIII', configarray[teller3+3]) <> 0 then srvr:='-q3s';
-        if pos('$Unreal', configarray[teller3+3]) <> 0 then srvr:='-uns';
-        application.ProcessMessages;
-        winexec(PChar(extractfilepath(application.exename) + 'qstat.exe -P -of txt'+intToStr(teller3)+'.txt -sort F '+ srvr +' '+ tempregel3[teller3]),sw_hide);
 
-        tempregel:='';
-        application.ProcessMessages;
-        sleep(1000);
-        application.ProcessMessages;
-
-        assignfile (bestand2,extractfilepath(application.exename)+'txt'+IntToStr(teller3)+'.txt');
-        oldfilemode:=filemode;
-        filemode:=0;
-        reset (bestand2);
+  for z:=1 to 20 do begin
+    for y:=1 to 4 do begin
+      //application.ProcessMessages;
+      screenline:=config.screen[z][y].text;
+      if ((pos('$Unreal', screenline) <> 0) or (pos('$QuakeIII', screenline) <> 0) or (pos('$QuakeII', screenline) <> 0) or (pos('$Half-life', screenline) <> 0)) and (copy(screenline,pos('¿',screenline)+1,1)='1') then begin
         teller:=1;
-        while not eof(bestand2) do begin
-          readln (bestand2, tempregel1[teller]);
-          teller:=teller+1;
+        try
+          if pos('$Half-life', screenline) <> 0 then srvr:='-hls';
+          if pos('$QuakeII', screenline) <> 0 then srvr:='-q2s';
+          if pos('$QuakeIII', screenline) <> 0 then srvr:='-q3s';
+          if pos('$Unreal', screenline) <> 0 then srvr:='-uns';
+          //application.ProcessMessages;
+          winexec(PChar(extractfilepath(application.exename) + 'qstat.exe -P -of txt'+intToStr(z)+'-'+intToStr(y)+'.txt -sort F '+ srvr +' '+ tempregel3[z,y]),sw_hide);
+
+          tempregel:='';
+          //application.ProcessMessages;
+          sleep(1000);
+          //application.ProcessMessages;
+
+          assignfile (bestand2,extractfilepath(application.exename)+'txt'+IntToStr(z)+'-'+IntToStr(y)+'.txt');
+          reset (bestand2);
+          teller:=1;
+          while (not eof(bestand2)) and (teller<80) do begin
+            readln (bestand2, tempregel1[teller]);
+            teller:=teller+1;
+          end;
+          closefile(bestand2);
+        except
+          try CloseFile(bestand2); except end;
         end;
-        closefile(bestand2);
-        filemode:=oldfilemode;
-      except
-        try CloseFile(bestand2); except end;
-      end;
 
-      eerste:=(teller3+3) div 4;
-      tweede:=teller3 mod 4;
-      if tweede=0 then tweede:=4;
-      if (pos('$Unreal1', configarray[teller3+3]) <> 0) or (pos('$QuakeIII1', configarray[teller3+3]) <> 0) or (pos('$QuakeII1', configarray[teller3+3]) <> 0) or (pos('$Half-life1', configarray[teller3+3]) <> 0) then begin
-        qstatreg1[eerste,tweede]:=copy(tempregel1[2],pos(' / ',tempregel1[2])+3,length(tempregel1[2]));
-        qstatreg1[eerste,tweede]:=stripspaces(copy(qstatreg1[eerste,tweede],pos(' ',qstatreg1[eerste,tweede])+1,length(qstatreg1[eerste,tweede])));
-      end;
-
-      if (pos('$Unreal2', configarray[teller3+3]) <> 0) or (pos('$QuakeIII2', configarray[teller3+3]) <> 0) or (pos('$QuakeII2', configarray[teller3+3]) <> 0) or (pos('$Half-life2', configarray[teller3+3]) <> 0) then begin
-        qstatreg2[eerste,tweede]:=copy(tempregel1[2],pos(':',tempregel1[2]),length(tempregel1[2]));
-        qstatreg2[eerste,tweede]:=copy(qstatreg2[eerste,tweede],pos('/',qstatreg2[eerste,tweede])+4,length(qstatreg2[eerste,tweede]));
-        qstatreg2[eerste,tweede]:=copy(qstatreg2[eerste,tweede],1,pos('/',qstatreg2[eerste,tweede])-5);
-        qstatreg2[eerste,tweede]:=stripspaces(copy(qstatreg2[eerste,tweede],pos(' ',qstatreg2[eerste,tweede])+1,length(qstatreg2[eerste,tweede])));
-      end;
-
-      if (pos('$Unreal3', configarray[teller3+3]) <> 0) or (pos('$QuakeIII3', configarray[teller3+3]) <> 0) or (pos('$QuakeII3', configarray[teller3+3]) <> 0) or (pos('$Half-life3', configarray[teller3+3]) <> 0) then begin
-        qstatreg3[eerste,tweede]:=stripspaces(copy(tempregel1[2],pos(' ',tempregel1[2]),length(tempregel1[2])));
-        qstatreg3[eerste,tweede]:=stripspaces(copy(qstatreg3[eerste,tweede],1,pos('/',qstatreg3[eerste,tweede])+3));
-      end;
-
-      if (pos('$Unreal4', configarray[teller3+3]) <> 0) or (pos('$QuakeIII4', configarray[teller3+3]) <> 0) or (pos('$QuakeII4', configarray[teller3+3]) <> 0) or (pos('$Half-life4', configarray[teller3+3]) <> 0) then begin
-        qstatreg4[eerste,tweede]:='';
-        for teller2:=1 to teller-3 do begin
-          regel:=stripspaces(tempregel1[teller2+2]);
-          tempregel2:=stripspaces(copy(copy(regel,pos('s ', regel)+1,length(regel)),pos('s ', regel)+2,length(regel)));
-          tempregel4:=stripspaces(copy(regel,2,pos(' frags ',regel)-1));
-          regel:=tempregel2 + ': '+ tempregel4 + ', ';
-          qstatreg4[eerste,tweede]:=qstatreg4[eerste,tweede]+regel;
-          application.ProcessMessages;
+        if (pos('$Unreal1', screenline) <> 0) or (pos('$QuakeIII1', screenline) <> 0) or (pos('$QuakeII1', screenline) <> 0) or (pos('$Half-life1', screenline) <> 0) then begin
+          qstatreg1[z,y]:=copy(tempregel1[2],pos(' / ',tempregel1[2])+3,length(tempregel1[2]));
+          qstatreg1[z,y]:=stripspaces(copy(qstatreg1[z,y],pos(' ',qstatreg1[z,y])+1,length(qstatreg1[z,y])));
         end;
-        application.ProcessMessages;
+
+        if (pos('$Unreal2', screenline) <> 0) or (pos('$QuakeIII2', screenline) <> 0) or (pos('$QuakeII2', screenline) <> 0) or (pos('$Half-life2', screenline) <> 0) then begin
+          qstatreg2[z,y]:=copy(tempregel1[2],pos(':',tempregel1[2]),length(tempregel1[2]));
+          qstatreg2[z,y]:=copy(qstatreg2[z,y],pos('/',qstatreg2[z,y])+4,length(qstatreg2[z,y]));
+          qstatreg2[z,y]:=copy(qstatreg2[z,y],1,pos('/',qstatreg2[z,y])-5);
+          qstatreg2[z,y]:=stripspaces(copy(qstatreg2[z,y],pos(' ',qstatreg2[z,y])+1,length(qstatreg2[z,y])));
+        end;
+
+        if (pos('$Unreal3', screenline) <> 0) or (pos('$QuakeIII3', screenline) <> 0) or (pos('$QuakeII3', screenline) <> 0) or (pos('$Half-life3', screenline) <> 0) then begin
+          qstatreg3[z,y]:=stripspaces(copy(tempregel1[2],pos(' ',tempregel1[2]),length(tempregel1[2])));
+          qstatreg3[z,y]:=stripspaces(copy(qstatreg3[z,y],1,pos('/',qstatreg3[z,y])+3));
+        end;
+
+        if (pos('$Unreal4', screenline) <> 0) or (pos('$QuakeIII4', screenline) <> 0) or (pos('$QuakeII4', screenline) <> 0) or (pos('$Half-life4', screenline) <> 0) then begin
+          qstatreg4[z,y]:='';
+          for teller2:=1 to teller-3 do begin
+            regel:=stripspaces(tempregel1[teller2+2]);
+            tempregel2:=stripspaces(copy(copy(regel,pos('s ', regel)+1,length(regel)),pos('s ', regel)+2,length(regel)));
+            tempregel4:=stripspaces(copy(regel,2,pos(' frags ',regel)-1));
+            regel:=tempregel2 + ': '+ tempregel4 + ', ';
+            qstatreg4[z,y]:=qstatreg4[z,y]+regel;
+            //application.ProcessMessages;
+          end;
+          //application.ProcessMessages;
+        end;
       end;
     end;
   end;
@@ -3689,7 +3522,7 @@ var
   temp1,temp2:string;
 
 begin
-if configarray[98] = '2' then begin
+if config.isMO then begin
   VaComm1.WriteChar(chr($0FE));
   VaComm1.WriteChar(chr($026));
   for teller:=1 to 65000 do begin end;
@@ -3699,7 +3532,7 @@ if configarray[98] = '2' then begin
   end;
 
 
-{  if (copy(configarray[92],2,1)='1') then begin
+{  if (config.mx3Usb) then begin
     for teller:=1 to 3 do begin
       VaComm1.WriteChar(chr($FE));
       VaComm1.WriteChar(chr($C1));
@@ -3715,7 +3548,7 @@ if configarray[98] = '2' then begin
 }
 end;
 
-if form2.Visible=false then begin
+if (form2<>nil) and (form2.Visible=false) then begin
   for teller := 1 to totalactions do begin
     if actionsarray[teller, 2] = '0' then begin
       try
@@ -3866,7 +3699,7 @@ if form2.Visible=false then begin
         temp1:=copy(todo[teller],pos('(',todo[teller])+1,1);
         if temp1 = '1' then backlight := 0;
         if temp1 = '0' then backlight := 1;
-        if (temp1 = '1') or (temp1 = '0') then backlit(self);
+        if (temp1 = '1') or (temp1 = '0') then backlit();
       end;
     end;
     if pos('2Backlight(',todo[teller])<>0 then begin
@@ -3875,13 +3708,13 @@ if form2.Visible=false then begin
         temp1:=copy(todo[teller],pos('(',todo[teller])+1,1);
         if temp1 = '0' then backlight := 0;
         if temp1 = '1' then backlight := 1;
-        if (temp1 = '1') or (temp1 = '0') then backlit(self);
+        if (temp1 = '1') or (temp1 = '0') then backlit();
       end;
     end;
     if pos('1BacklightToggle',todo[teller])<>0 then begin
       if didbltoggle[teller]=false then begin
         didbltoggle[teller]:=true;
-        backlit(self);
+        backlit();
       end;
     end;
     if pos('2BacklightToggle',todo[teller])<>0 then begin
@@ -4000,7 +3833,7 @@ if form2.Visible=false then begin
     if pos('1GPO(',todo[teller])<>0 then begin
       if didgpo[teller]=false then begin
         didgpo[teller]:=true;
-        if configarray[98] = '2' then begin
+        if config.isMO then begin
           try
             temp1:=copy(todo[teller],pos('(',todo[teller])+1,pos(',',todo[teller])-pos('(',todo[teller])-1);
             temp2:=copy(todo[teller],pos(',',todo[teller])+1,pos(')',todo[teller])-pos(',',todo[teller])-1);
@@ -4012,7 +3845,7 @@ if form2.Visible=false then begin
     if pos('2GPO(',todo[teller])<>0 then begin
       if didgpo[teller]=true then begin
         didgpo[teller]:=false;
-        if configarray[98] = '2' then begin
+        if config.isMO then begin
           try
             temp1:=copy(todo[teller],pos('(',todo[teller])+1,pos(',',todo[teller])-pos('(',todo[teller])-1);
             temp2:=copy(todo[teller],pos(',',todo[teller])+1,pos(')',todo[teller])-pos(',',todo[teller])-1);
@@ -4025,7 +3858,7 @@ if form2.Visible=false then begin
     if pos('1GPOFlash(',todo[teller])<>0 then begin
       if didGPOFlash[teller]=false then begin
         didGPOFlash[teller]:=true;
-        if configarray[98] = '2' then begin
+        if config.isMO then begin
           try
             whatgpo:=StrToInt(copy(todo[teller],pos('(',todo[teller])+1,pos(',',todo[teller])-pos('(',todo[teller])-1));
             temp2:=copy(todo[teller],pos(',',todo[teller])+1,pos(')',todo[teller])-pos(',',todo[teller])-1);
@@ -4079,34 +3912,37 @@ end;
 procedure TForm1.Timer9Timer(Sender: TObject);
 //MAILS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 begin
-  timer9.Interval:=StrToInt(copy(configarray[89],1,pos('¿',configarray[89])-1))*60000;
+  timer9.Interval:=config.emailPeriod*60000;
   if pop3threadisrunning=false then Tpop3Thread.Create(false);
 end;
 
 procedure TForm1.BacklightOn1Click(Sender: TObject);
 begin
-  backlit(self);
+  backlit();
 end;
 
 procedure TForm1.Timer10Timer(Sender: TObject);
 //NETWORKS STATS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 var
-  teller, netwerk:integer;
+  netwerk:integer;
   Size: ULONG;
   IntfTable: PMibIfTable;
   I: Integer;
+  z,y: Integer;
   MibRow: TMibIfRow;
   phoste: PHostEnt;
   Buffer: array [0..100] of char;
   WSAData: TWSADATA;
 
 begin
-netwerk:=0;
-timer10.interval:=1000;
+  netwerk:=0;
+  timer10.interval:=1000;
 
-for teller:= 1 to 80 do begin
-  if (pos('$Net', configarray[teller+3]) <> 0) and (copy(configarray[teller+3],pos('¿',configarray[teller+3])+1,1)='1') then netwerk:=1;
-end;
+  for z:= 1 to 20 do begin
+    for y:= 1 to 4 do begin
+      if (config.screen[z][y].enabled) and (pos('$Net', config.screen[z][y].text) <> 0) then netwerk:=1;
+    end;
+  end;
 
 if netwerk=1 then begin
   if WSAStartup($0101, WSAData) <> 0 then exit;
@@ -4128,23 +3964,21 @@ if netwerk=1 then begin
         // Ignore everything except ethernet cards
         if MibRow.dwType <> MIB_IF_TYPE_ETHERNET then Continue;
 
-        if nettotalupold[I]= '' then nettotalupold[I]:='0';
-        if nettotaldownold[I]= '' then nettotaldownold[I]:='0';
-        try netadaptername[I]:=stripspaces(PChar(@MibRow.bDescr[0])); except end;
-        try nettotaldown[I]:=floatToStr(MibRow.dwInOctets); except end;
-        try nettotalup[I]:=floatToStr(MibRow.dwOutOctets); except end;
-        try netunicastdown[I]:=floatToStr(MibRow.dwInUcastPkts); except end;
-        try netunicastup[I]:=floatToStr(MibRow.dwOutUcastPkts); except end;
-        try netnunicastDown[I]:=floatToStr(MibRow.dwInNUcastPkts); except end;
-        try netnunicastUp[I]:=floatToStr(MibRow.dwOutNUcastPkts); except end;
-        try netDiscardsDown[I]:=floatToStr(MibRow.dwInDiscards); except end;
-        try netDiscardsUp[I]:=floatToStr(MibRow.dwOutDiscards); except end;
-        try netErrorsDown[I]:=floatToStr(MibRow.dwInErrors); except end;
-        try netErrorsUp[I]:=floatToStr(MibRow.dwOutErrors); except end;
-        netSpeedDownK[I]:=floatToStr(round((StrToFloat(nettotaldown[I])-StrToFloat(nettotaldownold[I]))/1024*10)/10);
-        netSpeedUpK[I]:=floatToStr(round((StrToFloat(nettotalup[I])-StrToFloat(nettotalupold[I]))/1024*10)/10);
-        netSpeedDownM[I]:=floatToStr(round((StrToFloat(nettotaldown[I])-StrToFloat(nettotaldownold[I]))/1024/1024*10)/10);
-        netSpeedUpM[I]:=floatToStr(round((StrToFloat(nettotalup[I])-StrToFloat(nettotalupold[I]))/1024/1024*10)/10);
+        netadaptername[I]:=stripspaces(PChar(@MibRow.bDescr[0]));
+        nettotaldown[I]:=MibRow.dwInOctets;
+        nettotalup[I]:=MibRow.dwOutOctets;
+        netunicastdown[I]:=MibRow.dwInUcastPkts;
+        netunicastup[I]:=MibRow.dwOutUcastPkts;
+        netnunicastDown[I]:=MibRow.dwInNUcastPkts;
+        netnunicastUp[I]:=MibRow.dwOutNUcastPkts;
+        netDiscardsDown[I]:=MibRow.dwInDiscards;
+        netDiscardsUp[I]:=MibRow.dwOutDiscards;
+        netErrorsDown[I]:=MibRow.dwInErrors;
+        netErrorsUp[I]:=MibRow.dwOutErrors;
+        netSpeedDownK[I]:=round((nettotaldown[I]-nettotaldownold[I])/1024*10)/10;
+        netSpeedUpK[I]:=round((nettotalup[I]-nettotalupold[I])/1024*10)/10;
+        netSpeedDownM[I]:=round((nettotaldown[I]-nettotaldownold[I])/1024/1024*10)/10;
+        netSpeedUpM[I]:=round((nettotalup[I]-nettotalupold[I])/1024/1024*10)/10;
         nettotaldownold[I]:=nettotaldown[I];
         nettotalupold[I]:=nettotalup[I];
       end;
@@ -4159,10 +3993,10 @@ procedure TForm1.Timer7Timer(Sender: TObject);
 //NEXT SCREEN!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 Label opnieuwscreen;
 var
-  xx, x,teller:integer;
-  regel:string;
-  bestand:textfile;
+  xx, x:integer;
   welkescreenoud:integer;
+  y: Integer;
+  ascreen: TScreenLine;
   
 begin
   totaldlls:=0;
@@ -4172,46 +4006,49 @@ begin
 opnieuwscreen:
   x:=x+1;
   xx:=xx+1;
-  if copy(configarray[84],1,1) = '1' then begin
+  if config.randomScreens then begin
     welkescreen:=round(random(20)+1);
     if welkescreen>20 then welkescreen:=20;
     if welkescreen<1 then welkescreen:=1;
-    regel:= configarray[(welkescreen-1)*4+4];
   end;
-  if copy(configarray[84],1,1) = '0' then begin
+  if not config.randomScreens then begin
     welkescreen:=welkescreen+aantalscreensheenweer;
-    if welkescreen=21 then welkescreen:=1;
-    if welkescreen=0 then welkescreen:=20;
-    regel:= configarray[(welkescreen-1)*4+4];
+    if welkescreen>20 then welkescreen:=1;
+    if welkescreen<1 then welkescreen:=20;
   end;
+
   if xx> 22 then begin
     activetheme:=activetheme+1;
     xx:=0;
   end;
-  if (((x> 242) and (copy(configarray[84],1,1)='0')) or ((x> 1000) and (copy(configarray[84],1,1)='1'))) then begin
+  if (((x> 242) and (not config.randomScreens))
+        or ((x> 1000) and (config.randomScreens))) then begin
+
+    // It seems that we are in a endless loop because no screen is able to be
+    // displayed.  Force screen 1 to be displayed.
     x:=0;
-    configarray[4]:=copy(configarray[4],1,pos('¿',configarray[4]))+'100'+copy(configarray[4],pos('¿',configarray[4])+4,length(configarray[4]));
-    configarray[5]:=copy(configarray[5],1,pos('¿',configarray[5]))+'100'+copy(configarray[5],pos('¿',configarray[5])+4,length(configarray[5]));
-    configarray[6]:=copy(configarray[6],1,pos('¿',configarray[6]))+'100'+copy(configarray[6],pos('¿',configarray[6])+4,length(configarray[6]));
-    configarray[7]:=copy(configarray[7],1,pos('¿',configarray[7]))+'100'+copy(configarray[7],pos('¿',configarray[7])+4,length(configarray[7]));
+
+    for y:= 1 to 4 do begin
+      config.screen[1][y].enabled:=True;
+      config.screen[1][y].skip:=0;
+      config.screen[1][y].noscroll:=False;
+    end;
+
     welkescreen:=1;
-    assignfile(bestand,extractfilepath(application.exename)+'config.cfg');
-    rewrite(bestand);
-    for teller:= 1 to 100 do writeln(bestand,configarray[teller]);
-    regel:=configarray[4];
-    closefile(bestand);
     activetheme:=0;
   end;
 
-  if (copy(regel,pos('¿',regel)+5,1) <> IntToStr(activetheme)) then goto opnieuwscreen;
-  if (copy(regel,pos('¿',regel)+1,1) = '0') then goto opnieuwscreen;
-  if (copy(regel,pos('¿',regel)+2,1) = '1') and (winampctrl1.GetSongInfo(1) = 0) then goto opnieuwscreen;
-  if (copy(regel,pos('¿',regel)+2,1) = '2') and (winampctrl1.GetSongInfo(1) <> 0) then goto opnieuwscreen;
-  if (copy(regel,pos('¿',regel)+2,1) = '3') and (mbmactive=false) then goto opnieuwscreen;
-  if (copy(regel,pos('¿',regel)+2,1) = '4') and (mbmactive=true) then goto opnieuwscreen;
-  if (copy(regel,pos('¿',regel)+2,1) = '7') and (isconnected=false) then goto opnieuwscreen;
-  if (copy(regel,pos('¿',regel)+2,1) = '8') and (isconnected=true) then goto opnieuwscreen;
-  if (copy(regel,pos('¿',regel)+2,1) = '5') then begin
+  ascreen:= config.screen[welkescreen][1];
+
+  if (ascreen.theme <> activetheme) then goto opnieuwscreen;
+  if (not ascreen.enabled) then goto opnieuwscreen;
+  if (ascreen.skip = 1) and (winampctrl1.GetSongInfo(1) = 0) then goto opnieuwscreen;
+  if (ascreen.skip = 2) and (winampctrl1.GetSongInfo(1) <> 0) then goto opnieuwscreen;
+  if (ascreen.skip = 3) and (not mbmactive) then goto opnieuwscreen;
+  if (ascreen.skip = 4) and (mbmactive) then goto opnieuwscreen;
+  if (ascreen.skip = 7) and (not isconnected) then goto opnieuwscreen;
+  if (ascreen.skip = 8) and (isconnected) then goto opnieuwscreen;
+  if (ascreen.skip = 5) then begin
     if ((mailregel1 = '') or (mailregel1 = '0')) and
        ((mailregel2 = '') or (mailregel2 = '0')) and
        ((mailregel3 = '') or (mailregel3 = '0')) and
@@ -4224,7 +4061,7 @@ opnieuwscreen:
        ((mailregel0 = '') or (mailregel0 = '0')) then
       goto opnieuwscreen;
   end;
-  if (copy(regel,pos('¿',regel)+2,1) = '6') then begin
+  if (ascreen.skip = 6) then begin
     if ((mailregel1 <> '') and (StrToInt(mailregel1) > 0)) or
        ((mailregel2 <> '') and (StrToInt(mailregel2) > 0)) or
        ((mailregel3 <> '') and (StrToInt(mailregel3) > 0)) or
@@ -4238,11 +4075,11 @@ opnieuwscreen:
       goto opnieuwscreen;
   end;
 
-  scrollline1:=StrToInt(copy(configarray[(welkescreen-1)*4+4],pos('¿',configarray[(welkescreen-1)*4+4])+3,1));
-  scrollline2:=StrToInt(copy(configarray[(welkescreen-1)*4+5],pos('¿',configarray[(welkescreen-1)*4+5])+3,1));
-  scrollline3:=StrToInt(copy(configarray[(welkescreen-1)*4+6],pos('¿',configarray[(welkescreen-1)*4+6])+3,1));
-  scrollline4:=StrToInt(copy(configarray[(welkescreen-1)*4+7],pos('¿',configarray[(welkescreen-1)*4+7])+3,1));
-  scrollline5:=0;
+  scrollline1:=config.screen[welkescreen][1].noscroll;
+  scrollline2:=config.screen[welkescreen][2].noscroll;
+  scrollline3:=config.screen[welkescreen][3].noscroll;
+  scrollline4:=config.screen[welkescreen][4].noscroll;
+  scrollline5:=false;
 
   if timertransIntervaltemp <> 0 then timertrans.Interval:=timertransIntervaltemp;
   if (welkescreenoud<>welkescreen) then timertrans.Enabled:=True;
@@ -4261,17 +4098,17 @@ opnieuwscreen:
     gokjesarray[4,x]:=false;
   end;
 
-  timer7.Interval:=StrToInt(copy(regel,pos('¿',regel)+9,length(regel)))*1000+timertransIntervaltemp;
+  timer7.Interval:=ascreen.showTime*1000+timertransIntervaltemp;
   aantalscreensheenweer:=1;
 
-  timertransIntervaltemp:=StrToInt(copy(regel,pos('¿',regel)+7,2))*100;
+  timertransIntervaltemp:=ascreen.interactionTime*100;
   transActietemp:=transActietemp2;
-  transActietemp2:=StrToInt(copy(regel,pos('¿',regel)+6,1));
+  transActietemp2:=ascreen.interaction;
 
-  if copy(regel,pos('¿',regel)+1,1)='0' then transActietemp2:=0;
+  if not ascreen.enabled then transActietemp2:=0;
   if transActietemp2=0 then timertransIntervaltemp:=1;
-  regel:=copy(configarray[3],1,pos('¿1',configarray[3])-1);
-  if (regel='12') or (regel='9') or (regel='5') then begin
+
+  if (config.width=40) then begin
     panel5.left:=135;
     panel5.width:=100;
     Panel5.Caption:='Theme:' + IntToStr(activetheme+1) + ' Screen:' + IntToStr(welkescreen);
@@ -4283,58 +4120,30 @@ opnieuwscreen:
 end;
 
 procedure TForm1.Timer11Timer(Sender: TObject);
-
-var
-  regel, regel2:string;
-
 begin
-  regel:=copy(configarray[3],1,pos('¿',configarray[3])-1);
-  if regel='1' then regel2:='10';
-  if regel='2' then regel2:='16';
-  if regel='3' then regel2:='20';
-  if regel='4' then regel2:='24';
-  if regel='5' then regel2:='40';
-  if regel='6' then regel2:='16';
-  if regel='7' then regel2:='20';
-  if regel='8' then regel2:='24';
-  if regel='9' then regel2:='40';
-  if regel='10' then regel2:='16';
-  if regel='11' then regel2:='20';
-  if regel='12' then regel2:='40';
-  maxlength:=strtoint(regel2);
+  poort1 := TParPort.Create($+config.parallelPort,config.width, config.height); //hex waarde v/d poort
+  poort1.setbacklight(true);
 
-      if regel='1' then regel2:='1';
-      if regel='2' then regel2:='1';
-      if regel='3' then regel2:='1';
-      if regel='4' then regel2:='1';
-      if regel='5' then regel2:='1';
-      if regel='6' then regel2:='2';
-      if regel='7' then regel2:='2';
-      if regel='8' then regel2:='2';
-      if regel='9' then regel2:='2';
-      if regel='10' then regel2:='4';
-      if regel='11' then regel2:='4';
-      if regel='12' then regel2:='4';
-      poort1 := TParPort.Create($+StrToInt(configarray[91]),maxlength, StrToInt(regel2)); //hex waarde v/d poort
-      poort1.setbacklight(true);
-      customchar('1,12,18,18,12,0,0,0,0');
-      customchar('2,31,31,31,31,31,31,31,31');
-      customchar('3,16,16,16,16,16,16,31,16');
-      customchar('4,28,28,28,28,28,28,31,28');
-      customchar('1,12,18,18,12,0,0,0,0');
-      customchar('2,31,31,31,31,31,31,31,31');
-      customchar('3,16,16,16,16,16,16,31,16');
-      customchar('4,28,28,28,28,28,28,31,28');
+  customchar('1,12,18,18,12,0,0,0,0');
+  customchar('2,31,31,31,31,31,31,31,31');
+  customchar('3,16,16,16,16,16,16,31,16');
+  customchar('4,28,28,28,28,28,28,31,28');
+  customchar('1,12,18,18,12,0,0,0,0');
+  customchar('2,31,31,31,31,31,31,31,31');
+  customchar('3,16,16,16,16,16,16,31,16');
+  customchar('4,28,28,28,28,28,28,31,28');
 
-      timer1.enabled:=true;
-      timer2.enabled:=true;
-      timer3.enabled:=true;
-      timer6.enabled:=true;
-      timer7.enabled:=true;
-      timer8.enabled:=true;
-      timer9.enabled:=true;
-      timer10.enabled:=true;
-      timer11.Enabled:=false;
+  timer1.enabled:=true;
+  timer2.enabled:=true;
+  timer3.enabled:=true;
+  timer6.enabled:=true;
+  timer7.enabled:=true;
+  timer8.enabled:=true;
+  timer9.enabled:=true;
+  timer10.enabled:=true;
+  timer11.Enabled:=false;
+  timer12.enabled:=true;
+  timer13.enabled:=true;
 end;
 
 procedure TForm1.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
@@ -4386,7 +4195,7 @@ begin
   if upcase(key)='C' then winampctrl1.Pause;
   if upcase(key)='V' then winampctrl1.Stop;
   if upcase(key)='B' then winampctrl1.Next;
-  if upcase(key)='N' then backlit(self);
+  if upcase(key)='N' then backlit();
   if upcase(key)='M' then freeze();
   if upcase(key)='K' then begin
     activetheme:=activetheme-1;
@@ -4633,14 +4442,15 @@ end;
 procedure THTTPThread.execute();
 var
   teller,teller2:integer;
-  templine:array[1..20] of string;
+  templine:array[1..20] of String;
+  versionregel: String;
 
 begin
   HTTPthreadisrunning:=true;
     if DoNewsUpdate1=1 then begin
     DoNewsUpdate1:=0;
     try
-     Application.ProcessMessages;
+     //Application.ProcessMessages;
      tnetregel:=form1.IDHTTP4.Get('http://aphrodite.tweakers.net/turbotracker.dsp');
     except
       if news1<4 then begin
@@ -4668,14 +4478,14 @@ begin
 
   if DoNewsUpdate2<>0 then begin
    try
-     Application.ProcessMessages;
+     //Application.ProcessMessages;
      if DoNewsUpdate2 = 1 then begin
        DoNewsUpdate2:=0;
        weerregel:=Form1.IDHTTP1.Get('http://www.knmi.nl/voorl/weer/weermain.html');
        weerregel:=copy(weerregel,pos('<p>',weerregel)+3,(700)-(pos('<p>',weerregel)+3));
        weerregel:=StringReplace(weerregel,'&amp','&',[rfReplaceAll]);
        for teller2:=1 to 10 do begin
-        Application.ProcessMessages;
+        //Application.ProcessMessages;
         templine[teller2]:=copy(weerregel,1,pos(chr(10),weerregel)-1)+' ';
         weerregel:=copy(weerregel,pos(chr(10),weerregel)+1,length(weerregel)-pos(chr(10),weerregel)+1);
        end;
@@ -4699,7 +4509,7 @@ begin
   if DoNewsUpdate3=1 then begin
     DoNewsUpdate3:=0;
       try
-       Application.ProcessMessages;
+       //Application.ProcessMessages;
        techregel:=Form1.IDHTTP2.Get('http://www.tomshardware.com/technews/index.html');
       except
         if news3<4 then begin
@@ -4727,7 +4537,7 @@ begin
   if DoNewsUpdate4=1 then begin
    DoNewsUpdate4:=0;
     try
-     Application.ProcessMessages;
+     //Application.ProcessMessages;
      aexregel:=Form1.IDHTTP3.Get('http://www.aex.nl/scripts/home2.asp?taal=nl');
     except
        if news4<4 then begin
@@ -4761,7 +4571,7 @@ begin
   if DoNewsUpdate5=1 then begin
    DoNewsUpdate5:=0;
    try
-     Application.ProcessMessages;
+     //Application.ProcessMessages;
      CNNregel:=Form1.IDHTTP5.Get('http://www.cnn.com/WORLD/');
     except
        if news5<4 then begin
@@ -4795,12 +4605,12 @@ begin
      end;
   end;
 
-  if (copy(configarray[86],1,1) = '1') and (DoNewsUpdate6=1) then begin
+  if (config.checkUpdates) and (DoNewsUpdate6=1) then begin
     DoNewsUpdate6:=0;
     try
-      Application.ProcessMessages;
+      //Application.ProcessMessages;
       versionregel:=Form1.IDHTTP6.Get('http://lcdsmartie.sourceforge.net/version.txt');
-      Application.ProcessMessages;
+      //Application.ProcessMessages;
     except
       versionregel:='';
     end;
@@ -4808,7 +4618,7 @@ begin
     versionregel:=StringReplace(versionregel,chr(13),'',[rfReplaceAll]);
     if copy(versionregel,1,1) = '5' then
       isconnected:=true;
-    if (length(versionregel) < 72) and (copy(versionregel,1,7) <> '5.2.0.2') and (versionregel <> '') then begin
+    if (length(versionregel) < 72) and (copy(versionregel,1,7) <> '5.3.0.0') and (versionregel <> '') then begin
       Form1.timer1.enabled:=false;
       Form1.timer2.enabled:=false;
       Form1.timer3.enabled:=false;
@@ -4836,8 +4646,8 @@ begin
   if DoNewsUpdate7=1 then begin
   DoNewsUpdate7:=0;
     try
-      Application.ProcessMessages;
-      Setireg1:=Form1.IDHTTP7.Get('http://setiathome.ssl.berkeley.edu/fcgi-bin/fcgi?email=' + copy(configarray[2],pos('¿',configarray[2])+1,length(configarray[2])) + '&cmd=user_stats_new');
+      //Application.ProcessMessages;
+      Setireg1:=Form1.IDHTTP7.Get('http://setiathome.ssl.berkeley.edu/fcgi-bin/fcgi?email=' + config.setiEmail + '&cmd=user_stats_new');
     except
       if news7<4 then begin
         news7:=news7+1;
@@ -4900,8 +4710,8 @@ begin
   if DoNewsUpdate9=1 then begin
     DoNewsUpdate9:=0;
     try
-      Application.ProcessMessages;
-      foldreg7:=Form1.IDHTTP9.Get('http://folding.stanford.edu/cgi-bin/userpage.detailed?name='+copy(configarray[85],1,pos('¿', configarray[85])-1));
+      //Application.ProcessMessages;
+      foldreg7:=Form1.IDHTTP9.Get('http://folding.stanford.edu/cgi-bin/userpage.detailed?name='+config.foldUsername);
     except
       if news9<4 then begin
         news9:=news9+1;
@@ -4948,7 +4758,7 @@ begin
   DoNewsUpdate8:=0;
     try
       weather2:=Form1.IDHTTP8.Get('http://www.weather.com/weather/print/'+locationnumber);
-      Application.ProcessMessages;
+      //Application.ProcessMessages;
 
       weather2:=StringReplace(weather2,chr(10),'',[rfReplaceAll]);
       weather2:=StringReplace(weather2,chr(13),'',[rfReplaceAll]);
@@ -4959,7 +4769,7 @@ begin
       weather2:=StringReplace(weather2,' %<','%<',[rfReplaceAll]);
 
       weather2:=copy(weather2,pos('<!-- if printable page, use code below -->',weather2),length(weather2));
-      application.ProcessMessages;
+      //application.ProcessMessages;
       weather2:=copy(weather2,pos('<!-- insert forecast -->',weather2)+24,length(weather2));
       templine[1]:=copy(weather2,1,pos('</TD>',weather2)-1);
       weather2:=copy(weather2,pos('<!-- insert high -->',weather2)+20,length(weather2));
@@ -4984,7 +4794,8 @@ end;
 procedure Tpop3Thread.execute();
 var
   mailz: array[1..10] of integer;
-  teller:integer;
+  z, y: Integer;
+  screenline: String;
 
 begin
   pop3threadisrunning:=true;
@@ -4999,26 +4810,31 @@ begin
   mailz[9]:=0;
   mailz[10]:=0;
 
-  for teller:= 1 to 80 do begin
-    if (pos('$Email1',configarray[teller+3]) <> 0) and (copy(configarray[teller+3],pos('¿',configarray[teller+3])+1,1)='1') then mailz[1]:=1;
-    if (pos('$Email2',configarray[teller+3]) <> 0) and (copy(configarray[teller+3],pos('¿',configarray[teller+3])+1,1)='1') then mailz[2]:=1;
-    if (pos('$Email3',configarray[teller+3]) <> 0) and (copy(configarray[teller+3],pos('¿',configarray[teller+3])+1,1)='1') then mailz[3]:=1;
-    if (pos('$Email4',configarray[teller+3]) <> 0) and (copy(configarray[teller+3],pos('¿',configarray[teller+3])+1,1)='1') then mailz[4]:=1;
-    if (pos('$Email5',configarray[teller+3]) <> 0) and (copy(configarray[teller+3],pos('¿',configarray[teller+3])+1,1)='1') then mailz[5]:=1;
-    if (pos('$Email6',configarray[teller+3]) <> 0) and (copy(configarray[teller+3],pos('¿',configarray[teller+3])+1,1)='1') then mailz[6]:=1;
-    if (pos('$Email7',configarray[teller+3]) <> 0) and (copy(configarray[teller+3],pos('¿',configarray[teller+3])+1,1)='1') then mailz[7]:=1;
-    if (pos('$Email8',configarray[teller+3]) <> 0) and (copy(configarray[teller+3],pos('¿',configarray[teller+3])+1,1)='1') then mailz[8]:=1;
-    if (pos('$Email9',configarray[teller+3]) <> 0) and (copy(configarray[teller+3],pos('¿',configarray[teller+3])+1,1)='1') then mailz[9]:=1;
-    if (pos('$Email0',configarray[teller+3]) <> 0) and (copy(configarray[teller+3],pos('¿',configarray[teller+3])+1,1)='1') then mailz[10]:=1;
+  for z:= 1 to 20 do begin
+    for y:= 1 to 4 do begin
+      if (config.screen[z][y].enabled) then begin
+        screenline:=config.screen[z][y].text;
+        if (pos('$Email1',screenline) <> 0) then mailz[1]:=1;
+        if (pos('$Email2',screenline) <> 0) then mailz[2]:=1;
+        if (pos('$Email3',screenline) <> 0) then mailz[3]:=1;
+        if (pos('$Email4',screenline) <> 0) then mailz[4]:=1;
+        if (pos('$Email5',screenline) <> 0) then mailz[5]:=1;
+        if (pos('$Email6',screenline) <> 0) then mailz[6]:=1;
+        if (pos('$Email7',screenline) <> 0) then mailz[7]:=1;
+        if (pos('$Email8',screenline) <> 0) then mailz[8]:=1;
+        if (pos('$Email9',screenline) <> 0) then mailz[9]:=1;
+        if (pos('$Email0',screenline) <> 0) then mailz[10]:=1;
+      end;
+    end;
   end;
 
   if mailz[1]=1 then begin
     try
-      form1.idpop31.host:=copy(configarray[95],1,pos('¿0', configarray[95])-1);
-      form1.idpop31.UserName:=copy(configarray[96],1,pos('¿0', configarray[96])-1);
-      form1.idpop31.Password:=copy(configarray[97],1,pos('¿0', configarray[97])-1);
+      form1.idpop31.host:=config.pop[1].server;
+      form1.idpop31.UserName:=config.pop[1].user;
+      form1.idpop31.Password:=config.pop[1].pword;
       form1.idpop31.Connect;
-       mailregel1:=intToStr(form1.idpop31.CheckMessages);
+      mailregel1:=intToStr(form1.idpop31.CheckMessages);
       form1.idpop31.Disconnect;
       form1.IdPOP31.DisconnectSocket;
     except
@@ -5029,11 +4845,11 @@ begin
 
 if mailz[2]=1 then begin
   try
-    form1.idpop32.host:=copy(configarray[95],pos('¿0', configarray[95])+2,pos('¿1', configarray[95])-pos('¿0', configarray[95])-2);
-    form1.idpop32.UserName:=copy(configarray[96],pos('¿0', configarray[96])+2,pos('¿1', configarray[96])-pos('¿0', configarray[96])-2);
-    form1.idpop32.Password:=copy(configarray[97],pos('¿0', configarray[97])+2,pos('¿1', configarray[97])-pos('¿0', configarray[97])-2);
+    form1.idpop32.host:=config.pop[2].server;
+    form1.idpop32.UserName:=config.pop[2].user;
+    form1.idpop32.Password:=config.pop[2].pword;
     form1.idpop32.Connect;
-     mailregel2:=intToStr(form1.idpop32.CheckMessages);
+    mailregel2:=intToStr(form1.idpop32.CheckMessages);
     form1.idpop32.Disconnect;
     form1.IdPOP32.DisconnectSocket;
   except
@@ -5044,9 +4860,9 @@ end;
 
 if mailz[3]=1 then begin
   try
-    form1.idpop33.host:=copy(configarray[95],pos('¿1', configarray[95])+2,pos('¿2', configarray[95])-pos('¿1', configarray[95])-2);
-    form1.idpop33.UserName:=copy(configarray[96],pos('¿1', configarray[96])+2,pos('¿2', configarray[96])-pos('¿1', configarray[96])-2);
-    form1.idpop33.Password:=copy(configarray[97],pos('¿1', configarray[97])+2,pos('¿2', configarray[97])-pos('¿1', configarray[97])-2);
+    form1.idpop33.host:= config.pop[3].server;
+    form1.idpop33.UserName:=config.pop[3].user;
+    form1.idpop33.Password:=config.pop[3].pword;
     form1.idpop33.Connect;
      mailregel3:=intToStr(form1.idpop33.CheckMessages);
     form1.idpop33.Disconnect;
@@ -5059,9 +4875,9 @@ end;
 
 if mailz[4]=1 then begin
   try
-    form1.idpop34.host:=copy(configarray[95],pos('¿2', configarray[95])+2,pos('¿3', configarray[95])-pos('¿2', configarray[95])-2);
-    form1.idpop34.UserName:=copy(configarray[96],pos('¿2', configarray[96])+2,pos('¿3', configarray[96])-pos('¿2', configarray[96])-2);
-    form1.idpop34.Password:=copy(configarray[97],pos('¿2', configarray[97])+2,pos('¿3', configarray[97])-pos('¿2', configarray[97])-2);
+    form1.idpop34.host:= config.pop[4].server;
+    form1.idpop34.UserName:=config.pop[4].user;
+    form1.idpop34.Password:=config.pop[4].pword;
     form1.idpop34.Connect;
      mailregel4:=intToStr(form1.idpop34.CheckMessages);
     form1.idpop34.Disconnect;
@@ -5074,9 +4890,9 @@ end;
 
 if mailz[5]=1 then begin
   try
-    form1.idpop35.host:=copy(configarray[95],pos('¿3', configarray[95])+2,pos('¿4', configarray[95])-pos('¿3', configarray[95])-2);
-    form1.idpop35.UserName:=copy(configarray[96],pos('¿3', configarray[96])+2,pos('¿4', configarray[96])-pos('¿3', configarray[96])-2);
-    form1.idpop35.Password:=copy(configarray[97],pos('¿3', configarray[97])+2,pos('¿4', configarray[97])-pos('¿3', configarray[97])-2);
+    form1.idpop35.host:=config.pop[5].server;
+    form1.idpop35.UserName:=config.pop[5].user;
+    form1.idpop35.Password:=config.pop[5].pword;
     form1.idpop35.Connect;
      mailregel5:=intToStr(form1.idpop35.CheckMessages);
     form1.idpop35.Disconnect;
@@ -5089,9 +4905,9 @@ end;
 
 if mailz[6]=1 then begin
   try
-    form1.idpop36.host:=copy(configarray[95],pos('¿4', configarray[95])+2,pos('¿5', configarray[95])-pos('¿4', configarray[95])-2);
-    form1.idpop36.UserName:=copy(configarray[96],pos('¿4', configarray[96])+2,pos('¿5', configarray[96])-pos('¿4', configarray[96])-2);
-    form1.idpop36.Password:=copy(configarray[97],pos('¿4', configarray[97])+2,pos('¿5', configarray[97])-pos('¿4', configarray[97])-2);
+    form1.idpop36.host:=config.pop[6].server;
+    form1.idpop36.UserName:=config.pop[6].user;
+    form1.idpop36.Password:=config.pop[6].pword;
     form1.idpop36.Connect;
      mailregel6:=intToStr(form1.idpop36.CheckMessages);
     form1.idpop36.Disconnect;
@@ -5104,9 +4920,9 @@ end;
 
 if mailz[7]=1 then begin
   try
-    form1.idpop37.host:=copy(configarray[95],pos('¿5', configarray[95])+2,pos('¿6', configarray[95])-pos('¿5', configarray[95])-2);
-    form1.idpop37.UserName:=copy(configarray[96],pos('¿5', configarray[96])+2,pos('¿6', configarray[96])-pos('¿5', configarray[96])-2);
-    form1.idpop37.Password:=copy(configarray[97],pos('¿5', configarray[97])+2,pos('¿6', configarray[97])-pos('¿5', configarray[97])-2);
+    form1.idpop37.host:=config.pop[7].server;
+    form1.idpop37.UserName:=config.pop[7].user;
+    form1.idpop37.Password:=config.pop[7].pword;
     form1.idpop37.Connect;
      mailregel7:=intToStr(form1.idpop37.CheckMessages);
     form1.idpop37.Disconnect;
@@ -5119,9 +4935,9 @@ end;
 
 if mailz[8]=1 then begin
   try
-    form1.idpop38.host:=copy(configarray[95],pos('¿6', configarray[95])+2,pos('¿7', configarray[95])-pos('¿6', configarray[95])-2);
-    form1.idpop38.UserName:=copy(configarray[96],pos('¿6', configarray[96])+2,pos('¿7', configarray[96])-pos('¿6', configarray[96])-2);
-    form1.idpop38.Password:=copy(configarray[97],pos('¿6', configarray[97])+2,pos('¿7', configarray[97])-pos('¿6', configarray[97])-2);
+    form1.idpop38.host:=config.pop[8].server;
+    form1.idpop38.UserName:=config.pop[8].user;
+    form1.idpop38.Password:=config.pop[8].pword;
     form1.idpop38.Connect;
      mailregel8:=intToStr(form1.idpop38.CheckMessages);
     form1.idpop38.Disconnect;
@@ -5134,9 +4950,9 @@ end;
 
 if mailz[9]=1 then begin
   try
-    form1.idpop39.host:=copy(configarray[95],pos('¿7', configarray[95])+2,pos('¿8', configarray[95])-pos('¿7', configarray[95])-2);
-    form1.idpop39.UserName:=copy(configarray[96],pos('¿7', configarray[96])+2,pos('¿8', configarray[96])-pos('¿7', configarray[96])-2);
-    form1.idpop39.Password:=copy(configarray[97],pos('¿7', configarray[97])+2,pos('¿8', configarray[97])-pos('¿7', configarray[97])-2);
+    form1.idpop39.host:=config.pop[9].server;
+    form1.idpop39.UserName:=config.pop[9].user;
+    form1.idpop39.Password:=config.pop[9].pword;
     form1.idpop39.Connect;
      mailregel9:=intToStr(form1.idpop39.CheckMessages);
     form1.idpop39.Disconnect;
@@ -5149,9 +4965,9 @@ end;
 
 if mailz[10]=1 then begin
   try
-    form1.idpop310.host:=copy(configarray[95],pos('¿8', configarray[95])+2,pos('¿9', configarray[95])-pos('¿8', configarray[95])-2);
-    form1.idpop310.UserName:=copy(configarray[96],pos('¿8', configarray[96])+2,pos('¿9', configarray[96])-pos('¿8', configarray[96])-2);
-    form1.idpop310.Password:=copy(configarray[97],pos('¿8', configarray[97])+2,pos('¿9', configarray[97])-pos('¿8', configarray[97])-2);
+    form1.idpop310.host:=config.pop[10].server;
+    form1.idpop310.UserName:=config.pop[10].user;
+    form1.idpop310.Password:=config.pop[10].pword;
     form1.idpop310.Connect;
     mailregel0:=intToStr(form1.idpop310.CheckMessages);
     form1.idpop310.Disconnect;
@@ -5198,7 +5014,7 @@ end;
 
 procedure TForm1.Timer13Timer(Sender: TObject);
 begin
-  timer13.Interval:=StrToInt(copy(configarray[89],pos('¿',configarray[89])+1,pos('¿¿',configarray[89])-pos('¿',configarray[89])-1));
+  timer13.Interval:=config.scrollPeriod;
   dllcancheck:=true;                                                                    
 end;
 
@@ -5214,7 +5030,7 @@ end;
 
 procedure TForm1.Timer12Timer(Sender: TObject);
 begin
-  timer12.Interval:=StrToInt(copy(configarray[89],pos('¿¿',configarray[89])+2,length(configarray[89])));
+  timer12.Interval:=config.scrollPeriod;
   canscroll:=true;
 end;
 

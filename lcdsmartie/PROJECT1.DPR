@@ -3,20 +3,29 @@ program Project1;
 uses
   Forms,
   parport in 'parport.pas' {parport},
-//  parport in 'parport66.pas' {parport66},
   Unit1 in 'Unit1.pas' {Form1},
   Unit2 in 'Unit2.pas' {Form2},
   Unit3 in 'Unit3.pas' {Form3},
   Unit4 in 'Unit4.pas' {Form4},
   Unit5 in 'Unit5.pas' {Form5},
   Unit6 in 'Unit6.pas' {Form6},
-  Unit7 in 'Unit7.pas' {Form7};
+  Unit7 in 'Unit7.pas' {Form7},
+  UConfig in 'UConfig.pas',
+  System2 in 'system2.pas',
+  adCpuUsage in 'adCpuUsage.pas',
+  cxCpu40 in 'cxCpu40.pas',
+  IpExport in 'IpExport.pas',
+  IpHlpApi in 'IpHlpApi.pas',
+  IpIfConst in 'IpIfConst.pas',
+  IpRtrMib in 'IpRtrMib.pas',
+  IpTypes in 'IpTypes.pas',
+  DLPortIO in 'DLPORTIO.PAS';
 
 {$R *.RES}
 
 begin
   Application.Initialize;
-  Application.Title := 'LCD Smartie 5.2';
+  Application.Title := 'LCD Smartie';
   Application.HelpFile := 'README.HTM';
   Application.CreateForm(TForm1, Form1);
   Application.CreateForm(TForm2, Form2);

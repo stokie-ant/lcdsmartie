@@ -18,15 +18,13 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/Attic/Unit4.pas,v $
- *  $Revision: 1.3 $ $Date: 2004/10/29 19:08:35 $
+ *  $Revision: 1.4 $ $Date: 2004/11/05 13:16:21 $
  *****************************************************************************}
 unit Unit4;
 
 interface
 
-uses
-  Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
-  StdCtrls, ExtCtrls,shellapi;
+uses   Forms, ExtCtrls, Classes, StdCtrls, Graphics, Controls;
 
 type
   TForm4 = class(TForm)
@@ -49,37 +47,36 @@ var
 
 implementation
 
-uses Unit1;
+uses Windows, ShellApi, Unit1;
 
 {$R *.DFM}
 
 procedure TForm4.FormClick(Sender: TObject);
 begin
-form1.enabled:=true;
-form4.visible:=false;
-form1.BringToFront;
+  form1.enabled:=true;
+  form4.visible:=false;
+  form1.BringToFront;
 end;
 
 procedure TForm4.Label1Click(Sender: TObject);
 begin
-form1.enabled:=true;
-form4.visible:=false;
-form1.BringToFront;
+  form1.enabled:=true;
+  form4.visible:=false;
+  form1.BringToFront;
 end;
 
 procedure TForm4.Image1Click(Sender: TObject);
 begin
-form1.enabled:=true;
-form4.visible:=false;
-form1.BringToFront;
+  form1.enabled:=true;
+  form4.visible:=false;
+  form1.BringToFront;
 end;
 
 procedure TForm4.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
-form1.enabled:=true;
-form4.visible:=false;
-form1.BringToFront;
-
+  form1.enabled:=true;
+  form4.visible:=false;
+  form1.BringToFront;
 end;
 
 procedure TForm4.Label2Click(Sender: TObject);

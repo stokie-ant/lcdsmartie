@@ -1,6 +1,6 @@
 object Form1: TForm1
-  Left = 847
-  Top = 116
+  Left = 590
+  Top = 200
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsToolWindow
   Caption = 'LCD Smartie 5.3'
@@ -45,7 +45,7 @@ object Form1: TForm1
     Top = 64
     Width = 32
     Height = 27
-    Hint = 'LCD Smartie 1.5 1998-2001 BasieP'#39'n'#39'Servowire Computing, Inc.'
+    Hint = 'LCD Smartie'
     OnClick = Image1Click
     OnDblClick = Image1DblClick
   end
@@ -214,7 +214,7 @@ object Form1: TForm1
     Height = 17
     Alignment = taLeftJustify
     BevelOuter = bvNone
-    Caption = 'version 5.2.0.2'
+    Caption = 'version 5.3'
     Color = clNone
     Font.Charset = ANSI_CHARSET
     Font.Color = clWindowText
@@ -334,6 +334,33 @@ object Form1: TForm1
   object TTimer
     Interval = 250
   end
+  object TTimer
+    Interval = 250
+  end
+  object TTimer
+    Interval = 250
+  end
+  object TTimer
+    Interval = 250
+  end
+  object TTimer
+    Interval = 250
+  end
+  object TTimer
+    Interval = 250
+  end
+  object TTimer
+    Interval = 250
+  end
+  object TTimer
+    Interval = 250
+  end
+  object TTimer
+    Interval = 250
+  end
+  object TTimer
+    Interval = 250
+  end
   object PopupMenu1: TPopupMenu
     Left = 88
     Top = 152
@@ -415,7 +442,7 @@ object Form1: TForm1
   end
   object CoolTrayIcon1: TCoolTrayIcon
     CycleInterval = 0
-    Hint = 'LCD Smartie 5.2 by BasieP'
+    Hint = 'LCD Smartie 5.3'
     Icon.Data = {
       0000010001002020000000000000A80800001600000028000000200000004000
       0000010008000000000080040000000000000000000000010000000000000000
@@ -516,6 +543,7 @@ object Form1: TForm1
     Top = 152
   end
   object Timer3: TTimer
+    Enabled = False
     Interval = 250
     OnTimer = Timer3Timer
     Left = 40
@@ -777,6 +805,7 @@ object Form1: TForm1
     Top = 184
   end
   object Timer13: TTimer
+    Enabled = False
     Interval = 50
     OnTimer = Timer13Timer
     Left = 208
@@ -790,6 +819,7 @@ object Form1: TForm1
     Top = 152
   end
   object Timer12: TTimer
+    Enabled = False
     OnTimer = Timer12Timer
     Left = 16
     Top = 152
