@@ -33,11 +33,9 @@ type
     FAlwaysLoadList: Boolean;
     FUseBalanceCorrection: Boolean;
 
-    Checkica: TTimer;
     PlaylistPos: integer;
     FOnSongChanged: TNotifyEvent;
     procedure SetWinampLocation(Value: TFileName);
-    procedure SongChanged(Sender: TObject);//(var Msg: TWMSetText);message WM_SETTEXT;
   protected
     { Protected declarations }
     procedure LoadFileNameList;
@@ -49,6 +47,7 @@ type
     constructor Create(AOwner: TComponent);override;
     destructor Destroy;override;
 
+    procedure CheckIfSongChanged;//(var Msg: TWMSetText);message WM_SETTEXT;
     function GetState : integer;
     function GetOutputTime(TimeMode : Integer) : Int64;
     function GetSongInfo(InfoMode : Integer) : Integer;
@@ -147,10 +146,6 @@ begin
      FLengthList:=TStringList.Create;
      FFreeLists:=true;
      FUseBalanceCorrection:=true;
-     Checkica:=TTimer.Create(AOwner);
-     Checkica.Interval:=250;
-     Checkica.OnTimer:=SongChanged;
-     Checkica.Enabled:=true;
 end;
 
 destructor TWinampCtrl.Destroy;
@@ -158,10 +153,6 @@ begin
      if Assigned(FFileNameList)then FFileNameList.Free;
      if Assigned(FTitleList)then FTitleList.Free;
      if Assigned(FLengthList)then FLengthList.Free;
-     Checkica.OnTimer:=nil;
-     Checkica.Enabled:=false;
-     Sleep(300);
-     Checkica.Destroying;
      inherited;
 end;
 
@@ -703,7 +694,7 @@ begin
      Result:=Copy(Stringica,1,I-1);
 end;
 
-procedure TWinampCtrl.SongChanged(Sender: TObject);//(var Msg: TWMSetText);
+procedure TWinampCtrl.CheckIfSongChanged;//(var Msg: TWMSetText);
 begin
      hwnd_winamp := FindWindow(WinampClassName,nil);
      if hwnd_winamp=0 then exit;

@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.8 $ $Date: 2004/11/17 11:42:46 $
+ *  $Revision: 1.9 $ $Date: 2004/11/17 15:05:28 $
  *****************************************************************************}
 
 interface
@@ -88,6 +88,7 @@ type
     Timer12: TTimer;
     Timer13: TTimer;
     WinampCtrl1: TWinampCtrl;
+    WinAmpTimer: TTimer;
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure Showwindow1Click(Sender: TObject);
@@ -177,6 +178,7 @@ type
     procedure WMPowerBroadcast (var M: TMessage); message WM_POWERBROADCAST;
     procedure kleur();
     procedure ChangeScreen(scr: Integer);
+    procedure WinAmpTimerCheck(Sender: TObject);
   private
     screenLcd: Array [1..4] of ^TPanel;
     canflash: Boolean;
@@ -2058,6 +2060,11 @@ begin
   timer12.Interval:=config.scrollPeriod;
   canscroll:=true;
   canflash:=true;
+end;
+
+procedure TForm1.WinAmpTimerCheck(Sender: TObject);
+begin
+  WinampCtrl1.CheckIfSongChanged;
 end;
 
 end.

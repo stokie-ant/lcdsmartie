@@ -563,4 +563,9 @@ object Form1: TForm1
     Left = 16
     Top = 152
   end
+  object WinAmpTimer: TTimer
+    Enabled = True
+    Interval = 250
+    OnTimer = WinAmpTimerCheck
+  end
 end
