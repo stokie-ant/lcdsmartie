@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.24 $ $Date: 2004/12/15 21:22:27 $
+ *  $Revision: 1.25 $ $Date: 2004/12/17 16:09:04 $
  *****************************************************************************}
 
 
@@ -1407,7 +1407,7 @@ begin
       line := prefix + intToStr(spacecount) + postfix;
      end;
 
-    if decodeArgs(line, '$Chr', maxArgs, args, prefix, postfix, numargs) then
+    while decodeArgs(line, '$Chr', maxArgs, args, prefix, postfix, numargs) do
     begin
       try
         RequiredParameters(numargs, 1, 1);
@@ -1498,7 +1498,7 @@ begin
          if (pos(')', line2) = 0) then
           raise Exception.Create('No ending bracket');
         line2 := copy(line2, 1, pos(')', line2)-1);
-        customchar(line2);
+        Form1.customchar(line2);
         line := StringReplace(line, '$CustomChar(' + line2 + ')', '', []);
       except
         on E: Exception do line := StringReplace(line, '$CustomChar(',

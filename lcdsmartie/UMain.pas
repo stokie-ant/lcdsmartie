@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.31 $ $Date: 2004/12/15 22:44:28 $
+ *  $Revision: 1.32 $ $Date: 2004/12/17 16:09:09 $
  *****************************************************************************}
 
 interface
@@ -178,6 +178,7 @@ type
     procedure kleur();
     procedure ChangeScreen(scr: Integer);
     procedure WinAmpTimerCheck(Sender: TObject);
+    procedure customchar(fline: String);
   private
     screenLcd: Array[1..4] of ^TPanel;
     canflash: Boolean;
@@ -199,6 +200,7 @@ type
     gamesArray: Array[1..4, 1..40] of Boolean;
     activetheme: Integer; canscroll: Boolean;
     gpo: Array [1..8] of Boolean;
+    customChars: Array [1..8, 0..7] of Byte;
     doesgpoflash: Boolean;
     gpoflash, whatgpo: Integer;
     flash: Integer;
@@ -212,6 +214,8 @@ type
     procedure doInteractions;
     procedure OnMinimize(Sender: TObject);
     procedure backlit(iOn: Integer = -1);
+    function EscapeAmp(const sStr: string):String;
+    function UnescapeAmp(const sStr: string): String;
   end;
 
 var
@@ -228,12 +232,22 @@ var
   activeScreen : Integer;
   aantalscreensheenweer: Integer;
   combobox8temp: Integer;
-procedure customchar(fline: String);
+
 
 implementation
 
 uses Registry, Windows, SysUtils, Graphics, Dialogs, ShellAPI, mmsystem,
   USetup, UCredits, ULCD_MO, ULCD_CF, ULCD_HD, ExtActns;
+
+function TForm1.EscapeAmp(const sStr: string): String;
+begin
+  Result := StringReplace(sStr, '&', '&&', [rfReplaceAll])
+end;
+
+function TForm1.UnescapeAmp(const sStr: string): String;
+begin
+  Result := StringReplace(sStr, '&&', '&', [rfReplaceAll])
+end;
 
 procedure TForm1.WMPowerBroadcast (var M: TMessage);
 const
@@ -253,11 +267,56 @@ end;
 procedure TForm1.ChangeScreen(scr: Integer);
 var
   y: Integer;
+  ascreen: TScreenLine;
 begin
   activeScreen := scr;
+  ascreen := config.screen[activeScreen][1];
+
   for y := 1 to 4 do
   begin
     scrollPos[y] := 0; // Reset scroll postion.
+    oldline[y] := UnescapeAmp(screenLcd[y].Caption);
+  end;
+
+  if timertransIntervaltemp <> 0 then timertrans.Interval :=
+    timertransIntervaltemp;
+
+  gotnewlines := false;
+  TransCycle := 0;
+  foo2 := 0;
+
+  for y := 1 to 40 do
+  begin
+    gamesArray[1, y] := false;
+    gamesArray[2, y] := false;
+    gamesArray[3, y] := false;
+    gamesArray[4, y] := false;
+  end;
+
+  timer7.Interval := ascreen.showTime*1000 + timertransIntervaltemp;
+  timertransIntervaltemp := ascreen.interactionTime*100;
+
+
+
+
+  transActietemp := transActietemp2;
+  transActietemp2 := ascreen.interaction;
+
+  if not ascreen.enabled then transActietemp2 := 0;
+  if transActietemp2 = 0 then timertransIntervaltemp := 1;
+
+  if (config.width = 40) then
+  begin
+    panel5.left := 115;
+    panel5.width := 130;
+    Panel5.Caption := 'Theme: ' + IntToStr(activetheme + 1) + ' Screen: ' +
+      IntToStr(activeScreen);
+  end
+  else
+  begin
+    panel5.left := 87;
+    panel5.width := 33;
+    Panel5.Caption := IntToStr(activetheme + 1) + ' | ' + IntToStr(activeScreen);
   end;
 end;
 
@@ -301,7 +360,7 @@ begin
   result := x;
 end;
 
-procedure customchar(fline: String);
+procedure TForm1.customchar(fline: String);
 var
   character: Integer;
   waarde: Array[0..7] of Byte;
@@ -317,7 +376,15 @@ begin
   end;
   waarde[7] := StrToInt(copy(fline, 1, length(fline)));
 
-  Lcd.customChar(character, waarde);
+  // Only send if not already defined.
+  i := 0;
+  while (i <= 7) and (waarde[i] = customChars[character, i]) do Inc(i);
+
+  if (i <= 7) then
+  begin
+    Lcd.customChar(character, waarde);
+    for i := 0 to 7 do customChars[character, i] := waarde[i];
+  end;
 end;
 
 
@@ -598,8 +665,7 @@ begin
     begin
       tempstr := copy(newline[x] + '|' + oldline[x], round((config.width +
         2)-TransCycle*((config.width + 2)/maxTransCycles)), config.width);
-      screenLcd[x].Caption := StringReplace(tempstr, '&', '&&',
-        [rfReplaceAll]);
+      screenLcd[x].Caption := EscapeAmp(tempstr);
     end;
 
   end
@@ -612,8 +678,7 @@ begin
         tempstr := copy(oldline[x] + '|' + newline[x],
           round(TransCycle*((config.width + 2)/maxTransCycles)),
           config.width);
-        screenLcd[x].Caption := StringReplace(tempstr, '&', '&&',
-          [rfReplaceAll]);
+        screenLcd[x].Caption := EscapeAmp(tempstr);
       end;
 
     end
@@ -624,17 +689,16 @@ begin
         line := round(TransCycle*(config.height/maxTransCycles)) + 1;
         for x := 1 to line-1 do
         begin
-          screenLcd[x].Caption := StringReplace(newline[config.height-(line-1)
-            + x], '&', '&&', [rfReplaceAll]);
+          screenLcd[x].Caption := EscapeAmp(newline[config.height-(line-1)+ x]);
         end;
 
-        if (line <= config.height) then screenLcd[line].Caption :=
-          copy('----------------------------------------', 1, config.width);
+        if (line <= config.height) then
+          screenLcd[line].Caption :=
+            copy('----------------------------------------', 1, config.width);
 
         for x := line + 1 to config.height do
         begin
-          screenLcd[x].Caption := StringReplace(oldline[x-(line + 1) + 1],
-            '&', '&&', [rfReplaceAll]);
+          screenLcd[x].Caption := EscapeAmp(oldline[x-(line + 1) + 1]);
         end;
 
       end
@@ -645,19 +709,17 @@ begin
           line := round(TransCycle*(config.height/maxTransCycles)) + 1;
           for x := 1 to config.height-line do
           begin
-            screenLcd[x].Caption := StringReplace(oldline[x + line-1], '&',
-              '&&', [rfReplaceAll]);
+            screenLcd[x].Caption := EscapeAmp(oldline[x + line-1]);
           end;
 
-          if (config.height-line + 1 > 0) then screenLcd[config.height-line +
-            1].Caption := copy('----------------------------------------', 1,
-            config.width);
+          if (config.height-line + 1 > 0) then
+            screenLcd[config.height-line + 1].Caption :=
+              copy('----------------------------------------', 1, config.width);
 
           for x := config.height-line + 2 to config.height do
           begin
             screenLcd[x].Caption :=
-              StringReplace(newline[x-(config.height-line + 2) + 1], '&',
-              '&&', [rfReplaceAll]);
+              EscapeAmp(newline[x-(config.height-line + 2) + 1]);
           end;
 
         end
@@ -667,7 +729,7 @@ begin
 
             for x := 1 to 4 do
             begin
-              gokreg[x] := copy(screenLcd[x].caption +
+              gokreg[x] := copy(UnescapeAmp(screenLcd[x].caption) +
                 '                                        ', 1, config.width);
             end;
 
@@ -684,8 +746,7 @@ begin
             end;
             for x := 1 to 4 do
             begin
-              screenLcd[x].caption := StringReplace(gokreg[x], '&', '&&',
-                [rfReplaceAll]);
+              screenLcd[x].caption := EscapeAmp(gokreg[x]);
             end;
 
           end
@@ -721,7 +782,7 @@ begin
 
                 for x := 1 to 4 do
                 begin
-                  screenLcd[x].Caption := newline[x];
+                  screenLcd[x].Caption := EscapeAmp(newline[x]);
                 end;
 
                 if (config.isMO) then x := config.contrast
@@ -976,16 +1037,13 @@ begin
     for counter := 1 to config.height do
     begin
       if (not config.screen[activeScreen][counter].noscroll) then
-        screenLcd[counter].Caption := StringReplace(scroll(parsedLine[counter],
-        counter, scrollcount), '&', '&&', [rfReplaceAll])
+        screenLcd[counter].Caption := EscapeAmp(scroll(parsedLine[counter],
+          counter, scrollcount))
       else
         if (scrollPos[counter]>1) then     // maintain manual scroll postion
-          screenLcd[counter].Caption :=
-          StringReplace(scroll(parsedLine[counter], counter, 0), '&', '&&',
-          [rfReplaceAll])
-        else screenLcd[counter].Caption :=
-          StringReplace(copy(parsedLine[counter], 1, config.width), '&', '&&',
-          [rfReplaceAll]);
+          screenLcd[counter].Caption := EscapeAmp(scroll(parsedLine[counter], counter, 0))
+        else
+          screenLcd[counter].Caption := EscapeAmp(copy(parsedLine[counter], 1, config.width));
     end;
 
   end
@@ -1000,9 +1058,8 @@ begin
     if tmpline[h] <> copy(screenLcd[h].Caption +
       '                                        ', 1, config.width) then
     begin
-      tmpline[h] := copy(StringReplace(screenLcd[h].Caption, '&&', '&',
-        [rfReplaceAll]) + '                                        ', 1,
-        config.width);
+      tmpline[h] := copy(UnescapeAmp(screenLcd[h].Caption)
+        + '                                        ', 1, config.width);
 
       Lcd.setPosition(1, h);
       Lcd.write(tmpline[h]);
@@ -1253,10 +1310,9 @@ end;
 // Only used when line scroll button is pressed.
 procedure TForm1.scrollLine(line: Byte; direction: Integer);
 begin
-  screenLcd[line].caption := StringReplace(scroll(parsedLine[line], line,
-    direction), '&', '&&', [rfReplaceAll]);
-  tmpline[line] := copy(screenLcd[line].caption +
-    '                                        ', 1, config.width-1);
+  tmpline[line] := copy (scroll(parsedLine[line], line, direction)
+    + '                                        ', 1, config.width-1);
+  screenLcd[line].caption := EscapeAmp(tmpline[line]);
   Lcd.setPosition(1, line);
   Lcd.write(tmpline[line]);
 end;
@@ -1735,51 +1791,7 @@ opnieuwscreen:
   if (ascreen.skip = 5) and (not Data.gotEmail) then goto opnieuwscreen;
   if (ascreen.skip = 6) and (Data.gotEmail) then goto opnieuwscreen;
 
-  if timertransIntervaltemp <> 0 then timertrans.Interval :=
-    timertransIntervaltemp;
-
-  gotnewlines := false;
-  TransCycle := 0;
-  foo2 := 0;
-
-
-
-  for x := 1 to 4 do
-  begin
-    oldline[x] := screenLcd[x].Caption;
-  end;
-
-  for x := 1 to 40 do
-  begin
-    gamesArray[1, x] := false;
-    gamesArray[2, x] := false;
-    gamesArray[3, x] := false;
-    gamesArray[4, x] := false;
-  end;
-
-  timer7.Interval := ascreen.showTime*1000 + timertransIntervaltemp;
   aantalscreensheenweer := 1;
-
-  timertransIntervaltemp := ascreen.interactionTime*100;
-  transActietemp := transActietemp2;
-  transActietemp2 := ascreen.interaction;
-
-  if not ascreen.enabled then transActietemp2 := 0;
-  if transActietemp2 = 0 then timertransIntervaltemp := 1;
-
-  if (config.width = 40) then
-  begin
-    panel5.left := 115;
-    panel5.width := 130;
-    Panel5.Caption := 'Theme: ' + IntToStr(activetheme + 1) + ' Screen: ' +
-      IntToStr(tmpScreen);
-  end
-  else
-  begin
-    panel5.left := 87;
-    panel5.width := 33;
-    Panel5.Caption := IntToStr(activetheme + 1) + ' | ' + IntToStr(tmpScreen);
-  end;
 
   if (activeScreen <> tmpScreen) then
   begin
@@ -1793,10 +1805,6 @@ begin
   Lcd := TLCD_HD.CreateParallel($ + config.parallelPort, config.width, config.height);
   Lcd.setbacklight(true);
 
-  customchar('1, 12, 18, 18, 12, 0, 0, 0, 0');
-  customchar('2, 31, 31, 31, 31, 31, 31, 31, 31');
-  customchar('3, 16, 16, 16, 16, 16, 16, 31, 16');
-  customchar('4, 28, 28, 28, 28, 28, 28, 31, 28');
   customchar('1, 12, 18, 18, 12, 0, 0, 0, 0');
   customchar('2, 31, 31, 31, 31, 31, 31, 31, 31');
   customchar('3, 16, 16, 16, 16, 16, 16, 31, 16');
