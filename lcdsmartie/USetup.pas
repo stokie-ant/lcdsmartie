@@ -19,7 +19,7 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.29 $ $Date: 2005/01/22 14:25:36 $
+ *  $Revision: 1.30 $ $Date: 2005/01/25 15:39:09 $
  *****************************************************************************}
 
 interface
@@ -603,7 +603,7 @@ begin
     checkbox7.Visible := true;
     checkbox8.Visible := true;
     checkbox9.Visible := true;
-    checkbox12.visible := true;
+    checkbox11.visible := true;
     checkbox12.visible := true;
     checkbox13.visible := true;
   end;
@@ -838,6 +838,11 @@ Procedure TForm2.FocusToInputField;
 var
   tempint1, tempint2: Integer;
 begin
+  if (TabSheet11.visible) then // in Screens tab
+  begin
+    // not all the lines will be enabled/visible because of different size
+    // displays.
+
     if (setupbutton = 2) and (edit6.Enabled) and (edit6.visible) then
     begin
       tempint1 := edit6.SelStart;
@@ -862,15 +867,7 @@ begin
       edit8.SelStart := tempint1;
       edit8.SelLength := tempint2;
     end
-    else if (setupbutton = 5) and (edit16.Enabled) and (edit16.visible) then
-    begin
-      tempint1 := edit16.SelStart;
-      tempint2 := edit16.SelLength;
-      edit16.setfocus;
-      edit16.SelStart := tempint1;
-      edit16.SelLength := tempint2;
-    end
-    else  // default to line 1 of screen section
+    else if (edit5.Enabled) and (edit5.visible) then // default to line 1 of screen section
     begin // setupbutton = 1
       tempint1 := edit5.SelStart;
       tempint2 := edit5.SelLength;
@@ -878,6 +875,18 @@ begin
       edit5.SelStart := tempint1;
       edit5.SelLength := tempint2;
     end;
+  end
+  else if (TabSheet12.visible) then // in Actions tab
+  begin
+    if (edit16.Enabled) and (edit16.visible) then
+    begin
+      tempint1 := edit16.SelStart;
+      tempint2 := edit16.SelLength;
+      edit16.setfocus;
+      edit16.SelStart := tempint1;
+      edit16.SelLength := tempint2;
+    end
+  end;
 end;
 
 procedure TForm2.Button3Click(Sender: TObject);
@@ -887,42 +896,45 @@ var
 begin
   if Edit9.Text <> 'Variable: ' then
   begin
-    if setupbutton = 1 then
+    if (tabsheet11.visible) then // in Screens tab
     begin
-      tempint := edit5.SelStart;
-      edit5.text := copy(edit5.text, 1, tempint) + Edit9.Text +
-        copy(edit5.text, tempint + 1 + edit5.SelLength, length(edit5.Text));
-      edit5.SetFocus;
-      edit5.selstart := tempint + length(edit9.text);
+      if (setupbutton = 2) and (edit6.enabled) and (edit6.visible) then
+      begin
+        tempint := edit6.SelStart;
+        edit6.text := copy(edit6.text, 1, Edit6.SelStart) + Edit9.Text +
+          copy(edit6.text, edit6.SelStart + 1 + edit6.SelLength,
+          length(edit6.Text));
+        edit6.SetFocus;
+        edit6.selstart := tempint + length(edit9.text);
+      end
+      else if (setupbutton = 3) and (edit7.enabled) and (edit7.visible) then
+      begin
+        tempint := edit7.SelStart;
+        edit7.text := copy(edit7.text, 1, Edit7.SelStart) + Edit9.Text +
+          copy(edit7.text, edit7.SelStart + 1 + edit7.SelLength,
+          length(edit7.Text));
+        edit7.SetFocus;
+        edit7.selstart := tempint + length(edit9.text);
+      end
+      else if (setupbutton = 4) and (edit8.enabled) and (edit8.visible) then
+      begin
+        tempint := edit8.SelStart;
+        edit8.text := copy(edit8.text, 1, Edit8.SelStart) + Edit9.Text +
+          copy(edit8.text, edit8.SelStart + 1 + edit8.SelLength,
+          length(edit8.Text));
+        edit8.SetFocus;
+        edit8.selstart := tempint + length(edit9.text);
+      end
+      else if (edit5.enabled) and (edit5.visible) then // default to line 1
+      begin
+        tempint := edit5.SelStart;
+        edit5.text := copy(edit5.text, 1, tempint) + Edit9.Text +
+          copy(edit5.text, tempint + 1 + edit5.SelLength, length(edit5.Text));
+        edit5.SetFocus;
+        edit5.selstart := tempint + length(edit9.text);
+      end;
     end
-    else if setupbutton = 2 then
-    begin
-      tempint := edit6.SelStart;
-      edit6.text := copy(edit6.text, 1, Edit6.SelStart) + Edit9.Text +
-        copy(edit6.text, edit6.SelStart + 1 + edit6.SelLength,
-        length(edit6.Text));
-      edit6.SetFocus;
-      edit6.selstart := tempint + length(edit9.text);
-    end
-    else if setupbutton = 3 then
-    begin
-      tempint := edit7.SelStart;
-      edit7.text := copy(edit7.text, 1, Edit7.SelStart) + Edit9.Text +
-        copy(edit7.text, edit7.SelStart + 1 + edit7.SelLength,
-        length(edit7.Text));
-      edit7.SetFocus;
-      edit7.selstart := tempint + length(edit9.text);
-    end
-    else if setupbutton = 4 then
-    begin
-      tempint := edit8.SelStart;
-      edit8.text := copy(edit8.text, 1, Edit8.SelStart) + Edit9.Text +
-        copy(edit8.text, edit8.SelStart + 1 + edit8.SelLength,
-        length(edit8.Text));
-      edit8.SetFocus;
-      edit8.selstart := tempint + length(edit9.text);
-    end
-    else if setupbutton = 5 then
+    else if (tabsheet12.Visible) then // in Actions tab
     begin
       if (edit17.text='') and (edit9.text='$MObutton') then
       begin
@@ -930,8 +942,8 @@ begin
       end
       else
       begin
-        if pos('$MObutton', edit9.Text) <> 0 then edit9.Text := '$MObutton(' +
-          edit17.text + ')';
+        if pos('$MObutton', edit9.Text) <> 0 then
+          edit9.Text := '$MObutton(' + edit17.text + ')';
         edit16.text := edit9.text;
       end;
     end;

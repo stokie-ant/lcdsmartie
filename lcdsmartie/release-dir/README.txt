@@ -28,6 +28,7 @@ Changes
 5.3 Final
 	- Fixed bug when used with high refresh rates (scrolling and
 	  other things just stopped working!)
+	- Fixed more crashes that happened whilst in setup. 
 5.3Beta4
 	- Fixed bug in Rss code - didn't work with long urls.
 	- Plugins: Call SmartieFini just before unloading plugin (if
