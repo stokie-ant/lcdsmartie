@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.25 $ $Date: 2004/12/17 16:09:04 $
+ *  $Revision: 1.26 $ $Date: 2004/12/18 01:58:56 $
  *****************************************************************************}
 
 
@@ -115,8 +115,14 @@ type
     maxfreq: Cardinal;                        // hours - 0 means no restriction
   end;
 
-  TMyProc = function(param1: pchar; param2: pchar): Pchar;
-  stdcall;
+  TMyProc = function(param1: pchar; param2: pchar): Pchar; stdcall;
+
+  TDll = Record
+    sName: String;
+    hDll: Cardinal;
+    functions: Array [1..10] of TMyProc;
+    results: Array [1..10] of String;
+  end;
 
   TData = Class(TObject)
   public
@@ -139,10 +145,8 @@ type
     constructor Create;
     destructor Destroy; override;
   private
-    totaldlls: Integer;
-    dllsArray: Array[0..40] of String;
-    sOpenedLibrary: String;
-    hOpenedLibrary: Cardinal;
+    dlls: Array of TDll;
+    uiTotalDlls: Cardinal;
     doHTTPUpdate, doGameUpdate, doEmailUpdate: Boolean; STUsername,
       STComputername, STCPUType, STCPUSpeed: String;
     STPageFree, STPageTotal: Int64;
@@ -231,7 +235,7 @@ uses cxCpu40, adCpuUsage, UMain, Windows, Forms, Registry, IpHlpApi,
 
 procedure TData.ScreenStart;
 begin
-  totaldlls := 0;
+  //totaldlls := 0;
 end;
 
 procedure TData.ScreenEnd;
@@ -337,10 +341,9 @@ constructor TData.Create;
 begin
   inherited;
 
-  hOpenedLibrary := INVALID_HANDLE_VALUE;
   CPUUsagePos := 1;
   isconnected := false;
-  totaldlls := 0;
+  uiTotalDlls := 0;
   lcdSmartieUpdate := False;
   distributedlog := config.distLog;
 
@@ -1030,6 +1033,7 @@ var
   plib: String;
   tlib: String;
   dllFunction: TmyProc;
+  uiDll: Cardinal;
 
 begin
   try
@@ -1418,56 +1422,66 @@ begin
       end;
     end;
 
-    while decodeArgs(line, '$dll', maxArgs, args, prefix, postfix, numargs)
-      do
+    while decodeArgs(line, '$dll', maxArgs, args, prefix, postfix, numargs) do
     begin
-      totaldlls := totaldlls + 1;
-      if dllcancheck = true then
-      begin
-        try
-          RequiredParameters(numargs, 4, 4);
-          tempst := args[1];
-          if (tempst <> sOpenedLibrary)
-            or (hOpenedLibrary = INVALID_HANDLE_VALUE) then
+      try
+        RequiredParameters(numargs, 4, 4);
+        // check if we have seen this dll before
+        uiDll:=1;
+        while (uiDll<=uiTotalDlls) and (dlls[uiDll-1].sName <> args[1]) do
+          Inc(uiDll);
+
+        Dec(uiDll);
+
+        if (uiDll >= uiTotalDlls) then
+        begin // we havent seen this one before - load it
+          Inc(uiTotalDlls);
+          SetLength(dlls, uiTotalDlls);
+          dlls[uiDll].sName := args[1];
+          dlls[uiDll].hDll := LoadLibrary(pchar(extractfilepath(application.exename) +
+              'plugins\' + args[1]));
+
+          if (dlls[uiDll].hDll <> INVALID_HANDLE_VALUE) then
           begin
-            if (hOpenedLibrary <> INVALID_HANDLE_VALUE) then
-              CloseHandle(hOpenedLibrary);
-            hOpenedLibrary := LoadLibrary(pchar(extractfilepath(application.exename) +
-              'plugins\' + tempst));
-            sOpenedLibrary := tempst;
+            for i:= 1 to 10 do
+            begin
+              @dlls[uiDll].functions[i] := getprocaddress(dlls[uiDll].hDll,
+                PChar('function' + IntToStr(i)));
+            end;
           end;
+        end;
 
-          if (hOpenedLibrary <> INVALID_HANDLE_VALUE) then
+        nlib := StrToInt(args[2]);
+        plib := args[3];
+        tlib := args[4];
+
+        if dllcancheck = true then
+        begin
+          if (dlls[uiDll].hDll <> INVALID_HANDLE_VALUE) then
           begin
-            nlib := StrToInt(args[2]);
-            plib := args[3];
-            tlib := args[4];
-
             if (nlib >= 0) and (nlib <= 9) then
             begin
               if (nlib = 0) then nlib := 10;
 
-              @dllFunction := getprocaddress(hOpenedLibrary,
-                PChar('function' + IntToStr(nlib)));
-              if @dllFunction <> nil then
-                dllsArray[totaldlls] := dllFunction(pchar(plib), pchar(tlib))
+              if @dlls[uiDll].functions[nlib] <> nil then
+                dlls[uiDll].results[nlib] := dlls[uiDll].functions[nlib](pchar(plib), pchar(tlib))
               else
-                dllsArray[totaldlls] := '[Function not found]';
-            end;
+                dlls[uiDll].results[nlib] := '[Dll: Function not found]';
+            end
+            else
+              dlls[uiDll].results[nlib] := '[Dll: out of range]';
           end
           else
-          begin
-            dllsArray[totaldlls] := '[Cant load dll: '
+            dlls[uiDll].results[nlib] := '[Dll: Cant load dll: '
               + CleanString(ErrMsg(GetLastError)) + ']';
-          end;
-          line := prefix + dllsArray[totaldlls] + postfix;
-        except
-          on E: Exception do
-            dllsArray[totaldlls] := '[dll: ' + CleanString(E.Message) + ']';
         end;
+        line := prefix + dlls[uiDll].results[nlib] + postfix;
+      except
+        on E: Exception do
+          line := prefix + '[Dll: ' + CleanString(E.Message) + ']' + postfix;
       end;
 
-      line := prefix + dllsArray[totaldlls] + postfix;
+
     end;
 
     while decodeArgs(line, '$Count', maxArgs, args, prefix, postfix, numargs)
