@@ -19,7 +19,7 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.28 $ $Date: 2005/01/09 23:24:47 $
+ *  $Revision: 1.29 $ $Date: 2005/01/22 14:25:36 $
  *****************************************************************************}
 
 interface
@@ -838,15 +838,7 @@ Procedure TForm2.FocusToInputField;
 var
   tempint1, tempint2: Integer;
 begin
-    if setupbutton = 1 then
-    begin
-      tempint1 := edit5.SelStart;
-      tempint2 := edit5.SelLength;
-      edit5.setfocus;
-      edit5.SelStart := tempint1;
-      edit5.SelLength := tempint2;
-    end
-    else if setupbutton = 2 then
+    if (setupbutton = 2) and (edit6.Enabled) and (edit6.visible) then
     begin
       tempint1 := edit6.SelStart;
       tempint2 := edit6.SelLength;
@@ -854,7 +846,7 @@ begin
       edit6.SelStart := tempint1;
       edit6.SelLength := tempint2;
     end
-    else if setupbutton = 3 then
+    else if (setupbutton = 3) and (edit7.enabled) and (edit7.visible) then
     begin
       tempint1 := edit7.SelStart;
       tempint2 := edit7.SelLength;
@@ -862,7 +854,7 @@ begin
       edit7.SelStart := tempint1;
       edit7.SelLength := tempint2;
     end
-    else if setupbutton = 4 then
+    else if (setupbutton = 4) and (edit8.enabled) and (edit8.visible) then
     begin
       tempint1 := edit8.SelStart;
       tempint2 := edit8.SelLength;
@@ -870,13 +862,21 @@ begin
       edit8.SelStart := tempint1;
       edit8.SelLength := tempint2;
     end
-    else
+    else if (setupbutton = 5) and (edit16.Enabled) and (edit16.visible) then
     begin
       tempint1 := edit16.SelStart;
       tempint2 := edit16.SelLength;
       edit16.setfocus;
       edit16.SelStart := tempint1;
       edit16.SelLength := tempint2;
+    end
+    else  // default to line 1 of screen section
+    begin // setupbutton = 1
+      tempint1 := edit5.SelStart;
+      tempint2 := edit5.SelLength;
+      edit5.setfocus;
+      edit5.SelStart := tempint1;
+      edit5.SelLength := tempint2;
     end;
 end;
 
@@ -1945,7 +1945,6 @@ begin
   form1.timer2.interval := 1000;
   form1.timer8.interval := 1000;
   form1.timer6.interval := 1000;
-  form1.timer13.interval := config.dllPeriod;
   form1.timer12.interval := config.scrollPeriod;
   form1.timer9.interval := 800;
 
