@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.17 $ $Date: 2004/11/23 22:33:57 $
+ *  $Revision: 1.18 $ $Date: 2004/11/24 02:35:06 $
  *****************************************************************************}
 
 interface
@@ -217,6 +217,7 @@ type
       String;
     procedure scrollLine(line: Byte; direction: Integer);
     procedure doInteractions;
+    procedure OnMinimize(Sender: TObject);
   end;
 
 var
@@ -366,6 +367,8 @@ var
   initfile: textfile;
 begin
   Randomize;
+
+  Application.OnMinimize := OnMinimize;
 
   SetCurrentDir(extractfilepath(application.exename));
   CreateDirectory('cache', nil);
@@ -782,7 +785,7 @@ begin
     if parameter3 = '-hide' then parameter3 :=  '';
     if parameter4 = '-hide' then parameter4 :=  '';
     application.minimize;
-    hide;
+    coolTrayIcon1.HideMainForm;
   end;
 
   if (parameter1= '-totalhide') or (parameter2= '-totalhide') or (parameter3=
@@ -793,7 +796,7 @@ begin
     if parameter3 = '-totalhide' then parameter3 :=  '';
     if parameter4 = '-totalhide' then parameter4 :=  '';
     application.minimize;
-    hide;
+    coolTrayIcon1.HideMainForm;
     cooltrayicon1.HideTaskbarIcon;
     cooltrayicon1.enabled := False;
     cooltrayicon1.IconVisible := False;
@@ -1049,6 +1052,8 @@ var
 begin
   timer1.Interval := config.refreshRate;
 
+  cooltrayicon1.IconVisible := False;
+
   if config.height <> iNrLines then
   begin
     iNrLines := config.height;
@@ -1238,19 +1243,13 @@ begin
   end;
 end;
 
+// ShowMenu/Minimize has been selected from the tray/popup menu
 procedure TForm1.Showwindow1Click(Sender: TObject);
 begin
   if popupmenu1.Items[3].caption='&Minimize' then
-  begin
-    button1.Click;
-  end
+    button1.Click
   else
-  begin
-    form1.Show;
-    form1.BringToFront;
-    form1.SetFocus;
-    //Application.ProcessMessages;
-  end;
+    coolTrayIcon1.ShowMainForm;
 end;
 
 procedure TForm1.Close1Click(Sender: TObject);
@@ -1258,6 +1257,7 @@ begin
   form1.close();
 end;
 
+// The LCD Smartie logo has been clicked - raise popup menu
 procedure TForm1.Image1Click(Sender: TObject);
 begin
   popupmenu1.Items[3].caption := 'Minimize';
@@ -1312,15 +1312,14 @@ end;
 
 procedure TForm1.Button1Click(Sender: TObject);
 begin
-  popupmenu1.Items[3].caption := 'Show Main';
-  application.minimize;
-  hide;
+  Application.Minimize;
+  if (not form2.Visible) then CoolTrayIcon1.HideMainForm
 end;
 
 procedure TForm1.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
   application.minimize;
-  hide;
+  coolTrayIcon1.HideMainForm;
   cooltrayicon1.HideTaskbarIcon;
   cooltrayicon1.enabled := False;
   cooltrayicon1.IconVisible := False;
@@ -2387,6 +2386,7 @@ begin
   speedbutton10.click;
 end;
 
+// Hide has been pressed.
 procedure TForm1.Image17Click(Sender: TObject);
 begin
   button1.click;
@@ -2461,6 +2461,20 @@ procedure TForm1.WinAmpTimerCheck(Sender: TObject);
 begin
   WinampCtrl1.CheckIfSongChanged;
 end;
+
+procedure TForm1.OnMinimize(Sender: TObject);
+begin
+  // Only minimize to tray when setup isn't displayed
+  if (not form2.Visible) then
+  begin
+    cooltrayicon1.HideMainForm;
+    popupmenu1.Items[3].caption := 'Show Main';
+    cooltrayicon1.IconVisible := True;
+  end
+  else
+    coolTrayIcon1.IconVisible := False;
+end;
+
 
 end.
 

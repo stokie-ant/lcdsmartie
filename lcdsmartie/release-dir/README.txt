@@ -23,6 +23,7 @@ Changes
 	- Actions moved from action.cfg to config.ini.
 	- Fixed bug [1071793] Exception: Cannot focus a disabled or
 	  invisible window.
+	- Fixed bug [1070868] Minimise whilst in setup is broken.
 	- Added config option to improve contrast fade; MinFadeContrast -
 	  this defines the lowest point of the fade. LCDs often go blank
 	  long before a contrast of 0 is reached and the fade can appear to

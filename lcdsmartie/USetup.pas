@@ -19,7 +19,7 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.10 $ $Date: 2004/11/23 21:58:17 $
+ *  $Revision: 1.11 $ $Date: 2004/11/24 02:35:06 $
  *****************************************************************************}
 
 interface
@@ -275,6 +275,7 @@ uses Windows, ShellApi, graphics, sysutils, parport, UMain, UMOSetup,
 
 {$R *.DFM}
 
+// Cancel has been pressed.
 procedure TForm2.Button2Click(Sender: TObject);
 begin
   form1.timer1.enabled := true;
