@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.21 $ $Date: 2004/11/24 16:38:09 $
+ *  $Revision: 1.22 $ $Date: 2004/11/28 18:26:55 $
  *****************************************************************************}
 
 interface
@@ -562,8 +562,8 @@ begin
     customchar('7, 4, 4, 4, 4, 4, 4, 4, 0');
     customchar('8, 14, 17, 1, 13, 21, 21, 14, 0');
 
-    Lcd.setContrast(config.CF_contrast);
     Lcd.setBrightness(config.CF_brightness);
+    Lcd.setContrast(config.CF_contrast);
   end;
 
     //
