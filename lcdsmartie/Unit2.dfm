@@ -1,11 +1,11 @@
 object Form2: TForm2
-  Left = 238
-  Top = 362
+  Left = 174
+  Top = 263
   Anchors = []
   BiDiMode = bdLeftToRight
   BorderIcons = []
   BorderStyle = bsToolWindow
-  Caption = 'LCD Smartie 5.2 Setup'
+  Caption = 'LCD Smartie 5.3 Setup'
   ClientHeight = 410
   ClientWidth = 812
   Color = clBtnFace
@@ -39,7 +39,6 @@ object Form2: TForm2
     ParentFont = False
     ParentShowHint = False
     ShowHint = False
-    TabIndex = 0
     TabOrder = 0
     TabPosition = tpRight
     OnChange = PageControl1Change
@@ -956,7 +955,6 @@ object Form2: TForm2
     Width = 577
     Height = 377
     ActivePage = TabSheet11
-    TabIndex = 0
     TabOrder = 6
     OnChange = PageControl2Change
     object TabSheet11: TTabSheet

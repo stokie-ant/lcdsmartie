@@ -113,9 +113,9 @@ RootDir=
 IncludeVerInfo=1
 AutoIncBuild=0
 MajorVer=5
-MinorVer=2
+MinorVer=3
 Release=0
-Build=2
+Build=0
 Debug=0
 PreRelease=0
 Special=0
@@ -124,16 +124,15 @@ DLL=0
 Locale=1033
 CodePage=1252
 [Version Info Keys]
-CompanyName=1998-2003 BasieP Computing, Inc.
+CompanyName=SourceForge.net
 FileDescription=
-FileVersion=5.2.0.2
+FileVersion=5.3.0.0
 InternalName=LCD Smartie
-LegalCopyright=None ;-)  (It's Freeware)
+LegalCopyright=GPL
 LegalTrademarks=
 OriginalFilename=Smartie.exe
 ProductName=LCD Smartie
 ProductVersion=5
-Comments=It r0x
 [Excluded Packages]
 C:\Program Files\Borland\Delphi7\Projects\Bpl\WinampCtrl7.bpl=Runtime package for WinampCtrl
 [HistoryLists\hlUnitAliases]
