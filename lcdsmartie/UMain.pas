@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.45 $ $Date: 2005/01/07 15:19:33 $
+ *  $Revision: 1.46 $ $Date: 2005/01/07 19:44:01 $
  *****************************************************************************}
 
 interface
@@ -32,6 +32,8 @@ const
   WM_ICONTRAY = WM_USER + 1;   // User-defined message
 
 type
+  TChangeShow = (NoChange, ShowMainForm, HideMainForm, TotalHideMainForm);
+
   TForm1 = class(TForm)
     PopupMenu1: TPopupMenu;
     Showwindow1: TMenuItem;
@@ -183,8 +185,10 @@ type
     procedure ReInitLCD();
     procedure ResetScrollPositions;
     procedure SetupAutoStart;
+    procedure CoolTrayIcon1Startup(Sender: TObject;
+      var ShowMainForm: Boolean);
   private
-    bHide, bTotalHide: Boolean;
+    changeShow: TChangeShow;
     screenLcd: Array[1..4] of ^TPanel;
     canflash: Boolean;
     iSavedHeight, iSavedWidth: Integer;
@@ -561,20 +565,21 @@ begin
     application.Terminate;
   end;
 
-  bHide := False;
-  bTotalHide := False;
+  changeShow := ShowMainForm;
   for i:=1 to 4 do
   begin
     parameter :=  lowercase(paramstr(i));
 
     if (parameter = '-hide') then
-      bHide := True
+      changeShow := HideMainForm
     else if (parameter = '-totalhide') then
-      bTotalHide := True;
+      changeShow := TotalHideMainForm;
   end;
 
   if (config.bHideOnStartup) then
-    bHide := True;
+    changeShow := HideMainForm;
+
+  self.Visible := (changeShow = ShowMainForm);
 
   // delete/create startup shortcut as required.
   SetupAutoStart();
@@ -1005,22 +1010,30 @@ begin
 
   // This code can't go in FormCreate or FormShow because it either
   // doesn't work (FormCreate) or causes an exception (FormShow).
-  if (bHide) then
+  if (changeShow <> NoChange) then
   begin
-    bHide := False;
-    application.minimize;
-    coolTrayIcon1.HideMainForm;
-  end;
+    if (changeShow = ShowMainForm) then
+    begin
+      cooltrayIcon1.ShowMainForm();
+    end
+    else if (changeShow = HideMainForm) then
+    begin
+      application.minimize;
+      coolTrayIcon1.HideMainForm;
+      cooltrayicon1.IconVisible := True;
+    end
+    else if (changeShow = TotalHideMainForm) then
+    begin
+      changeShow := NoChange;
+      application.minimize;
+      coolTrayIcon1.HideMainForm;
+      cooltrayicon1.HideTaskbarIcon;
+      cooltrayicon1.enabled := False;
+      cooltrayicon1.IconVisible := False;
+      cooltrayicon1.Refresh;
+    end;
 
-  if (bTotalHide) then
-  begin
-    bTotalHide := False;
-    application.minimize;
-    coolTrayIcon1.HideMainForm;
-    cooltrayicon1.HideTaskbarIcon;
-    cooltrayicon1.enabled := False;
-    cooltrayicon1.IconVisible := False;
-    cooltrayicon1.Refresh;
+    changeShow := NoChange;
   end;
 
   if ((gotnewlines = false) OR (timertrans.enabled = false))then
@@ -2452,6 +2465,12 @@ begin
     coolTrayIcon1.IconVisible := False;
 end;
 
+
+procedure TForm1.CoolTrayIcon1Startup(Sender: TObject;
+  var ShowMainForm: Boolean);
+begin
+  ShowMainForm := False;
+end;
 
 end.
 

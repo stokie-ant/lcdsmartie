@@ -535,6 +535,7 @@ object Form1: TForm1
       E44FFFFFFFFFFE07FFFFFC01FFFFFC01FFFFF800FFFE000007FC000003FC}
     IconIndex = 0
     PopupMenu = PopupMenu1
+    OnStartup = CoolTrayIcon1Startup
     Left = 40
     Top = 152
   end
