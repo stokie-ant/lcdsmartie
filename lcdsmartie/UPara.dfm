@@ -71,7 +71,10 @@ object Form6: TForm6
     Top = 136
     Width = 153
     Height = 25
+    Hint = 'Some displays (esp the 1x16s) are addressed differently.'
     Caption = 'Use alternative addressing'
+    ParentShowHint = False
+    ShowHint = True
     TabOrder = 3
   end
   object SpinEdit2: TSpinEdit
@@ -79,10 +82,15 @@ object Form6: TForm6
     Top = 88
     Width = 49
     Height = 22
+    Hint = 
+      'Some displays need longer to do a command - set this to 5 if you' +
+      #39're having trouble.'
     EditorEnabled = False
     MaxLength = 2
     MaxValue = 5
     MinValue = 0
+    ParentShowHint = False
+    ShowHint = True
     TabOrder = 4
     Value = 1
   end

@@ -19,16 +19,16 @@ object Form7: TForm7
   object Label1: TLabel
     Left = 8
     Top = 16
-    Width = 210
+    Width = 188
     Height = 13
-    Caption = 'Here can you config the interaction between'
+    Caption = 'Here can you set the transition between'
   end
   object Label2: TLabel
     Left = 8
     Top = 32
-    Width = 173
+    Width = 169
     Height = 13
-    Caption = 'The current screen and the next one'
+    Caption = 'the current screen and the next one'
   end
   object Label3: TLabel
     Left = 8

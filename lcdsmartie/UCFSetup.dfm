@@ -84,7 +84,12 @@ object Form5: TForm5
     Top = 120
     Width = 105
     Height = 17
+    Hint = 
+      'If the @ symbol (and others) aren'#39't displaying correctly, change' +
+      ' this.'
     Caption = 'v2 character set'
+    ParentShowHint = False
+    ShowHint = True
     TabOrder = 5
     OnClick = v2cgromClick
   end
