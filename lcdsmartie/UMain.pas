@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.49 $ $Date: 2005/01/22 23:36:33 $
+ *  $Revision: 1.50 $ $Date: 2005/01/23 20:35:36 $
  *****************************************************************************}
 
 interface
@@ -1239,7 +1239,6 @@ begin
     begin
       ShellExecute(0, Nil, pchar('http://lcdsmartie.sourceforge.net/'), Nil,
         Nil, SW_NORMAL);
-      Form1.close;
     end;
   end;
 

@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.47 $ $Date: 2005/01/22 23:49:01 $
+ *  $Revision: 1.48 $ $Date: 2005/01/23 20:35:36 $
  *****************************************************************************}
 
 
@@ -3032,6 +3032,7 @@ var
   titles, descs, whole: String;
   sFilename: String;
   tempstr, tempstr2: String;
+  iPos1: Integer;
 
 begin
   if DoNewsUpdate[1] then
@@ -3084,25 +3085,32 @@ begin
     begin
       if (dataThread.Terminated) then raise EExiting.Create('');
       try
-        sFilename := getUrl('http://lcdsmartie.sourceforge.net/version.txt',
+        sFilename := getUrl('http://lcdsmartie.sourceforge.net/version2.txt',
           96*60);
         versionline := FileToString(sFilename);
       except
         on E: EExiting do raise;
         else versionline := '';
       end;
-      versionline := StringReplace(versionline, chr(10), '',
-        [rfReplaceAll]);
-      versionline := StringReplace(versionline, chr(13), '',
-        [rfReplaceAll]);
-      if copy(versionline, 1, 1) = '5' then isconnected := true;
-      if (length(versionline) < 72) and (copy(versionline, 1, 7) <>
-        '5.3.0.1') and (versionline <> '') then
+      versionline := StringReplace(versionline, chr(10), '', [rfReplaceAll]);
+      versionline := StringReplace(versionline, chr(13), '', [rfReplaceAll]);
+
+      if (Length(versionline) > 1) and (versionline[1]=':') then
       begin
-        if (lcdSmartieUpdateText <> copy(versionline, 8, 62)) then
+        isconnected := true;
+
+        iPos1 := PosEx(':', versionline, 2);
+
+        if (iPos1 <> 0) then
         begin
-          lcdSmartieUpdateText := copy(versionline, 8, 62);
-          lcdSmartieUpdate := True;
+          if (MidStr(versionline, 2, iPos1-2) <> '5.3.0.14') then
+          begin
+            if (lcdSmartieUpdateText <> MidStr(versionline, iPos1+1, 62)) then
+            begin
+              lcdSmartieUpdateText := MidStr(versionline, iPos1+1, 62);
+              lcdSmartieUpdate := True;
+            end;
+          end;
         end;
       end;
     end;
