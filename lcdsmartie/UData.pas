@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.10 $ $Date: 2004/11/19 21:06:25 $
+ *  $Revision: 1.11 $ $Date: 2004/11/19 21:47:00 $
  *****************************************************************************}
 
 
@@ -55,7 +55,8 @@ type
   public
     constructor Create(myMethod: TThreadMethod);
   private
-    method: TThreadMethod; published
+    method: TThreadMethod; 
+  published
     procedure execute; override;
   end;
 
