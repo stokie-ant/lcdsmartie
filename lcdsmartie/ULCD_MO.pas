@@ -132,8 +132,9 @@ begin
     if (output = INVALID_HANDLE_VALUE) then
     begin
       if (GetLastError = ERROR_PATH_NOT_FOUND) then
-        raise exception.Create('Failed to open USB Palm for writing: Please '
-          + 'ensure that ' + #10 + #13 + 'PalmOrb is running on your Palm.')
+        raise exception.Create('Failed to open USB Palm for writing.' + #10+#13
+          + 'Please ensure that Hotsync manager is not running, and that '
+          + 'PalmOrb is already running on your Palm.')
       else
         raise exception.Create('Failed to open USB Palm for writing: '
           + errMsg(GetLastError));
