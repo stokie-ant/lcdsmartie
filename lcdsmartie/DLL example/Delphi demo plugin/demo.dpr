@@ -44,7 +44,7 @@ Function function1(param1:pchar;param2:pchar):pchar; stdcall;
 begin
   try
 
-    result:=pchar(IntToStr(StrToInt(param1)+StrToInt(param2)));
+    result:=pchar(FloatToStr(StrToFloat(param1)+StrToFloat(param2)));
 
   except
     on E: Exception do
@@ -56,7 +56,7 @@ Function function2(param1:pchar;param2:pchar):pchar; stdcall;
 // this one is also a math funtion
 begin
   try
-    result:=pchar(IntToStr(StrToInt(param1)-StrToInt(param2)));
+    result:=pchar(FloatToStr(StrToFloat(param1)-StrToFloat(param2)));
   except
     on E: Exception do
       result := PChar('plugin had exception: ' + E.Message);
@@ -68,7 +68,7 @@ Function function3(param1:pchar;param2:pchar):pchar; stdcall;
 begin
   try
 
-    result:=pchar(IntToStr(StrToInt(param1)*StrToInt(param2)));
+    result:=pchar(FloatToStr(StrToFloat(param1)*StrToFloat(param2)));
 
   except
     on E: Exception do
@@ -199,7 +199,7 @@ Function function10(param1:pchar;param2:pchar):pchar; stdcall;
 begin
   try
 
-    result:=pchar(IntToStr(Round((StrToInt(param1)*1.8)+32)));
+    result:=pchar(IntToStr(Round((StrToFloat(param1)*1.8)+32)));
 
   except
     on E: Exception do

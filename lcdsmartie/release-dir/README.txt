@@ -45,6 +45,8 @@ Changes
 	- Limit data updates from plugins to 300ms - unless plugin states a
 	  different value.
 	- Profiled code, and made some optimizations.
+	- Fixed demo delphi plugin - was causing crashes! (Exceptions must
+	  be caught by the plugin).
 5.3Beta3
 	- Removed the need to restart smartie when some settings are changed.
 	- Added options for auto starting with windows and hiding on startup.
