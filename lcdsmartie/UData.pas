@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.13 $ $Date: 2004/11/20 00:19:40 $
+ *  $Revision: 1.14 $ $Date: 2004/11/20 23:51:01 $
  *****************************************************************************}
 
 
@@ -205,6 +205,7 @@ type
     procedure doSeti;
     function getUrl(Url: String; maxfreq: Cardinal = 0): String;
     function FileToString(sFilename: String): String;
+    function CleanString(str: String): String;
   end;
 
 function stripspaces(FString: String): String;
@@ -267,6 +268,15 @@ begin
   else Result := false;
 
 end;
+
+// Remove $'s from the string - this is used when an exception
+// message is inserted into the parsed string. This avoids
+// any chance of infinite recursion.
+function TData.CleanString(str: String): String;
+begin
+  Result := StringReplace(str, '$', '', [rfReplaceAll]);
+end;
+
 
 function stripHtml(str: String): String;
 var
@@ -407,8 +417,8 @@ begin
 
       line := prefix + tempstr + postfix;
     except
-      on E: Exception do line := prefix + '[WinampPosition: ' + E.Message +
-        ']' + postfix;
+      on E: Exception do line := prefix + '[WinampPosition: '
+        + CleanString(E.Message) + ']' + postfix;
     end;
   end;
 
@@ -647,8 +657,8 @@ begin
       adapterNum := StrToInt(args[1]);
       line := prefix + netadaptername[adapterNum] + postfix;
     except
-      on E: Exception do line := prefix + '[NetAdapter: ' + E.Message + ']' +
-        postfix;
+      on E: Exception do line := prefix + '[NetAdapter: '
+        + CleanString(E.Message) + ']' + postfix;
     end;
   end;
   while decodeArgs(line, '$NetDownK', maxArgs, args, prefix, postfix,
@@ -659,8 +669,8 @@ begin
       line := prefix + floatToStr(Round(nettotaldown[adapterNum]/1024*10)/10)
         + postfix;
     except
-      on E: Exception do line := prefix + '[NetDownK: ' + E.Message + ']' +
-        postfix;
+      on E: Exception do line := prefix + '[NetDownK: '
+        + CleanString(E.Message) + ']' + postfix;
     end;
   end;
   while decodeArgs(line, '$NetUpK', maxArgs, args, prefix, postfix, numargs)
@@ -671,8 +681,8 @@ begin
       line := prefix + floatToStr(Round(nettotalup[adapterNum]/1024*10)/10) +
         postfix;
     except
-      on E: Exception do line := prefix + '[NetUpK: ' + E.Message + ']' +
-        postfix;
+      on E: Exception do line := prefix + '[NetUpK: ' + CleanString(E.Message)
+        + ']' + postfix;
     end;
   end;
   while decodeArgs(line, '$NetDownM', maxArgs, args, prefix, postfix,
@@ -683,8 +693,8 @@ begin
       line := prefix +
         floatToStr(Round(nettotaldown[adapterNum]/1024/1024*10)/10) + postfix;
     except
-      on E: Exception do line := prefix + '[NetDownM: ' + E.Message + ']' +
-        postfix;
+      on E: Exception do line := prefix + '[NetDownM: '
+        + CleanString(E.Message) + ']' + postfix;
     end;
   end;
   while decodeArgs(line, '$NetUpM', maxArgs, args, prefix, postfix, numargs)
@@ -696,8 +706,8 @@ begin
       line := prefix +
         floatToStr(Round(nettotalup[adapterNum]/1024/1024*10)/10) + postfix;
     except
-      on E: Exception do line := prefix + '[NetUpM: ' + E.Message + ']' +
-        postfix;
+      on E: Exception do line := prefix + '[NetUpM: '
+        + CleanString(E.Message) + ']' + postfix;
     end;
   end;
   while decodeArgs(line, '$NetDownG', maxArgs, args, prefix, postfix,
@@ -710,8 +720,8 @@ begin
         floatToStr(Round(nettotaldown[adapterNum]/1024/1024/1024*10)/10) +
         postfix;
     except
-      on E: Exception do line := prefix + '[NetDownG: ' + E.Message + ']' +
-        postfix;
+      on E: Exception do line := prefix + '[NetDownG: '
+        + CleanString(E.Message) + ']' + postfix;
     end;
   end;
   while decodeArgs(line, '$NetUpG', maxArgs, args, prefix, postfix, numargs)
@@ -724,8 +734,8 @@ begin
         floatToStr(Round(nettotalup[adapterNum]/1024/1024/1024*10)/10) +
         postfix;
     except
-      on E: Exception do line := prefix + '[NetUpG: ' + E.Message + ']' +
-        postfix;
+      on E: Exception do line := prefix + '[NetUpG: ' +
+        CleanString(E.Message) + ']' + postfix;
     end;
   end;
   while decodeArgs(line, '$NetErrDown', maxArgs, args, prefix, postfix,
@@ -736,8 +746,8 @@ begin
       adapterNum := StrToInt(args[1]);
       line := prefix + FloatToStr(netErrorsDown[adapterNum]) + postfix;
     except
-      on E: Exception do line := prefix + '[NetErrDown: ' + E.Message + ']' +
-        postfix;
+      on E: Exception do line := prefix + '[NetErrDown: '
+        + CleanString(E.Message) + ']' + postfix;
     end;
   end;
   while decodeArgs(line, '$NetErrUp', maxArgs, args, prefix, postfix,
@@ -748,8 +758,8 @@ begin
       adapterNum := StrToInt(args[1]);
       line := prefix + FloatToStr(netErrorsUp[adapterNum]) + postfix;
     except
-      on E: Exception do line := prefix + '[NetErrUp: ' + E.Message + ']' +
-        postfix;
+      on E: Exception do line := prefix + '[NetErrUp: '
+        + CleanString(E.Message) + ']' + postfix;
     end;
   end;
   while decodeArgs(line, '$NetErrTot', maxArgs, args, prefix, postfix,
@@ -761,8 +771,8 @@ begin
       line := prefix + FloatToStr(netErrorsDown[adapterNum] +
         netErrorsUp[adapterNum]) + postfix;
     except
-      on E: Exception do line := prefix + '[NetErrTot: ' + E.Message + ']' +
-        postfix;
+      on E: Exception do line := prefix + '[NetErrTot: '
+        + CleanString(E.Message) + ']' + postfix;
     end;
   end;
   while decodeArgs(line, '$NetUniDown', maxArgs, args, prefix, postfix,
@@ -773,8 +783,8 @@ begin
       adapterNum := StrToInt(args[1]);
       line := prefix + FloatToStr(netunicastdown[adapterNum]) + postfix;
     except
-      on E: Exception do line := prefix + '[NetUniDown: ' + E.Message + ']' +
-        postfix;
+      on E: Exception do line := prefix + '[NetUniDown: '
+        + CleanString(E.Message) + ']' + postfix;
     end;
   end;
   while decodeArgs(line, '$NetUniUp', maxArgs, args, prefix, postfix,
@@ -785,8 +795,8 @@ begin
       adapterNum := StrToInt(args[1]);
       line := prefix + FloatToStr(netunicastup[adapterNum]) + postfix;
     except
-      on E: Exception do line := prefix + '[NetUniUp: ' + E.Message + ']' +
-        postfix;
+      on E: Exception do line := prefix + '[NetUniUp: '
+        + CleanString(E.Message) + ']' + postfix;
     end;
   end;
   while decodeArgs(line, '$NetUniTot', maxArgs, args, prefix, postfix,
@@ -798,8 +808,8 @@ begin
       line := prefix + FloatToStr(netunicastup[adapterNum] +
         netunicastdown[adapterNum]) + postfix;
     except
-      on E: Exception do line := prefix + '[NetUniTot: ' + E.Message + ']' +
-        postfix;
+      on E: Exception do line := prefix + '[NetUniTot: '
+        + CleanString(E.Message) + ']' + postfix;
     end;
   end;
   while decodeArgs(line, '$NetNuniDown', maxArgs, args, prefix, postfix,
@@ -810,8 +820,8 @@ begin
       adapterNum := StrToInt(args[1]);
       line := prefix + FloatToStr(netnunicastdown[adapterNum]) + postfix;
     except
-      on E: Exception do line := prefix + '[NetNuniDown: ' + E.Message + ']'
-        + postfix;
+      on E: Exception do line := prefix + '[NetNuniDown: '
+        + CleanString(E.Message) + ']' + postfix;
     end;
   end;
   while decodeArgs(line, '$NetNuniUp', maxArgs, args, prefix, postfix,
@@ -822,8 +832,8 @@ begin
       adapterNum := StrToInt(args[1]);
       line := prefix + FloatToStr(netnunicastup[adapterNum]) + postfix;
     except
-      on E: Exception do line := prefix + '[NetNuniUp: ' + E.Message + ']' +
-        postfix;
+      on E: Exception do line := prefix + '[NetNuniUp: '
+        + CleanString(E.Message) + ']' + postfix;
     end;
   end;
   while decodeArgs(line, '$NetNuniTot', maxArgs, args, prefix, postfix,
@@ -849,8 +859,8 @@ begin
         netnunicastdown[adapterNum] + netunicastdown[adapterNum] +
         netunicastup[adapterNum]) + postfix;
     except
-      on E: Exception do line := prefix + '[NetPackTot: ' + E.Message + ']' +
-        postfix;
+      on E: Exception do line := prefix + '[NetPackTot: '
+        + CleanString(E.Message) + ']' + postfix;
     end;
   end;
   while decodeArgs(line, '$NetDiscDown', maxArgs, args, prefix, postfix,
@@ -861,8 +871,8 @@ begin
       adapterNum := StrToInt(args[1]);
       line := prefix + FloatToStr(netDiscardsdown[adapterNum]) + postfix;
     except
-      on E: Exception do line := prefix + '[NetDiscDown: ' + E.Message + ']'
-        + postfix;
+      on E: Exception do line := prefix + '[NetDiscDown: '
+        + CleanString(E.Message) + ']' + postfix;
     end;
   end;
   while decodeArgs(line, '$NetDiscUp', maxArgs, args, prefix, postfix,
@@ -873,8 +883,8 @@ begin
       adapterNum := StrToInt(args[1]);
       line := prefix + FloatToStr(netDiscardsup[adapterNum]) + postfix;
     except
-      on E: Exception do line := prefix + '[NetDiscUp: ' + E.Message + ']' +
-        postfix;
+      on E: Exception do line := prefix + '[NetDiscUp: '
+        + CleanString(E.Message) + ']' + postfix;
     end;
   end;
 
@@ -887,8 +897,8 @@ begin
       line := prefix + FloatToStr(netDiscardsup[adapterNum] +
         netDiscardsdown[adapterNum]) + postfix;
     except
-      on E: Exception do line := prefix + '[NetDiscTot: ' + E.Message + ']' +
-        postfix;
+      on E: Exception do line := prefix + '[NetDiscTot: '
+        + CleanString(E.Message) + ']' + postfix;
     end;
   end;
 
@@ -900,8 +910,8 @@ begin
       adapterNum := StrToInt(args[1]);
       line := prefix + FloatToStr(netSpeeddownK[adapterNum]) + postfix;
     except
-      on E: Exception do line := prefix + '[NetSpDownK: ' + E.Message + ']' +
-        postfix;
+      on E: Exception do line := prefix + '[NetSpDownK: '
+        + CleanString(E.Message) + ']' + postfix;
     end;
   end;
 
@@ -913,8 +923,8 @@ begin
       adapterNum := StrToInt(args[1]);
       line := prefix + FloatToStr(netSpeedupK[adapterNum]) + postfix;
     except
-      on E: Exception do line := prefix + '[NetSpUpK: ' + E.Message + ']' +
-        postfix;
+      on E: Exception do line := prefix + '[NetSpUpK: '
+        + CleanString(E.Message) + ']' + postfix;
     end;
   end;
 
@@ -926,8 +936,8 @@ begin
       adapterNum := StrToInt(args[1]);
       line := prefix + FloatToStr(netSpeeddownM[adapterNum]) + postfix;
     except
-      on E: Exception do line := prefix + '[NetSpDownM: ' + E.Message + ']' +
-        postfix;
+      on E: Exception do line := prefix + '[NetSpDownM: '
+        + CleanString(E.Message) + ']' + postfix;
     end;
   end;
 
@@ -939,8 +949,8 @@ begin
       adapterNum := StrToInt(args[1]);
       line := prefix + FloatToStr(netSpeedupM[adapterNum]) + postfix;
     except
-      on E: Exception do line := prefix + '[NetSpUpM: ' + E.Message + ']' +
-        postfix;
+      on E: Exception do line := prefix + '[NetSpUpM: '
+        + CleanString(E.Message) + ']' + postfix;
     end;
   end;
 
@@ -1008,18 +1018,17 @@ begin
         spaceline := stripspaces(lines[lines.count - 1 - iFileline]);
         spaceline := copy(spaceline, pos('] ', spaceline) + 3,
           length(spaceline));
-        for i := 0 to 7 do spaceline := StringReplace(spaceline, chr(I), '',
+        for i := 0 to 7 do spaceline := StringReplace(spaceline, chr(i), '',
           [rfReplaceAll]);
         Lines.Free;
         line := prefix + spaceline + postfix;
       except
-        on E: Exception do line := prefix + '[LogFile: ' + E.message + ']' +
-          postfix;
+        on E: Exception do line := prefix + '[LogFile: '
+          + CleanString(E.message) + ']' + postfix;
       end;
     end;
 
-    while decodeArgs(line, '$File', maxArgs, args, prefix, postfix, numargs)
-      do
+    while decodeArgs(line, '$File', maxArgs, args, prefix, postfix, numargs) do
     begin
       assert(numargs = 2);
       sFileloc := args[1];
@@ -1033,8 +1042,8 @@ begin
         closefile(fFile3);
         line := prefix + line3 + postfix;
       except
-        on E: Exception do line := prefix + '[File: ' + E.Message + ']' +
-          postfix;
+        on E: Exception do line := prefix + '[File: '
+          + CleanString(E.Message) + ']' + postfix;
       end;
     end;
 
@@ -1195,8 +1204,8 @@ begin
         tempst := formatdatetime(line2, now);
         line := StringReplace(line, '$Time(' + line2 + ')', tempst, []);
       except
-        on E: Exception do line := StringReplace(line, '$Time(', '[Time: ' +
-          E.Message + ']', []);
+        on E: Exception do line := StringReplace(line, '$Time(', '[Time: '
+          + CleanString(E.Message) + ']', []);
       end;
     end;
 
@@ -1211,8 +1220,7 @@ begin
     end;
     if pos('$MemU%', line) <> 0 then
     begin
-      if (STMemTotal > 0) then mem :=
-        round(100/STMemTotal*(STMemTotal-STMemfree))
+      if (STMemTotal > 0) then mem := round(100/STMemTotal*(STMemTotal-STMemfree))
       else mem := 0;
       line := StringReplace(line, '$MemU%', IntToStr(mem), [rfReplaceAll]);
     end;
@@ -1226,8 +1234,7 @@ begin
 
     if pos('$PageU%', line) <> 0 then
     begin
-      if (STPageTotal > 0) then mem :=
-        round(100/STPageTotal*(STPageTotal-STPagefree))
+      if (STPageTotal > 0) then mem := round(100/STPageTotal*(STPageTotal-STPagefree))
       else mem := 0;
       line := StringReplace(line, '$PageU%', IntToStr(mem), [rfReplaceAll]);
     end;
@@ -1239,8 +1246,8 @@ begin
         letter := ord(upcase(args[1][1]));
         line := prefix + IntToStr(round(STHDFree[letter]/1024)) + postfix;
       except
-        on E: Exception do line := prefix + '[HDFreg: ' + E.Message + ']' +
-          postfix;
+        on E: Exception do line := prefix + '[HDFreg: '
+          + CleanString(E.Message) + ']' + postfix;
       end;
     end;
 
@@ -1251,8 +1258,8 @@ begin
         letter := ord(upcase(args[1][1]));
         line := prefix + IntToStr(STHDFree[letter]) + postfix;
       except
-        on E: Exception do line := prefix + '[HDFree: ' + E.Message + ']' +
-          postfix;
+        on E: Exception do line := prefix + '[HDFree: '
+          + CleanString(E.Message) + ']' + postfix;
       end;
     end;
 
@@ -1265,8 +1272,8 @@ begin
         line2 := IntToStr(round((STHDTotal[letter]-STHDFree[letter])/1024));
         line := prefix + line2 + postfix;
       except
-        on E: Exception do line := prefix + '[HDUseg: ' + E.Message + ']' +
-          postfix;
+        on E: Exception do line := prefix + '[HDUseg: '
+          + CleanString(E.Message) + ']' + postfix;
       end;
     end;
 
@@ -1278,26 +1285,24 @@ begin
         line2 := IntToStr(STHDTotal[letter]-STHDFree[letter]);
         line := prefix + line2 + postfix;
       except
-        on E: Exception do line := prefix + '[HDUsed: ' + E.Message + ']' +
-          postfix;
+        on E: Exception do line := prefix + '[HDUsed: '
+          + CleanString(E.Message) + ']' + postfix;
       end;
     end;
 
-    while decodeArgs(line, '$HDF%', maxArgs, args, prefix, postfix, numargs)
-      do
+    while decodeArgs(line, '$HDF%', maxArgs, args, prefix, postfix, numargs) do
     begin
       try
         letter := ord(upcase(args[1][1]));
         line2 := intToStr(round(100/STHDTotal[letter]*STHDFree[letter]));
         line := prefix + line2 + postfix;
       except
-        on E: Exception do line := prefix + '[HDF%: ' + E.Message + ']' +
-          postfix;
+        on E: Exception do line := prefix + '[HDF%: '
+          + CleanString(E.Message) + ']' + postfix;
       end;
     end;
 
-    while decodeArgs(line, '$HDU%', maxArgs, args, prefix, postfix, numargs)
-      do
+    while decodeArgs(line, '$HDU%', maxArgs, args, prefix, postfix, numargs) do
     begin
       try
         letter := ord(upcase(args[1][1]));
@@ -1306,8 +1311,8 @@ begin
           letter])));
         line := prefix + line2 + postfix;
       except
-        on E: Exception do line := prefix + '[HDU%: ' + E.Message + ']' +
-          postfix;
+        on E: Exception do line := prefix + '[HDU%: '
+          + CleanString(E.Message) + ']' + postfix;
       end;
     end;
 
@@ -1318,8 +1323,8 @@ begin
         letter := ord(upcase(args[1][1]));
         line := prefix + IntToStr(round(STHDTotal[letter]/1024)) + postfix;
       except
-        on E: Exception do line := prefix + '[HDTotag: ' + E.Message + ']' +
-          postfix;
+        on E: Exception do line := prefix + '[HDTotag: '
+          + CleanString(E.Message) + ']' + postfix;
       end;
     end;
 
@@ -1330,8 +1335,8 @@ begin
         letter := ord(upcase(args[1][1]));
         line := prefix + IntToStr(STHDTotal[letter]) + postfix;
       except
-        on E: Exception do line := prefix + '[HDTotal: ' + E.Message + ']' +
-          postfix;
+        on E: Exception do line := prefix + '[HDTotal: '
+          + CleanString(E.Message) + ']' + postfix;
       end;
     end;
 
@@ -1348,7 +1353,8 @@ begin
       try
         line := prefix + Chr(StrToInt(args[1])) + postfix;
       except
-        on E: Exception do line := prefix + '[Chr]' + postfix;
+        on E: Exception do line := prefix + '[Chr: '
+          + CleanString(E.Message) + ']' + postfix;
       end;
     end;
 
@@ -1431,8 +1437,8 @@ begin
           end;
           line := prefix + dllsArray[totaldlls] + postfix;
         except
-          on E: Exception do line := prefix + '[dll: ' + E.Message + ']' +
-            postfix;
+          on E: Exception do line := prefix + '[dll: '
+            + CleanString(E.Message) + ']' + postfix;
         end;
       end
       else
@@ -1456,8 +1462,8 @@ begin
 
         line := prefix + FloatToStr(ccount) + postfix;
       except
-        on E: Exception do line := prefix + '[Count: ' + E.Message + ']' +
-          postfix;
+        on E: Exception do line := prefix + '[Count: '
+          + CleanString(E.Message) + ']' + postfix;
       end;
     end;
 
@@ -1470,7 +1476,7 @@ begin
         line := StringReplace(line, '$CustomChar(' + line2 + ')', '', []);
       except
         on E: Exception do line := StringReplace(line, '$CustomChar(',
-          '[CustomChar: ' + E.Message + ']', []);
+          '[CustomChar: ' + CleanString(E.Message) + ']', []);
       end;
     end;
 
@@ -1541,8 +1547,8 @@ begin
 
           end;
       except
-        on E: Exception do line := prefix + '[Rss: ' + E.Message + ']' +
-          postfix;
+        on E: Exception do line := prefix + '[Rss: '
+          + CleanString(E.Message) + ']' + postfix;
       end;
     end;
 
@@ -1567,8 +1573,8 @@ begin
 
         line := prefix + STHDBar + postfix;
       except
-        on E: Exception do line := prefix + '[Bar: ' + E.Message + ']' +
-          postfix;
+        on E: Exception do line := prefix + '[Bar: '
+          + CleanString(E.Message) + ']' + postfix;
       end;
     end;
 
@@ -1594,7 +1600,7 @@ begin
         else line := StringReplace(line, '$Flash(', 'ERROR', []);
       except
         on E: Exception do line := StringReplace(line, '$Flash(', '[Flash: '
-          + E.Message + ']', []);
+          + CleanString(E.Message) + ']', []);
       end;
     end;
 
@@ -1620,7 +1626,7 @@ begin
           IntToStr(spacecount) + '%)', spaceline, []);
       except
         on E: Exception do line := StringReplace(line, '$Right(', '[Right: '
-          + E.Message + ']', []);
+          + CleanString(E.Message) + ']', []);
       end;
     end;
 
@@ -1644,7 +1650,8 @@ begin
       end;
     end;
   except
-    on E: Exception do line := '[Unhandled Exception: ' + E.Message + ']';
+    on E: Exception do line := '[Unhandled Exception: '
+      + CleanString(E.Message) + ']';
   end;
 
   line := StringReplace(line, Chr($A), '', [rfReplaceAll]);
