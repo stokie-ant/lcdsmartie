@@ -9,6 +9,8 @@ const
   MaxKeys = 20;
 
 type
+  TVersion = (Unknown, New633, Old633, V631);
+
   TLCD_CF = class(TLCD)
     procedure customChar(character: Integer; data: Array of Byte); override;
     procedure setPosition(x, y: Integer); override;
@@ -29,24 +31,28 @@ type
     keyBuf: String;
     uiBytesAvail: Cardinal;
     uiMaxContrast: Cardinal;
-    uiVersion: Cardinal;
+    version: TVersion;
     function CalcCrc(buffer: PByte; uiSize: Cardinal):Word;
     function PacketCmd(cmdCode: Byte): Boolean;  overload;
     function PacketCmd(cmdCode: Byte; data: Byte): Boolean;  overload;
     function PacketCmd(cmdCode: Byte; sData: String): Boolean;  overload;
     function PacketCmd(cmdCode: Byte; dataLen: Byte; buffer: PByte): Boolean; overload;
     function PacketReply(cmdCode: Byte): Boolean;
+    procedure ProcessVersion(var packet: array of Byte);
     procedure AddKey(key: Char);
   end;
 
 implementation
 
-uses UMain, SysUtils, Forms, Windows;
+uses UMain, SysUtils, Forms, Windows, StrUtils;
 
 const
+  {=packet command codes=}
   CmdPing = 0;
   CmdGetVersion = 1;
   CmdClearScreen = 6;
+  CmdSetLine1 = 7;
+  CmdSetLine2 = 8;
   CmdSetCustomChar = 9;
   CmdSetCursor = 12;
   CmdSetContrast = 13;
@@ -132,6 +138,7 @@ const
 
 var
   uiStartTime: Cardinal;
+  uiNow: Cardinal;
   bDone: Boolean;
   uiBytesRead: Cardinal;
   wCrc: Word;
@@ -170,26 +177,11 @@ begin
             begin
               bDone := true;               // success
 
-              if (cmdCode = 1) and (packet[DATALENPOS]=16) then // version packet
+              // Check if it's a version packet - if so, process it now
+              // (yes I know it's ugly).
+              if (cmdCode = 1) and (packet[DATALENPOS]>=16) then // version packet
               begin
-                //  Data will be 'CFA633:hX.X,fY.Y'
-                if (packet[3] = Byte('C'))
-                  and (packet[4] = Byte('F'))
-                  and (packet[5] = Byte('A'))
-                  and (packet[6] = Byte('6'))
-                  and (packet[7] = Byte('3')) then
-                begin
-                  if (packet[8] = Byte('1')) then
-                  begin
-                    uiMaxContrast := 255;
-                    uiVersion := 631;
-                  end
-                  else if (packet[8] = Byte('3')) then
-                  begin
-                    uiMaxContrast := 50;
-                    uiVersion := 633;
-                  end;
-                end;
+                ProcessVersion(packet);
               end;
             end
             else  // unhandled packet - ignore it
@@ -238,12 +230,50 @@ begin
       uiBytesToRemove := 0;
     end;
 
-  until (bDone) or (GetTickCount() > uiStartTime + 250);
+    uiNow := GetTickCount();
+  until (bDone)
+    or (uiNow < uiStartTime)
+    or (uiNow - uiStartTime > 250);
 
-  //if (not bDone) then
-   // raise exception.create('read timedout');
+
+  {if (not bDone) then
+    raise exception.create('read timedout'); }
 
   Result := bDone;
+end;
+
+procedure TLCD_CF.ProcessVersion(var packet: array of Byte);
+var
+  sVersion: String;
+  sFirmware: String;
+begin
+  //  Data will be 'CFA633:hX.X,fY.Y'
+  //  my 633 gave: 'CFA633:h1.4,k1.9'
+  //  my 631 gave: 'CFA631:h1.0,b1.0'
+  SetLength(sVersion, packet[1]);
+  Move(packet[2], sVersion[1], packet[1]);
+  if (LeftStr(sVersion, 6) = 'CFA633') then
+  begin
+    version := New633;
+    uiMaxContrast := 50;
+
+    // Check if it has a firmware older than 1.9
+    if (Pos(',', sVersion) <> 0) then
+    begin
+      sFirmware := RightStr(sVersion, (Length(sVersion)-Pos(',', sVersion)-1));
+      try
+        if (StrToFloat(sFirmware) < 1.9) then
+          version := Old633;
+      except
+      end;
+    end;
+
+  end
+  else if (LeftStr(sVersion, 6) = 'CFA631') then
+  begin
+    version := V631;
+    uiMaxContrast := 255;
+  end;
 end;
 
 constructor TLCD_CF.CreateSerial(uiPort: Cardinal; baudRate: Cardinal);
@@ -271,9 +301,9 @@ begin
     PacketCmd(CmdGetVersion); // this is ugly; the reply is handled in the reading code
     PacketCmd(CmdSetCursor, 0); // hide cursor
     // ask for all keys to be reported
-    if (uiVersion = 633) then
+    if (version = New633) or (version = Old633) then
       PacketCmd(CmdKeyReporting, ''+#$3f+#0)
-    else if (uiVersion = 631) then
+    else if (version = V631) then
       PacketCmd(CmdKeyReporting, ''+#$f+#0);
 
   end
@@ -457,13 +487,26 @@ begin
     assert(Pos(Chr(158), str)=0);
   end;
 
+  {==== Now write it! ====}
+
   if (bPackets) then
   begin
-    SetLength(buffer, Length(str)+2);
-    buffer[0] := xPos-1;
-    buffer[1] := yPos-1;
-    Move(str[1], buffer[2], Length(str));
-    PacketCmd(CmdSendText, Length(str)+2, @buffer[0]);
+    if (version = Old633) then
+    begin
+      if (xPos = 1) then
+        PacketCmd(CmdSetLine1, str)
+      else
+        PacketCmd(CmdSetLine2, str);
+    end
+    else
+    begin
+      SetLength(buffer, Length(str)+2);
+      buffer[0] := xPos-1;
+      buffer[1] := yPos-1;
+      Move(str[1], buffer[2], Length(str));
+      PacketCmd(CmdSendText, Length(str)+2, @buffer[0]);
+    end;
+
     xPos := xPos + Cardinal(Length(str));
   end
   else
