@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.37 $ $Date: 2005/01/02 23:10:07 $
+ *  $Revision: 1.38 $ $Date: 2005/01/02 23:19:05 $
  *****************************************************************************}
 
 interface
@@ -341,7 +341,7 @@ begin
   end;
 
   bNewScreen := True;
-  data.bNewScreenEvent := True;
+  data.NewScreen(True);
 
 end;
 
@@ -1836,7 +1836,7 @@ begin
   data.cLastKeyPressed := Chr(0);
 
   // Reset new screen - the following actions may set this again.
-  data.bNewScreenEvent := False;
+    data.NewScreen(False);;
 
   //
   // Run any required actions.

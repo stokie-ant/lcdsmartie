@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.31 $ $Date: 2005/01/02 21:37:37 $
+ *  $Revision: 1.32 $ $Date: 2005/01/02 23:19:04 $
  *****************************************************************************}
 
 
@@ -133,9 +133,9 @@ type
     isconnected: Boolean;
     gotEmail: Boolean;
     cLastKeyPressed: Char;
-    bNewScreenEvent: Boolean;
     procedure ScreenStart;
     procedure ScreenEnd;
+    procedure NewScreen(bYes: Boolean);
     function change(line: String; qstattemp: Integer = 1;
       bCacheResults: Boolean = false): String;
     function CallPlugin(sDllName: String; iFunc: Integer;
@@ -148,6 +148,7 @@ type
     constructor Create;
     destructor Destroy; override;
   private
+    bNewScreenEvent: Boolean;
     dlls: Array of TDll;
     uiTotalDlls: Cardinal;
     sDllResults: array of string;
@@ -237,6 +238,13 @@ uses cxCpu40, adCpuUsage, UMain, Windows, Forms, Registry, IpHlpApi,
   IdTCPConnection, IdTCPClient, IdMessageClient, IdPOP3, IdMessage, Menus,
   ExtCtrls, Controls, StdCtrls, StrUtils, ActiveX, IdUri, DateUtils, IdGlobal,
   UUtils;
+
+procedure TData.NewScreen(bYes: Boolean);
+begin
+  bNewScreenEvent := bYes;
+  // force a dll check on a new screen.
+  if (bYes) then  dllcancheck := true;
+end;
 
 procedure TData.ScreenStart;
 begin
