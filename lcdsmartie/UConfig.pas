@@ -19,7 +19,7 @@ unit UConfig;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UConfig.pas,v $
- *  $Revision: 1.30 $ $Date: 2005/01/11 18:52:38 $
+ *  $Revision: 1.31 $ $Date: 2005/01/22 19:12:43 $
  *****************************************************************************}
 
 interface
@@ -545,7 +545,7 @@ begin
     screen[x][1].theme := initFile.ReadInteger(sScreen, 'Theme', 1)-1;
     screen[x][1].showTime := initFile.ReadInteger(sScreen, 'ShowTime', 10);
     screen[x][1].bSticky := initFile.ReadBool(sScreen, 'Sticky', false);
-    screen[x][1].skip := initFile.ReadInteger(sScreen, 'Skip', 1);
+    screen[x][1].skip := initFile.ReadInteger(sScreen, 'Skip', 0);
     screen[x][1].interactionTime := initFile.ReadInteger(sScreen,
       'InteractionTime', 7);
     screen[x][1].interaction := initFile.ReadInteger(sScreen, 'Interaction',
