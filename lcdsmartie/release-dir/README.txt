@@ -3,6 +3,9 @@
 Please see our website for instructions and the latest information:
 		http://lcdsmartie.sourceforge.net/
 
+USB Palm users please visit: 
+  http://sourceforge.net/forum/forum.php?thread_id=1184430&forum_id=416971
+
 Alpha builds
 ============
 These builds are believed to be stable but the developer(s) do not have access
