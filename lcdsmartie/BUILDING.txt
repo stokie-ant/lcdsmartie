@@ -14,7 +14,6 @@ Required Components
 This project requires the following components to be installed and in
 the projects path:
  - CoolTrayIcon from: http://subsimple.com/delphi.asp
- - Async32 from: http://www.tmssoftware.com/
  - WinampCtrl.
 
 All of these components can be found in the components sub-directory.
@@ -41,7 +40,6 @@ Creating a release
 moment]
 - Copy the files (but not the subdirectories) from the images directory, into
   an images subdirectory of releases-dir.
-- Copy the whole of the plugins directory into the release directory.
 - Copy qstat.exe and dlportio.dll to the releases-dir.
 - Copy a freshly built LCDSmartie.exe to the releases-dir.
 - Update the README.txt.
