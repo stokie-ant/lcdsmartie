@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.29 $ $Date: 2004/12/29 19:15:02 $
+ *  $Revision: 1.30 $ $Date: 2004/12/30 16:45:56 $
  *****************************************************************************}
 
 
@@ -38,6 +38,7 @@ const
   ticksperyear: Int64 = Int64(ticksperdag) * 30 * 12;
   maxRssItems = 20;
   MAXNETSTATS = 10;
+  maxArgs = 10;
 
 type
   TBusType = (btISA, btSMBus, btVIA686ABus, btDirectIO);
@@ -119,7 +120,7 @@ type
 
   TDll = Record
     sName: String;
-    hDll: Cardinal;
+    hDll: HMODULE;
     functions: Array [1..10] of TMyProc;
   end;
 
@@ -219,8 +220,7 @@ type
     function FileToString(sFilename: String): String;
     function CleanString(str: String): String;
     procedure RequiredParameters(uiArgs: Cardinal; uiMinArgs: Cardinal; uiMaxArgs: Cardinal = 0);
-    procedure ProcessPlugin(var line: String; var args: array of String; numargs: Integer;
-       var prefix: String; var postfix: String);
+    procedure ProcessPlugin(var line: String; var qstattemp: Integer);
   end;
 
 function stripspaces(FString: String): String;
@@ -298,22 +298,31 @@ begin
     begin
       tempstr := copy(str, posArgsStart + 1, posArgsEnd-posArgsStart-1);
       // tempstr is now something like: '20,30,10'
-      posComma2 := 1;
+      posComma2 := 0;
       repeat
-        posComma := posEx(',', tempstr, posComma2);
-        if (poscomma = 0) then
+        // Find next comma ignoring those in brackets.
+        uiLevel := 0;
+        posComma := posComma2;
+        repeat
+          Inc(posComma);
+          case (tempstr[posComma]) of
+          '(': Inc(uiLevel);
+          ')': Dec(uiLevel);
+          end;
+        until (posComma >= Length(tempstr)) or ((uiLevel = 0) and (tempstr[posComma] = ','));
+
+        if (posComma >= Length(tempstr)) then
         begin
-          args[numArgs] := copy(tempstr, posComma2, length(tempstr)-PosComma2
-            + 1);
+          args[numArgs] := copy(tempstr, posComma2+1, length(tempstr)-PosComma2);
           Inc(numArgs);
         end
         else
         begin
-          args[numArgs] := copy(tempstr, posComma2, PosComma-PosComma2);
+          args[numArgs] := copy(tempstr, posComma2+1, PosComma-(PosComma2+1));
           Inc(numArgs);
         end;
-        posComma2 := posComma + 1;
-      until (poscomma = 0) or (numArgs >= maxArgs);
+        posComma2 := posComma;
+      until (poscomma >= Length(tempstr)) or (numArgs >= maxArgs);
     end;
   end
   else Result := false;
@@ -385,6 +394,8 @@ begin
 end;
 
 destructor TData.Destroy;
+var
+  uiDll: Cardinal;
 begin
   if (Assigned(dataThread)) then
   begin
@@ -392,6 +403,15 @@ begin
     dataThread.WaitFor;
     dataThread.Destroy;
   end;
+
+  for uiDll:=1 to uiTotalDlls do
+  try
+    if (dlls[uiDll-1].hDll <> 0) then
+      FreeLibrary(dlls[uiDll-1].hDll);
+    dlls[uiDll-1].hDll := 0;
+  except
+  end;
+  uiTotalDlls := 0;
 
   inherited;
 end;
@@ -1024,8 +1044,7 @@ begin
   Result := line;
 end;
 
-procedure TData.ProcessPlugin(var line: String; var args: array of String; numargs: Integer;
-   var prefix: String; var postfix: String);
+procedure TData.ProcessPlugin(var line: String; var qstattemp: Integer);
 var
   nlib: Integer;
   plib: String;
@@ -1033,7 +1052,12 @@ var
   uiDll: Cardinal;
   i: Integer;
   sDllName: String;
+  args: Array [0..maxArgs-1] of String;
+  prefix, postfix: String;
+  numArgs: Cardinal;
 begin
+    while decodeArgs(line, '$dll', maxArgs, args, prefix, postfix, numargs) do
+    begin
       Inc(iTotalDllResults);
       try
         RequiredParameters(numargs, 4, 4);
@@ -1058,7 +1082,7 @@ begin
           //    'c:\Documents and Settings\Administrator\My Documents\Visual Studio Projects\perf\Debug\perf.dll'));
 
 
-          if (dlls[uiDll].hDll <> INVALID_HANDLE_VALUE) then
+          if (dlls[uiDll].hDll <> 0) then
           begin
             for i:= 1 to 10 do
             begin
@@ -1072,8 +1096,8 @@ begin
         end;
 
         nlib := StrToInt(args[1]);
-        plib := args[2];
-        tlib := args[3];
+        plib := change(args[2], qstattemp); // parse 1st parameter
+        tlib := change(args[3], qstattemp); // parse 2nd parameter
 
         if (iTotalDllResults >= Length(sDllResults)) then
             SetLength(sDllResults, iTotalDllResults + 5);
@@ -1081,14 +1105,15 @@ begin
         if (dllcancheck = true) then
         begin
 
-          if (dlls[uiDll].hDll <> INVALID_HANDLE_VALUE) then
+          if (dlls[uiDll].hDll <> 0) then
           begin
             if (nlib >= 0) and (nlib <= 9) then
             begin
               if (nlib = 0) then nlib := 10;
 
               if @dlls[uiDll].functions[nlib] <> nil then
-                sDllResults[iTotalDllResults] := dlls[uiDll].functions[nlib](pchar(plib), pchar(tlib))
+                sDllResults[iTotalDllResults] :=
+                    dlls[uiDll].functions[nlib]( pchar(plib), pchar(tlib) )
               else
                 sDllResults[iTotalDllResults] := '[Dll: Function not found]';
             end
@@ -1099,18 +1124,16 @@ begin
             sDllResults[iTotalDllResults] := '[Dll: Cant load dll: '
               + CleanString(ErrMsg(GetLastError)) + ']';
         end;
-        line := prefix +  sDllResults[iTotalDllResults] + postfix;
+        line := prefix +  change(sDllResults[iTotalDllResults], qstattemp) + postfix;
       except
         on E: Exception do
           line := prefix + '[Dll: ' + CleanString(E.Message) + ']' + postfix;
       end;
+    end;
 end;
 
 
 function TData.change(line: String; qstattemp: Integer = 1): String;
-const
-  maxArgs = 10;
-
 var
   FileStream: TFileStream;
   Lines: TStringList;
@@ -1518,10 +1541,9 @@ begin
       end;
     end;
 
-    while decodeArgs(line, '$dll', maxArgs, args, prefix, postfix, numargs) do
-    begin
-      ProcessPlugin(line, args, numargs, prefix, postfix);
-    end;
+    if (pos('$dll(', line) <> 0) then
+      ProcessPlugin(line, qstattemp);
+
 
     while decodeArgs(line, '$Count', maxArgs, args, prefix, postfix, numargs)
       do
