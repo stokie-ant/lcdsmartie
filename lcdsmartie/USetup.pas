@@ -19,7 +19,7 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.17 $ $Date: 2004/12/08 23:44:07 $
+ *  $Revision: 1.18 $ $Date: 2004/12/09 14:22:50 $
  *****************************************************************************}
 
 interface
@@ -303,6 +303,8 @@ var
   sLookFor: String;
   uiTestPort: Cardinal;
 begin
+  { Try to limit the displayed COM port to only those that are useable }
+
   // Delete all entries in the Com Port list
   for i:= combobox4.Items.Count-1 downto 0 do
     combobox4.Items.Delete(i);
@@ -314,12 +316,18 @@ begin
                       GENERIC_READ or GENERIC_WRITE,
                       FILE_SHARE_READ or FILE_SHARE_WRITE, nil,
                       OPEN_EXISTING, FILE_FLAG_OVERLAPPED, 0);
-      if (uiTestPort <> INVALID_HANDLE_VALUE) or
-        (GetLastError = ERROR_ACCESS_DENIED) then
+      if (uiTestPort <> INVALID_HANDLE_VALUE) then
       begin
-        // ERROR_ACCESS_DENIED is given when the port is in use.
+        // Port successfully opened - add to list.
         comboBox4.Items.Add('COM'+IntToStr(i));
         CloseHandle(uiTestPort);
+      end
+      else if (GetLastError <> ERROR_FILE_NOT_FOUND)
+        and (GetLastError <> ERROR_PATH_NOT_FOUND) then 
+      begin
+	// Add them to the list - its better to have too many than not enough.
+        // This case is also used when the port is already used by smartie.
+        comboBox4.Items.Add('COM'+IntToStr(i));
       end;
   end;
   comboBox4.Items.Add(USBPALM);
