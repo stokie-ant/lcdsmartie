@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.40 $ $Date: 2005/01/11 19:14:21 $
+ *  $Revision: 1.41 $ $Date: 2005/01/11 19:26:07 $
  *****************************************************************************}
 
 
@@ -1884,7 +1884,7 @@ begin
         spaceline := '';
 
         if spacecount > length(prefix) then
-          spaceline := DupeString(' ', spacecount - length(prefix) - 1);
+          spaceline := DupeString(' ', spacecount - length(prefix));
 
         line := prefix + spaceline + postfix;
       except
