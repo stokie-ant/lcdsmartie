@@ -19,7 +19,7 @@ unit UConfig;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UConfig.pas,v $
- *  $Revision: 1.31 $ $Date: 2005/01/22 19:12:43 $
+ *  $Revision: 1.32 $ $Date: 2005/01/25 23:02:58 $
  *****************************************************************************}
 
 interface
@@ -126,7 +126,7 @@ type
 
 implementation
 
-uses SysUtils, Forms, INIFiles, StrUtils;
+uses SysUtils, Forms, INIFiles, StrUtils, Windows;
 
 constructor TConfig.Create(filename: String);
 begin
@@ -474,9 +474,9 @@ procedure TConfig.save;
 begin
   saveINI;
   if FileExists(ExtractFilePath(Application.EXEName) + 'config.cfg') then
-    DeleteFile(ExtractFilePath(Application.EXEName) + 'config.cfg');
+    DeleteFile(PChar(ExtractFilePath(Application.EXEName) + 'config.cfg'));
   if FileExists(ExtractFilePath(Application.EXEName) + 'actions.cfg') then
-    DeleteFile(ExtractFilePath(Application.EXEName) + 'actions.cfg')
+    DeleteFile(PChar(ExtractFilePath(Application.EXEName) + 'actions.cfg'))
 end;
 
 

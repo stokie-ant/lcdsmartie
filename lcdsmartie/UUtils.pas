@@ -11,7 +11,7 @@ type
   private
     method: TThreadMethod;
   published
-    procedure execute; override;
+    procedure Execute; override;
   public
     exited: TEvent;
     property Terminated;
