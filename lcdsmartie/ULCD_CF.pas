@@ -30,9 +30,9 @@ begin
   //VaComm1.Close;
   serial.Open;
 
-  serial.WriteChar(Chr(3));
-  serial.WriteChar(Chr(4));
-  serial.WriteChar(Chr(20));
+  serial.WriteChar(Chr(3));   // Restore display
+  serial.WriteChar(Chr(4));   // Hide cursor
+  serial.WriteChar(Chr(20));  // Scroll off.
 
   inherited Create;
 end;
@@ -70,6 +70,14 @@ end;
 
 procedure TLCD_CF.setPosition(x, y: Integer);
 begin
+  // This is what basiep used to do...
+  if (x=1) and (y=1) then
+  begin
+    serial.WriteChar(Chr(3));   // Restore display
+    serial.WriteChar(Chr(4));   // Hide cursor
+    serial.WriteChar(Chr(20));  // Scroll off.
+  end;
+
   serial.WriteChar(chr(17));
   serial.WriteChar(chr(x-1));
   serial.WriteChar(chr(y-1));
