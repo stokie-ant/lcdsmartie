@@ -24,6 +24,8 @@ and the usb.log file.
 
 Changes
 =======
+5.3Beta1
+	- Fixed bug: Actions weren't being saved.
 5.3Alpha5
 	- Removed delay when applying settings.
 	- List only usable serial ports.

@@ -2067,19 +2067,4 @@ object Form2: TForm2
     Left = 540
     Top = 384
   end
-  object VaCommTest: TVaComm
-    Baudrate = br9600
-    FlowControl.OutCtsFlow = False
-    FlowControl.OutDsrFlow = False
-    FlowControl.ControlDtr = dtrDisabled
-    FlowControl.ControlRts = rtsDisabled
-    FlowControl.XonXoffOut = False
-    FlowControl.XonXoffIn = False
-    FlowControl.DsrSensitivity = False
-    FlowControl.TxContinueOnXoff = False
-    DeviceName = 'COM%d'
-    UpdateDCB = False
-    Left = 328
-    Top = 384
-  end
 end

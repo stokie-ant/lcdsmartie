@@ -19,7 +19,7 @@ unit UConfig;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UConfig.pas,v $
- *  $Revision: 1.19 $ $Date: 2004/12/03 20:14:17 $
+ *  $Revision: 1.20 $ $Date: 2004/12/08 23:39:29 $
  *****************************************************************************}
 
 interface
@@ -53,6 +53,7 @@ type
     P_sizeOption: Integer;
     P_width: Integer;
     P_height: Integer;
+    uiActionsLoaded: Cardinal;
     function loadINI: Boolean;
     function loadCCFG: Boolean;
     function loadACFG: Boolean;
@@ -218,6 +219,7 @@ begin
   except
   end;
   totalactions := counter;
+  uiActionsLoaded := counter;
 
   result := true;
 
@@ -627,7 +629,6 @@ begin
 
   // Load Actions
   x := 0;
-  if not FileExists(ExtractFilePath(Application.EXEName) + 'actions.cfg') then
   repeat
     x := x + 1;
     actionsArray[x, 1] := initfile.ReadString('Actions', 'Action' +
@@ -640,6 +641,7 @@ begin
       Format('%.2u', [x]) + 'Action', '')
   until (actionsArray[x, 1] = '') or (x = 99);
   totalactions := x - 1;
+  uiActionsLoaded := totalactions;
 
   result := true;
 
@@ -652,7 +654,7 @@ var
   initfile : TMemINIFile;
   sScreen, sLine, sPOPAccount, sGameLine: String;
   x, y: Integer;
-
+  sPrefix: String;
 begin
   initfile := TMemINIFile.Create(ExtractFilePath(Application.EXEName) +
     'config.ini');
@@ -777,16 +779,27 @@ begin
   end;
 
   // Save Actions
-  for x := 1 to totalactions do
+  // and delete those we loaded but aren't now used.
+  // [ and delete two further sets of keys - to clean up from older builds which
+  // stored unused actions ]
+  for x := 1 to uiActionsLoaded + 2 do
   begin
-    initfile.WriteString('Actions', 'Action' + Format('%.2u', [x]) +
-      'Variable', actionsArray[x, 1]);
-    initfile.WriteString('Actions', 'Action' + Format('%.2u', [x]) +
-      'Condition', actionsArray[x, 2]);
-    initfile.WriteString('Actions', 'Action' + Format('%.2u', [x]) +
-      'ConditionValue', actionsArray[x, 3]);
-    initfile.WriteString('Actions', 'Action' + Format('%.2u', [x]) +
-      'Action', actionsArray[x, 4]);
+    sPrefix := 'Action' + Format('%.2u', [x]);
+    if (x <= totalactions) then
+    begin
+      initfile.WriteString('Actions', sPrefix + 'Variable', actionsArray[x, 1]);
+      initfile.WriteString('Actions', sPrefix + 'Condition', actionsArray[x, 2]);
+      initfile.WriteString('Actions', sPrefix + 'ConditionValue',
+        actionsArray[x, 3]);
+      initfile.WriteString('Actions', sPrefix + 'Action', actionsArray[x, 4]);
+    end
+    else
+    begin
+      initfile.DeleteKey('Actions', sPrefix + 'Variable');
+      initfile.DeleteKey('Actions', sPrefix + 'Condition');
+      initfile.DeleteKey('Actions', sPrefix + 'ConditionValue');
+      initfile.DeleteKey('Actions', sPrefix + 'Action');
+    end;
   end;
 
   initfile.UpdateFile;

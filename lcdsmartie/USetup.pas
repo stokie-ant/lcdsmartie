@@ -19,7 +19,7 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.15 $ $Date: 2004/12/03 19:44:13 $
+ *  $Revision: 1.16 $ $Date: 2004/12/08 23:39:29 $
  *****************************************************************************}
 
 interface
@@ -198,7 +198,6 @@ type
     SpinEdit9: TSpinEdit;
     Label59: TLabel;
     RadioButton4: TRadioButton;
-    VaCommTest: TVaComm;
     procedure Button2Click(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure ComboBox2Change(Sender: TObject);
@@ -310,21 +309,17 @@ begin
   // Check for COM Ports 1-20.
   for i:=1 to 20 do
   begin
-    vaCommTest.PortNum := i;
-    try
-
-      vaCommTest.Open;
-      comboBox4.Items.Add('COM'+IntToStr(i));
-      vaCommTest.Close;
-    except
-      on E: EVaCommError do
+      uiTestPort := CreateFile (PChar('\\.\COM'+IntToStr(i)),
+                      GENERIC_READ or GENERIC_WRITE,
+                      FILE_SHARE_READ or FILE_SHARE_WRITE, nil,
+                      OPEN_EXISTING, FILE_FLAG_OVERLAPPED, 0);
+      if (uiTestPort <> INVALID_HANDLE_VALUE) or
+        (GetLastError = ERROR_ACCESS_DENIED) then
       begin
-        // This is a truly ugly way to detect this...
-        if (pos('device not found', E.Message)=0) then
-          comboBox4.Items.Add('COM'+IntToStr(i));
-      end
-      else raise;
-    end;
+        // ERROR_ACCESS_DENIED is given when the port is in use.
+        comboBox4.Items.Add('COM'+IntToStr(i));
+        CloseHandle(uiTestPort);
+      end;
   end;
   comboBox4.Items.Add(USBPALM);
 
@@ -2085,7 +2080,8 @@ begin
     Exit;
   end;
 
-  for x := 0 to form2.StringGrid1.RowCount do
+  // The bottom row is always empty, hence -2.
+  for x := 0 to form2.StringGrid1.RowCount-2 do
   begin
     if (form2.Stringgrid1.cells[0, x] <> '') and (form2.Stringgrid1.cells[4,
       x] <> '') then
@@ -2107,6 +2103,8 @@ begin
         config.actionsArray[x + 1, 4] := form2.StringGrid1.Cells[4, x];
     end;
   end;
+  config.totalactions := form2.StringGrid1.RowCount-1;
+
 
   if (config.parallelPort <> StrToInt('$' + form6.edit1.text))
     then relood := true;
