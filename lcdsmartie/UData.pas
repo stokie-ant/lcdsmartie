@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.39 $ $Date: 2005/01/11 17:15:33 $
+ *  $Revision: 1.40 $ $Date: 2005/01/11 19:14:21 $
  *****************************************************************************}
 
 
@@ -1882,13 +1882,10 @@ begin
         RequiredParameters(numargs, 1, 1);
         spacecount := StrToInt(args[1]);
         spaceline := '';
-        if spacecount >= length(prefix) then
-        begin
-          for h := 0 to spacecount - length(prefix) do
-          begin
-            spaceline := spaceline + ' ';
-          end;
-        end;
+
+        if spacecount > length(prefix) then
+          spaceline := DupeString(' ', spacecount - length(prefix) - 1);
+
         line := prefix + spaceline + postfix;
       except
         on E: Exception do line := prefix + '[Fill: ' + E.Message + ']' +
