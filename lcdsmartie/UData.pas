@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.20 $ $Date: 2004/11/29 16:55:20 $
+ *  $Revision: 1.21 $ $Date: 2004/11/30 02:34:19 $
  *****************************************************************************}
 
 
@@ -29,11 +29,13 @@ uses Classes, System2, xmldom, XMLIntf, SysUtils, xercesxmldom, XMLDoc,
   msxmldom, ComCtrls, ComObj;
 
 const
-  ticksperweek = 3600000*24*7;
-  ticksperdag = 3600000*24;
-  ticksperhour = 3600000;
-  ticksperminute = 60000;
   ticksperseconde = 1000;
+  ticksperminute = ticksperseconde * 60;
+  ticksperhour = ticksperminute * 60;
+  ticksperdag = ticksperhour * 24;
+  ticksperweek = ticksperdag * 7;
+  tickspermonth: Int64 = Int64(ticksperdag) * 30;
+  ticksperyear: Int64 = Int64(ticksperdag) * 30 * 12;
   maxRssItems = 20;
   MAXNETSTATS = 10;
 
@@ -145,6 +147,8 @@ type
     STCPUUsage: Cardinal;
     lastCpuUpdate,
       lastSpdUpdate: LongWord;
+    iUptime: Int64;
+    iLastUptime: Cardinal;
     dataThread: TMyThread;
     replline,
       screenResolution: String;
@@ -1679,18 +1683,12 @@ begin
 end;
 
 procedure TData.refres(Sender: TObject);
-const
-  ticksperweek : Cardinal = 3600000*24*7;
-  ticksperdag : Cardinal = 3600000*24;
-  ticksperhour : Cardinal = 3600000;
-  ticksperminute : Cardinal = 60000;
-  ticksperseconde : Cardinal = 1000;
-
 var
   t: longword;
-  w, d, h, m, s : Cardinal;
-  total, y: Cardinal;
+  y, mo, d, h, m, s : Cardinal;
+  total, x: Cardinal;
   rawcpu: Double;
+  uiRemaining: Cardinal;
 
 begin
 //try
@@ -1721,7 +1719,7 @@ begin
     if (CPUUsageCount < 5) then Inc(CPUUsageCount);
 
     total := 0;
-    for y := 1 to CPUUsageCount do total := total + CPUUsage[y];
+    for x := 1 to CPUUsageCount do total := total + CPUUsage[x];
     if (CPUUsageCount > 0) then STCPUUsage := total div CPUUsageCount;
   end;
 
@@ -1740,31 +1738,80 @@ begin
 
   //time/uptime!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   t := GetTickCount;
-  w := t div ticksperweek;
-  t := t - w * ticksperweek;
-  d := t div ticksperdag;
-  t := t - d * ticksperdag;
-  h := t div ticksperhour;
-  t := t - h * ticksperhour;
-  m := t div ticksperminute;
-  t := t - m * ticksperminute;
-  s := t div ticksperseconde;
-  uptimereg := '';
-  uptimeregs := '';
-  if w > 0 then uptimereg := uptimereg + IntToStr(w) +  'wks ';
-  if d > 0 then uptimereg := uptimereg + IntToStr(d) +  'dys ';
-  if h > 0 then uptimereg := uptimereg + IntToStr(h) +  'hrs ';
-  if m > 0 then uptimereg := uptimereg + IntToStr(m) +  'min ';
-  uptimereg := uptimereg + IntToStr(s) + 'secs';
+  if (t < iLastUptime) then iUptime := iUptime + t + (MAXDWORD-iLastUptime)
+  else iUptime := iUptime + (t - iLastUptime);
+  iLastUptime := t;
 
-  uptimeregs := uptimeregs + IntToStr(d) +  ':';
-  uptimeregs := uptimeregs + IntToStr(h) +  ':';
-  uptimeregs := uptimeregs + IntToStr(m);
+  y :=  iUptime div ticksperyear;
+  mo := (iUptime div tickspermonth) mod 12;
+  d := (iUptime div ticksperdag) mod 30;
+  h := (iUptime div ticksperhour) mod 24;
+  m := (iUptime div ticksperminute) mod 60;
+  s := (iUptime div ticksperseconde) mod 60;
+
+  uptimereg := '';
+  if (y > 0) or (uptimereg<>'') then
+    uptimereg := uptimereg + IntToStr(y) +  'yrs ';
+  if (mo > 0) or (uptimereg<>'') then
+    uptimereg := uptimereg + IntToStr(mo) +  'mts ';
+  if (d > 0) or (uptimereg<>'') then
+    uptimereg := uptimereg + IntToStr(d) +  'dys ';
+  if (h > 0) or (uptimereg<>'') then
+    uptimereg := uptimereg + IntToStr(h) +  'hrs ';
+  if (m > 0) or (uptimereg<>'') then
+    uptimereg := uptimereg + IntToStr(m) +  'min ';
+  uptimereg := uptimereg + Format('%.2d',[s]) + 'secs';
+
+  // Create the short uptime string
+  // Display the three largest units, i.e. '15d 7h 12m' or '7h 12m 2s'
+  uptimeregs := '';
+  uiRemaining := 0;
+  if (y>0) and (uptimeregs='') then uiRemaining := 3;
+  if (uiRemaining > 0) then
+  begin
+    Dec(uiRemaining);
+    uptimeregs := uptimeregs + IntToStr(y) +'y ';
+  end;
+
+  if (mo>0) and (uptimeregs='') then uiRemaining := 3;
+  if (uiRemaining > 0) then
+  begin
+    Dec(uiRemaining);
+    uptimeregs := uptimeregs + IntToStr(mo) +'m ';
+  end;
+
+  if (d>0) and (uptimeregs='') then uiRemaining := 3;
+  if (uiRemaining > 0) then
+  begin
+    Dec(uiRemaining);
+    uptimeregs := uptimeregs + IntToStr(d) +'d ';
+  end;
+
+  if (h>0) and (uptimeregs='') then uiRemaining := 3;
+  if (uiRemaining > 0) then
+  begin
+    Dec(uiRemaining);
+    uptimeregs := uptimeregs + IntToStr(h) +'h ';
+  end;
+
+  if (m>0) and (uptimeregs='') then uiRemaining := 3;
+  if (uiRemaining > 0) then
+  begin
+    Dec(uiRemaining);
+    uptimeregs := uptimeregs + IntToStr(m) +'m ';
+  end;
+
+  if (uptimeregs='') or (uiRemaining > 0) then
+  begin
+    uptimeregs := uptimeregs + Format('%.2d', [s]) +'s ';
+  end;
+
+  // remove the trailing space
+  uptimeregs := MidStr(uptimeregs, 1, Length(uptimeregs)-1);
+
 
   totaldlls := 0;
-
   dllcancheck := false;
-
   distributedlog := config.distLog;
 
 //except

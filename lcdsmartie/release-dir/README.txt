@@ -33,6 +33,10 @@ Changes
 	- Fixed bug: [1073684] Exception: Range check error (cpuspeed)
 	- Fixed bug: asked for disk to be inserted when checking free space
 	  of a removable drive.
+	- Changed format of $UpTimes (from '12:34:56' to '12h 34m 56s'. Once
+	  days appear it becomes '1d 3h 45m', etc).
+	- Fixed bug: Uptimes wrapped every 7 days.
+	- Extended uptime to work over 49.7 days.
 5.3Alpha3
 	- Actions moved from action.cfg to config.ini.
 	- Fixed bug where some Crystalfontz display weren't working.
