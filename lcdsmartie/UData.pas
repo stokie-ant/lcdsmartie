@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.42 $ $Date: 2005/01/16 17:29:14 $
+ *  $Revision: 1.43 $ $Date: 2005/01/16 19:08:33 $
  *****************************************************************************}
 
 
@@ -112,6 +112,7 @@ type
   PPop3 = ^TIdPop3;
 
   TMyProc = function(param1: pchar; param2: pchar): Pchar; stdcall;
+  TFiniProc = procedure(); stdcall;
   TBridgeProc = function(iBridgeId: Integer; iFunc: Integer; param1: pchar; param2: pchar): Pchar; stdcall;
 
   TDll = Record
@@ -121,6 +122,7 @@ type
     iBridgeId: Integer;
     functions: Array [1..iMaxPluginFuncs] of TMyProc;
     bridgeFunc: TBridgeProc;
+    finiFunc: TFiniProc;
   end;
 
   TData = Class(TObject)
@@ -348,11 +350,17 @@ begin
     cpuThread.Free();
   end;
 
+  // close all plugins
   for uiDll:=1 to uiTotalDlls do
   begin
     try
       if (dlls[uiDll-1].hDll <> 0) then
+      begin
+        // call SmartieFini if it exists
+        if (Assigned(dlls[uiDll-1].finiFunc)) then
+           dlls[uiDll-1].finiFunc();
         FreeLibrary(dlls[uiDll-1].hDll);
+      end;
     except
     end;
     dlls[uiDll-1].hDll := 0;
@@ -1072,6 +1080,11 @@ begin
     if (not Assigned(initFunc)) then
       initFunc := getprocaddress(dlls[uiDll].hDll, PChar('_SmartieInit@0'));
 
+    dlls[uiDll].finiFunc := getprocaddress(dlls[uiDll].hDll, PChar('SmartieFini'));
+    if (not Assigned(dlls[uiDll].finiFunc)) then
+      dlls[uiDll].finiFunc := getprocaddress(dlls[uiDll].hDll, PChar('_SmartieFini@0'));
+
+    // Call SmartieInit if it exists.
     if (Assigned(initFunc)) then
     begin
       try

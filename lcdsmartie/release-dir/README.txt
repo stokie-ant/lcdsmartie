@@ -37,6 +37,8 @@ Changes
 =======
 5.3Beta4
 	- Fixed bug in Rss code - didn't work with long urls.
+	- Plugins: Call SmartieFini just before unloading plugin (if
+	  plugin has the function).
 5.3Beta3
 	- Removed the need to restart smartie when some settings are changed.
 	- Added options for auto starting with windows and hiding on startup.
