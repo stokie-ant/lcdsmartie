@@ -3,8 +3,8 @@
 Please see our website for instructions and the latest information:
 		http://lcdsmartie.sourceforge.net/
 
-Alpha builds
-============
+Beta builds
+===========
 These builds are believed to be stable but the developer(s) do not have access
 to all supported LCD types and/or use all the features of LCD Smartie.
 
@@ -16,18 +16,20 @@ BUGS KNOWN
 ==========
 See: http://sourceforge.net/tracker/?func=browse&group_id=122330&atid=693136
 
-USB Palm users
-==============
-If you have any problems then email "usb <at> x5.me.uk" - 
-stating your Palm make/model, PalmOS version and the usb.log file.
-
 Changes
 =======
 5.3Beta1
 	- Fixed screen timings, esp. when using GotoScreen action.
 	- Fixed bug: only one $Chr was processed per a line.
 	- Slowed down flashing.
-	- Added a surprise xmas screen.
+	- Added an xmas screen.
+	- Made demo screen more friendly to slow or 1 line displays.
+	- Added a timing multiplier option for HD44780s, some were failing as
+	 delays were too short.
+	- Plugin support improved.
+	- Custom chars are reset at the start of each screen.
+	  [to allow plugins to define characters without messing up the
+	  other screens].
 5.3Alpha7
 	- Fixed bug: action of GotoScreen(1) caused a crash.
 	- Fixed some bugs in the action code.

@@ -4,7 +4,7 @@ object Form6: TForm6
   BorderIcons = []
   BorderStyle = bsToolWindow
   Caption = 'HD44780 Settings'
-  ClientHeight = 150
+  ClientHeight = 197
   ClientWidth = 175
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -24,10 +24,24 @@ object Form6: TForm6
   end
   object Label2: TLabel
     Left = 8
-    Top = 56
+    Top = 61
     Width = 97
     Height = 13
     Caption = 'Driver boot delay: (s)'
+  end
+  object Label3: TLabel
+    Left = 8
+    Top = 97
+    Width = 77
+    Height = 13
+    Caption = 'Timing multiplier:'
+  end
+  object Label4: TLabel
+    Left = 8
+    Top = 113
+    Width = 75
+    Height = 13
+    Caption = '(requires restart)'
   end
   object Edit1: TEdit
     Left = 120
@@ -39,7 +53,7 @@ object Form6: TForm6
   end
   object SpinEdit1: TSpinEdit
     Left = 120
-    Top = 48
+    Top = 52
     Width = 49
     Height = 22
     EditorEnabled = False
@@ -51,7 +65,7 @@ object Form6: TForm6
   end
   object Button1: TButton
     Left = 96
-    Top = 120
+    Top = 168
     Width = 75
     Height = 25
     Caption = '&Ok'
@@ -61,10 +75,22 @@ object Form6: TForm6
   end
   object AltAddressing: TCheckBox
     Left = 8
-    Top = 88
+    Top = 136
     Width = 153
     Height = 25
     Caption = 'Use alternative addressing'
     TabOrder = 3
+  end
+  object SpinEdit2: TSpinEdit
+    Left = 120
+    Top = 88
+    Width = 49
+    Height = 22
+    EditorEnabled = False
+    MaxLength = 2
+    MaxValue = 5
+    MinValue = 0
+    TabOrder = 4
+    Value = 1
   end
 end

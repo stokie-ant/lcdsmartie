@@ -19,7 +19,7 @@ unit ULCD_HD;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/Attic/ULCD_HD.pas,v $
- *  $Revision: 1.7 $ $Date: 2004/12/16 14:34:03 $
+ *  $Revision: 1.8 $ $Date: 2004/12/23 21:46:03 $
  *
  *  Based on code from the following (open-source) projects:
  *     WinAmp LCD Plugin
@@ -107,8 +107,8 @@ implementation
 uses UMain, SysUtils, Windows;
 
 constructor TLCD_HD.CreateParallel(const poortadres: Word; const width, heigth: Byte);
-var
-  x, y: integer;
+{var
+  x, y: integer; }
 begin
   FBaseAddr := poortadres;
   FCtrlAddr := FBaseAddr + 2;
@@ -117,9 +117,11 @@ begin
   bHighResTimers := QueryPerformanceFrequency(iHighResTimerFreq);
   initClass;
 
+     {    // DEBUG CODE for checking addressing.
     for y:=1 to height do
       for x:=1 to width do
          SetPosition(x, y);
+         }
 end;
 
 destructor TLCD_HD.Destroy;
@@ -167,8 +169,8 @@ const
   FSInterface4Bit = 0;
   FSTwoLine = 8;
   FSOneLine = 0;
-  FSSmallFont = 4;
-  FSBigFont = 0;
+  FSSmallFont = 0;
+  FSBigFont = 4;
   EntryMode = 4;
   EMIncrement = 2;
   EMDecrement = 0;
@@ -177,16 +179,20 @@ const
   HomeCursor = 2;
 begin
   // perform initalising by instruction, just in case std power reset failed.
-  writectrl(All, FuncSet or FSInterface8Bit);
+
+  writectrl(All, FuncSet or FSInterface8Bit or FSTwoLine or FSSmallFont);
   UsecDelay(uiDelayInit);
 
-  writectrl(All, FuncSet or FSInterface8Bit);
+  writectrl(All, FuncSet or FSInterface8Bit or FSTwoLine or FSSmallFont);
   UsecDelay(uiDelayMed);
 
   writectrl(All, FuncSet or FSInterface8Bit or FSTwoLine or FSSmallFont);
   UsecDelay(uiDelayShort);
 
-  writectrl(All, OnOffCtrl);
+  writectrl(All, FuncSet or FSInterface8Bit or FSTwoLine or FSSmallFont);
+  UsecDelay(uiDelayShort);
+
+  writectrl(All, OnOffCtrl or OODisplayOff);
   UsecDelay(uiDelayShort);
 
   writectrl(All, ClearScreen);
@@ -194,6 +200,7 @@ begin
 
   writectrl(All, EntryMode or EMIncrement or EMNoShift);
   UsecDelay(uiDelayMed);
+
 
   // initialization finished.
 
@@ -203,6 +210,14 @@ begin
   writectrl(All, HomeCursor);
   UsecDelay(uiDelayLong);
 
+  {
+   // was:
+  writectrl(C1,56 xor CtrlMask);// 111000 = FuncSet or FSInterface8Bit or FSTwoLine or FSSmallFont
+  writectrl(C1,56 xor CtrlMask);// 111000 = FuncSet or FSInterface8Bit or FSTwoLine or FSSmallFont
+  writectrl(C1,56 xor CtrlMask);// 111000 = FuncSet or FSInterface8Bit or FSTwoLine or FSSmallFont
+  writectrl(C1,6 xor CtrlMask); // 000110 = EntryMode or EMIncrement or EMNoShift
+  writectrl(C1,12 xor CtrlMask);// 001100 = OnOffCtrl or OODisplayOn or OOCursorOff or OOCursorNoBlick
+ }
 end;
 
 procedure TLCD_HD.setbacklight(on: Boolean);
@@ -273,6 +288,11 @@ var
   uiElapsed: Cardinal;
   iBegin, iCurr: int64;
 begin
+
+  uiUsecs := uiUsecs * Cardinal(config.iHDTimingMultiplier);
+
+  if (uiUsecs <= 0) then Exit;
+
   if (bHighResTimers) then
   begin
     QueryPerformanceCounter(iBegin);
@@ -361,9 +381,7 @@ begin
 {
   CtrlOut(7 or backlight);     //7 + 8   B111 === B100  RS | backlight
   DataOut(x);
-  //bus delay
   CtrlOut(6 or backlight);     //6  RS=1, R/W=0, E=1  B110 == 101      RS | E1
-  //bus delay
   CtrlOut(7 or backlight);     //7  B111 = B100 = RS
   CtrlOut(5 or backlight);     //5  101 = 110 RS|RW  ?????
 

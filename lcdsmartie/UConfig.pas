@@ -19,7 +19,7 @@ unit UConfig;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UConfig.pas,v $
- *  $Revision: 1.22 $ $Date: 2004/12/16 14:34:02 $
+ *  $Revision: 1.23 $ $Date: 2004/12/23 21:46:02 $
  *****************************************************************************}
 
 interface
@@ -99,6 +99,7 @@ type
     totalactions: Integer;
     iMinFadeContrast: Integer;
     bHDAltAddressing: Boolean;
+    iHDTimingMultiplier: Integer;
     function load: Boolean;
     procedure save;
     property sizeOption: Integer read P_sizeOption write setSizeOption;
@@ -514,6 +515,8 @@ begin
 
   bHDAltAddressing := initFile.ReadBool('Communication Settings',
    'HDAlternativeAddressing', false);
+  iHDTimingMultiplier := initFile.ReadInteger('Communication Settings',
+   'HDTimingMultiplier', 1);
 
   refreshRate := initfile.ReadInteger('General Settings', 'RefreshRate', 75);
   winampLocation := initfile.ReadString('General Settings', 'WinAmpLocation',
@@ -680,8 +683,10 @@ begin
   initfile.WriteInteger('Communication Settings', 'ParallelPort',
     parallelPort);
 
-  initFile.WriteBool('Communication Settings',
-   'HDAlternativeAddressing', bHDAltAddressing);
+  initFile.WriteBool('Communication Settings', 'HDAlternativeAddressing',
+    bHDAltAddressing);
+  initfile.WriteInteger('Communication Settings', 'HDTimingMultiplier',
+    iHDTimingMultiplier);
 
   initFile.WriteBool('Communication Settings', 'MX3USB', mx3Usb);
 
@@ -690,6 +695,7 @@ begin
 
   initfile.WriteInteger('General Settings', 'BootDriverDelay',
     bootDriverDelay);
+
   initfile.WriteString('General Settings', 'SETIEmail', setiEmail);
 
   for x := 1 to 20 do
