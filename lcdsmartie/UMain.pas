@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.22 $ $Date: 2004/11/28 18:26:55 $
+ *  $Revision: 1.23 $ $Date: 2004/11/29 16:40:11 $
  *****************************************************************************}
 
 interface
@@ -2453,7 +2453,7 @@ end;
 procedure TForm1.OnMinimize(Sender: TObject);
 begin
   // Only minimize to tray when setup isn't displayed
-  if (not form2.Visible) then
+  if (Assigned(form2)) and (not form2.Visible) then
   begin
     cooltrayicon1.HideMainForm;
     popupmenu1.Items[3].caption := 'Show Main';
