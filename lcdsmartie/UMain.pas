@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.23 $ $Date: 2004/11/29 16:40:11 $
+ *  $Revision: 1.24 $ $Date: 2004/12/03 19:49:58 $
  *****************************************************************************}
 
 interface
@@ -501,7 +501,7 @@ begin
     try
       if (config.isMO) and (config.isUsbPalm) then
       begin
-        Lcd := TLCD_MO.CreateUsb(config.UsbPalmDevice);
+        Lcd := TLCD_MO.CreateUsb;
       end
       else
       begin

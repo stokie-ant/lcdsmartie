@@ -19,7 +19,7 @@ unit UConfig;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UConfig.pas,v $
- *  $Revision: 1.17 $ $Date: 2004/12/02 09:40:22 $
+ *  $Revision: 1.18 $ $Date: 2004/12/03 19:49:58 $
  *****************************************************************************}
 
 interface
@@ -60,8 +60,6 @@ type
     procedure setSizeOption(con: Integer);
   public
     isUsbPalm: Boolean;
-    UsbPalmDevice: String;
-    sUsbPalmWriteOverride, sUsbPalmReadOverride: String;
     gameServer: Array[1..20, 1..4] of String;
     pop: Array [0..9] of TPopAccount;
     comPort: Integer;
@@ -338,10 +336,6 @@ begin
   scrollPeriod := StrToInt(copy(configArray[89], pos('¿¿', configArray[89]) +
     2, length(configArray[89])));
 
-  UsbPalmDevice := configArray[90];
-  if (UsbPalmDevice='') then isUsbPalm := False
-  else isUsbPalm := True;
-
   parallelPort := StrToInt(configArray[91]);
 
   if (copy(configArray[92], 2, 1)='1') then mx3Usb := true
@@ -495,15 +489,8 @@ begin
 
   baudrate := initfile.ReadInteger('Communication Settings', 'Baudrate', 8);
   comPort := initfile.ReadInteger('Communication Settings', 'COMPort', 1);
-  UsbPalmDevice := initfile.ReadString('Communication Settings',
-    'USBPalmDevice', '');
-  if (UsbPalmDevice <> '') then isUsbPalm := True
-  else isUsbPalm := False;
-
-  sUsbPalmReadOverride := initfile.ReadString('Communication Settings',
-    'USBPalmReadOverride', '');
-  sUsbPalmWriteOverride := initfile.ReadString('Communication Settings',
-    'USBPalmWriteOverride', '');
+  isUsbPalm := initfile.ReadInteger('Communication Settings',
+    'USBPalm', 0) > 0;
 
   refreshRate := initfile.ReadInteger('General Settings', 'RefreshRate', 75);
   winampLocation := initfile.ReadString('General Settings', 'WinAmpLocation',
@@ -666,9 +653,9 @@ begin
 
   initfile.WriteInteger('Communication Settings', 'Baudrate', baudrate);
   initfile.WriteInteger('Communication Settings', 'COMPort', comPort);
-  if (isUsbPalm) then initfile.WriteString('Communication Settings',
-    'USBPalmDevice', UsbPalmDevice)
-  else initfile.WriteString('Communication Settings', 'USBPalmDevice', '');
+  if (isUsbPalm) then initfile.WriteInteger('Communication Settings',
+    'USBPalm', 1)
+  else initfile.WriteInteger('Communication Settings', 'USBPalm', 0);
 
   initfile.WriteInteger('General Settings', 'RefreshRate', refreshRate);
   initfile.WriteString('General Settings', 'WinAmpLocation', winampLocation);

@@ -1,9 +1,8 @@
 unit ULCD_MO;
 
-{ The USB Palm code that is in this file is currently highly experimental.
-  The USB Palm code will be replaced once we have some firm ideas on how to
-  correctly communicate with the Palm - this area is completely undocumented
-  by Palm.}
+{ Much of the USB Palm code in this file is based on the code in
+  EmTransportUSBWin.cpp of pose (The Palm OS Emulator).}
+
 
 interface
 
@@ -11,8 +10,42 @@ uses ULCD, Classes, SyncObjs, SysUtils, Windows, VaClasses, VaComm;
 
 const
   readBufferSize=100;
+  UsbNoError				     = $00000000;		// No error
+  UsbErrUnknown			     = $00000001;		// Unknown error
+  UsbErrSendTimedOut	   = $00000002;		// Send timed out
+  UsbErrRecvTimedOut	   = $00000003;		// Receive timed out
+  UsbErrPortNotOpen		   = $00000004;		// USB port is not open
+  UsbErrIOError			     = $00000005;		// I/O or line error
+  UsbErrPortBusy			   = $00000006;		// USB port is already in use
+  UsbErrNotSupported		 = $00000007;		// IOCTL code unsupported
+  UsbErrBufferTooSmall	 = $00000008;		// Buffer size too small
+  UsbErrNoAttachedDevices= $00000009;		// No devices currently attached
+  UsbErrDontMatchFilter	 = $00000010;		// Creator ID provided doesn't
+              						  						// match the USB-active device
+							                					// application creator ID
 
 type
+  PUSBTimeouts = ^USBTimeouts;
+  USBTimeouts = packed record
+    uiReadTimeout: DWORD;
+    uiWriteTimeout: DWORD;
+  end;
+  HANDLE = Cardinal;
+
+
+
+  TFNOpenPort = function (device: PCHAR; who: ULONG) : HANDLE; cdecl;
+  TFNGetAttachedDevices = function (pDeviceCount: PULONG; pBuffer: PCHAR; pBufferSize: PULONG):ULONG; cdecl;
+  TFNClosePort = function (devicehandle: HANDLE):BOOL; cdecl;
+  TFNReceiveBytes = function (devicehandle: HANDLE; buffer: PChar; size: ULONG; bytes: PULONG): ULONG; cdecl;
+  TFNSendBytes = function (devicehandle: HANDLE; buffer: PChar; size: ULONG; bytes: PULONG):ULONG; cdecl;
+  TFNSetTimeouts = function (devicehandle: HANDLE; timeout: PUSBTimeouts):ULONG; cdecl;
+  //TFNGetTimeouts = function (devicehandle: HANDLE; timeout: PUSBTimeouts):ULONG; cdecl;
+  //tyypedef HDEVNOTIFY				(*RegisterDeviceInterfaceProc)		(HWND);
+  //typedef VOID					(*UnRegisterDeviceInterfaceProc)	(HDEVNOTIFY);
+  //typedef BOOL					(*IsPalmOSDeviceNotificationProc)	(ULONG, ULONG, PTCHAR, GUID*);
+  //TFNGetDeviceFriendlyName = function ( pDeviceName:PCHAR; pFriendlyName: PCHAR):ULONG; cdecl;
+
   TThreadMethod = procedure of object;
 
   TMyThread = class(TTHREAD)
@@ -23,6 +56,7 @@ type
   published
     procedure execute; override;
   end;
+
 
   TLCD_MO = class(TLCD)
   public
@@ -38,30 +72,34 @@ type
     procedure setContrast(level: Integer); override;
     procedure setBrightness(level: Integer); override;
     constructor CreateSerial(serial: PTVACOMM; uiPort: Cardinal; baudRate: TVaBaudrate);
-    constructor CreateUsb(sDevice: String);
+    constructor CreateUsb;
     constructor Create; override;
     destructor Destroy; override;
   private
     bConnected: Boolean;
     serial: PTVACOMM;
     bUsb: Boolean;                        // for Usb
-    bUsbReadSupport: Boolean;             // for Usb
-    input, output: Cardinal;              // for Usb
-    eStopReadThread: THandle;             // for Usb
+    usbPalm: Cardinal;              // for Usb
     csRead: TCriticalSection;             // for Usb
     readThread: TMyThread;                // for Usb
     readBuffer: array [0..readBufferSize-1] of Byte; // for Usb
     uInPos, uOutPos: Cardinal;            // for Usb
-    sUsbPalmDeviceFile: String;           // for Usb
+    usbPortLib: HANDLE;
+    FNGetAttachedDevices: TFNGetAttachedDevices;
+    FNOpenPort: TFNOpenPort;
+    FNClosePort: TFNClosePort;
+    FNReceiveBytes: TFNReceiveBytes;
+    FNSendBytes: TFNSendBytes;
+    FNSetTimeouts: TFNSetTimeouts;
+
     procedure doReadThread;               // for Usb
-    procedure writeDevice(str: String); overload;
+    procedure writeDevice(buffer: PChar; len: Cardinal); overload;
     procedure writeDevice(byte: Byte); overload;
+    procedure writeDevice(str: String); overload;
     function readDevice(var chr: Char): Boolean;
     function errMsg(uError: Cardinal): String;
-    Function DumpIoCtrl(fOutput: Cardinal; uiCode: Cardinal; uiBytes: Cardinal): String;
-    procedure GetUsbPalmFiles(const sDevice: String;
-      var sReadFile: String; var sWriteFile: String);
-    function UsbPalmConnected: Boolean;
+    Function OpenUsbPort: Boolean;
+    procedure initLCD;
   end;
 
 implementation
@@ -107,313 +145,161 @@ begin
     Result := '#0'; // don't put "operation completed successfully! It's too confusing!
 end;
 
-Function TLCD_MO.DumpIoCtrl(fOutput: Cardinal; uiCode: Cardinal; uiBytes: Cardinal): String;
+Function TLCD_MO.OpenUsbPort: Boolean;
 var
-  buffer: Array [1..100] of Byte;
-  uiBytesOut: Cardinal;
-  sString: String;
-  x: Integer;
-begin
-  FillChar(buffer, SizeOf(buffer), 0);
+  ret: ULONG;
+  deviceCount: ULONG;
+  bufferSize: ULONG;
+  timeouts: USBTimeouts;
+  buffer: array [1..200] of Char;
 
-  sString := '';
-  uiBytesOut := 0;
-  if (DeviceIoControl(fOutput, uiCode, @buffer[1], uiBytes, @buffer[1], uiBytes,
-                    uiBytesOut, nil)) then
+begin
+  bufferSize := SizeOf(buffer);
+
+  ret := FNGetAttachedDevices(@deviceCount, @buffer[1], @bufferSize);
+
+
+  if (ret <> UsbNoError) then
+    raise Exception.Create('Failed whilst locating palms: '+IntToStr(ret));
+
+  if (deviceCount > 0) then
   begin
-    sString := IntToStr(uiBytesOut) + ': ';
-    for x:= 1 to uiBytesOut do
-    begin
-      sString := sString + IntToHex(buffer[x], 2) + ' ';
-    end;
-  end
-  else
-  begin
-     sString := IntToStr(uiBytesOut) + ': [Error: ' + ErrMsg(getLasterror) +']';
+
+    // $62724F50   == 'POrb'
+    usbPalm := FNOpenPort(@buffer[1], $62724F50);
+    if (usbPalm = INVALID_HANDLE_VALUE) then
+       raise Exception.Create('USB Palm open failed: '+errMsg(GetLastError));
+
+
+    // Set read/write time outs so LCD Smartie doesn't hang
+    timeouts.uiReadTimeout:=8000; // 8 seconds
+    timeouts.uiWriteTimeout:=1000;  // 1 second
+
+    FNSetTimeouts(usbPalm, @timeouts);
+
+    bConnected := true;
+
+    initLcd();
   end;
 
-  Result := sString;
+  Result := bConnected;
 end;
 
-function TLCD_MO.UsbPalmConnected: Boolean;
-var
-  device: Cardinal;
-begin
-  device := CreateFile (PChar(sUsbPalmDeviceFile), GENERIC_WRITE or GENERIC_READ,
-    FILE_SHARE_WRITE or FILE_SHARE_READ, nil, OPEN_EXISTING, 0, 0);
-  if (device = INVALID_HANDLE_VALUE) then
-  begin
-    Result := false;
-  end
-  else
-  begin
-    Result := true;
-    CloseHandle(device);
-  end;
-end;
 
-procedure TLCD_MO.GetUsbPalmFiles(const sDevice: String;
-  var sReadFile: String; var sWriteFile: String);
+
+constructor TLCD_MO.CreateUsb;
 const
-  maxDevice = 20;
+  PALMDESKTOPKEY='\Software\U.S. Robotics\Pilot Desktop\Core';
 var
-  device, test: Cardinal;
-  fUsbLog: TextFile;
-  x: Integer;
-  iWorkedIn, iWorkedOut: Integer;
-  bOpenedIn, bOpenedOut, bOpenedPipe: array [0..maxDevice] of Boolean;
-  names, devicenames: array[0..maxDevice] of String;
-  sReadFileOR, sWriteFileOR: String;
+
+  reg: TRegistry;
+  path: String;
 begin
-  // Create a log file with possibly interesting information, it may be useful
-  // when users are having problems.
-
-  AssignFile(fUsbLog, 'usb.log');
-  Rewrite(fUsbLog);
-
-
-  test := getUsbPalms(names, devicenames, maxDevice);
-  for x:= 0 to test-1 do
-    WriteLn(fUsbLog, IntToStr(x+1)+': '+names[x]+' = '+devicenames[x]);
-
-
-  WriteLn(fUsbLog, sDevice);
-  WriteLn(fUsbLog, '');
-
-  device := CreateFile (PChar(sDevice), GENERIC_WRITE or GENERIC_READ,
-    FILE_SHARE_WRITE or FILE_SHARE_READ, nil, OPEN_EXISTING, 0, 0);
-  if (device = INVALID_HANDLE_VALUE) then
-  begin
-    if (GetLastError = ERROR_PATH_NOT_FOUND)
-      or (GetLastError = ERROR_FILE_NOT_FOUND) then
-        raise exception.Create('Failed to open USB Palm.' + #10+#13
-          + 'Please ensure that Hotsync manager is not running, and that '
-          + 'PalmOrb is already running on your Palm.')
-    else
-      raise exception.Create('Failed to open USB Palm: '
-        + errMsg(GetLastError));
-  end;
-
-  WriteLn(fUsbLog, '424: ' + DumpIoCtrl(device, $222424, $12));
-  WriteLn(fUsbLog, '004: ' + DumpIoCtrl(device, $222004, $8));
-  WriteLn(fUsbLog, '40C: ' + DumpIoCtrl(device, $22240C, $2));
-  WriteLn(fUsbLog, '00C: ' + DumpIoCtrl(device, $22200C, $8));
-  WriteLn(fUsbLog, '000: ' + DumpIoCtrl(device, $222000, $14));
-  WriteLn(fUsbLog, '');
-  CloseHandle(device);
-
-  iWorkedIn:=99;
-  iWorkedOut:=99;
-  for x:= 0 to 10 do
-  begin
-    test := CreateFile (PChar(sDevice+'\PIPE'+Format('%.2d',[x])),
-       GENERIC_WRITE or GENERIC_READ, FILE_SHARE_WRITE or FILE_SHARE_READ,
-       nil, OPEN_EXISTING, 0, 0);
-    if (test = INVALID_HANDLE_VALUE) then
-    begin
-      if (GetLastError <> 87) then
-        WriteLn(fUsbLog, 'PIPE'+Format('%.2d',[x])+': Failed: '
-          + errMsg(GetLastError));
-      bOpenedPipe[x]:=False;
-    end
-    else
-    begin
-      bOpenedPipe[x]:=True;
-    end;
-    CloseHandle(test);
-
-    test := CreateFile (PChar(sDevice+'\IN_'+Format('%.2d',[x])),
-       GENERIC_WRITE or GENERIC_READ, FILE_SHARE_WRITE or FILE_SHARE_READ,
-       nil, OPEN_EXISTING, 0, 0);
-    if (test = INVALID_HANDLE_VALUE) then
-    begin
-      if (GetLastError <> 87) then
-        WriteLn(fUsbLog, 'IN_'+Format('%.2d',[x])+': Failed: '
-          + errMsg(GetLastError));
-      bOpenedIn[x]:=False;
-    end
-    else
-    begin
-      bOpenedIn[x]:=True;
-    end;
-    CloseHandle(test);
-
-    test := CreateFile (PChar(sDevice+'\OUT_'+Format('%.2d',[x])),
-       GENERIC_WRITE or GENERIC_READ, FILE_SHARE_WRITE or FILE_SHARE_READ,
-       nil, OPEN_EXISTING, 0, 0);
-    if (test = INVALID_HANDLE_VALUE) then
-    begin
-      if (GetLastError <> 87) then
-        WriteLn(fUsbLog, 'OUT_'+Format('%.2d',[x])+': Failed: '
-          + errMsg(GetLastError));
-      bOpenedOut[x]:=False;
-    end
-    else
-    begin
-      bOpenedOut[x]:=True;
-    end;
-    CloseHandle(test);
-  end;
-
-  // Current selection method choose lower IN/OUT available
-  for x:= MaxDevice downto 0 do
-  begin
-    if (bOpenedOut[x]) then iWorkedOut := x;
-    if (bOpenedIn[x]) then iWorkedIn := x;
-  end;
-  System.Write(fUsbLog, 'OUT: ');
-  for x:= 0 to MaxDevice do
-    if (bOpenedOut[x]) then System.Write(fUsbLog, Format('%.2d ',[x]));
-  WriteLn(fUsbLog, '');
-
-  System.Write(fUsbLog, 'IN: ');
-  for x:= 0 to MaxDevice do
-    if (bOpenedIn[x]) then System.Write(fUsbLog, Format('%.2d ',[x]));
-  WriteLn(fUsbLog, '');
-
-  System.Write(fUsbLog, 'PIPE: ');
-  for x:= 0 to MaxDevice do
-    if (bOpenedPipe[x]) then System.Write(fUsbLog, Format('%.2d ',[x]));
-  WriteLn(fUsbLog, '');
-  WriteLn(fUsbLog, '');
-
-  sWriteFile := 'OUT_' +Format('%.2d', [iWorkedOut]);
-  sReadFile := 'IN_' + Format('%.2d', [iWorkedIn]);
-
-  WriteLn(fUsbLog, 'To use: ' + sWriteFile + ' & ' + sReadFile);
-
-  // ================ Auto over riding - based on usb.log files sent in.
-  sReadFileOR := sReadFile;
-  sWriteFileOR := sWriteFile;
-  if (pos('Vid_054c&Pid_0066', sDevice) <> 0) then
-  begin
-    if (bOpenedIn[2]) then sReadFileOR := 'IN_02';
-    if (bOpenedOut[2]) then sWriteFileOR := 'OUT_02';
-  end;
-
-  if (sReadFileOR <> sReadFile) then
-  begin
-    sReadFile := sReadFileOR;
-    WriteLn(fUsbLog, 'Auto overriding reading: using ' + sReadFile + ' instead');
-  end;
-
-  if (sWritefileOR <> sWriteFile) then
-  begin
-    sWriteFile := sWriteFileOR;
-    WriteLn(fUsbLog, 'Auto overriding writing: using ' + sWriteFile + ' instead');
-  end;
-
-  // ================= Config over riding - sent in response to support requests.
-
-  if (config.sUsbPalmWriteOverride<>'')
-    and (config.sUsbPalmWriteOverride<>sWriteFile) then
-  begin
-    sWriteFile := config.sUsbPalmWriteOverride;
-    WriteLn(fUsbLog, 'Config overriding writing: using ' + sWriteFile + ' instead');
-  end;
-  if (config.sUsbPalmReadOverride <> '') and (config.sUsbPalmReadOverride <> sReadFile) then
-  begin
-    sReadFile := config.sUsbPalmReadOverride;
-    WriteLn(fUsbLog, 'Config overriding reading: using ' + sReadFile + ' instead');
-  end;
-  CloseFile(fUsbLog);
-
-  sWriteFile := sDevice + '\' + sWriteFile;
-  sReadFile := sDevice + '\' + sReadFile;
-end;
-
-
-constructor TLCD_MO.CreateUsb(sDevice: String);
-var
-  sReadFile, sWriteFile: String;
-begin
-  eStopReadThread := INVALID_HANDLE_VALUE;
-  input := INVALID_HANDLE_VALUE;
-  output := INVALID_HANDLE_VALUE;
-  bUsbReadSupport := False;
+  usbPortLib := 0;
+  usbPalm := INVALID_HANDLE_VALUE;
   bUsb := True;
 
-  sDevice := StringReplace(sDevice, '\??\', '\\.\', []);
-  sUsbPalmDeviceFile := sDevice;
-  //'\\.\USB#Vid_054c&Pid_0066#6&673a0bd&0&4#{a5dcbf10-6530-11d2-901f-00c04fb951ed}';
+  // Check if there are any Usb Palm entries in the registry.
+  Reg := TRegistry.Create;
 
-  GetUsbPalmFiles(sDevice, sReadFile, sWriteFile);
-
-  input := CreateFile (PChar(sReadFile),  GENERIC_READ or GENERIC_WRITE,
-      FILE_SHARE_READ or FILE_SHARE_WRITE, nil, OPEN_EXISTING, 0, 0);
-  if (input = INVALID_HANDLE_VALUE) then
+  Reg.RootKey := HKEY_CURRENT_USER;
+  if Reg.OpenKeyReadOnly(PALMDESKTOPKEY) then
   begin
-    if (GetLastError = ERROR_PATH_NOT_FOUND) then
-      raise exception.Create('Failed to open USB Palm for reading.' + #10+#13
-        + 'Please ensure that Hotsync manager is not running, and that '
-        + 'PalmOrb is already running on your Palm.')
-    else
-      raise exception.Create('Failed to open USB Palm for reading: '
-        + errMsg(GetLastError));
+    path := Reg.ReadString('DesktopPath');
+    if (path = '') then
+      path := Reg.ReadString('Path');
+    if (path = '') then
+      path := 'c:\Program Files\palmOne';
+
+    Reg.CloseKey;
+    Reg.Free;
   end;
-  bUsbReadSupport := True;
 
-  output := CreateFile (PChar(sWriteFile), GENERIC_WRITE or GENERIC_READ,
-      FILE_SHARE_WRITE or FILE_SHARE_READ, nil, OPEN_EXISTING, 0, 0);
-  if (output = INVALID_HANDLE_VALUE) then
-    raise exception.Create('Failed to open USB Palm for writing: '
-          + errMsg(GetLastError));
+  usbPortLib := LoadLibrary(PChar('USBPort.dll'));
+  if (usbPortLib = 0) then
+    usbPortLib := LoadLibrary(PChar(path+'\USBPort.dll'));
+  if (usbPortLib = 0) then
+    usbPortLib := LoadLibrary('c:\Program Files\palmOne\USBPort.dll');
+  if (usbPortLib = 0) then
+    usbPortLib := LoadLibrary('c:\Palm\USBPort.dll');
 
+  if (usbPortLib = 0) then
+    raise Exception.create('Can not find USBPort.dll: '+ErrMsg(GetLastError));
 
-  // Do the standard setup now before creating the read thead.
-  // The standard setup writes to the device, and so will detect any problems
-  // communicating with it.
-  Create;
+  FNGetAttachedDevices := TFNGetAttachedDevices(
+    GetProcAddress(usbPortLib, 'PalmUsbGetAttachedDevices'));
+  FNOpenPort := TFNOpenPort(
+    GetProcAddress(usbPortLib, 'PalmUsbOpenPort'));
+  FNClosePort := TFNClosePort(
+    GetProcAddress(usbPortLib, 'PalmUsbClosePort'));
+  FNReceiveBytes := TFNReceiveBytes(
+    GetProcAddress(usbPortLib, 'PalmUsbReceiveBytes'));
+  FNSendBytes := TFNSendBytes(
+    GetProcAddress(usbPortLib, 'PalmUsbSendBytes'));
+  FNSetTimeouts := TFNSetTimeouts(
+    GetProcAddress(usbPortLib, 'PalmUsbSetTimeouts'));
 
+  if (not Assigned(FNGetAttachedDevices))
+    or (not Assigned(FNOpenPort))
+    or (not Assigned(FNClosePort))
+    or (not Assigned(FNReceiveBytes))
+    or (not Assigned(FNSendBytes))
+    or (not Assigned(FNSetTimeouts)) then
+    raise Exception.Create('Failed to get required APIs: ' + errMsg(GetLastError));
+
+  if (not OpenUsbPort()) then
+    raise exception.Create('No connected USB Palms were detected.' + #10+#13
+      + 'Please ensure PalmOrb is already running on your Palm.');
 
   // CriticalSection to protect read buffer
   csRead := TCriticalSection.Create;
 
-  if (bUsbReadSupport) then
-  begin
-    // event to wait up read Thread so we can exit it.
-    eStopReadThread := CreateEvent(nil, True, False, nil);
+  // start read thread
+  readThread:= TMyThread.Create(self.doReadThread);
+  readThread.Resume;
+end;
 
-    // start read thread
-    readThread:= TMyThread.Create(self.doReadThread);
-    readThread.Resume;
+procedure TLCD_MO.initLCD;
+var
+  g: Cardinal;
+begin
+  if (not bConnected) then Exit;
+  
+  for g := 1 to 8 do
+  begin
+    setGPO(g, false);
   end;
+
+  writeDevice($0FE);     //Cursor blink off
+  writeDevice('T', 1);
+
+  writeDevice($0FE);     //clear screen
+  writeDevice('X', 1);
+
+  writeDevice($0FE);     //Cursor off
+  writeDevice('K', 1);
+
+  writeDevice($0FE);     //auto scroll off
+  writeDevice('R', 1);
+
+  writeDevice($0FE);     //auto line wrap off
+  writeDevice('D', 1);
+
+  writeDevice($0FE);   //auto transmit keys
+  writeDevice($041);
+
+  writeDevice($0FE);     //auto repeat off
+  writeDevice('`', 1);
+
+  setbacklight(true);
 end;
 
 constructor TLCD_MO.Create;
-var
-  g: Integer;
 begin
   bConnected := True;
 
   try
-    for g := 1 to 8 do
-    begin
-      setGPO(g, false);
-    end;
-
-    writeDevice($0FE);     //Cursor blink off
-    writeDevice('T');
-
-    writeDevice($0FE);     //clear screen
-    writeDevice('X');
-
-    writeDevice($0FE);     //Cursor off
-    writeDevice('K');
-
-    writeDevice($0FE);     //auto scroll off
-    writeDevice('R');
-
-    writeDevice($0FE);     //auto line wrap off
-    writeDevice('D');
-
-    writeDevice($0FE);   //auto transmit keys
-    writeDevice($041);
-
-    writeDevice($0FE);     //auto repeat off
-    writeDevice('`');
-
-    setbacklight(true);
+    initLcd;
   except
     bConnected := False;
     raise;
@@ -438,45 +324,52 @@ begin
       end;
 
       writeDevice($0FE);  //clear screen
-      writeDevice('X');
+      writeDevice('X', 1); 
     except
     end;
+    bConnected := false;
   end;
 
   if (bUsb) then
   begin
-    if bUsbReadSupport then
+    if Assigned(readThread) then
     begin
-
-      if Assigned(readThread) then
-      begin
-        if (eStopReadThread <> INVALID_HANDLE_VALUE) then SetEvent(eStopReadThread);
-
-        // This is ugly but the palm driver doesn't seem to support cancelling,
-        // WaitFor..., or any other means we can use to avoid blocking on a read
-        // request.
-        // So instead we send the palm a command that causes it to send a byte.
-        // (we're asking for it's version).
-        try
-          writeDevice(#254+#54);
-        except
-        end;
-
-        readThread.Terminate;
-        readThread.WaitFor;
-        readThread.Destroy;
-      end;
-
-      if (input <> INVALID_HANDLE_VALUE) then CloseHandle(input);
-      if (eStopReadThread <> INVALID_HANDLE_VALUE) then CloseHandle(eStopReadThread);
-
+      readThread.Terminate;
+      readThread.WaitFor;
+      readThread.Destroy;
     end;
-    if (output <> INVALID_HANDLE_VALUE) then CloseHandle(output);
+
+    if (usbPalm <> INVALID_HANDLE_VALUE) then
+    begin
+      if (usbPortLib <> 0) and (Assigned(FNClosePort)) then
+        FNClosePort(usbPalm);
+      usbPalm := INVALID_HANDLE_VALUE;
+    end;
+    if (usbPortLib <> 0) then
+    begin
+      FreeLibrary(usbPortLib);
+      usbPortLib := 0;
+    end;
+
+    if (usbPalm <> INVALID_HANDLE_VALUE) then
+    begin
+      FNClosePort(usbPalm);
+      usbPalm := INVALID_HANDLE_VALUE;
+    end;
+
     if Assigned(csRead) then csRead.Free;
   end
   else
   begin
-    sleep(500);
+    // Ensure all serial data has been writen out
+    // (close discards all remaining data)
+    g := 0;
+    While (serial.WriteBufUsed > 0) and (g<100) do
+    begin
+      Inc(g);
+      Application.ProcessMessages;
+      Sleep(10);
+    end;
     serial.close;
   end;
 
@@ -602,81 +495,56 @@ begin
 
 end;
 
-procedure TLCD_MO.writeDevice(str: String);
+procedure TLCD_MO.writeDevice(buffer: PChar; len: Cardinal);
 var
   bytesWritten: Cardinal;
+  ret: Cardinal;
 begin
-  if (not bConnected) then Exit;
+  if (not bConnected) then
+  begin
+    if (not bUsb) then Exit;
+
+    // See if we can reconnect.
+    if (not OpenUsbPort()) then Exit;
+  end;
+
+  if (len = 0) then Exit;
 
   if not bUsb then
   begin
 
-    serial.WriteText(str);
+    serial.WriteBuf(buffer, len);
 
   end
   else
   begin
 
-    if (not WriteFile(output, str[1], length(str), bytesWritten, nil)) then
+    ret:=FNSendBytes(usbPalm, buffer, len, @bytesWritten);
+    if (ret <> UsbNoError)
+      and (ret <> UsbErrSendTimedOut)
+      and (ret <> UsbErrPortNotOpen) then
     begin
-      if (UsbPalmConnected()) then
-        raise Exception.Create('Failed writing to USB Palm: ['
-          + IntToStr(length(str)) + ':' + IntToStr(bytesWritten) + ']: '
-          + errMsg(GetLastError))
-      else
-      begin
-        bConnected := False;
-        showmessage('The USB Palm has disconnected. LCD Smartie will now exit.');
-        application.Terminate;
-      end;
+      raise Exception.create('Write failed with '+IntToStr(ret));
     end
-    else if (bytesWritten <> Cardinal(length(str))) then
+    else if (ret = UsbErrPortNotOpen) then
     begin
-      // This can happen when the USB Palm is connected but powered off.
-      // just ignore - but sleep to avoid a busy loop.
-      Sleep(10);
+      bConnected := False;
+      FNClosePort(usbPalm);
+      usbPalm := INVALID_HANDLE_VALUE;
     end;
-
   end;
-
 end;
 
 procedure TLCD_MO.writeDevice(byte: Byte);
-var
-  bytesWritten: Cardinal;
 begin
-  if (not bConnected) then Exit;
-
-  if not bUsb then
-  begin
-
-    serial.WriteChar(Chr(byte));
-
-  end
-  else
-  begin
-
-    if (not WriteFile(output, byte, 1, bytesWritten, nil)) then
-    begin
-      if (UsbPalmConnected()) then
-        raise Exception.Create('Failed writing to USB Palm: [1:'
-          + IntToStr(bytesWritten) + ']: ' + errMsg(GetLastError))
-      else
-      begin
-        bConnected := False;
-        showmessage('The USB Palm has disconnected. LCD Smartie will now exit.');
-        application.Terminate;
-      end;
-    end
-    else if (bytesWritten <> 1) then
-    begin
-      // This can happen when the USB Palm is connected but powered off.
-      // just ignore - but sleep to avoid a busy loop.
-      Sleep(1);
-    end;
-
-  end;
+  writeDevice(@byte, 1);
 end;
+
+procedure TLCD_MO.writeDevice(str: String);
+begin
+  writeDevice(@str[1], length(str));
+end;
+
 
 function TLCD_MO.readDevice(var chr: Char): Boolean;
 var
@@ -716,64 +584,49 @@ procedure TLCD_MO.doReadThread;
 var
   bytesRead: Cardinal;
   buffer: Byte;
-  handles: TWOHandleArray;
-  res: DWORD;
-
+  ret: Cardinal;
 begin
-  handles[0] := eStopReadThread;
-  handles[1] := input;
-
-  try
-    While (bConnected) and (not readThread.Terminated) do
+    While (not readThread.Terminated) do
     begin
-      bytesRead := 0;
-      res := WaitForMultipleObjects(2, @handles, False, INFINITE);
-
-      if (res = WAIT_OBJECT_0)
-        or (readThread.Terminated)
-        or (not bConnected) then Exit
-      else if (res = WAIT_OBJECT_0+1) then
+      if (bConnected) then
       begin
-        // There's something to read - sadly this doesn't work with the Palm
-        // driver - the WaitFor... doesn't block and the input handle is always
-        // signalled.
-        if (not ReadFile(input, buffer, 1, bytesRead, nil)) then
+        bytesRead := 0;
+        ret:=  FNReceiveBytes(usbPalm, @buffer, 1, @bytesRead);
+        if (ret <> UsbNoError)
+          and (ret <> UsbErrRecvTimedOut)
+          and (ret <> UsbErrPortNotOpen) then
         begin
-          if (UsbPalmConnected()) then
-            raise Exception.create('Failed reading from USB Palm: '+errMsg(GetLastError))
-          else  // Sleep to avoid a busy loop, wait for write to detect loss of Palm.
-            Sleep(100);
+          raise Exception.create('Read failed with '+IntToStr(ret));
         end;
+
+        if (bytesRead>0) then
+        begin
+          // We finally have our data!
+          csRead.Enter;
+          try
+            if (((uInPos+1) mod ReadBufferSize) = uOutPos) then
+              raise Exception.Create('Read buffer is full');
+            readBuffer[uInPos] := buffer;
+            Inc(uInPos);
+            if (uInPos >= ReadBufferSize) then uInPos := 0;
+          finally
+            csRead.Leave;
+          end;
+        end;
+
+        // When the Palm is switched off then we get bytesRead=0 and
+        // WaitForMultipleObjects doesn't block - this causes a busy
+        // loop, hence the ugly sleep.
+        // [We could exit the thread instead, but when the palm is switched
+        // back on everything works again - so it's a shame to break that].
+        // Update: The read returns 0 bytes also when the read has timed out.
+        if (bytesRead<=0) then Sleep(10);
       end
       else
       begin
-        raise Exception.create('Unexpected return from WaitForMultipleObjects: ' + errMsg(res));
+        // Not connected - wait to be reconnected or if the thread must exit.
+        Sleep(10);
       end;
-
-      if (bytesRead>0) then
-      begin
-        // We finally have our data!
-        csRead.Enter;
-        try
-          if (((uInPos+1) mod ReadBufferSize) = uOutPos) then
-            raise Exception.Create('Read buffer is full');
-          readBuffer[uInPos] := buffer;
-          Inc(uInPos);
-          if (uInPos >= ReadBufferSize) then uInPos := 0;
-        finally
-          csRead.Leave;
-        end;
-      end;
-
-      // When the Palm is switched off then we get bytesRead=0 and
-      // WaitForMultipleObjects doesn't block - this causes a busy
-      // loop, hence the ugly sleep.
-      // [We could exit the thread instead, but when the palm is switched
-      // back on everything works again - so it's a shame to break that].
-      if (bytesRead<=0) then Sleep(10);
-    end;
-  finally
-    //CancelIO(input);
   end;
 end;
 
