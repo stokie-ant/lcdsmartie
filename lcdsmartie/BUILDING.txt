@@ -1,0 +1,15 @@
+
+Currently this project doesn't build; all references to WinAmp must be commented
+out or changed over to use a new winamp component.
+
+
+This project can not be built by trial versions of Delphi Studio; trail versions do
+not allow binary only components to be installed and will fail stating that they
+can't find the xxxx.pas file.
+
+
+This project requires the following components to be installed and in the projects path:
+ - CoolTrayIcon from: http://subsimple.com/delphi.asp
+ - Async32 from: http://www.tmssoftware.com/
+
+
