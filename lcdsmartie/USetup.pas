@@ -19,7 +19,7 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.24 $ $Date: 2005/01/02 21:37:37 $
+ *  $Revision: 1.25 $ $Date: 2005/01/04 20:13:05 $
  *****************************************************************************}
 
 interface
@@ -278,26 +278,18 @@ uses Windows, ShellApi, graphics, sysutils, UMain, UMOSetup,
 // Cancel has been pressed.
 procedure TForm2.Button2Click(Sender: TObject);
 begin
-
-  form1.timer1.enabled := true;
-  form1.timer2.enabled := true;
   form1.timer2.interval := 500;
-  form1.timer3.enabled := true;
-  form1.timer6.enabled := true;
-  if frozen = false then
-  begin
-    form1.timer7.interval := 0;
-    if (not config.screen[activeScreen][1].bSticky) then
-      form1.timer7.interval := config.screen[activeScreen][1].showTime*1000;
-    form1.timer7.enabled := true;
-  end;
-  form1.timer8.enabled := true;
-  form1.timer9.enabled := true;
-  form1.timer10.enabled := true;
+
+  form1.timer7.interval := 0;
+  if (not config.screen[activeScreen][1].bSticky) then
+    form1.timer7.interval := config.screen[activeScreen][1].showTime*1000;
+
   form2.visible := false;
   form1.enabled := true;
   form1.BringToFront;
   form1.SetFocus;
+
+  form1.UpdateTimersState();
 end;
 
 
@@ -339,14 +331,6 @@ begin
   end;
   comboBox4.Items.Add(USBPALM);
 
-  form1.timer2.enabled := false;
-  form1.timer4.enabled := false;
-  form1.timer5.enabled := false;
-  form1.timer6.enabled := false;
-  form1.timer7.enabled := false;
-  form1.timer8.enabled := false;
-  form1.timer9.enabled := false;
-  form1.timer10.enabled := false;
   pagecontrol2.ActivePage := tabsheet11;
   //if pagecontrol1.activepage = tabsheet13 then pagecontrol1.ActivePage :=
    // tabsheet1;
@@ -624,18 +608,12 @@ end;
 
 procedure TForm2.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
-  form1.timer1.enabled := true;
-  form1.timer2.enabled := true;
-  form1.timer3.enabled := true;
-  form1.timer6.enabled := true;
-  form1.timer7.enabled := true;
-  form1.timer8.enabled := true;
-  form1.timer9.enabled := true;
-
   form2.visible := false;
   form1.enabled := true;
  // form1.refres(self);
   form1.BringToFront;
+
+  form1.UpdateTimersState();
 end;
 
 
@@ -674,6 +652,7 @@ begin
   config.screen[scr][2].noscroll := checkbox4.checked;
   config.screen[scr][3].noscroll := checkbox5.checked;
   config.screen[scr][4].noscroll := checkbox6.checked;
+  form1.ResetScrollPositions();
 
   config.screen[scr][1].contNextLine := checkbox7.checked;
   config.screen[scr][2].contNextLine := checkbox8.checked;
@@ -1495,6 +1474,16 @@ end;
 
 procedure TForm2.Button4Click(Sender: TObject);
 begin
+  if (not config.isMO) then
+  begin
+    if MessageDlg('The Matrix Orbital driver is not currently loaded.' + chr(13) +
+      'Should I apply your settings and load the driver?',
+      mtConfirmation, [mbYes, mbNo], 0) = mrYes then
+    begin
+      // press apply for them
+      button7.click();
+    end;
+  end;
   form3.visible := true;
   form2.enabled := false;
 end;
@@ -1661,6 +1650,16 @@ end;
 
 procedure TForm2.Button5Click(Sender: TObject);
 begin
+ if (not config.isCF) then
+  begin
+    if MessageDlg('The Crystalfontz driver is not currently loaded.' + chr(13) +
+      'Should I apply your settings and load the driver?',
+      mtConfirmation, [mbYes, mbNo], 0) = mrYes then
+    begin
+      // press apply for them
+      button7.click();
+    end;
+  end;
   form5.visible := true;
   form2.enabled := false;
 end;
@@ -1789,6 +1788,16 @@ end;
 
 procedure TForm2.Button6Click(Sender: TObject);
 begin
+ if (not config.isHD) then
+  begin
+    if MessageDlg('The HD44780 driver is not currently loaded.' + chr(13) +
+      'Should I apply your settings and load the driver?',
+      mtConfirmation, [mbYes, mbNo], 0) = mrYes then
+    begin
+      // press apply for them
+      button7.click();
+    end;
+  end;
   form6.visible := true;
   form2.enabled := false;
 end;
@@ -1822,7 +1831,7 @@ begin
   relood := false;
 
   if (comboBox4.items[combobox4.itemIndex] = USBPALM)
-    and (not radiobutton2.checked) then
+    and (radiobutton3.checked) then
   begin
     showmessage('Matrix Orbital must be selected if USB Palm is selected.');
     Exit;
@@ -1876,26 +1885,14 @@ begin
   if (radiobutton3.checked) and (not config.isCF) then relood := true;
   if (radiobutton4.checked) and (not config.isHD2) then relood := true;
 
-  if relood = true then
-  begin
-    form1.timer1.enabled := false;
-    form1.timer2.enabled := false;
-    form1.timer3.enabled := false;
-    form1.timer4.enabled := false;
-    form1.timer5.enabled := false;
-    form1.timer6.enabled := false;
-    form1.timer7.enabled := false;
-    form1.timer8.enabled := false;
-    form1.timer9.enabled := false;
-    form1.timer10.enabled := false;
-  end;
-
 
   form1.WinampCtrl1.WinampLocation := edit15.text;
   config.winampLocation := edit15.text;
   config.refreshRate := StrToInt(spinEdit1.text);
   config.setiEmail := edit1.text;
   config.bootDriverDelay := StrToInt(form6.spinedit1.text);
+
+  if (config.iHDTimingMultiplier <> form6.spinedit2.value) then relood := true;
   config.iHDTimingMultiplier := form6.spinedit2.value;
   config.bHDAltAddressing := form6.AltAddressing.checked;
   config.sizeOption := combobox2.itemindex + 1;
@@ -1933,8 +1930,6 @@ begin
   config.isHD2 := radiobutton4.checked;
 
   if edit4.text='' then edit4.text := '0';
-  if (edit3.text <> proxytemp1) or (edit4.text <> proxytemp2) then
-    showmessage('You have to restart LCD Smartie for this option!');
   config.httpProxy := edit3.text;
   config.httpProxyPort := StrToInt(edit4.text);
 
@@ -1948,14 +1943,9 @@ begin
 
   config.save();
 
-  //application.ProcessMessages;
-
   if relood = true then
   begin
-    showmessage(
-  'You have to restart LCD Smartie when you change driver or driver settings!'
-      );
-    form1.close;
+    Form1.ReInitLCD();
   end;
 
 end;
@@ -1964,7 +1954,7 @@ end;
 procedure TForm2.Button1Click(Sender: TObject);
 begin
   if (comboBox4.items[combobox4.itemIndex] = USBPALM)
-    and (not radiobutton2.checked) then
+    and (radiobutton3.checked) then
   begin
     showmessage('Matrix Orbital must be selected if USB Palm is selected.');
     Exit;

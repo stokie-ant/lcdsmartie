@@ -36,13 +36,6 @@ object Form6: TForm6
     Height = 13
     Caption = 'Timing multiplier:'
   end
-  object Label4: TLabel
-    Left = 8
-    Top = 113
-    Width = 75
-    Height = 13
-    Caption = '(requires restart)'
-  end
   object Edit1: TEdit
     Left = 120
     Top = 16

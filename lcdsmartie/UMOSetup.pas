@@ -19,7 +19,7 @@ unit UMOSetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/Attic/UMOSetup.pas,v $
- *  $Revision: 1.3 $ $Date: 2004/11/24 14:50:53 $
+ *  $Revision: 1.4 $ $Date: 2005/01/04 20:12:50 $
  *****************************************************************************}
 
 
@@ -74,8 +74,11 @@ end;
 procedure TForm3.Button1Click(Sender: TObject);
 
 begin
-  lcd.setContrast(trackbar1.position);
-  lcd.setBrightness(trackbar2.position);
+  if (config.isMO) then
+  begin
+    lcd.setContrast(trackbar1.position);
+    lcd.setBrightness(trackbar2.position);
+  end;
 
   form3.visible := false;
   form2.enabled := true;
@@ -91,7 +94,8 @@ end;
 // MO options - contrast bar.
 procedure TForm3.TrackBar1Change(Sender: TObject);
 begin
-  lcd.setContrast(trackbar1.position);
+  if (config.isMO) then
+    lcd.setContrast(trackbar1.position);
   config.contrast := trackbar1.position;
 end;
 
@@ -103,7 +107,8 @@ end;
 // MO options - brightness bar.
 procedure TForm3.TrackBar2Change(Sender: TObject);
 begin
-  lcd.setBrightness(trackbar2.position);
+  if (config.isMO) then
+    lcd.setBrightness(trackbar2.position);
   config.brightness := trackbar2.position;
 end;
 

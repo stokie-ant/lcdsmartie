@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.40 $ $Date: 2005/01/04 01:04:23 $
+ *  $Revision: 1.41 $ $Date: 2005/01/04 20:12:50 $
  *****************************************************************************}
 
 interface
@@ -87,6 +87,8 @@ type
     Timer13: TTimer;
     WinampCtrl1: TWinampCtrl;
     WinAmpTimer: TTimer;
+    procedure DoFullDisplayDraw;
+    procedure UpdateTimersState;
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure Showwindow1Click(Sender: TObject);
@@ -179,6 +181,8 @@ type
     procedure ChangeScreen(scr: Integer);
     procedure WinAmpTimerCheck(Sender: TObject);
     procedure customchar(fline: String);
+    procedure ReInitLCD();
+    procedure ResetScrollPositions;
   private
     screenLcd: Array[1..4] of ^TPanel;
     canflash: Boolean;
@@ -221,6 +225,8 @@ type
     function UnescapeAmp(const sStr: string): String;
     procedure SendCustomChars;
     procedure ProcessAction(bDoAction: Boolean; sAction: String);
+    procedure InitLCD();
+    procedure FiniLCD();
   end;
 
 var
@@ -260,23 +266,25 @@ const
   PBT_APMRESUMESUSPEND = 7;
   PBT_APMRESUMESTANDBY = 8;
   PBT_APMRESUMEAUTOMATIC = $012;
-var
-  x: Integer;
 begin
   if (M.WParam = PBT_APMRESUMEAUTOMATIC) or (M.WParam = PBT_APMRESUMECRITICAL)
     or (M.WParam = PBT_APMRESUMESTANDBY) or (M.WParam = PBT_APMRESUMESUSPEND)
     then
   begin
-    if Assigned(Lcd) then Lcd.powerResume;
-
-    // Wipe the virtual display
-    for x := 1 to config.height do
-    begin
-      screenLcd[x].Caption := '';
-    end;
-
+    ReInitLCD();
   end;
 end;
+
+procedure TForm1.ResetScrollPositions;
+var
+  y: Integer;
+begin
+  for y := 1 to 4 do
+  begin
+    scrollPos[y] := 0; // Reset scroll postion.
+  end;
+end;
+
 
 procedure TForm1.ChangeScreen(scr: Integer);
 var
@@ -302,9 +310,10 @@ begin
 
   for y := 1 to 4 do
   begin
-    scrollPos[y] := 0; // Reset scroll postion.
     oldline[y] := UnescapeAmp(screenLcd[y].Caption);
   end;
+
+  ResetScrollPositions();
 
   gotnewlines := false;
   TransCycle := 0;
@@ -439,6 +448,7 @@ begin
   if length(scrollvar) > config.width then
   begin
     scrollPos[line] := scrollPos[line] + speed;
+    if (scrollPos[line]<1) then scrollPos[line] := length(scrollvar);
     if (scrollPos[line]>length(scrollvar)) then scrollPos[line] := 1;
 
     len := length(scrollvar)-scrollPos[line] + 1;
@@ -459,10 +469,6 @@ end;
 {$R *.DFM}
 
 procedure TForm1.FormCreate(Sender: TObject);
-const
-  baudRates: array [0..14] of Cardinal =(CBR_110, CBR_300, CBR_600, CBR_1200, CBR_2400,
-    CBR_4800, CBR_9600, CBR_14400, CBR_19200, CBR_38400, CBR_56000, CBR_57600,
-    CBR_115200, CBR_128000, CBR_256000);
 var
   line: String;
   initfile: textfile;
@@ -607,6 +613,37 @@ begin
   if form1.top + form1.height > screen.desktopheight then form1.top :=
     screen.desktopheight-form1.height;
 
+  InitLCD();
+
+  ChangeScreen(1);
+
+end;
+
+procedure TForm1.FiniLCD();
+begin
+  timer11.enabled := false; // stop any startup of the HD44780 driver
+  try
+    if (Lcd <> nil) Then Lcd.Destroy();
+  except
+  end;
+  timer1.enabled := false;  // stop updates to lcd
+  Lcd := nil;
+end;
+
+procedure TForm1.ReInitLCD();
+begin
+  FiniLCD();
+  InitLCD();
+end;
+
+procedure TForm1.InitLCD();
+const
+  baudRates: array [0..14] of Cardinal =(CBR_110, CBR_300, CBR_600, CBR_1200, CBR_2400,
+    CBR_4800, CBR_9600, CBR_14400, CBR_19200, CBR_38400, CBR_56000, CBR_57600,
+    CBR_115200, CBR_128000, CBR_256000);
+begin
+  timer11.enabled := false; // stop any startup of the HD44780 driver
+
   if (config.isMO) or (config.isCF) or (config.isTestDriver) then
   begin
     try
@@ -629,7 +666,6 @@ begin
       begin
         showmessage('Failed to open device: ' + E.Message);
         Lcd := TLCD.Create();
-
       end;
     end;
   end;
@@ -653,39 +689,36 @@ begin
 
   if (config.isCF) then
   begin
-    customchar('7, 4, 4, 4, 4, 4, 4, 4, 0');
-    customchar('8, 14, 17, 1, 13, 21, 21, 14, 0');
-
     Lcd.setBrightness(config.CF_brightness);
     Lcd.setContrast(config.CF_contrast);
   end;
 
-    //
-    // Enable the timers...
-    //
-  if (not config.isHD) and (not config.isHD2) then
+  if (config.isHD) or (config.isHD2) then
   begin
-    timer1.enabled := true;
-    timer2.enabled := true;
-    timer3.enabled := true;
-    timer6.enabled := true;
-    timer7.enabled := true;
-    timer8.enabled := true;
-    timer9.enabled := true;
-    timer10.enabled := true;
-    timer12.enabled := true;
-    timer13.enabled := true;
-  end
-  else
-  begin
+    Lcd := TLCD.Create(); // use a dummy LCD until the boot time has passed.
+
       // HD/HD2 have a delay start - they will setup the above timers later.
+    timer11.interval := 0;
     if config.bootDriverDelay = 0 then timer11.interval := 10
     else timer11.interval := config.bootDriverDelay*1000;
     timer11.enabled := true;
+
   end;
 
-  ChangeScreen(1);
+  DoFullDisplayDraw();
 
+  UpdateTimersState();
+end;
+
+procedure TForm1.DoFullDisplayDraw;
+var
+  x: Integer;
+begin
+  // Wipe the our view of the display - this will cause a full redraw.
+  for x := 1 to config.height do
+  begin
+    tmpline[x] := '';
+  end;
 end;
 
 procedure TForm1.doInteractions;
@@ -1112,7 +1145,7 @@ begin
 
   for h := 1 to config.height do
   begin
-    if tmpline[h] <> copy(screenLcd[h].Caption +
+    if tmpline[h] <> copy(UnescapeAmp(screenLcd[h].Caption) +
       '                                        ', 1, config.width) then
     begin
       tmpline[h] := copy(UnescapeAmp(screenLcd[h].Caption)
@@ -1164,6 +1197,7 @@ begin
     end;
   end;
 
+
 end;
 
 procedure TForm1.Timer2Timer(Sender: TObject);
@@ -1172,32 +1206,13 @@ begin
   begin
     data.lcdSmartieUpdate := False;
 
-    timer1.enabled := false;
-    timer2.enabled := false;
-    timer3.enabled := false;
-    timer4.enabled := false;
-    timer5.enabled := false;
-    timer6.enabled := false;
-    timer7.enabled := false;
-    timer8.enabled := false;
-    timer9.enabled := false;
     if MessageDlg('A new version of LCD Smartie is detected. ' + chr(13) +
-      data.lcdSmartieUpdateText + chr(13) + 'Go to download page?',
+      data.lcdSmartieUpdateText + chr(13) + 'Go to LCD Smartie website?',
       mtConfirmation, [mbYes, mbNo], 0) = mrYes then
     begin
       ShellExecute(0, Nil, pchar('http://lcdsmartie.sourceforge.net/'), Nil,
         Nil, SW_NORMAL);
       Form1.close;
-    end
-    else
-    begin
-      timer1.enabled := true;
-      timer2.enabled := true;
-      timer3.enabled := true;
-      timer6.enabled := true;
-      timer7.enabled := true;
-      timer8.enabled := true;
-      timer9.enabled := true;
     end;
   end;
 
@@ -1370,7 +1385,7 @@ end;
 procedure TForm1.scrollLine(line: Byte; direction: Integer);
 begin
   tmpline[line] := copy (scroll(parsedLine[line], line, direction)
-    + '                                        ', 1, config.width-1);
+    + '                                        ', 1, config.width);
   screenLcd[line].caption := EscapeAmp(tmpline[line]);
   Lcd.setPosition(1, line);
   Lcd.write(tmpline[line]);
@@ -1394,6 +1409,8 @@ begin
   form1.enabled := false;
   form2.visible := true;
   form2.SetFocus;
+
+  UpdateTimersState(); // turns off required timers as form2 is visible.
 end;
 
 procedure TForm1.Timer6Timer(Sender: TObject);
@@ -1444,10 +1461,7 @@ begin
   except
   end;
 
-  try
-    if (Lcd <> nil) Then Lcd.Destroy();
-  except
-  end;
+  FiniLCD();
 
   if (Data <> nil) then Data.Destroy;
   if (config <> nil) then config.Destroy;
@@ -1766,7 +1780,7 @@ var
 
 begin
 
-  if (form2 <> nil) and (Lcd.readKey(cKey)) then
+  if (form2 <> nil) and (Lcd <> nil) and (Lcd.readKey(cKey)) then
   begin
     form2.Edit17.text := cKey;
     data.cLastKeyPressed := cKey;
@@ -1967,32 +1981,62 @@ procedure TForm1.Timer11Timer(Sender: TObject);
 begin
   timer11.Enabled := false;
 
-  try
-    Lcd := TLCD_HD.CreateParallel($ + config.parallelPort, config.width, config.height);
-  except
-    on E: Exception do
-    begin
-      showmessage('Failed to open device: ' + E.Message);
-      Lcd := TLCD.Create();
+  // check just in case they've changed they mind in the mean time.
+  if (config.isHD) then
+  begin
+
+    FiniLCD(); // get rid of the dummy one.
+    try
+      Lcd := TLCD_HD.CreateParallel($ + config.parallelPort, config.width, config.height);
+    except
+      on E: Exception do
+      begin
+        showmessage('Failed to open device: ' + E.Message);
+        Lcd := TLCD.Create();
+      end;
     end;
+    Lcd.setbacklight(true);
+
+    customchar('1, 12, 18, 18, 12, 0, 0, 0, 0');
+    customchar('2, 31, 31, 31, 31, 31, 31, 31, 31');
+    customchar('3, 16, 16, 16, 16, 16, 16, 31, 16');
+    customchar('4, 28, 28, 28, 28, 28, 28, 31, 28');
   end;
-  Lcd.setbacklight(true);
 
-  customchar('1, 12, 18, 18, 12, 0, 0, 0, 0');
-  customchar('2, 31, 31, 31, 31, 31, 31, 31, 31');
-  customchar('3, 16, 16, 16, 16, 16, 16, 31, 16');
-  customchar('4, 28, 28, 28, 28, 28, 28, 31, 28');
+  UpdateTimersState();
+end;
 
-  timer1.enabled := true;
-  timer2.enabled := true;
-  timer3.enabled := true;
-  timer6.enabled := true;
-  timer7.enabled := true;
-  timer8.enabled := true;
-  timer9.enabled := true;
-  timer10.enabled := true;
-  timer12.enabled := true;
-  timer13.enabled := true;
+procedure TForm1.UpdateTimersState;
+begin
+  if (not Assigned(Form2)) or (not Form2.Visible) then
+  begin    // We're not in setup
+    // don't change timer states if we're waiting for a HD44780 to start.
+    if (not timer11.enabled) then
+    begin
+      if not frozen then
+      begin
+        timer7.enabled := true; // next screen
+      end;
+    end;
+  end
+  else
+  begin    // We're in Setup
+    timer4.enabled := false;     // left manual scroll
+    timer5.enabled := false;     // right manual scroll
+    timer7.enabled := false;     // next screen
+    timertrans.enabled := false; // "interactions"
+  end;
+
+  if (not timer11.enabled) then
+    timer1.enabled := true;  // update lcd and data
+  timer2.enabled := true;  // http update
+  timer3.enabled := true;  // actions
+  timer6.enabled := true;  // mbm update
+  timer8.enabled := true;  // game update
+  timer9.enabled := true;  // email update
+  timer10.enabled := true; // net update
+  timer12.enabled := true; // scroll/flash
+  timer13.enabled := true; // dll check
 end;
 
 procedure TForm1.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
@@ -2076,16 +2120,16 @@ begin
   if frozen = false then
   begin
     frozen := true;
-    form1.timer7.enabled := false;
+    timer7.enabled := false;
     popupmenu1.Items[0].Items[1].Caption := 'Unfreeze';
     form1.caption := form1.caption + ' - frozen'
   end
   else
   begin
     frozen := false;
-    form1.timer7.enabled := true;
-    form1.timer7.interval := 0;
-    form1.timer7.interval := 5;
+    timer7.enabled := true;
+    timer7.interval := 0;
+    timer7.interval := 5;
     popupmenu1.Items[0].Items[1].Caption := 'Freeze';
     if pos('frozen', form1.caption) <> 0 then form1.caption :=
       copy(form1.caption, 1, length(form1.caption)-length(' - frozen'));
@@ -2190,6 +2234,7 @@ begin
     'images\small_arrow_right_down1.bmp');
   line2scroll := 1;
   timer4.enabled := true;
+  timer1.enabled := false;
 end;
 
 procedure TForm1.Image8MouseDown(Sender: TObject; Button: TMouseButton; Shift:
@@ -2199,6 +2244,7 @@ begin
     'images\small_arrow_right_down2.bmp');
   line2scroll := 2;
   timer4.enabled := true;
+  timer1.enabled := false;
 end;
 
 procedure TForm1.Image9MouseDown(Sender: TObject; Button: TMouseButton; Shift:
@@ -2208,6 +2254,7 @@ begin
     'images\small_arrow_right_down3.bmp');
   line2scroll := 3;
   timer4.enabled := true;
+  timer1.enabled := false;
 end;
 
 procedure TForm1.Image10MouseDown(Sender: TObject; Button: TMouseButton;
@@ -2217,6 +2264,7 @@ begin
     'images\small_arrow_right_down4.bmp');
   line2scroll := 4;
   timer4.enabled := true;
+  timer1.enabled := false;
 end;
 
 procedure TForm1.Image4MouseUp(Sender: TObject; Button: TMouseButton; Shift:
@@ -2252,6 +2300,7 @@ begin
   image7.picture.LoadFromFile(extractfilepath(application.exename) +
     'images\small_arrow_right_up1.bmp');
   timer4.enabled := false;
+  timer1.enabled := true;
 end;
 
 procedure TForm1.Image8MouseUp(Sender: TObject; Button: TMouseButton; Shift:
@@ -2260,6 +2309,7 @@ begin
   image8.picture.LoadFromFile(extractfilepath(application.exename) +
     'images\small_arrow_right_up2.bmp');
   timer4.enabled := false;
+  timer1.enabled := true;
 end;
 
 procedure TForm1.Image9MouseUp(Sender: TObject; Button: TMouseButton; Shift:
@@ -2268,6 +2318,7 @@ begin
   image9.picture.LoadFromFile(extractfilepath(application.exename) +
     'images\small_arrow_right_up3.bmp');
   timer4.enabled := false;
+  timer1.enabled := true;
 end;
 
 procedure TForm1.Image10MouseUp(Sender: TObject; Button: TMouseButton; Shift:
@@ -2276,6 +2327,7 @@ begin
   image10.picture.LoadFromFile(extractfilepath(application.exename) +
     'images\small_arrow_right_up4.bmp');
   timer4.enabled := false;
+  timer1.enabled := true;
 end;
 
 procedure TForm1.Image11MouseDown(Sender: TObject; Button: TMouseButton;
@@ -2362,6 +2414,7 @@ begin
   inherited;
   form1.Close;
 end;
+
 procedure TForm1.TimertransTimer(Sender: TObject);
 begin
   timertrans.Enabled := false;

@@ -18,6 +18,15 @@ See: http://sourceforge.net/tracker/?func=browse&group_id=122330&atid=693136
 
 Changes
 =======
+5.3Beta3
+	- Remove the need to restart smartie when some settings are changed.
+	- Fixed some scrolling bugs.
+	- Updated credits screen.
+	- Make some settings work instantly (such as the Crystalfontz 
+	  character set).
+	- Re-display the whole display after resuming.
+	- Fixed bug: Privileged instruction caused by dlportio on resume.
+	- Call "SmartieInit" at load time if a plugin supports it.
 5.3Beta2
 	- Fixed bug: $dll sometimes required the .dll extension, this was
 	  meant to be optional.

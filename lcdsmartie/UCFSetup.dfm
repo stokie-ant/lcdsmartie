@@ -86,5 +86,6 @@ object Form5: TForm5
     Height = 17
     Caption = 'v2 character set'
     TabOrder = 5
+    OnClick = v2cgromClick
   end
 end

@@ -19,7 +19,7 @@ unit UCFSetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UCFSetup.pas,v $
- *  $Revision: 1.4 $ $Date: 2004/12/12 22:23:27 $
+ *  $Revision: 1.5 $ $Date: 2005/01/04 20:12:50 $
  *****************************************************************************}
 
 interface
@@ -39,6 +39,7 @@ type
     procedure TrackBar1Change(Sender: TObject);
     procedure TrackBar2Change(Sender: TObject);
     procedure Button1Click(Sender: TObject);
+    procedure v2cgromClick(Sender: TObject);
   private
     { Private declarations }
   public
@@ -70,26 +71,35 @@ end;
 // CF options - contrast bar.
 procedure TForm5.TrackBar1Change(Sender: TObject);
 begin
-  Lcd.setContrast(trackbar1.Position);
+  if (config.isCF) then
+    Lcd.setContrast(trackbar1.Position);
   config.CF_contrast := trackbar1.Position;
 end;
 
 // CF options - brightness bar.
 procedure TForm5.TrackBar2Change(Sender: TObject);
 begin
-  Lcd.setBrightness(trackbar2.Position);
+  if (config.isCF) then
+    Lcd.setBrightness(trackbar2.Position);
   config.CF_brightness := trackbar2.Position;
 end;
 
 procedure TForm5.Button1Click(Sender: TObject);
 begin
+
+  form5.visible := false;
+  form2.enabled := true;
+  form2.BringToFront;
+end;
+
+procedure TForm5.v2cgromClick(Sender: TObject);
+begin
   if (v2cgrom.checked) then
     config.iCF_cgrom := 2
   else
     config.iCF_cgrom := 1;
-  form5.visible := false;
-  form2.enabled := true;
-  form2.BringToFront;
+
+  form1.DoFullDisplayDraw();
 end;
 
 end.
