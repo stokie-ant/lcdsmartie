@@ -29,9 +29,11 @@ type
     keyBuf: String;
     uiBytesAvail: Cardinal;
     uiMaxContrast: Cardinal;
+    uiVersion: Cardinal;
     function CalcCrc(buffer: PByte; uiSize: Cardinal):Word;
     function PacketCmd(cmdCode: Byte): Boolean;  overload;
     function PacketCmd(cmdCode: Byte; data: Byte): Boolean;  overload;
+    function PacketCmd(cmdCode: Byte; sData: String): Boolean;  overload;
     function PacketCmd(cmdCode: Byte; dataLen: Byte; buffer: PByte): Boolean; overload;
     function PacketReply(cmdCode: Byte): Boolean;
     procedure AddKey(key: Char);
@@ -49,6 +51,7 @@ const
   CmdSetCursor = 12;
   CmdSetContrast = 13;
   CmdSetBrightness = 14;
+  CmdKeyReporting = 23;
   CmdSendText = 31;
 
 procedure TLCD_CF.AddKey(key: char);
@@ -58,6 +61,10 @@ end;
 
 function TLCD_CF.readKey(var key: Char): Boolean;
 begin
+  // send/receive a ping - a side effect of this is processing of key events.
+  if (bPackets) then
+    PacketCmd(CmdPing);
+
   if (Length(keyBuf) > 0) then
   begin
     key := keyBuf[1];
@@ -76,6 +83,11 @@ end;
 function TLCD_CF.PacketCmd(cmdCode: Byte; data: Byte): Boolean;
 begin
   result := PacketCmd(cmdCode, 1, @data);
+end;
+
+function TLCD_CF.PacketCmd(cmdCode: Byte; sData: String): Boolean;
+begin
+  result := PacketCmd(cmdCode, Length(sData), @sData[1]);
 end;
 
 function TLCD_CF.PacketCmd(cmdCode: Byte; dataLen: Byte; buffer: PByte): Boolean;
@@ -170,10 +182,12 @@ begin
                   if (packet[8] = Byte('1')) then
                   begin
                     uiMaxContrast := 255;
+                    uiVersion := 631;
                   end
                   else if (packet[8] = Byte('3')) then
                   begin
                     uiMaxContrast := 50;
+                    uiVersion := 633;
                   end;
                 end;
               end;
@@ -198,10 +212,10 @@ begin
                    KEY_CANCEL: AddKey('J');
                    // else ignore
                 end;
-              end
-              else
+              end;
+              {else
                 raise exception.create('unexpected packet: '
-                  + IntToStr(packet[CMDCODEPOS]) + ':cmd=' + IntToStr(cmdCode));
+                  + IntToStr(packet[CMDCODEPOS]) + ':cmd=' + IntToStr(cmdCode));}
             end;
 
             uiBytesToRemove := packet[DATALENPOS] + 4;
@@ -256,6 +270,12 @@ begin
   begin
     PacketCmd(CmdGetVersion); // this is ugly; the reply is handled in the reading code
     PacketCmd(CmdSetCursor, 0); // hide cursor
+    // ask for all keys to be reported
+    if (uiVersion = 633) then
+      PacketCmd(CmdKeyReporting, ''+#$3f+#0)
+    else if (uiVersion = 631) then
+      PacketCmd(CmdKeyReporting, ''+#$f+#0);
+
   end
   else
   begin
@@ -364,35 +384,78 @@ var
   buffer: array of Byte;
   i: Cardinal;
 begin
+
+  {================ map characters onto displays character set =============}
+
+  // Now handle all simple byte to byte mappings
   for i:= 1 to Length(str) do
   begin
+    // Custom characters - these mapping exists only to be compatible with older
+    // smartie releases.
     case Ord(str[i]) of
-       Ord('°'): str[i]:=Chr(0);
-       Ord('ž'): str[i]:=Chr(1);
-       131: str[i]:=Chr(2);
-       132: str[i]:=Chr(3);
-       133: str[i]:=Chr(4);
-       134: str[i]:=Chr(5);
-       135: str[i]:=Chr(6);
-       136: str[i]:=Chr(7);
-       Ord('{'): str[i]:=Chr(253);
-       Ord('|'): str[i]:=Chr(254);
-       Ord('}'): str[i]:=Chr(255);
-       Ord('$'): str[i]:=Chr(202);
-       Ord('@'): str[i]:= chr(160);
-       Ord('_'): str[i]:= 'Ä';
-       Ord('’'): str[i]:= chr(39);
-       Ord('`'): str[i]:= chr(39);
-       Ord('~'): str[i]:= chr(206);
-       Ord('['): str[i]:= 'ú';
-       Ord(']'): str[i]:= 'ü';
-       Ord('\'): str[i]:= 'û';
-       Ord('^'): str[i]:= chr(206);
-     end;
-     // on ascii based displays, map on to special char locations
-     if (not bPackets) and (Ord(str[i])<=7) then str[i]:=Chr(Ord(str[i])+128);
+      131: str[i]:=Chr(2);
+      132: str[i]:=Chr(3);
+      133: str[i]:=Chr(4);
+      134: str[i]:=Chr(5);
+      135: str[i]:=Chr(6);
+      136: str[i]:=Chr(7);
+    end;
+
+    // packet based display, with cgrom v2
+    if (bPackets) and (config.iCF_cgrom = 2) then
+    begin
+      case Ord(str[i]) of
+        Ord('^') {94}: str[i]:= Chr(29);
+        Ord('ž') {158}: str[i]:= Chr(31);
+      end;
+    end;
+
+      // custom chars
+      //Ord('°') {176}: str[i]:=Chr(0);
+      //Ord('ž') {158}: str[i]:=Chr(1);
+
+    // v1 cgrom
+    if (config.iCF_cgrom = 1) then
+    begin
+       { // map to cgrom - v1.0 displays
+           '\' and '~' are not ascii mapped, but also don't appear in the cgrom...
+       }
+       if (str[i] = '°') {176} then str[i] := Chr(0); // custom char
+       if (str[i] = 'ž') then str[i] := Chr(255);
+    end
+    else
+    begin
+      // v2 cgrom
+      case Ord(str[i]) of
+        Ord('°') {176}: str[i]:=Chr(0); // custom char
+
+        Ord('$') {36}: str[i]:= Chr(162); // was 202
+        Ord('@') {64}: str[i]:= Chr(160);
+        Ord('[') {91}: str[i]:= Chr(250);
+        Ord('\') {92}: str[i]:= Chr(251);
+        Ord(']') {93}: str[i]:= Chr(252);
+        Ord('_') {95}: str[i]:= Chr(196);
+        Ord('`') {96}: str[i]:= Chr(39); // ` not in cgrom, mapped to ' instead
+        Ord('’') {146}: str[i]:= Chr(39);
+        Ord('{') {123}: str[i]:= Chr(253);
+        Ord('|') {124}: str[i]:= Chr(254);
+        Ord('}') {125}: str[i]:= Chr(255);
+        Ord('~') {126}: str[i]:= Chr(206);
+        Ord('£') {163}: str[i]:= Chr(161);
+      end;
+    end;
+    // on ascii based displays, map on to special char locations
+    if (not bPackets) and (Ord(str[i])<=7) then str[i]:=Chr(Ord(str[i])+128);
   end;
 
+  // ascii based display with cgrom v2
+  if (not bPackets) and (config.iCF_cgrom = 2) then
+  begin
+    str := StringReplace(str, '^', #30+#1+#29, [rfReplaceAll]);
+    str := StringReplace(str, Chr(158) {ž}, #30+#1+#31, [rfReplaceAll]);
+    assert(Pos('^', str)=0);
+    assert(Pos(Chr(158), str)=0);
+  end;
 
   if (bPackets) then
   begin

@@ -4,7 +4,7 @@ object Form5: TForm5
   BorderIcons = []
   BorderStyle = bsToolWindow
   Caption = 'Crystalfontz settings'
-  ClientHeight = 147
+  ClientHeight = 179
   ClientWidth = 190
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -71,12 +71,20 @@ object Form5: TForm5
   end
   object Button1: TButton
     Left = 112
-    Top = 120
+    Top = 152
     Width = 75
     Height = 25
     Caption = 'Ok'
     Default = True
     TabOrder = 4
     OnClick = Button1Click
+  end
+  object v2cgrom: TCheckBox
+    Left = 8
+    Top = 120
+    Width = 105
+    Height = 17
+    Caption = 'v2 character set'
+    TabOrder = 5
   end
 end

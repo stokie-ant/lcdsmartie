@@ -19,7 +19,7 @@ unit UConfig;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UConfig.pas,v $
- *  $Revision: 1.20 $ $Date: 2004/12/08 23:39:29 $
+ *  $Revision: 1.21 $ $Date: 2004/12/12 22:23:27 $
  *****************************************************************************}
 
 interface
@@ -79,6 +79,7 @@ type
     brightness: Integer;
     CF_contrast: Integer;
     CF_brightness: Integer;
+    iCF_cgrom: Integer;
     newsRefresh: Integer;
     randomScreens: Boolean;
     gameRefresh: Integer;
@@ -587,6 +588,7 @@ begin
   CF_contrast := initFile.ReadInteger('General Settings', 'CFContrast', 66);
   CF_brightness := initFile.ReadInteger('General Settings', 'CFBrightness',
     61);
+  iCF_cgrom := initFile.ReadInteger('General Settings', 'CFCGRomVersion', 2);
   iMinFadeContrast := initFile.ReadInteger('General Settings', 'MinFadeContrast',
     0);
 
@@ -743,6 +745,7 @@ begin
 
   initFile.WriteInteger('General Settings', 'CFContrast', CF_contrast);
   initFile.WriteInteger('General Settings', 'CFBrightness', CF_brightness);
+  initFile.WriteInteger('General Settings', 'CFCGRomVersion', iCF_cgrom);
   initFile.WriteInteger('General Settings', 'MinFadeContrast', iMinFadeContrast);
 
   initFile.WriteInteger('General Settings', 'NewsRefresh', newsRefresh);

@@ -19,7 +19,7 @@ unit UCFSetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UCFSetup.pas,v $
- *  $Revision: 1.3 $ $Date: 2004/11/19 19:55:19 $
+ *  $Revision: 1.4 $ $Date: 2004/12/12 22:23:27 $
  *****************************************************************************}
 
 interface
@@ -33,6 +33,7 @@ type
     TrackBar2: TTrackBar;
     TrackBar1: TTrackBar;
     Button1: TButton;
+    v2cgrom: TCheckBox;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormShow(Sender: TObject);
     procedure TrackBar1Change(Sender: TObject);
@@ -63,6 +64,7 @@ procedure TForm5.FormShow(Sender: TObject);
 begin
   trackbar1.position := config.CF_contrast;
   trackbar2.position := config.CF_brightness;
+  v2cgrom.checked := (config.iCF_cgrom = 2);
 end;
 
 // CF options - contrast bar.
@@ -81,6 +83,10 @@ end;
 
 procedure TForm5.Button1Click(Sender: TObject);
 begin
+  if (v2cgrom.checked) then
+    config.iCF_cgrom := 2
+  else
+    config.iCF_cgrom := 1;
   form5.visible := false;
   form2.enabled := true;
   form2.BringToFront;
