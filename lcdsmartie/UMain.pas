@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.13 $ $Date: 2004/11/19 22:34:24 $
+ *  $Revision: 1.14 $ $Date: 2004/11/20 00:19:40 $
  *****************************************************************************}
 
 interface
@@ -232,7 +232,7 @@ var
   setupbutton: Integer;
   setupscreen: Integer;
   tempscreen: Integer;
-  kar: char;
+  key: char;
   activeScreen : Integer;
   actionsArray: Array[1..99, 1..4] of String;
   aantalscreensheenweer: Integer;
@@ -1418,7 +1418,7 @@ var
 
 begin
 
-  if (Lcd.readKey(kar)) then form2.Edit17.text := kar;
+  if (Lcd.readKey(key)) then form2.Edit17.text := key;
 
   if (form2 <> nil) and (form2.Visible = false) then
   begin

@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.12 $ $Date: 2004/11/19 22:49:33 $
+ *  $Revision: 1.13 $ $Date: 2004/11/20 00:19:40 $
  *****************************************************************************}
 
 
@@ -1338,7 +1338,7 @@ begin
     if decodeArgs(line, '$MObutton', maxArgs, args, prefix, postfix, numargs)
       then
     begin
-      if UMain.kar = args[1] then spacecount := 1
+      if UMain.key = args[1] then spacecount := 1
       else spacecount := 0;
       line := prefix + intToStr(spacecount) + postfix;
     end;
@@ -1522,7 +1522,7 @@ begin
           begin
 
           // We know about the Rss entry but have no data...
-            if (copy(rss[jj].whole, 1, 5) = '[Rss: ') then
+            if (copy(rss[jj].whole, 1, 6) = '[Rss: ') then
             begin
             // Assume an error message is in whole
               line := prefix + rss[jj].whole + postfix;
