@@ -1,6 +1,6 @@
 object Form2: TForm2
   Left = 69
-  Top = 69
+  Top = 70
   ActiveControl = SpinEdit2
   Anchors = []
   BiDiMode = bdLeftToRight
@@ -1342,6 +1342,12 @@ object Form2: TForm2
           Height = 17
           Hint = 'Don'#39't automatically change from this screen.'
           Caption = 'Sticky'
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          ParentFont = False
           ParentShowHint = False
           ShowHint = True
           TabOrder = 16
