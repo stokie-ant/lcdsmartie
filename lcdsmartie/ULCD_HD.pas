@@ -19,7 +19,7 @@ unit ULCD_HD;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/Attic/ULCD_HD.pas,v $
- *  $Revision: 1.6 $ $Date: 2004/12/15 20:06:06 $
+ *  $Revision: 1.7 $ $Date: 2004/12/16 14:34:03 $
  *
  *  Based on code from the following (open-source) projects:
  *     WinAmp LCD Plugin
@@ -87,16 +87,13 @@ type
       FBaseAddr: Word;
       FCtrlAddr: Word;
       cursorx, cursory: Word;
-      backlight, lcd16, width, heigth: Byte;
+      backlight, width, height: Byte;
       bTwoControllers: Boolean;
       bHighResTimers: Boolean;
       iHighResTimerFreq: Int64;
       procedure writectrl(const controllers: TControllers; const x: Byte);
       procedure writedata(const controllers: TControllers; const x: Byte);
       procedure writestring(const controllers: TControllers; s: String);
-      procedure setcursor1(const x, y: Byte);
-      procedure setcursor2(const x, y: Byte);
-      procedure setcursor3(const x, y: Byte); //1 controller lcd's
       procedure clear;
       procedure UsecDelay(uiUsecs: Cardinal);
       procedure init;
@@ -110,13 +107,19 @@ implementation
 uses UMain, SysUtils, Windows;
 
 constructor TLCD_HD.CreateParallel(const poortadres: Word; const width, heigth: Byte);
+var
+  x, y: integer;
 begin
   FBaseAddr := poortadres;
   FCtrlAddr := FBaseAddr + 2;
   self.width := width;
-  self.heigth := heigth;
+  self.height := heigth;
   bHighResTimers := QueryPerformanceFrequency(iHighResTimerFreq);
   initClass;
+
+    for y:=1 to height do
+      for x:=1 to width do
+         SetPosition(x, y);
 end;
 
 destructor TLCD_HD.Destroy;
@@ -145,14 +148,15 @@ begin
   cursory := 1;
 
   //defining wether lcd is 1 or 2 controller based
-  if (width >= 40) and (heigth >= 4) then begin
+  if (width * height > 80) then begin
     bTwoControllers := True;
+
+    // the line usually used for the backlight is used to enable the second
+    // controller.
     backlight := 0;
   end
   else bTwoControllers := False;
 
-  //adjustment for 16 column lcd's
-  if width > 16 then lcd16 := 0 else lcd16 := 4;
   init;
 end;
 
@@ -209,7 +213,7 @@ begin
     backlight := 0;
 
   if (not bTwoControllers) then
-    clear; //update 'lightline'
+      CtrlOut(backlight);; //update 'lightline'
 end;
 
 procedure TLCD_HD.write(str: String);
@@ -230,26 +234,17 @@ begin
     end;
   end;
 
-  if (cursory < 3) or not bTwoControllers then
+  if (not bTwoControllers) or (cursory < ((height div 2)+1)) then
     writestring(C1, str)
   else
     writestring(C2, str);
 end;
 
-procedure TLCD_HD.setPosition(x, y: Integer);
-begin
-  if not bTwoControllers then setcursor3(x, y)
-  else if y <= 2 then setcursor1(x, y)
-  else setcursor2(x, y);
-  cursory := y;
-end;
 
 procedure TLCD_HD.customChar(character: Integer; data: Array of Byte);
 var
   i: Byte;
 begin
-
-
     writectrl(All, SetCGRamAddr + ((character-1) * 8));
     for i := 0 to 7 do writedata(All, data[i]);
 
@@ -385,6 +380,12 @@ var
 begin
   i := 1;
   while (i <= length(s)) and (cursorx <= width) do begin
+
+    // special case for 1 chip 1x16 displays
+    if (config.bHDAltAddressing) and (width = 16) and (height = 1)
+      and (cursorx = 9) then
+      setPosition(cursorx, cursory);
+
     writedata(controllers, ord(s[i]));
     inc(i);
     inc(cursorx);
@@ -393,33 +394,42 @@ begin
 end;
 
 
-procedure TLCD_HD.setcursor1(const x, y: Byte);
+procedure TLCD_HD.setPosition(x, y: Integer);
+var
+  tempX, tempY: Byte;
+  DDaddr: Byte;
+  controller: TControllers;
 begin
-  case y of
-    1: writectrl(C1, SetPos or (x-1));
-    2: writectrl(C1, SetPos or (64 + (x-1)));
-  end;
+  // store theses values as they are used when a write occurs.
+  cursory := y;
   cursorx := x;
-end;
 
-procedure TLCD_HD.setcursor2(const x, y: Byte);
-begin
-  case y of
-    3: writectrl(C2, SetPos or (x-1));
-    4: writectrl(C2, SetPos or (64 + (x-1)));
-  end;
-  cursorx := x;
-end;
+  tempX := x - 1;
+  tempY := y - 1;
 
-procedure TLCD_HD.setcursor3(const x, y: Byte);
-begin
-  case y of
-    1: writectrl(C1, SetPos or (x-1));
-    2: writectrl(C1, SetPos or (64 + (x-1)));
-    3: writectrl(C1, SetPos or (20 + (x-1) - lcd16));
-    4: writectrl(C1, SetPos or (84 + (x-1) - lcd16));
+  if (bTwoControllers) and (tempY >= (height div 2)) then
+  begin
+    tempY := tempY mod (height div 2);
+    controller := C2;
+  end
+  else
+    controller := C1;
+
+  // special case for 1 chip 1x16 displays, acts like 2x8 display
+  if (config.bHDAltAddressing) and (width = 16) and (height = 1)
+    and (tempX >= 8) then
+  begin
+    tempX := tempX - 8;
+    tempY := tempY + 1;
   end;
-  cursorx := x;
+
+  DDaddr := tempX + (tempY mod 2) * 64;
+
+  // line 3 logically follows line 1, (same for 4 and 2)
+  if ((tempY mod 4) >= 2) then
+    DDaddr := DDaddr + width;
+
+  writectrl(controller, SetPos or DDaddr);
 end;
 
 

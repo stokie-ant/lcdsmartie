@@ -19,7 +19,7 @@ unit UConfig;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UConfig.pas,v $
- *  $Revision: 1.21 $ $Date: 2004/12/12 22:23:27 $
+ *  $Revision: 1.22 $ $Date: 2004/12/16 14:34:02 $
  *****************************************************************************}
 
 interface
@@ -98,6 +98,7 @@ type
     actionsArray: Array[1..99, 1..4] of String;
     totalactions: Integer;
     iMinFadeContrast: Integer;
+    bHDAltAddressing: Boolean;
     function load: Boolean;
     procedure save;
     property sizeOption: Integer read P_sizeOption write setSizeOption;
@@ -506,6 +507,14 @@ begin
       (initfile.ReadString('Communication Settings', 'USBPalmDevice', '') <> '');
   end;
 
+  parallelPort := initfile.ReadInteger('Communication Settings',
+    'ParallelPort', 888);
+
+  mx3Usb := initFile.ReadBool('Communication Settings', 'MX3USB', false);
+
+  bHDAltAddressing := initFile.ReadBool('Communication Settings',
+   'HDAlternativeAddressing', false);
+
   refreshRate := initfile.ReadInteger('General Settings', 'RefreshRate', 75);
   winampLocation := initfile.ReadString('General Settings', 'WinAmpLocation',
     'C:\Program Files\Winamp\winamp.exe');
@@ -558,10 +567,6 @@ begin
   dllPeriod := initfile.ReadInteger('General Settings', 'DLLPeriod', 75);
   scrollPeriod := initfile.ReadInteger('General Settings', 'ScrollPeriod',
     200);
-  parallelPort := initfile.ReadInteger('Communication Settings',
-    'ParallelPort', 888);
-
-  mx3Usb := initFile.ReadBool('Communication Settings', 'MX3USB', false);
 
   alwaysOnTop := initFile.ReadBool('General Settings', 'AlwaysOnTop', false);
 
@@ -672,6 +677,14 @@ begin
     'USBPalm', 1)
   else initfile.WriteInteger('Communication Settings', 'USBPalm', 0);
 
+  initfile.WriteInteger('Communication Settings', 'ParallelPort',
+    parallelPort);
+
+  initFile.WriteBool('Communication Settings',
+   'HDAlternativeAddressing', bHDAltAddressing);
+
+  initFile.WriteBool('Communication Settings', 'MX3USB', mx3Usb);
+
   initfile.WriteInteger('General Settings', 'RefreshRate', refreshRate);
   initfile.WriteString('General Settings', 'WinAmpLocation', winampLocation);
 
@@ -722,10 +735,6 @@ begin
   initfile.WriteInteger('General Settings', 'EmailPeriod', emailPeriod);
   initfile.WriteInteger('General Settings', 'DLLPeriod', dllPeriod);
   initfile.WriteInteger('General Settings', 'ScrollPeriod', scrollPeriod);
-  initfile.WriteInteger('Communication Settings', 'ParallelPort',
-    parallelPort);
-
-  initFile.WriteBool('Communication Settings', 'MX3USB', mx3Usb);
 
   initFile.WriteBool('General Settings', 'AlwaysOnTop', alwaysOnTop);
 

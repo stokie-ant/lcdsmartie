@@ -1,6 +1,6 @@
 object Form2: TForm2
-  Left = 200
-  Top = 171
+  Left = 270
+  Top = 655
   Anchors = []
   BiDiMode = bdLeftToRight
   BorderIcons = []
@@ -1526,9 +1526,9 @@ object Form2: TForm2
         object Label9: TLabel
           Left = 40
           Top = 112
-          Width = 47
+          Width = 50
           Height = 13
-          Caption = 'COMport:'
+          Caption = 'COM Port:'
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
           Font.Height = -11
@@ -1554,7 +1554,7 @@ object Form2: TForm2
           Top = 16
           Width = 113
           Height = 17
-          Caption = 'Parallel (HD44780)'
+          Caption = 'HD44780 (Parallel)'
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
           Font.Height = -11
@@ -1569,7 +1569,7 @@ object Form2: TForm2
           Top = 48
           Width = 145
           Height = 17
-          Caption = 'Serial (Matrix Orbital)'
+          Caption = 'Matrix Orbital (Serial)'
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
           Font.Height = -11
@@ -1645,7 +1645,7 @@ object Form2: TForm2
           Top = 80
           Width = 121
           Height = 17
-          Caption = 'Serial (Crystalfontz)'
+          Caption = 'Crystalfontz (serial)'
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
           Font.Height = -11
@@ -1675,7 +1675,7 @@ object Form2: TForm2
           Top = 16
           Width = 113
           Height = 17
-          Caption = '&Parallel settings'
+          Caption = '&HD44780 settings'
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
           Font.Height = -11

@@ -26,8 +26,10 @@ Changes
 5.3Alpha7
 	- Fixed bug: action of GotoScreen(1) caused a crash.
 	- Fixed some bugs in the action code.
-	- Re-implemented HD44780 support.
 	- Plugin support fixed.
+	- Re-implemented HD44780 support [experimental - report all bugs].
+	- Added switch to HD44780 section for alternative addressing used by
+	  1 chip 1x16 displays (they are to be addressed like a 2x8 display).
 5.3Alpha6
 	- Crystalfontz: Experimental support for 631 & 633 displays; includes
 	  keypad support.

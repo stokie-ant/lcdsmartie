@@ -19,7 +19,7 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.21 $ $Date: 2004/12/15 20:06:08 $
+ *  $Revision: 1.22 $ $Date: 2004/12/16 14:34:03 $
  *****************************************************************************}
 
 interface
@@ -394,6 +394,7 @@ begin
   spinedit9.text := IntToStr(config.scrollPeriod);
 
   form6.edit1.text := intToHex(config.parallelPort, 3);
+  form6.AltAddressing.checked := config.bHDAltAddressing;
 
   checkbox2.checked := config.alwaysOnTop;
   form3.checkbox1.checked := config.mx3Usb;
@@ -1886,6 +1887,7 @@ begin
   config.refreshRate := StrToInt(spinEdit1.text);
   config.setiEmail := edit1.text;
   config.bootDriverDelay := StrToInt(form6.spinedit1.text);
+  config.bHDAltAddressing := form6.AltAddressing.checked;
   config.sizeOption := combobox2.itemindex + 1;
   config.randomScreens := checkbox14.checked;
   config.newsRefresh := StrToInt(spinedit3.text);

@@ -3,8 +3,8 @@ object Form6: TForm6
   Top = 188
   BorderIcons = []
   BorderStyle = bsToolWindow
-  Caption = 'Parallel Settings'
-  ClientHeight = 109
+  Caption = 'HD44780 Settings'
+  ClientHeight = 150
   ClientWidth = 175
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -51,12 +51,20 @@ object Form6: TForm6
   end
   object Button1: TButton
     Left = 96
-    Top = 80
+    Top = 120
     Width = 75
     Height = 25
     Caption = '&Ok'
     Default = True
     TabOrder = 2
     OnClick = Button1Click
+  end
+  object AltAddressing: TCheckBox
+    Left = 8
+    Top = 88
+    Width = 153
+    Height = 25
+    Caption = 'Use alternative addressing'
+    TabOrder = 3
   end
 end

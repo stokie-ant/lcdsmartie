@@ -19,7 +19,7 @@ unit UPara;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/Attic/UPara.pas,v $
- *  $Revision: 1.2 $ $Date: 2004/11/19 19:55:19 $
+ *  $Revision: 1.3 $ $Date: 2004/12/16 14:34:03 $
  *****************************************************************************}
 
 interface
@@ -33,6 +33,7 @@ type
     SpinEdit1: TSpinEdit;
     Label2: TLabel;
     Button1: TButton;
+    AltAddressing: TCheckBox;
     procedure Button1Click(Sender: TObject);
   private
     { Private declarations }
