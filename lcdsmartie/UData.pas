@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.18 $ $Date: 2004/11/28 21:34:31 $
+ *  $Revision: 1.19 $ $Date: 2004/11/28 22:06:30 $
  *****************************************************************************}
 
 
@@ -320,8 +320,13 @@ begin
   lcdSmartieUpdate := False;
   distributedlog := config.distLog;
 
-  // Get CPU speed first time: 
-  STCPUSpeed := IntToStr(cxCpu[0].Speed.RawSpeed.AsNumber);
+  // Get CPU speed first time:
+  try
+    STCPUSpeed := IntToStr(cxCpu[0].Speed.RawSpeed.AsNumber);
+  except
+    // BUGBUG: This has been reported as failing when with Range check error,
+    // they reported that it only occured when they ran a slow 16 bit app
+  end;
 
   doEmailUpdate := True;
   doHTTPUpdate := True;
@@ -1724,7 +1729,12 @@ begin
   if (t - lastSpdUpdate > (ticksperseconde * 2)) then
   begin                                                     // Update every 2 s
     lastSpdUpdate := t;
-    STCPUSpeed := IntToStr(cxCpu[0].Speed.RawSpeed.AsNumber);
+    try
+      STCPUSpeed := IntToStr(cxCpu[0].Speed.RawSpeed.AsNumber);
+    except
+      // BUGBUG: This has been reported as failing when with Range check error,
+      // they reported that it only occured when they ran a slow 16 bit app.
+    end;
   end;
 
 
