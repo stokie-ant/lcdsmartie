@@ -1,6 +1,6 @@
 object Form1: TForm1
-  Left = 590
-  Top = 200
+  Left = 368
+  Top = 126
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsToolWindow
   Caption = 'LCD Smartie 5.3'
@@ -321,6 +321,15 @@ object Form1: TForm1
     WinampLocation = 'C:\Program Files\Winamp\winamp.exe'
     Left = 64
     Top = 152
+  end
+  object TTimer
+    Interval = 250
+  end
+  object TTimer
+    Interval = 250
+  end
+  object TTimer
+    Interval = 250
   end
   object PopupMenu1: TPopupMenu
     Left = 88

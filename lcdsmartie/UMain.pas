@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.1 $ $Date: 2004/11/05 14:34:15 $
+ *  $Revision: 1.2 $ $Date: 2004/11/05 21:50:54 $
  *****************************************************************************}
 
 interface
@@ -27,12 +27,12 @@ interface
 uses Messages, IdHTTP, IdBaseComponent, IdComponent, IdTCPConnection,
   IdTCPClient, IdMessageClient, IdPOP3, VaClasses, VaComm, CoolTrayIcon,
   Menus, WinampCtrl, ExtCtrls, Controls, StdCtrls, Buttons, Classes, Forms,
-  parport, system2, UConfig;
+  parport, system2, UConfig, ULCD;
 
 const
   WM_ICONTRAY = WM_USER + 1;   // User-defined message
 
-                              
+
 type
   TBusType     = (btISA, btSMBus,btVIA686ABus, btDirectIO);
   TSMBType     = (smtSMBIntel, smtSMBAMD, smtSMBALi, smtSMBNForce, smtSMBSIS);
@@ -156,7 +156,6 @@ type
     IdHTTP9: TIdHTTP;
     Panel1: TPanel;
     Timertrans: TTimer;
-    VaComm2: TVaComm;
     VaComm1: TVaComm;
     Timer1: TTimer;
     Timer2: TTimer;
@@ -260,7 +259,6 @@ type
     procedure WMQueryEndSession (var M: TWMQueryEndSession); message WM_QUERYENDSESSION;
     procedure refres(Sender: TObject);
   private
-    poort1: TParPort;
     function1:TmyProc;
     function2:TmyProc;
     function3:TmyProc;
@@ -289,7 +287,7 @@ type
     srvr:string;
     koeregel,resoregel,winampregel,winampregel3,winampregel4:string;
     regelz: array [1..4] of string;
-    temp:array[1..4] of integer;
+    scrollPos:array[1..4] of integer;
     regel2scroll:integer;
     tmpregel1, tmpregel2, tmpregel3, tmpregel4:string;
     forgroundcoloroff,forgroundcoloron,backgroundcoloroff,backgroundcoloron:integer;
@@ -335,19 +333,21 @@ type
     function ReadMBM5Data : Boolean;
     function doguess(regel:integer): integer;
     procedure checkIfNewsUpdatesRequired;
-    procedure SetPos(const Column,Row: byte);
     procedure freeze();
     procedure doGPO(const ftemp1,ftemp2:integer);
     procedure kleur();
     procedure backlit();
-    function scroll(scrollvar:string;nummer,speed:integer):string;
+    function scroll(scrollvar:string;line,speed:integer):string;
     function change(regel:string):string;
     function GetCpuSpeedRegistry(proc: Byte): string;
+    procedure customchar(fregel:string);
 end;
 
 var
+  Lcd: TLCD;
   Form1: TForm1;
   config: TConfig;
+  poort1: TParPort;
   frozen: Boolean;
   setupbutton: Integer;
   setupscreen: Integer;
@@ -379,7 +379,8 @@ implementation
 uses
   Registry, Windows, SysUtils, Graphics,  Dialogs,
   ShellAPI, IpHlpApi,  IpIfConst, IpRtrMib,
-  mmsystem, winsock, cxCpu40, USetup, UCredits;
+  mmsystem, winsock, cxCpu40, USetup, UCredits,
+  ULCD_MO, ULCD_CF, ULCD_HD;
 
 function TForm1.doguess(regel:integer): integer;
 var
@@ -399,10 +400,10 @@ begin
   result:=gokje;
 end;
 
-procedure customchar(fregel:string);
+procedure TForm1.customchar(fregel:string);
 var
   character:integer;
-  waarde:array[0..7] of integer;
+  waarde:array[0..7] of Byte;
   i:integer;
 
 begin
@@ -414,35 +415,7 @@ begin
   end;
   waarde[7]:=StrToInt(copy(fregel,1,length(fregel)));
 
-  if config.isHD then begin
-    form1.poort1.definechar(character-1, waarde);
-    form1.poort1.definechar2(character-1, waarde);
-  end;
-  if config.isMO then begin
-    Form1.VaComm1.WriteChar(Chr($0FE));     //command prefix
-    Form1.VaComm1.WriteChar(Chr($04E));     //this starts the custom characters
-    Form1.VaComm1.WriteChar(Chr(character-1));  //00 to 07 for 8 custom characters.
-    Form1.VaComm1.WriteChar(Chr(waarde[0]));
-    Form1.VaComm1.WriteChar(Chr(waarde[1]));
-    Form1.VaComm1.WriteChar(Chr(waarde[2]));
-    Form1.VaComm1.WriteChar(Chr(waarde[3]));
-    Form1.VaComm1.WriteChar(Chr(waarde[4]));
-    Form1.VaComm1.WriteChar(Chr(waarde[5]));
-    Form1.VaComm1.WriteChar(Chr(waarde[6]));
-    Form1.VaComm1.WriteChar(Chr(waarde[7]));
-  end;
-  if config.isCF then begin
-    Form1.VaComm2.WriteChar(chr(25));    //this starts the custom characters
-    Form1.VaComm2.WriteChar(chr(character-1));     //00 to 07 for 8 custom characters.
-    Form1.VaComm2.WriteChar(chr(waarde[0]));
-    Form1.VaComm2.WriteChar(chr(waarde[1]));
-    Form1.VaComm2.WriteChar(chr(waarde[2]));
-    Form1.VaComm2.WriteChar(chr(waarde[3]));
-    Form1.VaComm2.WriteChar(chr(waarde[4]));
-    Form1.VaComm2.WriteChar(chr(waarde[5]));
-    Form1.VaComm2.WriteChar(chr(waarde[6]));
-    Form1.VaComm2.WriteChar(chr(waarde[7]));
-  end;
+  Lcd.customChar(character, waarde);
 end;
 
 
@@ -520,20 +493,23 @@ begin
   CloseHandle(myHandle);
 end;
 
-function TForm1.scroll(scrollvar:string;nummer,speed:integer):string;
+function TForm1.scroll(scrollvar:string;line,speed:integer):string;
 var
   scrolltext:string;
 
 begin
-  if length(stripspaces(scrollvar)) > config.width then begin
-    if (temp[nummer] < length(scrollvar)) and (temp[nummer] <> 0) then temp[nummer]:=temp[nummer]+speed else temp[nummer]:=1;
-    scrolltext:=copy(scrollvar,temp[nummer], config.width);
+  if length(scrollvar) > config.width then begin
+    if (scrollPos[line] < length(scrollvar)) and (scrollPos[line] <> 0) then
+      scrollPos[line]:=scrollPos[line]+speed
+    else
+      scrollPos[line]:=1;
+    scrolltext:=copy(scrollvar, scrollPos[line], config.width);
+
     if length(scrolltext) < config.width then begin
-      scrolltext:=scrolltext+copy(scrollvar,1,config.width);
-      scrolltext:=copy(scrolltext,1,config.width);
+      scrolltext:=scrolltext+copy(scrollvar,1,config.width-length(scrolltext)+1);
     end;
-  end else scrolltext:=copy(scrollvar,1,length(scrollvar));
-  result:=scrolltext;
+    result:=scrolltext;
+  end else result:=scrollvar;
 end;
 
 function TForm1.change(regel:string):string;
@@ -1498,17 +1474,6 @@ begin
     application.Icon.LoadFromFile(regel+'images\smartie.ico');
     cooltrayicon1.Refresh;
   except
-    timer1.enabled:=false;
-    timer2.enabled:=false;
-    timer3.enabled:=false;
-    timer4.enabled:=false;
-    timer5.enabled:=false;
-    timer6.enabled:=false;
-    timer7.enabled:=false;
-    timer8.enabled:=false;
-    timer9.enabled:=false;
-    timer10.enabled:=false;
-    timer11.enabled:=false;
     showmessage('Error: unable to access images subdirectory.');
     application.terminate;
   end;
@@ -1562,17 +1527,6 @@ begin
     backgroundcoloroff:=StrToInt('$00'+copy(regel,1,6));
     closefile(initfile);
   except
-    timer1.enabled:=false;
-    timer2.enabled:=false;
-    timer3.Enabled:=false;
-    timer4.enabled:=false;
-    timer5.enabled:=false;
-    timer6.enabled:=false;
-    timer7.enabled:=false;
-    timer8.enabled:=false;
-    timer9.enabled:=false;
-    timer10.enabled:=false;
-    timer11.enabled:=false;
     showmessage('Fatal Error:  Can`t find images\colors.cfg');
     application.Terminate;
   end;
@@ -1581,21 +1535,9 @@ begin
 
   if (config.load() = false) then
   begin
-    timer1.enabled:=false;
-    timer2.enabled:=false;
-    timer3.enabled:=false;
-    timer4.enabled:=false;
-    timer5.enabled:=false;
-    timer6.enabled:=false;
-    timer7.enabled:=false;
-    timer8.enabled:=false;
-    timer9.enabled:=false;
-    timer10.enabled:=false;
-    timer11.enabled:=false;
     showmessage('Fatal Error:  Can`t load config.cfg');
     application.Terminate;
   end;
-
 
   form1.WinampCtrl1.WinampLocation:=config.winampLocation;
   file1:=config.distLog;
@@ -1649,35 +1591,13 @@ begin
   end;
 
   checkIfNewsUpdatesRequired();
-
-
-
   kleuren:=config.colorOption;
-
   backlight:=1;
-
   distributedlog:=config.distLog;
-
   kleur();
 
   if (parameter1 <> '-nolcd') AND (parameter2 <> '-nolcd') AND (parameter3 <> '-nolcd') AND (parameter4 <> '-nolcd') then begin
-    if (config.isHD) or (config.isHD2) then begin
-      timer1.enabled:=false;
-      timer2.enabled:=false;
-      timer3.enabled:=false;
-      timer4.enabled:=false;
-      timer5.enabled:=false;
-      timer6.enabled:=false;
-      timer7.enabled:=false;
-      timer8.enabled:=false;
-      timer9.enabled:=false;
-      timer10.enabled:=false;
-      timer11.enabled:=false;
-      if config.bootDriverDelay=0 then timer11.interval:=10
-      else timer11.interval:=config.bootDriverDelay*1000;
-      timer11.enabled:=true;
-    end;
-    if (config.isMO) then begin
+    if (config.isMO) or (config.isCF) then begin
       if config.baudrate=0 then VaComm1.Baudrate:=br110;
       if config.baudrate=1 then VaComm1.Baudrate:=br300;
       if config.baudrate=2 then VaComm1.Baudrate:=br600;
@@ -1697,110 +1617,39 @@ begin
       VaComm1.Close;
       try
         VaComm1.Open;
+        if (config.isCF) then Lcd:=TLCD_CF.Create()
+        else if (config.isMO) then Lcd:=TLCD_MO.Create();
       except
-        timer2.enabled:=false;
-        timer3.enabled:=false;
-        timer4.enabled:=false;
-        timer5.enabled:=false;
-        timer5.enabled:=false;
-        timer6.enabled:=false;
-        timer7.enabled:=false;
-        timer8.enabled:=false;
-        timer9.enabled:=false;
-        timer10.enabled:=false;
-        timer11.enabled:=false;
+        Lcd:=TLCD.Create();
       end;
-
-      customchar('1,12,18,18,12,0,0,0,0');
-      customchar('2,31,31,31,31,31,31,31,31');
-      customchar('3,16,16,16,16,16,16,31,16');
-      customchar('4,28,28,28,28,28,28,31,28');
-
-      VaComm1.WriteChar(chr($0FE));
-      VaComm1.WriteChar('V');
-      VaComm1.WriteChar(chr($01));
-
-      VaComm1.WriteChar(Chr($0FE));
-      VaComm1.WriteChar('P');
-      VaComm1.WriteChar(chr(config.contrast));
-
-      VaComm1.WriteChar(Chr($0FE));
-      VaComm1.WriteChar(Chr($098));
-      VaComm1.WriteChar(chr(config.brightness));
-
-      VaComm1.WriteChar(chr($0FE));   //Cursor blink off
-      VaComm1.WriteChar('T');
-
-      VaComm1.WriteChar(chr($0FE));   //clear screen
-      VaComm1.WriteChar('X');
-
-      VaComm1.WriteChar(chr($0FE));   //Cursor off
-      VaComm1.WriteChar('K');
-
-      VaComm1.WriteChar(chr($0FE));   //auto scroll off
-      VaComm1.WriteChar('R');
-
-      VaComm1.WriteChar(chr($0FE));   //auto line wrap off
-      VaComm1.WriteChar('D');
-
-      VaComm1.WriteChar(chr($0FE));   //keypad polling on
-      VaComm1.WriteChar('O');
-
-      VaComm1.WriteChar(chr($0FE));   //auto repeat off
-      VaComm1.WriteChar('`');
-
-      VaComm1.WriteChar(chr($0FE));   // backlight on
-      VaComm1.WriteChar('B');
-      VaComm1.WriteChar(chr($00));
-
-      timer1.enabled:=true;
-      timer2.enabled:=true;
-      timer3.enabled:=true;
-      timer6.enabled:=true;
-      timer7.enabled:=true;
-      timer8.enabled:=true;
-      timer9.enabled:=true;
-      timer10.enabled:=true;
-      timer12.enabled:=true;
-      timer13.enabled:=true;
     end;
-    if (config.isCF) then begin
-      if config.baudrate=0 then VaComm2.Baudrate:=br110;
-      if config.baudrate=1 then VaComm2.Baudrate:=br300;
-      if config.baudrate=2 then VaComm2.Baudrate:=br600;
-      if config.baudrate=3 then VaComm2.Baudrate:=br1200;
-      if config.baudrate=4 then VaComm2.Baudrate:=br2400;
-      if config.baudrate=5 then VaComm2.Baudrate:=br4800;
-      if config.baudrate=6 then VaComm2.Baudrate:=br9600;
-      if config.baudrate=7 then VaComm2.Baudrate:=br14400;
-      if config.baudrate=8 then VaComm2.Baudrate:=br19200;
-      if config.baudrate=9 then VaComm2.Baudrate:=br38400;
-      if config.baudrate=10 then VaComm2.Baudrate:=br56000;
-      if config.baudrate=11 then VaComm2.Baudrate:=br57600;
-      if config.baudrate=12 then VaComm2.Baudrate:=br115200;
-      if config.baudrate=13 then VaComm2.Baudrate:=br128000;
-      if config.baudrate=14 then VaComm2.Baudrate:=br256000;
-      VaComm2.PortNum:=config.comPort;
-      VaComm2.Close;
-      VaComm2.Open;
 
-      VaComm2.WriteChar(Chr(3));
-      VaComm2.WriteChar(Chr(4));
-      VaComm2.WriteChar(Chr(20));
+    if not (config.isCF or config.isMO or config.isHD) then Lcd:=TLCD.Create();
 
+    if (config.isMO) or (config.isCF) then begin
       customchar('1,12,18,18,12,0,0,0,0');
       customchar('2,31,31,31,31,31,31,31,31');
       customchar('3,16,16,16,16,16,16,31,16');
       customchar('4,28,28,28,28,28,28,31,28');
+    end;
+
+    if (config.isMO) then begin
+      Lcd.setContrast(config.contrast);
+      Lcd.setBrightness(config.brightness);
+    end;
+
+    if (config.isCF) then begin
       customchar('7,4,4,4,4,4,4,4,0');
       customchar('8,14,17,1,13,21,21,14,0');
 
-      Form1.VaComm2.WriteChar(chr(14));
-      Form1.VaComm2.WriteChar(chr(config.CF_brightness));
+      Lcd.setContrast(config.CF_contrast);
+      Lcd.setBrightness(config.CF_brightness);
+    end;
 
-      Form1.VaComm2.WriteChar(chr(15));
-      Form1.VaComm2.WriteChar(chr(config.CF_contrast));
-
+    //
+    // Enable the threads...
+    //
+    if (config.isMO) or (config.isCF) then begin
       timer1.enabled:=true;
       timer2.enabled:=true;
       timer3.enabled:=true;
@@ -1812,15 +1661,14 @@ begin
       timer12.enabled:=true;
       timer13.enabled:=true;
     end;
-  end;
-end;
 
-procedure TForm1.SetPos(const Column,Row: byte);
-begin
-  VaComm1.WriteChar(Chr($0FE));
-  VaComm1.WriteChar('G');
-  VaComm1.WriteChar(Chr(Column));
-  VaComm1.WriteChar(Chr(Row));
+    if (config.isHD) or (config.isHD2) then begin
+      if config.bootDriverDelay=0 then timer11.interval:=10
+      else timer11.interval:=config.bootDriverDelay*1000;
+      timer11.enabled:=true;
+    end;
+
+  end;
 end;
 
 procedure TForm1.refres(Sender: TObject);
@@ -1999,22 +1847,7 @@ winampregel:='';
   nextline3:=config.screen[welkescreen][3].contNextLine;
   nextline4:=config.screen[welkescreen][4].contNextLine;
 
-  for teller:= 1 to aantregelsoud do begin
-    //Application.ProcessMessages;
-    regel:=config.screen[welkescreen][teller].text;
-    qstattemp:=teller;
-    regel:=change(regel);
 
-    if config.screen[welkescreen][teller].center then begin
-      if length(regel) < config.width-1 then begin
-        for h:=1 to round((config.width - length(regel))/2 - 0.4) do begin
-          regel:=' '+regel+' ';
-        end;
-      end;
-    end;
-
-    regelz[teller]:=regel;
-  end;
   dllcancheck:=false;
   if (canscroll) then begin
     if (doesflash) then doesflash:=false else doesflash:=true;
@@ -2025,7 +1858,7 @@ winampregel:='';
     if (doesgpoflash) then doesgpoflash:=false else doesgpoflash:=true;
     if (gpoflash > 0) then begin
       gpoflash := gpoflash -1;
-      dogpo(whatgpo,2)
+      doGPO(whatgpo,2)
     end;
   end;
 
@@ -2042,59 +1875,73 @@ winampregel:='';
   end;
 except
 end;
-newline[1]:=regelz[1];
-newline[2]:=regelz[2];
-newline[3]:=regelz[3];
-newline[4]:=regelz[4];
-gotnewlines:=true;
+
+  for teller:= 1 to aantregelsoud do begin
+    //Application.ProcessMessages;
+    regel:=config.screen[welkescreen][teller].text;
+    qstattemp:=teller;
+    regel:=change(regel);
+
+    if config.screen[welkescreen][teller].center then begin
+      if length(regel) < config.width-1 then begin
+        for h:=1 to round((config.width - length(regel))/2 - 0.4) do begin
+          regel:=' '+regel+' ';
+        end;
+      end;
+    end;
+
+    regelz[teller]:=regel;
+    newline[teller]:=regel;  // Used by screen change interaction.
+  end;
+  gotnewlines:=true;
 end;
 
 procedure TForm1.Timer1Timer(Sender: TObject);
-
 var
-Reg: TRegistry;
-foo,x:integer;
-gokje:integer;
-gokreg:array[1..4] of string;
-
+  Reg: TRegistry;
+  foo,x:integer;
+  gokje:integer;
+  gokreg:array[1..4] of string;
 begin
-if ((gotnewlines=false) OR (timertrans.enabled=false))then refres(self);
-//Application.ProcessMessages;
+  if ((gotnewlines=false) OR (timertrans.enabled=false))then refres(self);
+  //Application.ProcessMessages;
 
-if timertrans.Enabled=false then begin
-  if not scrollline5 then begin
-    Panel1.Caption:=StringReplace(copy(regelz[1],1,config.width),'&','&&',[rfReplaceAll]);
-    panel2.Caption:=StringReplace(copy(regelz[2],1,config.width),'&','&&',[rfReplaceAll]);
-    panel3.Caption:=StringReplace(copy(regelz[3],1,config.width),'&','&&',[rfReplaceAll]);
-    panel4.Caption:=StringReplace(copy(regelz[4],1,config.width),'&','&&',[rfReplaceAll]);
-    if nextline1 then begin
-      panel2.Caption:=copy(regelz[1],1+config.width,2*config.width);
-      regelz[2]:=copy(regelz[1],1+config.width,length(regelz[1]));
+  if timertrans.Enabled=false then begin
+    if not scrollline5 then begin
+      Panel1.Caption:=StringReplace(copy(regelz[1],1,config.width),'&','&&',[rfReplaceAll]);
+      panel2.Caption:=StringReplace(copy(regelz[2],1,config.width),'&','&&',[rfReplaceAll]);
+      panel3.Caption:=StringReplace(copy(regelz[3],1,config.width),'&','&&',[rfReplaceAll]);
+      panel4.Caption:=StringReplace(copy(regelz[4],1,config.width),'&','&&',[rfReplaceAll]);
+      if nextline1 then begin
+        panel2.Caption:=copy(regelz[1],1+config.width,2*config.width);
+        regelz[2]:=copy(regelz[1],1+config.width,length(regelz[1]));
+      end;
+      if nextline2 then begin
+        panel3.Caption:=copy(regelz[2],1+config.width,2*config.width);
+        regelz[3]:=copy(regelz[2],1+config.width,length(regelz[2]));
+      end;
+      if nextline3 then begin
+        panel4.Caption:=copy(regelz[3],1+config.width,2*config.width);
+        regelz[4]:=copy(regelz[3],1+config.width,length(regelz[3]));
+      end;
     end;
-    if nextline2 then begin
-      panel3.Caption:=copy(regelz[2],1+config.width,2*config.width);
-      regelz[3]:=copy(regelz[2],1+config.width,length(regelz[2]));
-    end;
-    if nextline3 then begin
-      panel4.Caption:=copy(regelz[3],1+config.width,2*config.width);
-      regelz[4]:=copy(regelz[3],1+config.width,length(regelz[3]));
-    end;
-  end;
 
-if (canscroll) then begin
-  canscroll:=false;
-  if not scrollline1 then Panel1.Caption:=StringReplace(scroll(regelz[1],1,1),'&','&&',[rfReplaceAll]);
-  if not scrollline2 then Panel2.Caption:=StringReplace(scroll(regelz[2],2,1),'&','&&',[rfReplaceAll]);
-  if not scrollline3 then panel3.Caption:=StringReplace(scroll(regelz[3],3,1),'&','&&',[rfReplaceAll]);
-  if not scrollline4 then panel4.Caption:=StringReplace(scroll(regelz[4],4,1),'&','&&',[rfReplaceAll]);
+    if (canscroll) then begin
+      canscroll:=false;
+      if not scrollline1 then Panel1.Caption:=StringReplace(scroll(regelz[1],1,1),'&','&&',[rfReplaceAll]);
+      if not scrollline2 then Panel2.Caption:=StringReplace(scroll(regelz[2],2,1),'&','&&',[rfReplaceAll]);
+      if not scrollline3 then panel3.Caption:=StringReplace(scroll(regelz[3],3,1),'&','&&',[rfReplaceAll]);
+      if not scrollline4 then panel4.Caption:=StringReplace(scroll(regelz[4],4,1),'&','&&',[rfReplaceAll]);
+    end else begin
+      if not scrollline1 then Panel1.Caption:=StringReplace(scroll(regelz[1],1,0),'&','&&',[rfReplaceAll]);
+      if not scrollline2 then Panel2.Caption:=StringReplace(scroll(regelz[2],2,0),'&','&&',[rfReplaceAll]);
+      if not scrollline3 then panel3.Caption:=StringReplace(scroll(regelz[3],3,0),'&','&&',[rfReplaceAll]);
+      if not scrollline4 then panel4.Caption:=StringReplace(scroll(regelz[4],4,0),'&','&&',[rfReplaceAll]);
+    end;
+
 end else begin
-  if not scrollline1 then Panel1.Caption:=StringReplace(scroll(regelz[1],1,0),'&','&&',[rfReplaceAll]);
-  if not scrollline2 then Panel2.Caption:=StringReplace(scroll(regelz[2],2,0),'&','&&',[rfReplaceAll]);
-  if not scrollline3 then panel3.Caption:=StringReplace(scroll(regelz[3],3,0),'&','&&',[rfReplaceAll]);
-  if not scrollline4 then panel4.Caption:=StringReplace(scroll(regelz[4],4,0),'&','&&',[rfReplaceAll]);
-end;
+  // Changing screen - do any interactions required.
 
-end else begin
   for x:=1 to 4 do begin
     oldline[x]:=copy(oldline[x]+'                                        ',1,config.width);
     newline[x]:=copy(newline[x]+'                                        ',1,config.width);
@@ -2131,7 +1978,7 @@ end else begin
     Panel3.Caption:=StringReplace(oldnewline[7-round(counter*(aantregelsoud/(timertrans.interval/(timer1.interval*1.13))))],'&','&&',[rfReplaceAll]);
     Panel4.Caption:=StringReplace(oldnewline[8-round(counter*(aantregelsoud/(timertrans.interval/(timer1.interval*1.13))))],'&','&&',[rfReplaceAll]);
   end;
-  if transActietemp=4 then begin  //bottum-->top
+  if transActietemp=4 then begin  //bottom-->top
     counter:=counter+1;
     oldnewline[1]:=oldline[1];
     oldnewline[2]:=oldline[2];
@@ -2244,240 +2091,33 @@ if (parameter1 <> '-nolcd') and (parameter2 <> '-nolcd') and (parameter3 <> '-no
   if tmpregel1<>copy(panel1.Caption + '                                        ',1,config.width) then begin
     tmpregel1:=copy(StringReplace(panel1.Caption,'&&','&',[rfReplaceAll]) + '                                        ',1,config.width);
     //Application.ProcessMessages;
-    if config.isMO then begin
-      tmpregel1:=StringReplace(tmpregel1,'\','/',[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,'°',chr(0),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,'ž',chr(1),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,chr(131),chr(2),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,chr(132),chr(3),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,chr(133),chr(4),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,chr(134),chr(5),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,chr(135),chr(6),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,chr(136),chr(7),[rfReplaceAll]);
-      setpos(1,1);
-      VaComm1.WriteText(tmpregel1);
-    end;
-    if config.isHD then begin
-      tmpregel1:=StringReplace(tmpregel1,'°',chr(0),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,'ž',chr(1),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,chr(131),chr(2),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,chr(132),chr(3),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,chr(133),chr(4),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,chr(134),chr(5),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,chr(135),chr(6),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,chr(136),chr(7),[rfReplaceAll]);
-      poort1.setcursor(1, 1);          //zet de cursor op kolom: 1 en rij: 1
-     //Application.ProcessMessages;
-      poort1.writestring(tmpregel1);   //schrijft een string weg
-    end;
-    if config.isCF then begin
-      tmpregel1:=StringReplace(tmpregel1,'°',chr(128),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,'ž',chr(129),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,chr(131),chr(130),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,chr(132),chr(131),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,chr(133),chr(132),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,chr(134),chr(133),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,chr(135),chr(134),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,chr(136),chr(135),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,'{',chr(253),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,'|',chr(254),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,'}',chr(255),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,'$',chr(202),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,'@',chr(160),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,'_','Ä',[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,'’',chr(39),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,'`',chr(39),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,'~',chr(206),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,'[','ú',[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,']','ü',[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,'\','û',[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,'^',chr(206),[rfReplaceAll]);
 
-      VaComm2.WriteChar(Chr(3));
-      VaComm2.WriteChar(Chr(4));
-      VaComm2.WriteChar(Chr(20));
-
-      VaComm2.WriteChar(chr(17));
-      VaComm2.WriteChar(chr(0));
-      VaComm2.WriteChar(chr(0));
-      VaComm2.WriteText(tmpregel1);
-    end;
+    Lcd.setPosition(1, 1);
+    Lcd.write(tmpregel1);
   end;
   if aantregelsoud > 1 then begin
     if tmpregel2<>copy(panel2.Caption + '                                        ',1,config.width) then begin
       tmpregel2:=copy(StringReplace(panel2.Caption,'&&','&',[rfReplaceAll]) + '                                        ',1,config.width);
       //Application.ProcessMessages;
-      if config.isMO then begin
-        tmpregel2:=StringReplace(tmpregel2,'\','/',[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,'°',chr(0),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,'ž',chr(1),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,chr(131),chr(2),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,chr(132),chr(3),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,chr(133),chr(4),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,chr(134),chr(5),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,chr(135),chr(6),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,chr(136),chr(7),[rfReplaceAll]);
-        setpos(1,2);
-        VaComm1.WriteText(tmpregel2);
-      end;
-      if config.isHD then begin
-      tmpregel2:=StringReplace(tmpregel2,'°',chr(0),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,'ž',chr(1),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,chr(131),chr(2),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,chr(132),chr(3),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,chr(133),chr(4),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,chr(134),chr(5),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,chr(135),chr(6),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,chr(136),chr(7),[rfReplaceAll]);
-        poort1.setcursor(1, 2);
-        //Application.ProcessMessages;
-        poort1.writestring(tmpregel2);
-      end;
-      if config.isCF then begin
-      tmpregel2:=StringReplace(tmpregel2,'°',chr(128),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,'ž',chr(129),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,chr(131),chr(130),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,chr(132),chr(131),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,chr(133),chr(132),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,chr(134),chr(133),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,chr(135),chr(134),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,chr(136),chr(135),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,'{',chr(253),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,'|',chr(254),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,'}',chr(255),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,'$',chr(202),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,'@',chr(160),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,'_','Ä',[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,'’',chr(39),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,'`',chr(39),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,'~',chr(206),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,'[','ú',[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,']','ü',[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,'\','û',[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,'^',chr(206),[rfReplaceAll]);
-        VaComm2.WriteChar(chr(17));
-        VaComm2.WriteChar(chr(0));
-        VaComm2.WriteChar(chr(1));
-        VaComm2.WriteText(tmpregel2);
-      end;
+
+      Lcd.setPosition(1, 2);
+      Lcd.write(tmpregel2);
     end;
   end;
   if aantregelsoud > 2 then begin
     if tmpregel3<>copy(panel3.Caption + '                                        ',1,config.width) then begin
       tmpregel3:=copy(StringReplace(panel3.Caption,'&&','&',[rfReplaceAll]) + '                                        ',1,config.width);
       //Application.ProcessMessages;
-      if config.isMO then begin
-        tmpregel3:=StringReplace(tmpregel3,'\','/',[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,'°',chr(0),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,'ž',chr(1),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,chr(131),chr(2),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,chr(132),chr(3),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,chr(133),chr(4),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,chr(134),chr(5),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,chr(135),chr(6),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,chr(136),chr(7),[rfReplaceAll]);
-        setpos(1,3);
-        VaComm1.WriteText(tmpregel3);
-      end;
-      if config.isHD then begin
-      tmpregel3:=StringReplace(tmpregel3,'°',chr(0),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,'ž',chr(1),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,chr(131),chr(2),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,chr(132),chr(3),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,chr(133),chr(4),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,chr(134),chr(5),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,chr(135),chr(6),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,chr(136),chr(7),[rfReplaceAll]);
-        poort1.setcursor(1, 3);
-        //Application.ProcessMessages;
-        poort1.writestring(tmpregel3);
-      end;
-      if config.isCF then begin
-      tmpregel3:=StringReplace(tmpregel3,'°',chr(128),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,'ž',chr(129),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,chr(131),chr(130),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,chr(132),chr(131),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,chr(133),chr(132),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,chr(134),chr(133),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,chr(135),chr(134),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,chr(136),chr(135),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,'{',chr(253),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,'|',chr(254),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,'}',chr(255),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,'$',chr(202),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,'@',chr(160),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,'_','Ä',[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,'’',chr(39),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,'`',chr(39),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,'~',chr(206),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,'[','ú',[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,']','ü',[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,'\','û',[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,'^',chr(206),[rfReplaceAll]);
-        VaComm2.WriteChar(chr(17));
-        VaComm2.WriteChar(chr(0));
-        VaComm2.WriteChar(chr(2));
-        VaComm2.WriteText(tmpregel3);
-      end;
+      Lcd.setPosition(1, 3);
+      Lcd.write(tmpregel3);
     end;
   end;
   if aantregelsoud > 3 then begin
     if tmpregel4<>copy(panel4.Caption + '                                        ',1,config.width) then begin
       tmpregel4:=copy(StringReplace(panel4.Caption,'&&','&',[rfReplaceAll]) + '                                        ',1,config.width);
-      //Application.ProcessMessages;
-      if config.isMO then begin
-        tmpregel4:=StringReplace(tmpregel4,'\','/',[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,'°',chr(0),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,'ž',chr(1),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,chr(131),chr(2),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,chr(132),chr(3),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,chr(133),chr(4),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,chr(134),chr(5),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,chr(135),chr(6),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,chr(136),chr(7),[rfReplaceAll]);
-        setpos(1,4);
-        VaComm1.WriteText(tmpregel4);
-      end;
-      if config.isHD then begin
-      tmpregel4:=StringReplace(tmpregel4,'°',chr(0),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,'ž',chr(1),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,chr(131),chr(2),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,chr(132),chr(3),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,chr(133),chr(4),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,chr(134),chr(5),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,chr(135),chr(6),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,chr(136),chr(7),[rfReplaceAll]);
-        poort1.setcursor(1, 4);
-        //Application.ProcessMessages;
-        poort1.writestring(tmpregel4);
-      end;
-      if config.isCF then begin
-      tmpregel4:=StringReplace(tmpregel4,'°',chr(128),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,'ž',chr(129),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,chr(131),chr(130),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,chr(132),chr(131),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,chr(133),chr(132),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,chr(134),chr(133),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,chr(135),chr(134),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel4,chr(136),chr(135),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,'{',chr(253),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,'|',chr(254),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,'}',chr(255),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,'$',chr(202),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,'@',chr(160),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,'_','Ä',[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,'’',chr(39),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,'`',chr(39),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,'~',chr(206),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,'[','ú',[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,']','ü',[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,'\','û',[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,'^',chr(206),[rfReplaceAll]);
-        VaComm2.WriteChar(chr(17));
-        VaComm2.WriteChar(chr(0));
-        VaComm2.WriteChar(chr(3));
-        VaComm2.WriteText(tmpregel4);
-      end;
+
+      Lcd.setPosition(1, 4);
+      Lcd.write(tmpregel4);
     end;
   end;
 end;
@@ -2489,34 +2129,12 @@ var
 Reg: TRegistry;
 
 begin
-  if backlight=1 then
-   begin
-    //Application.ProcessMessages;
-    if config.isHD then poort1.setbacklight(false);
-    if config.isMO then begin
-      VaComm1.WriteChar(chr($0FE));
-      VaComm1.WriteChar('F');
-    end;
-    if config.isCF then begin
-      VaComm2.WriteChar(chr(14));
-      VaComm2.WriteChar(chr(0));
-    end;
+  if backlight=1 then begin
+    Lcd.setbacklight(false);
     backlight:=0;
     popupmenu1.Items[0].Items[0].Caption:='&Backlight On';
-   end
-  else
-   begin
-   //Application.ProcessMessages;
-    if config.isHD then poort1.setbacklight(true);
-    if config.isMO then begin
-      VaComm1.WriteChar(chr($0FE));
-      VaComm1.WriteChar('B');
-      VaComm1.WriteChar(chr($00));
-    end;
-    if config.isCF then begin
-      VaComm2.WriteChar(chr(14));
-      VaComm2.WriteChar(chr(100));
-    end;
+   end else begin
+    Lcd.setbacklight(true);
     backlight:=1;
     popupmenu1.Items[0].Items[0].Caption:='&Backlight Off';
    end;
@@ -2778,48 +2396,8 @@ if regel2scroll=1 then begin
   if (parameter1 <> '-nolcd') and (parameter2 <> '-nolcd') and (parameter3 <> '-nolcd') then begin
     tmpregel1:=copy(panel1.caption + '                                        ',1,config.width-1);
     //Application.ProcessMessages;
-    if config.isMO then begin
-      tmpregel1:=StringReplace(tmpregel1,'°',chr(0),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,'ž',chr(1),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,chr(131),chr(2),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,chr(132),chr(3),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,chr(133),chr(4),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,chr(134),chr(5),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,chr(135),chr(6),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,chr(136),chr(7),[rfReplaceAll]);
-      setpos(1,1);
-      VaComm1.WriteText(tmpregel1);
-    end;
-    if config.isHD then begin
-      tmpregel1:=StringReplace(tmpregel1,'°',chr(0),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,'ž',chr(1),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,chr(131),chr(2),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,chr(132),chr(3),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,chr(133),chr(4),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,chr(134),chr(5),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,chr(135),chr(6),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,chr(136),chr(7),[rfReplaceAll]);
-      poort1.setcursor(1, 1); //zet de cursor op kolom: 1 en rij: 1
-      poort1.writestring(tmpregel1); //schrijft een string weg
-    end;
-    if config.isCF then begin
-      tmpregel1:=StringReplace(tmpregel1,'°',chr(128),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,'ž',chr(129),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,chr(131),chr(130),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,chr(132),chr(131),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,chr(133),chr(132),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,chr(134),chr(133),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,chr(135),chr(134),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,chr(136),chr(135),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,'|',chr(134),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,'@',chr(135),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,'_',' ',[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,'’',chr(39),[rfReplaceAll]);
-      VaComm2.WriteChar(chr(17));
-      VaComm2.WriteChar(chr(0));
-      VaComm2.WriteChar(chr(0));
-      VaComm2.WriteText(tmpregel1);
-    end;
+    Lcd.setPosition(1,1);
+    Lcd.write(tmpregel1);
   end;
 end;
 if regel2scroll=2 then begin
@@ -2827,151 +2405,26 @@ if regel2scroll=2 then begin
   if (parameter1 <> '-nolcd') and (parameter2 <> '-nolcd') and (parameter3 <> '-nolcd') then begin
    tmpregel2:=copy(panel2.caption + '                                        ',1,config.width-1);
    //Application.ProcessMessages;
-      if config.isMO then begin
-      tmpregel2:=StringReplace(tmpregel2,'°',chr(0),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,'ž',chr(1),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,chr(131),chr(2),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,chr(132),chr(3),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,chr(133),chr(4),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,chr(134),chr(5),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,chr(135),chr(6),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,chr(136),chr(7),[rfReplaceAll]);
-        setpos(1,2);
-        VaComm1.WriteText(tmpregel2);
-      end;
-      if config.isHD then begin
-      tmpregel2:=StringReplace(tmpregel2,'°',chr(0),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,'ž',chr(1),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,chr(131),chr(2),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,chr(132),chr(3),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,chr(133),chr(4),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,chr(134),chr(5),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,chr(135),chr(6),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,chr(136),chr(7),[rfReplaceAll]);
-        poort1.setcursor(1, 2);
-        //Application.ProcessMessages;
-        poort1.writestring(tmpregel2);
-      end;
-      if config.isCF then begin
-      tmpregel2:=StringReplace(tmpregel2,'°',chr(128),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,'ž',chr(129),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,chr(131),chr(130),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,chr(132),chr(131),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,chr(133),chr(132),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,chr(134),chr(133),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,chr(135),chr(134),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,chr(136),chr(135),[rfReplaceAll]);
-        tmpregel2:=StringReplace(tmpregel2,'|',chr(134),[rfReplaceAll]);
-        tmpregel2:=StringReplace(tmpregel2,'@',chr(135),[rfReplaceAll]);
-        tmpregel2:=StringReplace(tmpregel2,'_',' ',[rfReplaceAll]);
-        tmpregel2:=StringReplace(tmpregel2,'’',chr(39),[rfReplaceAll]);
-        VaComm2.WriteChar(chr(17));
-        VaComm2.WriteChar(chr(0));
-        VaComm2.WriteChar(chr(1));
-        VaComm2.WriteText(tmpregel2);
-      end;
+   Lcd.setPosition(1,2);
+   Lcd.write(tmpregel2);
   end;
 end;
 if regel2scroll=3 then begin
   panel3.caption:=StringReplace(scroll(regelz[3],3,1),'&','&&',[rfReplaceAll]);
   if (parameter1 <> '-nolcd') and (parameter2 <> '-nolcd') and (parameter3 <> '-nolcd') then begin
     tmpregel3:=copy(panel3.caption + '                                        ',1,config.width-1);
-    //Application.ProcessMessages;
-      if config.isMO then begin
-      tmpregel3:=StringReplace(tmpregel3,'°',chr(0),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,'ž',chr(1),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,chr(131),chr(2),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,chr(132),chr(3),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,chr(133),chr(4),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,chr(134),chr(5),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,chr(135),chr(6),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,chr(136),chr(7),[rfReplaceAll]);
-        setpos(1,3);
-        VaComm1.WriteText(tmpregel3);
-      end;
-      if config.isHD then begin
-      tmpregel3:=StringReplace(tmpregel3,'°',chr(0),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,'ž',chr(1),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,chr(131),chr(2),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,chr(132),chr(3),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,chr(133),chr(4),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,chr(134),chr(5),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,chr(135),chr(6),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,chr(136),chr(7),[rfReplaceAll]);
-        poort1.setcursor(1, 3);
-        //Application.ProcessMessages;
-        poort1.writestring(tmpregel3);
-      end;
-      if config.isCF then begin
-      tmpregel3:=StringReplace(tmpregel3,'°',chr(128),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,'ž',chr(129),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,chr(131),chr(130),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,chr(132),chr(131),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,chr(133),chr(132),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,chr(134),chr(133),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,chr(135),chr(134),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,chr(136),chr(135),[rfReplaceAll]);
-        tmpregel3:=StringReplace(tmpregel3,'|',chr(134),[rfReplaceAll]);
-        tmpregel3:=StringReplace(tmpregel3,'@',chr(135),[rfReplaceAll]);
-        tmpregel3:=StringReplace(tmpregel3,'_',' ',[rfReplaceAll]);
-        tmpregel3:=StringReplace(tmpregel3,'’',chr(39),[rfReplaceAll]);
-        VaComm2.WriteChar(chr(17));
-        VaComm2.WriteChar(chr(0));
-        VaComm2.WriteChar(chr(2));
-        VaComm2.WriteText(tmpregel3);
-      end;
+    Lcd.setPosition(1,3);
+    Lcd.write(tmpregel3);
   end;
 end;
 if regel2scroll=4 then begin
   panel4.caption:=StringReplace(scroll(regelz[4],4,1),'&','&&',[rfReplaceAll]);
   if (parameter1 <> '-nolcd') and (parameter2 <> '-nolcd') and (parameter3 <> '-nolcd') then begin
     tmpregel4:=copy(panel4.caption + '                                        ',1,config.width-1);
-    //Application.ProcessMessages;
-      if config.isMO then begin
-      tmpregel4:=StringReplace(tmpregel4,'°',chr(0),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,'ž',chr(1),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,chr(131),chr(2),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,chr(132),chr(3),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,chr(133),chr(4),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,chr(134),chr(5),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,chr(135),chr(6),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,chr(136),chr(7),[rfReplaceAll]);
-        setpos(1,4);
-        VaComm1.WriteText(tmpregel4);
-      end;
-      if config.isHD then begin
-      tmpregel4:=StringReplace(tmpregel4,'°',chr(0),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,'ž',chr(1),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,chr(131),chr(2),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,chr(132),chr(3),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,chr(133),chr(4),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,chr(134),chr(5),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,chr(135),chr(6),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,chr(136),chr(7),[rfReplaceAll]);
-        poort1.setcursor(1, 4);
-        //Application.ProcessMessages;
-        poort1.writestring(tmpregel4);
-      end;
-      if config.isCF then begin
-      tmpregel4:=StringReplace(tmpregel4,'°',chr(128),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,'ž',chr(129),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,chr(131),chr(130),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,chr(132),chr(131),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,chr(133),chr(132),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,chr(134),chr(133),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,chr(135),chr(134),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,chr(136),chr(135),[rfReplaceAll]);
-        tmpregel4:=StringReplace(tmpregel4,'|',chr(134),[rfReplaceAll]);
-        tmpregel4:=StringReplace(tmpregel4,'@',chr(135),[rfReplaceAll]);
-        tmpregel4:=StringReplace(tmpregel4,'_',' ',[rfReplaceAll]);
-        tmpregel4:=StringReplace(tmpregel4,'’',chr(39),[rfReplaceAll]);
-        VaComm2.WriteChar(chr(17));
-        VaComm2.WriteChar(chr(0));
-        VaComm2.WriteChar(chr(3));
-        VaComm2.WriteText(tmpregel4);
-      end;
-    end;
+    Lcd.setPosition(1,4);
+    Lcd.write(tmpregel4);
   end;
+end;
 end;
 
 procedure TForm1.Timer5Timer(Sender: TObject);
@@ -2980,199 +2433,32 @@ if regel2scroll=1 then begin
   panel1.caption:=StringReplace(scroll(regelz[1],1,-1),'&','&&',[rfReplaceAll]);
   if (parameter1 <> '-nolcd') and (parameter2 <> '-nolcd') and (parameter3 <> '-nolcd') then begin
     tmpregel1:=copy(panel1.caption + '                                        ',1,config.width-1);
-    //Application.ProcessMessages;
-    if config.isMO then begin
-      tmpregel1:=StringReplace(tmpregel1,'°',chr(0),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,'ž',chr(1),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,chr(131),chr(2),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,chr(132),chr(3),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,chr(133),chr(4),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,chr(134),chr(5),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,chr(135),chr(6),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,chr(136),chr(7),[rfReplaceAll]);
-      setpos(1,1);
-      VaComm1.WriteText(tmpregel1);
-    end;
-    if config.isHD then begin
-      tmpregel1:=StringReplace(tmpregel1,'°',chr(0),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,'ž',chr(1),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,chr(131),chr(2),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,chr(132),chr(3),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,chr(133),chr(4),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,chr(134),chr(5),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,chr(135),chr(6),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,chr(136),chr(7),[rfReplaceAll]);
-      poort1.setcursor(1, 1); //zet de cursor op kolom: 1 en rij: 1
-      poort1.writestring(tmpregel1); //schrijft een string weg
-    end;
-    if config.isCF then begin
-      tmpregel1:=StringReplace(tmpregel1,'°',chr(128),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,'ž',chr(129),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,chr(131),chr(130),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,chr(132),chr(131),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,chr(133),chr(132),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,chr(134),chr(133),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,chr(135),chr(134),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,chr(136),chr(135),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,'|',chr(134),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,'@',chr(135),[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,'_',' ',[rfReplaceAll]);
-      tmpregel1:=StringReplace(tmpregel1,'’',chr(39),[rfReplaceAll]);
-      VaComm2.WriteChar(chr(17));
-      VaComm2.WriteChar(chr(0));
-      VaComm2.WriteChar(chr(0));
-      VaComm2.WriteText(tmpregel1);
-    end;
+    Lcd.setPosition(1,1);
+    Lcd.write(tmpregel1);
   end;
 end;
 if regel2scroll=2 then begin
   panel2.caption:=StringReplace(scroll(regelz[2],2,-1),'&','&&',[rfReplaceAll]);
   if (parameter1 <> '-nolcd') and (parameter2 <> '-nolcd') and (parameter3 <> '-nolcd') then begin
     tmpregel2:=copy(panel2.caption + '                                        ',1,config.width-1);
-    //Application.ProcessMessages;
-      if config.isMO then begin
-      tmpregel2:=StringReplace(tmpregel2,'°',chr(0),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,'ž',chr(1),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,chr(131),chr(2),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,chr(132),chr(3),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,chr(133),chr(4),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,chr(134),chr(5),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,chr(135),chr(6),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,chr(136),chr(7),[rfReplaceAll]);
-        setpos(1,2);
-        VaComm1.WriteText(tmpregel2);
-      end;
-      if config.isHD then begin
-      tmpregel2:=StringReplace(tmpregel2,'°',chr(0),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,'ž',chr(1),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,chr(131),chr(2),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,chr(132),chr(3),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,chr(133),chr(4),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,chr(134),chr(5),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,chr(135),chr(6),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,chr(136),chr(7),[rfReplaceAll]);
-        poort1.setcursor(1, 2);
-        //Application.ProcessMessages;
-        poort1.writestring(tmpregel2);
-      end;
-      if config.isCF then begin
-      tmpregel2:=StringReplace(tmpregel2,'°',chr(128),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,'ž',chr(129),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,chr(131),chr(130),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,chr(132),chr(131),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,chr(133),chr(132),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,chr(134),chr(133),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,chr(135),chr(134),[rfReplaceAll]);
-      tmpregel2:=StringReplace(tmpregel2,chr(136),chr(135),[rfReplaceAll]);
-        tmpregel2:=StringReplace(tmpregel2,'|',chr(134),[rfReplaceAll]);
-        tmpregel2:=StringReplace(tmpregel2,'@',chr(135),[rfReplaceAll]);
-        tmpregel2:=StringReplace(tmpregel2,'_',' ',[rfReplaceAll]);
-        tmpregel2:=StringReplace(tmpregel2,'’',chr(39),[rfReplaceAll]);
-        VaComm2.WriteChar(chr(17));
-        VaComm2.WriteChar(chr(0));
-        VaComm2.WriteChar(chr(1));
-        VaComm2.WriteText(tmpregel2);
-      end;
+    Lcd.setPosition(1,2);
+    Lcd.write(tmpregel2);
   end;
 end;
 if regel2scroll=3 then begin
   panel3.caption:=StringReplace(scroll(regelz[3],3,-1),'&','&&',[rfReplaceAll]);
   if (parameter1 <> '-nolcd') and (parameter2 <> '-nolcd') and (parameter3 <> '-nolcd') then begin
     tmpregel3:=copy(panel3.caption + '                                        ',1,config.width-1);
-    //Application.ProcessMessages;
-      if config.isMO then begin
-      tmpregel3:=StringReplace(tmpregel3,'°',chr(0),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,'ž',chr(1),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,chr(131),chr(2),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,chr(132),chr(3),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,chr(133),chr(4),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,chr(134),chr(5),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,chr(135),chr(6),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,chr(136),chr(7),[rfReplaceAll]);
-        setpos(1,3);
-        VaComm1.WriteText(tmpregel3);
-      end;
-      if config.isHD then begin
-      tmpregel3:=StringReplace(tmpregel3,'°',chr(0),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,'ž',chr(1),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,chr(131),chr(2),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,chr(132),chr(3),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,chr(133),chr(4),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,chr(134),chr(5),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,chr(135),chr(6),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,chr(136),chr(7),[rfReplaceAll]);
-        poort1.setcursor(1, 3);
-        //Application.ProcessMessages;
-        poort1.writestring(tmpregel3);
-      end;
-      if config.isCF then begin
-      tmpregel3:=StringReplace(tmpregel3,'°',chr(128),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,'ž',chr(129),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,chr(131),chr(130),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,chr(132),chr(131),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,chr(133),chr(132),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,chr(134),chr(133),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,chr(135),chr(134),[rfReplaceAll]);
-      tmpregel3:=StringReplace(tmpregel3,chr(136),chr(135),[rfReplaceAll]);
-        tmpregel3:=StringReplace(tmpregel3,'|',chr(134),[rfReplaceAll]);
-        tmpregel3:=StringReplace(tmpregel3,'@',chr(135),[rfReplaceAll]);
-        tmpregel3:=StringReplace(tmpregel3,'_',' ',[rfReplaceAll]);
-        tmpregel3:=StringReplace(tmpregel3,'’',chr(39),[rfReplaceAll]);
-        VaComm2.WriteChar(chr(17));
-        VaComm2.WriteChar(chr(0));
-        VaComm2.WriteChar(chr(2));
-        VaComm2.WriteText(tmpregel3);
-      end;
+    Lcd.setPosition(1,3);
+    Lcd.write(tmpregel3);
   end;
 end;
 if regel2scroll=4 then begin
   panel4.caption:=StringReplace(scroll(regelz[4],4,-1),'&','&&',[rfReplaceAll]);
   if (parameter1 <> '-nolcd') and (parameter2 <> '-nolcd') and (parameter3 <> '-nolcd') then begin
     tmpregel4:=copy(panel4.caption + '                                        ',1,config.width-1);
-    //Application.ProcessMessages;
-    if config.isMO then begin
-      tmpregel4:=StringReplace(tmpregel4,'°',chr(0),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,'ž',chr(1),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,chr(131),chr(2),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,chr(132),chr(3),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,chr(133),chr(4),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,chr(134),chr(5),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,chr(135),chr(6),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,chr(136),chr(7),[rfReplaceAll]);
-      setpos(1,4);
-      VaComm1.WriteText(tmpregel4);
-    end;
-    if config.isHD then begin
-      tmpregel4:=StringReplace(tmpregel4,'°',chr(0),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,'ž',chr(1),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,chr(131),chr(2),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,chr(132),chr(3),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,chr(133),chr(4),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,chr(134),chr(5),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,chr(135),chr(6),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,chr(136),chr(7),[rfReplaceAll]);
-      poort1.setcursor(1, 4);
-      //Application.ProcessMessages;
-      poort1.writestring(tmpregel4);
-    end;
-    if config.isCF then begin
-      tmpregel4:=StringReplace(tmpregel4,'°',chr(128),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,'ž',chr(129),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,chr(131),chr(130),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,chr(132),chr(131),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,chr(133),chr(132),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,chr(134),chr(133),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,chr(135),chr(134),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,chr(136),chr(135),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,'|',chr(134),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,'@',chr(135),[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,'_',' ',[rfReplaceAll]);
-      tmpregel4:=StringReplace(tmpregel4,'’',chr(39),[rfReplaceAll]);
-      VaComm2.WriteChar(chr(17));
-      VaComm2.WriteChar(chr(0));
-      VaComm2.WriteChar(chr(3));
-      VaComm2.WriteText(tmpregel4);
-    end;
+    Lcd.setPosition(1,4);
+    Lcd.write(tmpregel4);
   end;
 end;
 end;
@@ -3355,6 +2641,7 @@ begin
     if pop3threadisrunning=true then pop3thread.Terminate;
   except
   end;
+
   if config.isHD then begin
     try
       poort1.clear;
@@ -3363,57 +2650,19 @@ begin
       poort1.Free;
     except end;
   end;
-  if config.isMO then begin
-    try
-      try
-        VaComm1.WriteChar(chr($0FE));  //clear screen
-        VaComm1.WriteChar('X');
-        VaComm1.WriteChar(chr($0FE));  //backlight off
-        VaComm1.WriteChar('F');
-        VaComm1.WriteChar(chr($0FE));
-        VaComm1.WriteChar('V');
-        VaComm1.WriteChar(chr($01));
-        VaComm1.WriteChar(chr($0FE));
-        VaComm1.WriteChar('V');
-        VaComm1.WriteChar(chr($02));
-        VaComm1.WriteChar(chr($0FE));
-        VaComm1.WriteChar('V');
-        VaComm1.WriteChar(chr($03));
-        VaComm1.WriteChar(chr($0FE));
-        VaComm1.WriteChar('V');
-        VaComm1.WriteChar(chr($04));
-        VaComm1.WriteChar(chr($0FE));
-        VaComm1.WriteChar('V');
-        VaComm1.WriteChar(chr($05));
-        VaComm1.WriteChar(chr($0FE));
-        VaComm1.WriteChar('V');
-        VaComm1.WriteChar(chr($06));
-        VaComm1.WriteChar(chr($0FE));
-        VaComm1.WriteChar('V');
-        VaComm1.WriteChar(chr($07));
-        VaComm1.WriteChar(chr($0FE));
-        VaComm1.WriteChar('V');
-        VaComm1.WriteChar(chr($08));
 
-        VaComm1.WriteChar(chr($0FE));  //clear screen
-        VaComm1.WriteChar('X');
-        //application.ProcessMessages;
-      finally
-        sleep(500);
-        Vacomm1.close;
-      end;
-    except
-      try Vacomm1.close; except end;
-    end;
+  try
+    if (Lcd <> nil) Then Lcd.Destory();
+  except
+  end;
+
+  if config.isMO then begin
+    sleep(500);
+    try Vacomm1.close; except end;
   end;
 
   if config.isCF then begin
-    try
-      VaComm2.WriteChar(chr(14));
-      VaComm2.WriteChar(chr(0));
-    finally
-    end;
-    Vacomm2.close;
+    Vacomm1.close;
   end;
 end;
 
@@ -3522,31 +2771,8 @@ var
   temp1,temp2:string;
 
 begin
-if config.isMO then begin
-  VaComm1.WriteChar(chr($0FE));
-  VaComm1.WriteChar(chr($026));
-  for teller:=1 to 65000 do begin end;
-  if form1.VaComm1.ReadBufUsed>0 then begin
-    form1.VaComm1.ReadChar(kar);
-    if kar <> '' then form2.Edit17.text:=kar;
-  end;
 
-
-{  if (config.mx3Usb) then begin
-    for teller:=1 to 3 do begin
-      VaComm1.WriteChar(chr($FE));
-      VaComm1.WriteChar(chr($C1));
-      VaComm1.WriteChar(chr($03));
-
-      temp1:='';
-      while form1.VaComm1.ReadBufUsed>=1 do begin
-        form1.VaComm1.ReadChar(kar);
-        temp1:=temp1+kar;
-      end;
-    end;
-  end;
-}
-end;
+  if (Lcd.readKey(kar)) then form2.Edit17.text:=kar;
 
 if (form2<>nil) and (form2.Visible=false) then begin
   for teller := 1 to totalactions do begin
@@ -3889,15 +3115,8 @@ if (form2<>nil) and (form2.Visible=false) then begin
           temp1:=copy(todo[teller],pos('(',todo[teller])+1,pos(',',todo[teller])-pos('(',todo[teller])-1);
           temp2:=copy(todo[teller],pos(',',todo[teller])+1,pos(')',todo[teller])-pos(',',todo[teller])-1);
 
-          form1.VaComm1.WriteChar(chr($FE));                         //set speed
-          form1.VaComm1.WriteChar(chr($C0));
-          form1.VaComm1.WriteChar(chr(StrToInt(temp1)));
-          form1.VaComm1.WriteChar(chr(strToInt(temp2)));
+          Lcd.setFan(StrToInt(temp1), StrToInt(temp2));
 
-          form1.VaComm1.WriteChar(chr($FE));                         //remember startup state
-          form1.VaComm1.WriteChar(chr($C3));
-          form1.VaComm1.WriteChar(chr(StrToInt(temp1)));
-          form1.VaComm1.WriteChar(chr(strToInt(temp2)));
         except end;
       end;
     end;
@@ -4082,7 +3301,12 @@ opnieuwscreen:
   scrollline5:=false;
 
   if timertransIntervaltemp <> 0 then timertrans.Interval:=timertransIntervaltemp;
-  if (welkescreenoud<>welkescreen) then timertrans.Enabled:=True;
+  if (welkescreenoud<>welkescreen) then begin
+    timertrans.Enabled:=True;
+    for y:= 1 to 4 do begin
+      scrollPos[y]:=1; // Reset scroll postion.
+    end;
+  end;
   gotnewlines:=false;
   counter:=0;
   foo2:=0;
@@ -4122,7 +3346,8 @@ end;
 procedure TForm1.Timer11Timer(Sender: TObject);
 begin
   poort1 := TParPort.Create($+config.parallelPort,config.width, config.height); //hex waarde v/d poort
-  poort1.setbacklight(true);
+  Lcd:=TLCD_HD.Create();
+  Lcd.setbacklight(true);
 
   customchar('1,12,18,18,12,0,0,0,0');
   customchar('2,31,31,31,31,31,31,31,31');
@@ -4985,27 +4210,19 @@ procedure tform1.dogpo(const ftemp1,ftemp2:integer);
 begin
   if ftemp1 < 9 then begin
     if ftemp2=0 then begin
-      VaComm1.WriteChar(chr($0FE));
-      VaComm1.WriteChar('V');
-      VaComm1.WriteChar(chr($+ftemp1));
+      Lcd.setGPO(ftemp1, false);
       gpo[ftemp1]:=false;
     end;
     if ftemp2=1 then begin
-      VaComm1.WriteChar(chr($0FE));
-      VaComm1.WriteChar('W');
-      VaComm1.WriteChar(chr($+ftemp1));
+      Lcd.setGPO(ftemp1, true);
       gpo[ftemp1]:=true;
     end;
     if ftemp2=2 then begin
       if (gpo[ftemp1]) then begin
-        VaComm1.WriteChar(chr($0FE));
-        VaComm1.WriteChar('V');
-        VaComm1.WriteChar(chr($+ftemp1));
+        Lcd.setGPO(ftemp1, false);
         gpo[ftemp1]:=false;
       end else begin
-        VaComm1.WriteChar(chr($0FE));
-        VaComm1.WriteChar('W');
-        VaComm1.WriteChar(chr($+ftemp1));
+        Lcd.setGPO(ftemp1, true);
         gpo[ftemp1]:=true;
       end;
     end;
@@ -5015,7 +4232,7 @@ end;
 procedure TForm1.Timer13Timer(Sender: TObject);
 begin
   timer13.Interval:=config.scrollPeriod;
-  dllcancheck:=true;                                                                    
+  dllcancheck:=true;
 end;
 
 procedure TForm1.WMQueryEndSession (var M: TWMQueryEndSession);

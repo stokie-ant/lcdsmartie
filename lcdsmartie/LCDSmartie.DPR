@@ -19,7 +19,11 @@ uses
   IpIfConst in 'IpIfConst.pas',
   IpRtrMib in 'IpRtrMib.pas',
   IpTypes in 'IpTypes.pas',
-  DLPortIO in 'DLPORTIO.PAS';
+  DLPortIO in 'DLPORTIO.PAS',
+  ULCD in 'ULCD.pas',
+  ULCD_MO in 'ULCD_MO.pas',
+  ULCD_HD in 'ULCD_HD.pas',
+  ULCD_CF in 'ULCD_CF.pas';
 
 {$R *.RES}
 

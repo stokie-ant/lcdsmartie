@@ -37,7 +37,7 @@ type
       procedure init;
       procedure CtrlOut(const AValue: Byte);
       procedure DataOut(const AValue: Byte);
-
+   public
       procedure writectrl(const x: Byte);
       procedure writectrl2(const x: Byte);
       procedure writedata(const x: Byte);
@@ -47,12 +47,9 @@ type
       procedure setcursor1(const x, y: Byte);
       procedure setcursor2(const x, y: Byte);
       procedure setcursor3(const x, y: Byte); //1 controller lcd's
-    public
       procedure writestring(s: String);
       procedure setcursor(const x, y: Byte);
       procedure clear;
-      procedure definechar(const adr: Byte; const pattern: array of Integer);
-      procedure definechar2(const adr: Byte; const pattern: array of Integer);
       procedure setbacklight(const light: Boolean);
       function lcdpresent: Boolean;
       constructor Create(const poortadres: Word; const width, heigth: Byte);
@@ -67,27 +64,7 @@ begin
   clear; //update 'lightline'            
 end;
 
-procedure TParPort.definechar(const adr: Byte; const pattern: array of Integer);
-var
-  i: Byte;
-begin
-  writectrl(64 + (adr * 8));
-  for i := 1 to 8 do
-    writedata(pattern[i]);
-end;
 
-// for 2nd controller
-procedure TParPort.definechar2(const adr: Byte; const pattern: array of Integer);
-var
-  i: Byte;
-begin
-  writectrl2(64 + (adr * 8));
-  for i := 1 to 8 do
-    writedata2(pattern[i]);
-  writectrl2(64 + (adr * 8));
-  for i := 1 to 8 do
-    writedata2(pattern[i]);
-end;
 
 procedure TParPort.init;
 begin
