@@ -1,4 +1,6 @@
 *.dcu
+*.~*
+*.swp
 LCDSmartie.map
 LCDSmartie.drc
 LCDSmartie.exe
