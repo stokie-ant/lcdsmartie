@@ -6,17 +6,18 @@ uses ULCD;
 
 type
   TLCD_MO = class(TLCD)
-    procedure customChar(character: Integer; data: array of Byte);
-    procedure setPosition(x, y: Integer);
-    procedure write(str: String);
-    procedure setbacklight(on: Boolean);
-    function readKey(var key: Char):Boolean;
-    procedure setFan(t1,t2: Integer);
-    procedure setGPO(gpo: Byte; on: Boolean);
-    procedure setContrast(level: Integer);
-    procedure setBrightness(level: Integer);
-    constructor Create;
-    destructor Destory;
+  public
+    procedure customChar(character: Integer; data: array of Byte); override;
+    procedure setPosition(x, y: Integer);  override;
+    procedure write(str: String); override;
+    procedure setbacklight(on: Boolean); override;
+    function readKey(var key: Char):Boolean; override;
+    procedure setFan(t1,t2: Integer); override;
+    procedure setGPO(gpo: Byte; on: Boolean); override;
+    procedure setContrast(level: Integer); override;
+    procedure setBrightness(level: Integer); override;
+    constructor Create; override;
+    destructor Destory; override;
   end;
 
 implementation
@@ -176,6 +177,8 @@ begin
     WriteChar(Chr(x));
     WriteChar(Chr(y));
   end;
+
+  inherited;
 end;
 
 

@@ -6,10 +6,10 @@ uses ULCD;
 
 type
   TLCD_HD = class(TLCD)
-    procedure customChar(character: Integer; data: array of Byte);
-    procedure setPosition(x, y: Integer);
-    procedure write(str: String);
-    procedure setbacklight(on: Boolean);
+    procedure customChar(character: Integer; data: array of Byte); override;
+    procedure setPosition(x, y: Integer); override;
+    procedure write(str: String);  override;
+    procedure setbacklight(on: Boolean);  override;
   end;
 
 implementation

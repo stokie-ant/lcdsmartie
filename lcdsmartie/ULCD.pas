@@ -19,7 +19,7 @@ unit ULCD;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/ULCD.pas,v $
- *  $Revision: 1.1 $ $Date: 2004/11/05 21:50:55 $
+ *  $Revision: 1.2 $ $Date: 2004/11/07 01:19:40 $
  *****************************************************************************}
 
 
@@ -28,17 +28,17 @@ interface
 type
     TLCD = class(TObject)
     public
-      procedure setPosition(x, y: Integer);
-      procedure write(str: String);
-      procedure customChar(chr: Integer; data: array of Byte);
-      procedure setbacklight(on: Boolean);
-      function readKey(var key: Char) : Boolean;
-      procedure setFan(t1,t2: Integer);
-      procedure setGPO(gpo: Byte; on: Boolean);
-      procedure setContrast(level: Integer);
-      procedure setBrightness(level: Integer);
-      constructor Create;
-      destructor Destory;
+      procedure setPosition(x, y: Integer);  virtual;
+      procedure write(str: String);  virtual;
+      procedure customChar(chr: Integer; data: array of Byte);  virtual;
+      procedure setbacklight(on: Boolean);  virtual;
+      function readKey(var key: Char) : Boolean; virtual;
+      procedure setFan(t1,t2: Integer); virtual;
+      procedure setGPO(gpo: Byte; on: Boolean); virtual;
+      procedure setContrast(level: Integer); virtual;
+      procedure setBrightness(level: Integer); virtual;
+      constructor Create; virtual;
+      destructor Destory; virtual;
     private
       posX, posY: Integer;
     end;

@@ -6,15 +6,15 @@ uses ULCD;
 
 type
   TLCD_CF = class(TLCD)
-    procedure customChar(character: Integer; data: array of Byte);
-    procedure setPosition(x, y: Integer);
-    procedure write(str: String);
-    procedure setbacklight(on: Boolean);
-    procedure setContrast(level: Integer);
-    procedure setBrightness(level: Integer);
-    constructor Create;
-    destructor Destory;
-  end;
+    procedure customChar(character: Integer; data: array of Byte); override;
+    procedure setPosition(x, y: Integer);  override;
+    procedure write(str: String);  override;
+    procedure setbacklight(on: Boolean); override;
+    procedure setContrast(level: Integer);  override;
+    procedure setBrightness(level: Integer);   override;
+    constructor Create;  override;
+    destructor Destory;  override;
+  end;                  
 
 implementation
 

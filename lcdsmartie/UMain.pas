@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.2 $ $Date: 2004/11/05 21:50:54 $
+ *  $Revision: 1.3 $ $Date: 2004/11/07 01:19:41 $
  *****************************************************************************}
 
 interface
@@ -157,6 +157,7 @@ type
     Panel1: TPanel;
     Timertrans: TTimer;
     VaComm1: TVaComm;
+    VaComm2: TVaComm;
     Timer1: TTimer;
     Timer2: TTimer;
     Timer3: TTimer;
@@ -303,13 +304,14 @@ type
     doesgpoflash, doesflash: boolean;
     activetheme:integer;
     kar:char;
-    STUsername, STComputername, STCPUType, STCPUSpeed, STCPUUsage,STCPUUsageBar:string;
-    STMemFree,STMemTotal,STPageFree,STPageTotal:string;
-    STHDFree,STHDTotal:array[67..90] of string;
+    STUsername, STComputername, STCPUType, STCPUSpeed, STCPUUsage:string;
+    STPageFree,STPageTotal:Integer;
+    STMemFree, STMemTotal: Integer;
+    STHDFree,STHDTotal:array[67..90] of Integer;
     STHDBar:string;
     templib:string;
     hlib: cardinal;
-    nlib: string;
+    nlib: Integer;
     plib: string;
     tlib: string;
     canscroll,dllcancheck:boolean;
@@ -789,12 +791,12 @@ begin
     regel:=StringReplace(regel,'$CPUType',STCPUType,[rfReplaceAll]);
     regel:=StringReplace(regel,'$CPUSpeed',STCPUSpeed,[rfReplaceAll]);
     regel:=StringReplace(regel,'$CPUUsage%',STCPUUsage,[rfReplaceAll]);
-    regel:=StringReplace(regel,'$MemFree',STMemFree,[rfReplaceAll]);
-    regel:=StringReplace(regel,'$MemUsed',IntToStr(StrToInt(STMemTotal)-strtoint(STMemFree)),[rfReplaceAll]);
-    regel:=StringReplace(regel,'$MemTotal',STMemTotal,[rfReplaceAll]);
-    regel:=StringReplace(regel,'$PageFree',STPageFree,[rfReplaceAll]);
-    regel:=StringReplace(regel,'$PageUsed',IntToStr(StrToInt(STPageTotal)-strtoint(STPageFree)),[rfReplaceAll]);
-    regel:=StringReplace(regel,'$PageTotal',STPageTotal,[rfReplaceAll]);
+    regel:=StringReplace(regel,'$MemFree',IntToStr(STMemFree),[rfReplaceAll]);
+    regel:=StringReplace(regel,'$MemUsed',IntToStr(STMemTotal-STMemFree),[rfReplaceAll]);
+    regel:=StringReplace(regel,'$MemTotal',IntToStr(STMemTotal),[rfReplaceAll]);
+    regel:=StringReplace(regel,'$PageFree',IntToStr(STPageFree),[rfReplaceAll]);
+    regel:=StringReplace(regel,'$PageUsed',IntToStr(STPageTotal-STPageFree),[rfReplaceAll]);
+    regel:=StringReplace(regel,'$PageTotal',IntToStr(STPageTotal),[rfReplaceAll]);
     regel:=StringReplace(regel,'$ScreenReso',ResoRegel,[rfReplaceAll]);
 
     regel:=StringReplace(regel,'$Tempname1',TempName[1],[rfReplaceAll]);
@@ -1119,11 +1121,11 @@ begin
       end;
     end;
 
-    if pos('$MemF%',regel) <> 0 then regel:=StringReplace(regel,'$MemF%', IntToStr(round(100/StrToInt(STMemTotal)*StrToInt(STMemfree))),[rfReplaceAll]);
-    if pos('$MemU%',regel) <> 0 then regel:=StringReplace(regel,'$MemU%', IntToStr(round(100/StrToInt(STMemTotal)*(StrToInt(STMemTotal)-StrToInt(STMemfree)))),[rfReplaceAll]);
+    if pos('$MemF%',regel) <> 0 then regel:=StringReplace(regel,'$MemF%', IntToStr(round(100/STMemTotal*STMemfree)),[rfReplaceAll]);
+    if pos('$MemU%',regel) <> 0 then regel:=StringReplace(regel,'$MemU%', IntToStr(round(100/STMemTotal*(STMemTotal-STMemfree))),[rfReplaceAll]);
 
-    if pos('$PageF%',regel) <> 0 then regel:=StringReplace(regel,'$PageF%', IntToStr(round(100/StrToInt(STPageTotal)*StrToInt(STPagefree))),[rfReplaceAll]);
-    if pos('$PageU%',regel) <> 0 then regel:=StringReplace(regel,'$PageU%', IntToStr(round(100/StrToInt(STPageTotal)*(StrToInt(STPageTotal)-StrToInt(STPagefree)))),[rfReplaceAll]);
+    if pos('$PageF%',regel) <> 0 then regel:=StringReplace(regel,'$PageF%', IntToStr(round(100/STPageTotal*STPagefree)),[rfReplaceAll]);
+    if pos('$PageU%',regel) <> 0 then regel:=StringReplace(regel,'$PageU%', IntToStr(round(100/STPageTotal*(STPageTotal-STPagefree))),[rfReplaceAll]);
 
     hdteller:=0;
     while pos('$HDFreg(',regel) <> 0 do begin
@@ -1131,7 +1133,7 @@ begin
         hdteller:=hdteller+1;
         if hdteller>10 then regel:=StringReplace(regel,'$HDFreg(','error',[rfReplaceAll]);
         letter:=ord(upcase(copy(regel,pos('$HDFreg(',regel)+8,1)[1]));
-        regel:=StringReplace(regel,'$HDFreg('+copy(regel,pos('$HDFreg(',regel)+8,1)+')',IntToStr(round(StrToInt(STHDFree[letter])/1024)),[rfReplaceAll]);
+        regel:=StringReplace(regel,'$HDFreg('+copy(regel,pos('$HDFreg(',regel)+8,1)+')',IntToStr(round(STHDFree[letter]/1024)),[rfReplaceAll]);
       except
       end;
     end;
@@ -1141,7 +1143,7 @@ begin
         hdteller:=hdteller+1;
         if hdteller>10 then regel:=StringReplace(regel,'$HDFree(','error',[rfReplaceAll]);
         letter:=ord(upcase(copy(regel,pos('$HDFree(',regel)+8,1)[1]));
-        regel:=StringReplace(regel,'$HDFree('+copy(regel,pos('$HDFree(',regel)+8,1)+')',STHDFree[letter],[rfReplaceAll]);
+        regel:=StringReplace(regel,'$HDFree('+copy(regel,pos('$HDFree(',regel)+8,1)+')',IntToStr(STHDFree[letter]),[rfReplaceAll]);
       except
       end;
     end;
@@ -1151,7 +1153,7 @@ begin
         hdteller:=hdteller+1;
         if hdteller>10 then regel:=StringReplace(regel,'$HDUseg(','error',[rfReplaceAll]);
         letter:=ord(upcase(copy(regel,pos('$HDUseg(',regel)+8,1)[1]));
-        regel2:=IntToStr(round((StrToInt(STHDTotal[letter])-StrToInt(STHDFree[letter]))/1024));
+        regel2:=IntToStr(round((STHDTotal[letter]-STHDFree[letter])/1024));
         regel:=StringReplace(regel,'$HDUseg('+copy(regel,pos('$HDUseg(',regel)+8,1)+')',regel2,[rfReplaceAll]);
       except
       end;
@@ -1162,7 +1164,7 @@ begin
         hdteller:=hdteller+1;
         if hdteller>10 then regel:=StringReplace(regel,'$HDUsed(','error',[rfReplaceAll]);
         letter:=ord(upcase(copy(regel,pos('$HDUsed(',regel)+8,1)[1]));
-        regel2:=IntToStr(round(StrToInt(STHDTotal[letter])-StrToInt(STHDFree[letter])));
+        regel2:=IntToStr(round(STHDTotal[letter]-STHDFree[letter]));
         regel:=StringReplace(regel,'$HDUsed('+copy(regel,pos('$HDUsed(',regel)+8,1)+')',regel2,[rfReplaceAll]);
       except
       end;
@@ -1173,7 +1175,7 @@ begin
         hdteller:=hdteller+1;
         if hdteller>10 then regel:=StringReplace(regel,'$HDF%(','error',[rfReplaceAll]);
         letter:=ord(upcase(copy(regel,pos('$HDF%(',regel)+6,1)[1]));
-        regel2:=intToStr(round(100/StrToInt(STHDTotal[letter])*StrToInt(STHDFree[letter])));
+        regel2:=intToStr(round(100/STHDTotal[letter]*STHDFree[letter]));
         regel:=StringReplace(regel,'$HDF%('+chr(letter)+')',regel2,[rfReplaceAll]);
       except
       end;
@@ -1184,7 +1186,7 @@ begin
         hdteller:=hdteller+1;
         if hdteller>10 then regel:=StringReplace(regel,'$HDU%(','error',[rfReplaceAll]);
         letter:=ord(upcase(copy(regel,pos('$HDU%(',regel)+6,1)[1]));
-        regel2:=intToStr(round(100/StrToInt(STHDTotal[letter])*(StrToInt(STHDTotal[letter])-StrToInt(STHDFree[letter]))));
+        regel2:=intToStr(round(100/STHDTotal[letter]*(STHDTotal[letter]-STHDFree[letter])));
         regel:=StringReplace(regel,'$HDU%('+chr(letter)+')',regel2,[rfReplaceAll]);
       except
       end;
@@ -1195,7 +1197,7 @@ begin
         hdteller:=hdteller+1;
         if hdteller>10 then regel:=StringReplace(regel,'$HDTotag(','error',[rfReplaceAll]);
         letter:=ord(upcase(copy(regel,pos('$HDTotag(',regel)+9,1)[1]));
-        regel:=StringReplace(regel,'$HDTotag('+copy(regel,pos('$HDTotag(',regel)+9,1)+')',IntToStr(round(StrToInt(STHDTotal[letter])/1024)),[rfReplaceAll]);
+        regel:=StringReplace(regel,'$HDTotag('+copy(regel,pos('$HDTotag(',regel)+9,1)+')',IntToStr(round(STHDTotal[letter]/1024)),[rfReplaceAll]);
       except
       end;
     end;
@@ -1205,7 +1207,7 @@ begin
         hdteller:=hdteller+1;
         if hdteller>10 then regel:=StringReplace(regel,'$HDUseg(','error',[rfReplaceAll]);
         letter:=ord(upcase(copy(regel,pos('$HDTotal(',regel)+9,1)[1]));
-        regel:=StringReplace(regel,'$HDTotal('+copy(regel,pos('$HDTotal(',regel)+9,1)+')',STHDTotal[letter],[rfReplaceAll]);
+        regel:=StringReplace(regel,'$HDTotal('+copy(regel,pos('$HDTotal(',regel)+9,1)+')',IntToStr(STHDTotal[letter]),[rfReplaceAll]);
       except
       end;
     end;
@@ -1239,49 +1241,49 @@ begin
             tempst:=copy(regel, pos('$dll(',regel)+5,length(regel));
             tempst:=copy(tempst,pos(',',tempst)+1,length(tempst));
 
-            nlib:=copy(tempst,1,1);
+            nlib:=StrToInt(copy(tempst,1,1));
             tempst:=copy(tempst,3,length(tempst));
             plib:=copy(tempst,1,pos(',',tempst)-1);
             tlib:=copy(tempst,pos(',',tempst)+1,pos(')',tempst)-pos(',',tempst)-1);
             tempst:=copy(regel,pos('$dll(',regel),length(regel));
             tempst:=copy(tempst,1,pos(')',tempst));
-            if nlib = '1' then begin
+            if nlib = 1 then begin
               @function1:=getprocaddress(hlib,'function1');
               if @function1 <> nil then dllsarray[totaldlls]:=function1(pchar(plib), pchar(tlib));
             end;
-            if nlib = '2' then begin
+            if nlib = 2 then begin
               @function2:=getprocaddress(hlib,'function2');
               if @function2 <> nil then dllsarray[totaldlls]:=function2(pchar(plib), pchar(tlib));
             end;
-            if nlib = '3' then begin
+            if nlib = 3 then begin
               @function3:=getprocaddress(hlib,'function3');
               if @function3 <> nil then dllsarray[totaldlls]:=function3(pchar(plib), pchar(tlib));
             end;
-            if nlib = '4' then begin
+            if nlib = 4 then begin
               @function4:=getprocaddress(hlib,'function4');
               if @function4 <> nil then dllsarray[totaldlls]:=function4(pchar(plib), pchar(tlib));
             end;
-            if nlib = '5' then begin
+            if nlib = 5 then begin
               @function5:=getprocaddress(hlib,'function5');
               if @function5 <> nil then dllsarray[totaldlls]:=function5(pchar(plib), pchar(tlib));
             end;
-            if nlib = '6' then begin
+            if nlib = 6 then begin
               @function6:=getprocaddress(hlib,'function6');
               if @function6 <> nil then dllsarray[totaldlls]:=function6(pchar(plib), pchar(tlib));
             end;
-            if nlib = '7' then begin
+            if nlib = 7 then begin
               @function7:=getprocaddress(hlib,'function7');
               if @function7 <> nil then dllsarray[totaldlls]:=function7(pchar(plib), pchar(tlib));
             end;
-            if nlib = '8' then begin
+            if nlib = 8 then begin
               @function8:=getprocaddress(hlib,'function8');
               if @function8 <> nil then dllsarray[totaldlls]:=function8(pchar(plib), pchar(tlib));
             end;
-            if nlib = '9' then begin
+            if nlib = 9 then begin
               @function9:=getprocaddress(hlib,'function9');
               if @function9 <> nil then dllsarray[totaldlls]:=function9(pchar(plib), pchar(tlib));
             end;
-            if nlib = '0' then begin
+            if nlib = 0 then begin
               @function10:=getprocaddress(hlib,'function10');
               if @function10 <> nil then dllsarray[totaldlls]:=function10(pchar(plib), pchar(tlib));
             end;
@@ -1725,11 +1727,9 @@ if ((donewsupdate1 = 1) or
 
 //cpuusage!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 STCPUUsage:='';
-STCPUUsageBar:='';
 //Application.ProcessMessages;
 try
   STCPUUsage:=cxCpu[0].Usage.Value.AsString;
-  if STCPUUsage<'0' then STCPUUsage:='0';
 except
   STCPUUsage:='Unknown';
 end;
@@ -2507,10 +2507,10 @@ begin
   STComputername:=system1.Computername;
   STUsername:=system1.Username;
 
-  STMemfree:=intToStr(round(system1.availPhysmemory / 1024 / 1023.5));
-  STMemTotal:=intToSTr(round(system1.totalPhysmemory / 1024 /1023));
-  STPageTotal:=intToSTr(round(system1.totalPageFile / 1024 /1024));
-  STPageFree:=intToSTr(round(system1.AvailPageFile / 1024 /1024));
+  STMemfree:=round(system1.availPhysmemory / 1024 / 1023.5);
+  STMemTotal:=round(system1.totalPhysmemory / 1024 /1023);
+  STPageTotal:=round(system1.totalPageFile / 1024 /1024);
+  STPageFree:=round(system1.AvailPageFile / 1024 /1024);
 
 // HD space!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 if hd=1 then begin
@@ -2534,8 +2534,8 @@ if hd=1 then begin
     try
       if letter2[letter]=1 then begin
 //        if (system1.diskindrive(chr(letter),true)) then begin
-          STHDFree[letter]:=formatfloat('0',(system1.diskfreespace(chr(letter))) /1024/1024);
-          STHDTotal[letter]:=formatfloat('0',(system1.disktotalspace(chr(letter))) /1024/1024);
+          STHDFree[letter]:=system1.diskfreespace(chr(letter)) div (1024*1024);
+          STHDTotal[letter]:=system1.disktotalspace(chr(letter)) div (1024*1024);
 //        end;
       end;
     except
