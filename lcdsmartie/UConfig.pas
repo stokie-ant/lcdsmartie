@@ -19,7 +19,7 @@ unit UConfig;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UConfig.pas,v $
- *  $Revision: 1.15 $ $Date: 2004/11/23 22:34:10 $
+ *  $Revision: 1.16 $ $Date: 2004/11/29 23:28:06 $
  *****************************************************************************}
 
 interface
@@ -61,6 +61,7 @@ type
   public
     isUsbPalm: Boolean;
     UsbPalmDevice: String;
+    sUsbPalmWriteOverride, sUsbPalmReadOverride: String;
     gameServer: Array[1..20, 1..4] of String;
     pop: Array [0..9] of TPopAccount;
     comPort: Integer;
@@ -496,6 +497,11 @@ begin
     'USBPalmDevice', '');
   if (UsbPalmDevice <> '') then isUsbPalm := True
   else isUsbPalm := False;
+
+  sUsbPalmReadOverride := initfile.ReadString('Communication Settings',
+    'USBPalmReadOverride', '');
+  sUsbPalmWriteOverride := initfile.ReadString('Communication Settings',
+    'USBPalmWriteOverride', '');
 
   refreshRate := initfile.ReadInteger('General Settings', 'RefreshRate', 75);
   winampLocation := initfile.ReadString('General Settings', 'WinAmpLocation',
