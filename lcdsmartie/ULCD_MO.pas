@@ -214,7 +214,7 @@ var
   fLog: textfile;
   winDir: PChar;
 begin
-  assign(fLog, 'usb.log');
+  assignfile(fLog,  extractfilepath(application.exename) + 'usb.log');
   rewrite(fLog);
 
   writeln(fLog, 'Path: ' + sPath);

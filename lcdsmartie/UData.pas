@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.34 $ $Date: 2005/01/04 10:49:16 $
+ *  $Revision: 1.35 $ $Date: 2005/01/04 22:53:52 $
  *****************************************************************************}
 
 
@@ -2304,7 +2304,7 @@ begin
   Filename := StringReplace(Filename, '?', '_', [rfReplaceAll]);
   Filename := StringReplace(Filename, '=', '_', [rfReplaceAll]);
   Filename := StringReplace(Filename, '.', '_', [rfReplaceAll]);
-  Filename := 'cache\\' + Filename + '.cache';
+  Filename :=  extractfilepath(application.exename) + 'cache\\' + Filename + '.cache';
 
   try
     toonew := false;
@@ -2577,7 +2577,8 @@ begin
           if pos('$QuakeIII', screenline) <> 0 then srvr := '-q3s';
           if pos('$Unreal', screenline) <> 0 then srvr := '-uns';
           winexec(PChar(extractfilepath(application.exename) +
-            'qstat.exe -P -of txt' + intToStr(z) + '-' + intToStr(y) +
+            'qstat.exe -P -of txt'
+            + intToStr(z) + '-' + intToStr(y) +
             '.txt -sort F ' + srvr + ' ' + config.gameServer[z, y]), sw_hide);
 
           templine := '';
