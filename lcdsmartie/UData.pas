@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.43 $ $Date: 2005/01/16 19:08:33 $
+ *  $Revision: 1.44 $ $Date: 2005/01/16 19:16:38 $
  *****************************************************************************}
 
 
@@ -358,7 +358,15 @@ begin
       begin
         // call SmartieFini if it exists
         if (Assigned(dlls[uiDll-1].finiFunc)) then
-           dlls[uiDll-1].finiFunc();
+        begin
+          try
+            dlls[uiDll-1].finiFunc();
+          except
+            on E: Exception do
+              raise Exception.Create('Plugin '+dlls[uiDll-1].sName+' had an exception during closedown: '
+              + E.Message);
+          end;
+        end;
         FreeLibrary(dlls[uiDll-1].hDll);
       end;
     except
