@@ -20,7 +20,7 @@ const
   UsbErrNotSupported		 = $00000007;		// IOCTL code unsupported
   UsbErrBufferTooSmall	 = $00000008;		// Buffer size too small
   UsbErrNoAttachedDevices= $00000009;		// No devices currently attached
-  UsbErrDontMatchFilter	 = $00000010;		// Creator ID provided doesn't
+  UsbErrDontMatchFilter	 = $00000010;		// Creator ID provided doesnt
               						  						// match the USB-active device
 							                					// application creator ID
 
@@ -93,9 +93,8 @@ type
     FNSetTimeouts: TFNSetTimeouts;
 
     procedure doReadThread;               // for Usb
-    procedure writeDevice(buffer: PChar; len: Cardinal); overload;
+    procedure writeDevice(buffer: string); overload;
     procedure writeDevice(byte: Byte); overload;
-    procedure writeDevice(str: String); overload;
     function readDevice(var chr: Char): Boolean;
     function errMsg(uError: Cardinal): String;
     Function OpenUsbPort: Boolean;
@@ -142,7 +141,7 @@ begin
     Result := sError;
   end
   else
-    Result := '#0'; // don't put "operation completed successfully! It's too confusing!
+    Result := '#0'; // don't put "operation completed successfully!" It's too confusing!
 end;
 
 Function TLCD_MO.OpenUsbPort: Boolean;
@@ -160,18 +159,21 @@ begin
 
 
   if (ret <> UsbNoError) then
-    raise Exception.Create('Failed whilst locating palms: '+IntToStr(ret));
+    raise Exception.Create('Failed whilst locating USB palms: '+IntToStr(ret)
+      + ':'+errMsg(GetLastError));
 
   if (deviceCount > 0) then
   begin
 
-    // $62724F50   == 'POrb'
-    usbPalm := FNOpenPort(@buffer[1], $62724F50);
+    // $504F7262   == 'POrb'
+    usbPalm := FNOpenPort(@buffer[1], $504F7262);
     if (usbPalm = INVALID_HANDLE_VALUE) then
-       raise Exception.Create('USB Palm open failed: '+errMsg(GetLastError));
+       raise Exception.Create(
+         'An USB palm was detected but we failed to connect to PalmOrb.'+#10+#13
+         + 'Please ensure PalmOrb is already running on your Palm.');
 
 
-    // Set read/write time outs so LCD Smartie doesn't hang
+    // Set read/write time outs so LCD Smartie doesnt hang
     timeouts.uiReadTimeout:=8000; // 8 seconds
     timeouts.uiWriteTimeout:=1000;  // 1 second
 
@@ -185,6 +187,59 @@ begin
   Result := bConnected;
 end;
 
+function GetVersion(sFile: String):String;
+var
+  iVerSize: Integer;
+  iLen: Cardinal;
+  verInfo: pointer;
+  sVer: String;
+  fixedInfo: PVSFIXEDFILEINFO;
+  dummy: Cardinal;
+  ptr: pointer;
+begin
+  sVer := 'unknown';
+  
+  iVerSize := GetFileVersionInfoSize(PChar(sFile), dummy);
+  if iVerSize <> 0 then
+  begin
+    GetMem(verInfo, iVerSize);
+    GetFileVersionInfo(PChar(sFile), 0, iVerSize, verInfo);
+    if (VerQueryValue(verInfo, '\', ptr, iLen))
+       and (iLen<>0) then
+    begin
+      fixedInfo := PVSFixedFileInfo(ptr);
+      sVer := Format('%d.%d.%d.%d : %d.%d.%d.%d', [
+        (fixedInfo.dwFileVersionMS and not $FFFF) shr 16, (fixedInfo.dwFileVersionMS and $FFFF),
+        (fixedInfo.dwFileVersionLS and not $FFFF)  shr 16, (fixedInfo.dwFileVersionLS and $FFFF),
+        (fixedInfo.dwProductVersionMS and not $FFFF) shr 16, (fixedInfo.dwProductVersionMS and $FFFF),
+        (fixedInfo.dwFileVersionLS and not $FFFF) shr 16, (fixedInfo.dwFileVersionLS and $FFFF)
+        ]);
+    end;
+    FreeMem(verInfo);
+  end;
+  Result := sVer;
+end;
+
+procedure LogInfo(sPath: String; sDll: String);
+var
+  fLog: textfile;
+  winDir: PChar;
+begin
+  assign(fLog, 'usb.log');
+  rewrite(fLog);
+
+  writeln(fLog, 'Path: ' + sPath);
+  writeln(fLog, 'DLL: ' + sDll + ' [' + GetVersion(sDll) + ']');
+  GetMem(winDir, 144);
+  GetWindowsDirectory(winDir, 144);
+
+  writeln(fLog, winDir+'\system32\drivers\PalmUSBD.sys: [' + GetVersion(windir+'\system32\drivers\PalmUSBD.sys') + ']');
+  FreeMem(winDir);
+
+  closefile(fLog);
+end;
+
+
 
 
 constructor TLCD_MO.CreateUsb;
@@ -194,10 +249,17 @@ var
 
   reg: TRegistry;
   path: String;
+  sFile: String;
 begin
   usbPortLib := 0;
   usbPalm := INVALID_HANDLE_VALUE;
   bUsb := True;
+
+  // Check if hotsync is running
+  if FindWindow('KittyHawk', Nil) <> 0 then
+    raise Exception.Create('Detected Hotsync running - please terminate it and restart LCD Smartie.');
+
+
 
   // Check if there are any Usb Palm entries in the registry.
   Reg := TRegistry.Create;
@@ -215,16 +277,28 @@ begin
     Reg.Free;
   end;
 
-  usbPortLib := LoadLibrary(PChar('USBPort.dll'));
+  sFile := 'USBPort.dll';
+  usbPortLib := LoadLibrary(PChar(sFile));
   if (usbPortLib = 0) then
-    usbPortLib := LoadLibrary(PChar(path+'\USBPort.dll'));
+  begin
+    sFile := path+'\USBPort.dll';
+    usbPortLib := LoadLibrary(PChar(sFile));
+  end;
   if (usbPortLib = 0) then
-    usbPortLib := LoadLibrary('c:\Program Files\palmOne\USBPort.dll');
+  begin
+    sFile := 'c:\Program Files\palmOne\USBPort.dll';
+    usbPortLib := LoadLibrary(PChar(sFile));
+  end;
   if (usbPortLib = 0) then
-    usbPortLib := LoadLibrary('c:\Palm\USBPort.dll');
+  begin
+    sFile := 'c:\Palm\USBPort.dll';
+    usbPortLib := LoadLibrary(PChar(sFile));
+  end;
 
   if (usbPortLib = 0) then
-    raise Exception.create('Can not find USBPort.dll: '+ErrMsg(GetLastError));
+    raise Exception.create('Can not find USBPort.dll.');
+
+  LogInfo(path, sFile);
 
   FNGetAttachedDevices := TFNGetAttachedDevices(
     GetProcAddress(usbPortLib, 'PalmUsbGetAttachedDevices'));
@@ -245,7 +319,7 @@ begin
     or (not Assigned(FNReceiveBytes))
     or (not Assigned(FNSendBytes))
     or (not Assigned(FNSetTimeouts)) then
-    raise Exception.Create('Failed to get required APIs: ' + errMsg(GetLastError));
+    raise Exception.Create('Failed to get required APIs.');
 
   if (not OpenUsbPort()) then
     raise exception.Create('No connected USB Palms were detected.' + #10+#13
@@ -271,25 +345,25 @@ begin
   end;
 
   writeDevice($0FE);     //Cursor blink off
-  writeDevice('T', 1);
+  writeDevice('T');
 
   writeDevice($0FE);     //clear screen
-  writeDevice('X', 1);
+  writeDevice('X');
 
   writeDevice($0FE);     //Cursor off
-  writeDevice('K', 1);
+  writeDevice('K');
 
   writeDevice($0FE);     //auto scroll off
-  writeDevice('R', 1);
+  writeDevice('R');
 
   writeDevice($0FE);     //auto line wrap off
-  writeDevice('D', 1);
+  writeDevice('D');
 
   writeDevice($0FE);   //auto transmit keys
   writeDevice($041);
 
   writeDevice($0FE);     //auto repeat off
-  writeDevice('`', 1);
+  writeDevice('`');
 
   setbacklight(true);
 end;
@@ -324,7 +398,7 @@ begin
       end;
 
       writeDevice($0FE);  //clear screen
-      writeDevice('X', 1); 
+      writeDevice('X');
     except
     end;
     bConnected := false;
@@ -495,11 +569,13 @@ begin
 
 end;
 
-procedure TLCD_MO.writeDevice(buffer: PChar; len: Cardinal);
+procedure TLCD_MO.writeDevice(buffer: string);
 var
   bytesWritten: Cardinal;
-  ret: Cardinal;
+  ret, len: Cardinal;
 begin
+  len := length(buffer);
+
   if (not bConnected) then
   begin
     if (not bUsb) then Exit;
@@ -513,13 +589,13 @@ begin
   if not bUsb then
   begin
 
-    serial.WriteBuf(buffer, len);
+    serial.WriteText(buffer);
 
   end
   else
   begin
 
-    ret:=FNSendBytes(usbPalm, buffer, len, @bytesWritten);
+    ret:=FNSendBytes(usbPalm, @buffer[1], len, @bytesWritten);
     if (ret <> UsbNoError)
       and (ret <> UsbErrSendTimedOut)
       and (ret <> UsbErrPortNotOpen) then
@@ -537,12 +613,7 @@ end;
 
 procedure TLCD_MO.writeDevice(byte: Byte);
 begin
-  writeDevice(@byte, 1);
-end;
-
-procedure TLCD_MO.writeDevice(str: String);
-begin
-  writeDevice(@str[1], length(str));
+  writeDevice(Char(byte));
 end;
 
 
