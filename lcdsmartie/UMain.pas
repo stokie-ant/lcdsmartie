@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.54 $ $Date: 2005/01/28 20:35:23 $
+ *  $Revision: 1.55 $ $Date: 2005/01/28 21:39:02 $
  *****************************************************************************}
 
 interface
@@ -30,6 +30,10 @@ uses Messages, CoolTrayIcon, Menus,
 
 const
   WM_ICONTRAY = WM_USER + 1;   // User-defined message
+  OurVersMaj = 5;
+  OurVersMin = 3;
+  OurVersRel = 1;
+  OurVersBuild = 16;
 
 type
   TChangeShow = (NoChange, ShowMainForm, HideMainForm, TotalHideMainForm);

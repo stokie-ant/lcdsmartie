@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.51 $ $Date: 2005/01/27 21:20:11 $
+ *  $Revision: 1.52 $ $Date: 2005/01/28 21:39:01 $
  *****************************************************************************}
 
 
@@ -3308,7 +3308,9 @@ var
   sAllTitles, sAllDescs, sWhole: String;
   sFilename: String;
   tempstr, tempstr2: String;
-  iPos1: Integer;
+  iPos1, iPosPoint1, iPosPoint2, iPosPoint3: Integer;
+  iVersMaj, iVersMin, iVersRel, iVersBuild: Integer;
+  bUpgrade: Boolean;
   items: Cardinal;
   titles: Array[0..maxRssItems] of String;
   descs: Array[0..maxRssItems] of String;
@@ -3397,12 +3399,50 @@ begin
 
         if (iPos1 <> 0) then
         begin
-          if (MidStr(versionline, 2, iPos1-2) <> '5.3.0.15') then
+          iPosPoint1 := PosEx('.', versionline, 2);
+          iPosPoint2 := PosEx('.', versionline, iPosPoint1 + 1);
+          iPosPoint3 := PosEx('.', versionline, iPosPoint2 + 1);
+
+          if (iPosPoint1 <> 0) and (iPosPoint2 <> 0) and (iPosPoint3 <> 0)
+            and (iPosPoint3 < iPos1) then
           begin
-            if (lcdSmartieUpdateText <> MidStr(versionline, iPos1+1, 62)) then
+            try
+              iVersMaj := StrToInt(MidStr(versionline, 2, iPosPoint1-2));
+              iVersMin := StrToInt(MidStr(versionline, iPosPoint1+1, iPosPoint2-(iPosPoint1+1)));
+              iVersRel := StrToInt(MidStr(versionline, iPosPoint2+1, iPosPoint3-(iPosPoint2+1)));
+              iVersBuild:= StrToInt(MidStr(versionline, iPosPoint3+1, iPos1-(iPosPoint3+1)));
+            except
+              iVersMaj := 0;
+              iVersMin := 0;
+              iVersRel := 0;
+              iVersBuild := 0;
+            end;
+
+            bUpgrade := false;
+            if (iVersMaj > OurVersMaj) then bUpgrade := true;
+
+            if (iVersMaj = OurVersMaj) then
             begin
-              lcdSmartieUpdateText := MidStr(versionline, iPos1+1, 62);
-              lcdSmartieUpdate := True;
+              if (iVersMin > OurVersMin) then bUpgrade := true;
+
+              if (iVersMin = OurVersMin) then
+              begin
+                if (iVersRel > OurVersRel) then bUpgrade := true;
+
+                if (iVersRel = OurVersRel) then
+                begin
+                  if (iVersBuild > OurVersBuild) then bUpgrade := true;
+                end;
+              end;
+            end;
+
+            if (bUpgrade) then
+            begin
+              if (lcdSmartieUpdateText <> MidStr(versionline, iPos1+1, 62)) then
+              begin
+                lcdSmartieUpdateText := MidStr(versionline, iPos1+1, 62);
+                lcdSmartieUpdate := True;
+              end;
             end;
           end;
         end;
