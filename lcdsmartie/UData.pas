@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.11 $ $Date: 2004/11/19 21:47:00 $
+ *  $Revision: 1.12 $ $Date: 2004/11/19 22:49:33 $
  *****************************************************************************}
 
 
@@ -219,9 +219,9 @@ uses cxCpu40, adCpuUsage, UMain, Windows, Forms, Registry, IpHlpApi,
   IdTCPConnection, IdTCPClient, IdMessageClient, IdPOP3, IdMessage, Menus,
   ExtCtrls, Controls, StdCtrls, StrUtils, ActiveX, IdUri, DateUtils, IdGlobal;
 
-// Takes a String like: 'C: $Bar(20, 30, 10) jterlktjer(fsdfs)sfsdf(sdf)'
+// Takes a string like: 'C:$Bar(20,30,10) jterlktjer(fsdfs)sfsdf(sdf)'
 // with funcName '$Bar'
-// and returns true(found) and numArgs = 3 and an Array with: '20', '30', '10'
+// and returns true(found) and numArgs=3 and an array with: '20', '30', '10'
 // postfix=' jterlktjer(fsdfs)sfsdf(sdf)'
 // prefix='C:'
 function TData.decodeArgs(str: String; funcName: String; maxargs: Cardinal;
@@ -245,7 +245,7 @@ begin
       prefix := copy(str, 1, posFuncStart-1);
       postfix := copy(str, posArgsEnd + 1, length(str)-posArgsEnd + 1);
       tempstr := copy(str, posArgsStart + 1, posArgsEnd-posArgsStart-1);
-      // tempstr is now something like: '20, 30, 10'
+      // tempstr is now something like: '20,30,10'
       posComma2 := 1;
       repeat
         posComma := posEx(',', tempstr, posComma2);
@@ -354,8 +354,8 @@ begin
   if pos('$WinampTitle', line) <> 0 then
   begin
     tempstr := form1.winampctrl1.GetCurrSongTitle;
-    line := StringReplace(line, '$WinampTitle', copy(tempstr, pos('.',
-      tempstr) + 2, length(tempstr)-pos('.', tempstr)-2), [rfReplaceAll]);
+    line := StringReplace(line, '$WinampTitle', copy(tempstr, pos('. ',
+      tempstr) + 2, length(tempstr)-pos('. ', tempstr)-2), [rfReplaceAll]);
   end;
   if pos('$WinampChannels', line) <> 0 then
   begin
@@ -401,7 +401,7 @@ begin
       tempstr := '';
 
       for i := 1 to barPosition-1 do tempstr := tempstr +  '-';
-      tempstr := tempstr +  ' + ';
+      tempstr := tempstr +  '+';
       for i := barPosition + 1 to barlength do tempstr := tempstr +  '-';
       tempstr := copy(tempstr, 1, barlength);
 
