@@ -1,0 +1,54 @@
+package VaComm7;
+
+{$R *.res}
+{$ALIGN 8}
+{$ASSERTIONS OFF}
+{$BOOLEVAL OFF}
+{$DEBUGINFO OFF}
+{$EXTENDEDSYNTAX ON}
+{$IMPORTEDDATA ON}
+{$IOCHECKS ON}
+{$LOCALSYMBOLS OFF}
+{$LONGSTRINGS ON}
+{$OPENSTRINGS ON}
+{$OPTIMIZATION ON}
+{$OVERFLOWCHECKS OFF}
+{$RANGECHECKS OFF}
+{$REFERENCEINFO OFF}
+{$SAFEDIVIDE OFF}
+{$STACKFRAMES OFF}
+{$TYPEDADDRESS OFF}
+{$VARSTRINGCHECKS ON}
+{$WRITEABLECONST ON}
+{$MINENUMSIZE 1}
+{$IMAGEBASE $400000}
+{$DESCRIPTION 'TMS Async32'}
+{$IMPLICITBUILD ON}
+
+requires
+  vcl;
+
+contains
+  VaObjects in 'VaObjects.pas',
+  VaClasses in 'VaClasses.pas',
+  VaConst in 'VaConst.pas',
+  VaTypes in 'VaTypes.pas',
+  VaReg in 'VaReg.pas',
+  VaUtils in 'VaUtils.pas',
+  VaComm in 'VaComm.pas',
+  VaSystem in 'VaSystem.pas',
+  VaCrc32 in 'VaCrc32.pas',
+  VaBuffer in 'VaBuffer.pas',
+  VaServer in 'VaServer.pas',
+  VaPrst in 'VaPrst.pas',
+  VaTriggers in 'VaTriggers.pas',
+  VaModem in 'VaModem.pas',
+  VaProtocol in 'VaProtocol.pas',
+  VaInterface in 'VaInterface.pas',
+  VaZmodem in 'VaZmodem.pas',
+  VaTerminal in 'VaTerminal.pas',
+  VaDisplay in 'VaDisplay.pas',
+  VaControls in 'VaControls.pas',
+  VaANSIEmulation in 'VaANSIEmulation.pas';
+
+end.

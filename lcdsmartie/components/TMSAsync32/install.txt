@@ -1,0 +1,56 @@
+Installation of the TMS Async32
+-------------------------------
+
+To be able to use the components they have to be added in the IDE.
+
+Adding the components 
+
+Delphi 4
+1. Run Delphi 4 and select the FILE / OPEN menu item 
+2. Open the file Vacommd4.dpk and click Install.
+3. Choose Environment options from the Tools menu.
+4. Add the folder of vcl to the library path.
+
+Delphi 5
+1. Run Delphi 5 and select the FILE / OPEN menu item 
+2. Open the file Vacommd5.dpk and click Install.
+3. Choose Environment options from the Tools menu.
+4. Add the folder of vcl to the library path.
+
+Delphi 6
+1. Run Delphi 6 and select the FILE / OPEN menu item 
+2. Open the file Vacommd6.dpk and click Install.
+3. Choose Environment options from the Tools menu.
+4. Add the folder of vcl to the library path.
+
+Delphi 7
+1. Run Delphi 7 and select the FILE / OPEN menu item 
+2. Open the file Vacommd7.dpk and click Install.
+3. Choose Environment options from the Tools menu.
+4. Add the folder of vcl to the library path.
+
+BCB 4
+1. Run BCB 4 and select the FILE / OPEN menu item 
+2. Open the file Vacommb4.bpk and click Install.
+3. Choose Environment options from the Tools menu.
+
+4. Add the folder of vcl to the library path.
+
+BCB 5
+1. Run BCB 5 and select the FILE / OPEN menu item 
+2. Open the file Vacommb5.bpk and click Install.
+3. Choose Environment options from the Tools menu.
+4. Add the folder of vcl to the library path.
+
+BCB 6
+1. Run BCB 6 and select the FILE / OPEN menu item 
+2. Open the file Vacommb6.bpk and click Install.
+3. Choose Environment options from the Tools menu.
+4. Add the folder of vcl to the library path.
+
+ 
+The TMS Async32 components will appear at the end of the current palette
+
+
+
+ 
