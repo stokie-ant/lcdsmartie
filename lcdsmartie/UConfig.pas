@@ -19,7 +19,7 @@ unit UConfig;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UConfig.pas,v $
- *  $Revision: 1.9 $ $Date: 2004/11/17 21:10:00 $
+ *  $Revision: 1.10 $ $Date: 2004/11/17 21:46:58 $
  *****************************************************************************}
 
 interface
@@ -562,9 +562,7 @@ begin
     sPOPAccount:=Format('%.2u', [x]);
     pop[x].server:=initFile.ReadString('POP Accounts', 'Server' + sPOPAccount, '');
     pop[x].user:=initFile.ReadString('POP Accounts', 'User' + sPOPAccount, '');
-    pop[x].user:=MidStr(pop[x].user, 2, Length(pop[x].user) - 2);  // To Remove Enclosing Quotes
     pop[x].pword:=initFile.ReadString('POP Accounts', 'Password' + sPOPAccount, '');
-    pop[x].pword:=MidStr(pop[x].pword, 2, Length(pop[x].pword) - 2); // To Remove Enclosing Quotes
   end;
 
 
