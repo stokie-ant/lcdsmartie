@@ -324,7 +324,8 @@ begin
     if (not WriteFile(output, str[1], length(str), bytesWritten, nil))
         or (bytesWritten <> Cardinal(length(str))) then
     begin
-      raise Exception.Create('Write USB Palm failed: ' + errMsg(GetLastError));
+      raise Exception.Create('Write USB Palm failed [' + IntToStr(length(str))
+        + ':' + IntToStr(bytesWritten) + ']: ' + errMsg(GetLastError));
     end;
 
   end;
