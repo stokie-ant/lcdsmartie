@@ -1,15 +1,15 @@
-program Project1;
+program LCDSmartie;
 
 uses
   Forms,
   parport in 'parport.pas' {parport},
-  Unit1 in 'Unit1.pas' {Form1},
-  Unit2 in 'Unit2.pas' {Form2},
-  Unit3 in 'Unit3.pas' {Form3},
-  Unit4 in 'Unit4.pas' {Form4},
-  Unit5 in 'Unit5.pas' {Form5},
-  Unit6 in 'Unit6.pas' {Form6},
-  Unit7 in 'Unit7.pas' {Form7},
+  UMain in 'UMain.pas' {Form1},
+  USetup in 'USetup.pas' {Form2},
+  UMOSetup in 'UMOSetup.pas' {Form3},
+  UCredits in 'UCredits.pas' {Form4},
+  UCFSetup in 'UCFSetup.pas' {Form5},
+  UPara in 'UPara.pas' {Form6},
+  UInteract in 'UInteract.pas' {Form7},
   UConfig in 'UConfig.pas',
   System2 in 'system2.pas',
   adCpuUsage in 'adCpuUsage.pas',

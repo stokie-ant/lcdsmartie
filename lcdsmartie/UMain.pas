@@ -1,4 +1,4 @@
-unit Unit1;
+unit UMain;
 {******************************************************************************
  *
  *  LCD Smartie - LCD control software.
@@ -18,8 +18,8 @@ unit Unit1;
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
- *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/Attic/Unit1.pas,v $
- *  $Revision: 1.4 $ $Date: 2004/11/05 13:16:21 $
+ *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
+ *  $Revision: 1.1 $ $Date: 2004/11/05 14:34:15 $
  *****************************************************************************}
 
 interface
@@ -379,7 +379,7 @@ implementation
 uses
   Registry, Windows, SysUtils, Graphics,  Dialogs,
   ShellAPI, IpHlpApi,  IpIfConst, IpRtrMib,
-  mmsystem, winsock, cxCpu40, Unit2, Unit4;
+  mmsystem, winsock, cxCpu40, USetup, UCredits;
 
 function TForm1.doguess(regel:integer): integer;
 var

@@ -1,4 +1,4 @@
-unit Unit2;
+unit USetup;
 {******************************************************************************
  *
  *  LCD Smartie - LCD control software.
@@ -18,8 +18,8 @@ unit Unit2;
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
- *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/Attic/Unit2.pas,v $
- *  $Revision: 1.3 $ $Date: 2004/11/05 13:16:21 $
+ *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
+ *  $Revision: 1.1 $ $Date: 2004/11/05 14:34:15 $
  *****************************************************************************}
 
 interface
@@ -259,8 +259,8 @@ var
 
 implementation
 
-uses Windows, ShellApi, graphics, sysutils, parport, Unit1, Unit3, Unit5,
-  Unit6, Unit7, UConfig;
+uses Windows, ShellApi, graphics, sysutils, parport, UMain, UMOSetup, UCFSetup,
+  UPara, UInteract, UConfig;
 
 {$R *.DFM}
 
@@ -308,7 +308,7 @@ begin
   tabsheet13.Enabled:=false;
 
   GPOsaan:=0;
-  unit1.setupbutton:=1;
+  UMain.setupbutton:=1;
   setupscreen:=1;
 
   try
@@ -639,7 +639,7 @@ begin
   edit6.color:=clWhite;
   edit7.color:=clWhite;
   edit8.color:=clWhite;
-  unit1.setupbutton:=1;
+  UMain.setupbutton:=1;
   edit10.text:=serversarray[(scr-1)*4+1];
 
   ascreen:=config.screen[scr][1];
@@ -771,28 +771,28 @@ begin
     if listbox7.itemindex = 14 then Edit9.Text:='$WinampTracknr';
     if listbox7.itemindex = 15 then Edit9.Text:='$WinampTotalTracks';
     if listbox7.itemindex = 16 then Edit9.Text:='$WinampStat';
-    if unit1.setupbutton=1 then begin
+    if UMain.setupbutton=1 then begin
       tempint1:=edit5.SelStart;
       tempint2:=edit5.SelLength;
       edit5.setfocus;
       edit5.SelStart:=tempint1;
       edit5.SelLength:=tempint2;
     end;
-    if unit1.setupbutton=2 then begin
+    if UMain.setupbutton=2 then begin
       tempint1:=edit6.SelStart;
       tempint2:=edit6.SelLength;
       edit6.setfocus;
       edit6.SelStart:=tempint1;
       edit6.SelLength:=tempint2;
     end;
-    if unit1.setupbutton=3 then begin
+    if UMain.setupbutton=3 then begin
       tempint1:=edit7.SelStart;
       tempint2:=edit7.SelLength;
       edit7.setfocus;
       edit7.SelStart:=tempint1;
       edit7.SelLength:=tempint2;
     end;
-    if unit1.setupbutton=4 then begin
+    if UMain.setupbutton=4 then begin
       tempint1:=edit8.SelStart;
       tempint2:=edit8.SelLength;
       edit8.setfocus;
@@ -808,31 +808,31 @@ var
 
 begin
   if Edit9.Text<> 'Variable:' then begin
-    if unit1.setupbutton=1 then begin
+    if UMain.setupbutton=1 then begin
       tempint:=edit5.SelStart;
       edit5.text:=copy(edit5.text,1,tempint)+Edit9.Text+copy(edit5.text,tempint+1+edit5.SelLength,length(edit5.Text));
       edit5.SetFocus;
       edit5.selstart:=tempint+length(edit9.text);
     end;
-    if unit1.setupbutton=2 then begin
+    if UMain.setupbutton=2 then begin
       tempint:=edit6.SelStart;
       edit6.text:=copy(edit6.text,1,Edit6.SelStart)+Edit9.Text+copy(edit6.text,edit6.SelStart+1+edit6.SelLength,length(edit6.Text));
       edit6.SetFocus;
       edit6.selstart:=tempint+length(edit9.text);
     end;
-    if unit1.setupbutton=3 then begin
+    if UMain.setupbutton=3 then begin
       tempint:=edit7.SelStart;
       edit7.text:=copy(edit7.text,1,Edit7.SelStart)+Edit9.Text+copy(edit7.text,edit7.SelStart+1+edit7.SelLength,length(edit7.Text));
       edit7.SetFocus;
       edit7.selstart:=tempint+length(edit9.text);
     end;
-    if unit1.setupbutton=4 then begin
+    if UMain.setupbutton=4 then begin
       tempint:=edit8.SelStart;
       edit8.text:=copy(edit8.text,1,Edit8.SelStart)+Edit9.Text+copy(edit8.text,edit8.SelStart+1+edit8.SelLength,length(edit8.Text));
       edit8.SetFocus;
       edit8.selstart:=tempint+length(edit9.text);
     end;
-    if unit1.setupbutton=5 then begin
+    if UMain.setupbutton=5 then begin
       if (edit17.text='') and (edit9.text='$MObutton') then begin
         showmessage ('please press the button you want to bind');
       end else begin
@@ -880,28 +880,28 @@ begin
     if listbox6.itemindex = 28 then Edit9.Text:='$Bar($HDFree(C),$HDTotal(C),10)';
     if listbox6.itemindex = 29 then Edit9.Text:='$Bar($HDUsed(C),$HDTotal(C),10)';
     if listbox6.itemindex = 30 then Edit9.Text:='$ScreenReso';
-    if unit1.setupbutton=1 then begin
+    if UMain.setupbutton=1 then begin
       tempint1:=edit5.SelStart;
       tempint2:=edit5.SelLength;
       edit5.setfocus;
       edit5.SelStart:=tempint1;
       edit5.SelLength:=tempint2;
     end;
-    if unit1.setupbutton=2 then begin
+    if UMain.setupbutton=2 then begin
       tempint1:=edit6.SelStart;
       tempint2:=edit6.SelLength;
       edit6.setfocus;
       edit6.SelStart:=tempint1;
       edit6.SelLength:=tempint2;
     end;
-    if unit1.setupbutton=3 then begin
+    if UMain.setupbutton=3 then begin
       tempint1:=edit7.SelStart;
       tempint2:=edit7.SelLength;
       edit7.setfocus;
       edit7.SelStart:=tempint1;
       edit7.SelLength:=tempint2;
     end;
-    if unit1.setupbutton=4 then begin
+    if UMain.setupbutton=4 then begin
       tempint1:=edit8.SelStart;
       tempint2:=edit8.SelLength;
       edit8.setfocus;
@@ -977,28 +977,28 @@ begin
     if listbox5.itemindex = 57 then Edit9.Text:='$Voltname8';
     if listbox5.itemindex = 58 then Edit9.Text:='$Voltname9';
     if listbox5.itemindex = 59 then Edit9.Text:='$Voltname10';
-    if unit1.setupbutton=1 then begin
+    if UMain.setupbutton=1 then begin
       tempint1:=edit5.SelStart;
       tempint2:=edit5.SelLength;
       edit5.setfocus;
       edit5.SelStart:=tempint1;
       edit5.SelLength:=tempint2;
     end;
-    if unit1.setupbutton=2 then begin
+    if UMain.setupbutton=2 then begin
       tempint1:=edit6.SelStart;
       tempint2:=edit6.SelLength;
       edit6.setfocus;
       edit6.SelStart:=tempint1;
       edit6.SelLength:=tempint2;
     end;
-    if unit1.setupbutton=3 then begin
+    if UMain.setupbutton=3 then begin
       tempint1:=edit7.SelStart;
       tempint2:=edit7.SelLength;
       edit7.setfocus;
       edit7.SelStart:=tempint1;
       edit7.SelLength:=tempint2;
     end;
-    if unit1.setupbutton=4 then begin
+    if UMain.setupbutton=4 then begin
       tempint1:=edit8.SelStart;
       tempint2:=edit8.SelLength;
       edit8.setfocus;
@@ -1020,28 +1020,28 @@ begin
     if listbox2.itemindex = 3 then Edit9.Text:='$T.netHL';
     if listbox2.itemindex = 4 then Edit9.Text:='$DutchWeather';
     if listbox2.itemindex = 5 then Edit9.Text:='$Weather.com(CAXX0504)';
-    if unit1.setupbutton=1 then begin
+    if UMain.setupbutton=1 then begin
       tempint1:=edit5.SelStart;
       tempint2:=edit5.SelLength;
       edit5.setfocus;
       edit5.SelStart:=tempint1;
       edit5.SelLength:=tempint2;
     end;
-    if unit1.setupbutton=2 then begin
+    if UMain.setupbutton=2 then begin
       tempint1:=edit6.SelStart;
       tempint2:=edit6.SelLength;
       edit6.setfocus;
       edit6.SelStart:=tempint1;
       edit6.SelLength:=tempint2;
     end;
-    if unit1.setupbutton=3 then begin
+    if UMain.setupbutton=3 then begin
       tempint1:=edit7.SelStart;
       tempint2:=edit7.SelLength;
       edit7.setfocus;
       edit7.SelStart:=tempint1;
       edit7.SelLength:=tempint2;
     end;
-    if unit1.setupbutton=4 then begin
+    if UMain.setupbutton=4 then begin
       tempint1:=edit8.SelStart;
       tempint2:=edit8.SelLength;
       edit8.setfocus;
@@ -1095,28 +1095,28 @@ begin
     if listbox1.itemindex = 14 then Edit9.Text:='$Fill(10)';
     if listbox1.itemindex = 15 then Edit9.Text:='$Flash(insert text here$)$';
     if listbox1.itemindex = 16 then Edit9.Text:='$CustomChar(1,31,31,31,31,31,31,31,31)';
-    if unit1.setupbutton=1 then begin
+    if UMain.setupbutton=1 then begin
       tempint1:=edit5.SelStart;
       tempint2:=edit5.SelLength;
       edit5.setfocus;
       edit5.SelStart:=tempint1;
       edit5.SelLength:=tempint2;
     end;
-    if unit1.setupbutton=2 then begin
+    if UMain.setupbutton=2 then begin
       tempint1:=edit6.SelStart;
       tempint2:=edit6.SelLength;
       edit6.setfocus;
       edit6.SelStart:=tempint1;
       edit6.SelLength:=tempint2;
     end;
-    if unit1.setupbutton=3 then begin
+    if UMain.setupbutton=3 then begin
       tempint1:=edit7.SelStart;
       tempint2:=edit7.SelLength;
       edit7.setfocus;
       edit7.SelStart:=tempint1;
       edit7.SelLength:=tempint2;
     end;
-    if unit1.setupbutton=4 then begin
+    if UMain.setupbutton=4 then begin
       tempint1:=edit8.SelStart;
       tempint2:=edit8.SelLength;
       edit8.setfocus;
@@ -1141,28 +1141,28 @@ begin
     if listbox3.itemindex = 6 then Edit9.Text:='$SETIrank';
     if listbox3.itemindex = 7 then Edit9.Text:='$SETIsharingrank';
     if listbox3.itemindex = 8 then Edit9.Text:='$SETImoreWU%';
-    if unit1.setupbutton=1 then begin
+    if UMain.setupbutton=1 then begin
       tempint1:=edit5.SelStart;
       tempint2:=edit5.SelLength;
       edit5.setfocus;
       edit5.SelStart:=tempint1;
       edit5.SelLength:=tempint2;
     end;
-    if unit1.setupbutton=2 then begin
+    if UMain.setupbutton=2 then begin
       tempint1:=edit6.SelStart;
       tempint2:=edit6.SelLength;
       edit6.setfocus;
       edit6.SelStart:=tempint1;
       edit6.SelLength:=tempint2;
     end;
-    if unit1.setupbutton=3 then begin
+    if UMain.setupbutton=3 then begin
       tempint1:=edit7.SelStart;
       tempint2:=edit7.SelLength;
       edit7.setfocus;
       edit7.SelStart:=tempint1;
       edit7.SelLength:=tempint2;
     end;
-    if unit1.setupbutton=4 then begin
+    if UMain.setupbutton=4 then begin
       tempint1:=edit8.SelStart;
       tempint2:=edit8.SelLength;
       edit8.setfocus;
@@ -1419,7 +1419,7 @@ end;
 
 procedure TForm2.Edit10Exit(Sender: TObject);
 begin
-  serversarray[combobox3.itemindex*4+unit1.setupbutton]:=edit10.text;
+  serversarray[combobox3.itemindex*4+UMain.setupbutton]:=edit10.text;
 end;
 
 procedure TForm2.Button4Click(Sender: TObject);
@@ -1461,28 +1461,28 @@ begin
     if listbox4.itemindex = 7 then Edit9.Text:='$Email8';
     if listbox4.itemindex = 8 then Edit9.Text:='$Email9';
     if listbox4.itemindex = 9 then Edit9.Text:='$Email0';
-    if unit1.setupbutton=1 then begin
+    if UMain.setupbutton=1 then begin
       tempint1:=edit5.SelStart;
       tempint2:=edit5.SelLength;
       edit5.setfocus;
       edit5.SelStart:=tempint1;
       edit5.SelLength:=tempint2;
     end;
-    if unit1.setupbutton=2 then begin
+    if UMain.setupbutton=2 then begin
       tempint1:=edit6.SelStart;
       tempint2:=edit6.SelLength;
       edit6.setfocus;
       edit6.SelStart:=tempint1;
       edit6.SelLength:=tempint2;
     end;
-    if unit1.setupbutton=3 then begin
+    if UMain.setupbutton=3 then begin
       tempint1:=edit7.SelStart;
       tempint2:=edit7.SelLength;
       edit7.setfocus;
       edit7.SelStart:=tempint1;
       edit7.SelLength:=tempint2;
     end;
-    if unit1.setupbutton=4 then begin
+    if UMain.setupbutton=4 then begin
       tempint1:=edit8.SelStart;
       tempint2:=edit8.SelLength;
       edit8.setfocus;
@@ -1512,7 +1512,7 @@ begin
   if checkbox7.checked=true then begin
     checkbox3.Checked:=true;
     checkbox3.enabled:=false;
-    if unit1.setupbutton=2 then begin
+    if UMain.setupbutton=2 then begin
       tempint1:=edit5.SelStart;
       edit5.setfocus;
       edit5.SelStart:=tempint1;
@@ -1534,7 +1534,7 @@ begin
   if checkbox8.checked=true then begin
     checkbox4.Checked:=true;
     checkbox4.enabled:=false;
-    if unit1.setupbutton=3 then begin
+    if UMain.setupbutton=3 then begin
       tempint1:=edit5.SelStart;
       edit5.setfocus;
       edit5.SelStart:=tempint1;
@@ -1556,7 +1556,7 @@ begin
   if checkbox9.checked=true then begin
     checkbox5.Checked:=true;
     checkbox5.enabled:=false;
-    if unit1.setupbutton=4 then begin
+    if UMain.setupbutton=4 then begin
       tempint1:=edit5.SelStart;
       edit5.setfocus;
       edit5.SelStart:=tempint1;
@@ -1612,28 +1612,28 @@ begin
     if combobox6.itemindex = 2 then Edit9.Text:='$QuakeIII4';
     if combobox6.itemindex = 3 then Edit9.Text:='$Unreal4';
   end;
-    if unit1.setupbutton=1 then begin
+    if UMain.setupbutton=1 then begin
       tempint1:=edit5.SelStart;
       tempint2:=edit5.SelLength;
       edit5.setfocus;
       edit5.SelStart:=tempint1;
       edit5.SelLength:=tempint2;
     end;
-    if unit1.setupbutton=2 then begin
+    if UMain.setupbutton=2 then begin
       tempint1:=edit6.SelStart;
       tempint2:=edit6.SelLength;
       edit6.setfocus;
       edit6.SelStart:=tempint1;
       edit6.SelLength:=tempint2;
     end;
-    if unit1.setupbutton=3 then begin
+    if UMain.setupbutton=3 then begin
       tempint1:=edit7.SelStart;
       tempint2:=edit7.SelLength;
       edit7.setfocus;
       edit7.SelStart:=tempint1;
       edit7.SelLength:=tempint2;
     end;
-    if unit1.setupbutton=4 then begin
+    if UMain.setupbutton=4 then begin
       tempint1:=edit8.SelStart;
       tempint2:=edit8.SelLength;
       edit8.setfocus;
@@ -1646,7 +1646,7 @@ end;
 procedure TForm2.Edit5Enter(Sender: TObject);
 begin
   edit10.text:=serversarray[combobox3.itemindex*4+1];
-  unit1.setupbutton:=1;
+  UMain.setupbutton:=1;
   edit5.color:=$00A1D7A4;
   if edit6.enabled= true then edit6.color:=clWhite else edit6.color:=$00BBBBFF;
   if edit7.enabled= true then edit7.color:=clWhite else edit7.color:=$00BBBBFF;
@@ -1656,7 +1656,7 @@ end;
 procedure TForm2.Edit6Enter(Sender: TObject);
 begin
   edit10.text:=serversarray[combobox3.itemindex*4+2];
-  unit1.setupbutton:=2;
+  UMain.setupbutton:=2;
   edit6.color:=$00A1D7A4;
   if edit5.enabled= true then edit5.color:=clWhite else edit5.color:=$00BBBBFF;
   if edit7.enabled= true then edit7.color:=clWhite else edit7.color:=$00BBBBFF;
@@ -1666,7 +1666,7 @@ end;
 procedure TForm2.Edit7Enter(Sender: TObject);
 begin
   edit10.text:=serversarray[combobox3.itemindex*4+3];
-  unit1.setupbutton:=3;
+  UMain.setupbutton:=3;
   edit7.color:=$00A1D7A4;
   if edit6.enabled= true then edit6.color:=clWhite else edit6.color:=$00BBBBFF;
   if edit5.enabled= true then edit5.color:=clWhite else edit5.color:=$00BBBBFF;
@@ -1676,7 +1676,7 @@ end;
 procedure TForm2.Edit8Enter(Sender: TObject);
 begin
   edit10.text:=serversarray[combobox3.itemindex*4+4];
-  unit1.setupbutton:=4;
+  UMain.setupbutton:=4;
   edit8.color:=$00A1D7A4;
   if edit6.enabled= true then edit6.color:=clWhite else edit6.color:=$00BBBBFF;
   if edit7.enabled= true then edit7.color:=clWhite else edit7.color:=$00BBBBFF;
@@ -1714,28 +1714,28 @@ begin
     if listbox9.itemindex = 22 then Edit9.Text:='$NetDiscUp(1)';
     if listbox9.itemindex = 23 then Edit9.Text:='$NetDiscTot(1)';
     if listbox9.itemindex = 24 then Edit9.Text:='$NetIPaddress';
-    if unit1.setupbutton=1 then begin
+    if UMain.setupbutton=1 then begin
       tempint1:=edit5.SelStart;
       tempint2:=edit5.SelLength;
       edit5.setfocus;
       edit5.SelStart:=tempint1;
       edit5.SelLength:=tempint2;
     end;
-    if unit1.setupbutton=2 then begin
+    if UMain.setupbutton=2 then begin
       tempint1:=edit6.SelStart;
       tempint2:=edit6.SelLength;
       edit6.setfocus;
       edit6.SelStart:=tempint1;
       edit6.SelLength:=tempint2;
     end;
-    if unit1.setupbutton=3 then begin
+    if UMain.setupbutton=3 then begin
       tempint1:=edit7.SelStart;
       tempint2:=edit7.SelLength;
       edit7.setfocus;
       edit7.SelStart:=tempint1;
       edit7.SelLength:=tempint2;
     end;
-    if unit1.setupbutton=4 then begin
+    if UMain.setupbutton=4 then begin
       tempint1:=edit8.SelStart;
       tempint2:=edit8.SelLength;
       edit8.setfocus;
@@ -1764,28 +1764,28 @@ var
     if listbox10.itemindex = 4 then Edit9.Text:='$FOLDscore';
     if listbox10.itemindex = 5 then Edit9.Text:='$FOLDrank';
     if listbox10.itemindex = 6 then Edit9.Text:='$FOLDwu';
-    if unit1.setupbutton=1 then begin
+    if UMain.setupbutton=1 then begin
       tempint1:=edit5.SelStart;
       tempint2:=edit5.SelLength;
       edit5.setfocus;
       edit5.SelStart:=tempint1;
       edit5.SelLength:=tempint2;
     end;
-    if unit1.setupbutton=2 then begin
+    if UMain.setupbutton=2 then begin
       tempint1:=edit6.SelStart;
       tempint2:=edit6.SelLength;
       edit6.setfocus;
       edit6.SelStart:=tempint1;
       edit6.SelLength:=tempint2;
     end;
-    if unit1.setupbutton=3 then begin
+    if UMain.setupbutton=3 then begin
       tempint1:=edit7.SelStart;
       tempint2:=edit7.SelLength;
       edit7.setfocus;
       edit7.SelStart:=tempint1;
       edit7.SelLength:=tempint2;
     end;
-    if unit1.setupbutton=4 then begin
+    if UMain.setupbutton=4 then begin
       tempint1:=edit8.SelStart;
       tempint2:=edit8.SelLength;
       edit8.setfocus;
@@ -1999,7 +1999,7 @@ end;
 procedure TForm2.PageControl2Change(Sender: TObject);
 begin
   if Pagecontrol2.ActivePage=Tabsheet12 then begin
-    unit1.setupbutton:=5;
+    UMain.setupbutton:=5;
     combobox9.ItemIndex:=0;
     try
       listbox11.Items.Delete(21);
@@ -2022,7 +2022,7 @@ begin
       pagecontrol1.ActivePage:=Tabsheet1;
     end;
     edit10.text:=serversarray[combobox3.itemindex*4+1];
-    unit1.setupbutton:=1;
+    UMain.setupbutton:=1;
     edit5.color:=$00A1D7A4;
     if edit6.enabled= true then edit6.color:=clWhite else edit6.color:=$00BBBBFF;
     if edit7.enabled= true then edit7.color:=clWhite else edit7.color:=$00BBBBFF;
@@ -2069,28 +2069,28 @@ var
 begin
   if listbox12.itemindex > -1 then begin
     if listbox12.itemindex = 0 then Edit9.Text:='$MObutton';
-    if unit1.setupbutton=1 then begin
+    if UMain.setupbutton=1 then begin
       tempint1:=edit5.SelStart;
       tempint2:=edit5.SelLength;
       edit5.setfocus;
       edit5.SelStart:=tempint1;
       edit5.SelLength:=tempint2;
     end;
-    if unit1.setupbutton=2 then begin
+    if UMain.setupbutton=2 then begin
       tempint1:=edit6.SelStart;
       tempint2:=edit6.SelLength;
       edit6.setfocus;
       edit6.SelStart:=tempint1;
       edit6.SelLength:=tempint2;
     end;
-    if unit1.setupbutton=3 then begin
+    if UMain.setupbutton=3 then begin
       tempint1:=edit7.SelStart;
       tempint2:=edit7.SelLength;
       edit7.setfocus;
       edit7.SelStart:=tempint1;
       edit7.SelLength:=tempint2;
     end;
-    if unit1.setupbutton=4 then begin
+    if UMain.setupbutton=4 then begin
       tempint1:=edit8.SelStart;
       tempint2:=edit8.SelLength;
       edit8.setfocus;

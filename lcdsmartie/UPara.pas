@@ -1,3 +1,4 @@
+unit UPara;
 {******************************************************************************
  *
  *  LCD Smartie - LCD control software.
@@ -17,27 +18,22 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
- *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/Attic/Unit7.pas,v $
- *  $Revision: 1.3 $ $Date: 2004/11/05 13:16:21 $
+ *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/Attic/UPara.pas,v $
+ *  $Revision: 1.1 $ $Date: 2004/11/05 14:34:15 $
  *****************************************************************************}
-unit Unit7;
 
 interface
 
 uses Forms, StdCtrls, Spin, Controls, Classes;
 
 type
-  TForm7 = class(TForm)
+  TForm6 = class(TForm)
     Label1: TLabel;
-    Label2: TLabel;
-    Label3: TLabel;
-    Label4: TLabel;
-    ComboBox10: TComboBox;
+    Edit1: TEdit;
     SpinEdit1: TSpinEdit;
+    Label2: TLabel;
     Button1: TButton;
     procedure Button1Click(Sender: TObject);
-    procedure ComboBox10Change(Sender: TObject);
-    procedure FormShow(Sender: TObject);
   private
     { Private declarations }
   public
@@ -45,42 +41,19 @@ type
   end;
 
 var
-  Form7: TForm7;
+  Form6: TForm6;
 
 implementation
 
-uses SysUtils, Unit2;
+uses USetup;
 
-{$R *.dfm}
+{$R *.DFM}
 
-procedure TForm7.Button1Click(Sender: TObject);
-var
-  foo:integer;
-
+procedure TForm6.Button1Click(Sender: TObject);
 begin
-  try
-    foo:=StrToInt(spinedit1.text);
-  except
-    SpinEdit1.text:='1';
-  end;
-  if SpinEdit1.Text='0' then SpinEdit1.Text:='1';
-  if copy(SpinEdit1.Text,1,1) = '0' then Form7.SpinEdit1.Text:=copy(SpinEdit1.Text,2,1);
-  form7.visible:=false;
+  form6.visible:=false;
   form2.enabled:=true;
   form2.BringToFront;
-end;
-
-procedure TForm7.ComboBox10Change(Sender: TObject);
-begin
-  if combobox10.ItemIndex=0 then
-    spinedit1.Enabled:=False
-  else
-    spinedit1.Enabled:=True;
-end;
-
-procedure TForm7.FormShow(Sender: TObject);
-begin
-  if copy(form7.SpinEdit1.Text,1,1) = '0' then Form7.SpinEdit1.Text:=copy(form7.SpinEdit1.Text,2,1);
 end;
 
 end.

@@ -361,6 +361,12 @@ object Form1: TForm1
   object TTimer
     Interval = 250
   end
+  object TTimer
+    Interval = 250
+  end
+  object TTimer
+    Interval = 250
+  end
   object PopupMenu1: TPopupMenu
     Left = 88
     Top = 152

@@ -1,3 +1,4 @@
+unit UCFSetup;
 {******************************************************************************
  *
  *  LCD Smartie - LCD control software.
@@ -17,10 +18,9 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
- *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/Attic/Unit5.pas,v $
- *  $Revision: 1.3 $ $Date: 2004/11/05 13:16:21 $
+ *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UCFSetup.pas,v $
+ *  $Revision: 1.1 $ $Date: 2004/11/05 14:34:15 $
  *****************************************************************************}
-unit Unit5;
 
 interface
 
@@ -49,7 +49,7 @@ var
 
 implementation
 
-uses Unit1, Unit2;
+uses UMain, USetup;
 
 {$R *.DFM}
 
