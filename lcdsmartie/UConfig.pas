@@ -19,7 +19,7 @@ unit UConfig;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UConfig.pas,v $
- *  $Revision: 1.14 $ $Date: 2004/11/23 22:28:28 $
+ *  $Revision: 1.15 $ $Date: 2004/11/23 22:34:10 $
  *****************************************************************************}
 
 interface
@@ -96,7 +96,7 @@ type
     contrast: Integer;
     actionsArray: Array[1..99, 1..4] of String;
     totalactions: Integer;
-    uiMinFadeContrast: Cardinal;
+    iMinFadeContrast: Integer;
     function load: Boolean;
     procedure save;
     property sizeOption: Integer read P_sizeOption write setSizeOption;
@@ -112,7 +112,7 @@ uses SysUtils, Forms, INIFiles, StrUtils;
 
 constructor TConfig.Create;
 begin
-  uiMinFadeContrast := 0;
+  iMinFadeContrast := 0;
   inherited;
 end;
 
@@ -579,7 +579,7 @@ begin
   CF_contrast := initFile.ReadInteger('General Settings', 'CFContrast', 66);
   CF_brightness := initFile.ReadInteger('General Settings', 'CFBrightness',
     61);
-  uiMinFadeContrast := initFile.ReadInteger('General Settings', 'MinFadeContrast',
+  iMinFadeContrast := initFile.ReadInteger('General Settings', 'MinFadeContrast',
     0);
 
   newsRefresh := initFile.ReadInteger('General Settings', 'NewsRefresh', 120);
@@ -735,7 +735,7 @@ begin
 
   initFile.WriteInteger('General Settings', 'CFContrast', CF_contrast);
   initFile.WriteInteger('General Settings', 'CFBrightness', CF_brightness);
-  initFile.WriteInteger('General Settings', 'MinFadeContrast', uiMinFadeContrast);
+  initFile.WriteInteger('General Settings', 'MinFadeContrast', iMinFadeContrast);
 
   initFile.WriteInteger('General Settings', 'NewsRefresh', newsRefresh);
   initFile.WriteBool('General Settings', 'RandomScreens', randomScreens);
