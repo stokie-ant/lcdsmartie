@@ -18,7 +18,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/SYSTEM2.PAS,v $
- *  $Revision: 1.8 $ $Date: 2004/11/19 22:02:19 $
+ *  $Revision: 1.9 $ $Date: 2004/11/29 16:55:20 $
  *****************************************************************************}
 unit System2;
 
@@ -345,20 +345,30 @@ function TSystem.diskfreespace(lw: char): int64;
 var
   la: byte;
   lw2: char;
+  uiOldMode: Cardinal;
 begin
+  // We don't want any system dislogs poping up if a file or drive isn't found.
+  uiOldMode := SetErrorMode(SEM_NOOPENFILEERRORBOX or SEM_FAILCRITICALERRORS);
   lw2 := upcase(lw);
   la := ord(lw2)-64;
   result := diskfree(la);
+  if (result = -1) then result := 0;
+  SetErrorMode(uiOldMode);
 end;
 
 function TSystem.disktotalspace(lw: char): int64;
 var
   la: byte;
   lw2: char;
+  uiOldMode: Cardinal;
 begin
+  // We don't want any system dislogs poping up if a file or drive isn't found.
+  uiOldMode := SetErrorMode(SEM_NOOPENFILEERRORBOX or SEM_FAILCRITICALERRORS);
   lw2 := upcase(lw);
   la := ord(lw2)-64;
   result := disksize(la);
+  if (result = -1) then result := 0;
+  SetErrorMode(uiOldMode);
 end;
 
 end.

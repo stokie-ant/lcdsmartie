@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.19 $ $Date: 2004/11/28 22:06:30 $
+ *  $Revision: 1.20 $ $Date: 2004/11/29 16:55:20 $
  *****************************************************************************}
 
 
@@ -138,7 +138,7 @@ type
       STComputername, STCPUType, STCPUSpeed: String;
     STPageFree, STPageTotal: Int64;
     STMemFree, STMemTotal: Int64;
-    STHDFree, STHDTotal: Array[67..90] of Int64;
+    STHDFree, STHDTotal: Array[65..90] of Int64;
     CPUUsage: Array [1..5] of Cardinal;
     CPUUsageCount: Cardinal;
     CPUUsagePos: Cardinal;
@@ -1963,7 +1963,7 @@ procedure TData.updateMBMStats(Sender: TObject);
 //HARDDISK MOTHERBOARD MONITOR AND DISTRIBUTED STATS!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 var
   letter: Integer;
-  letter2: Array [67..90] of Integer;
+  letter2: Array [65..90] of Integer;
   x: Integer;
   fFile: textfile;
   replz, hd, mbm, counter: Integer;
@@ -2005,7 +2005,7 @@ begin
 // HD space!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   if hd = 1 then
   begin
-    for letter := 67 to 90 do letter2[letter] := 0;
+    for letter := 65 to 90 do letter2[letter] := 0;
     for z := 1 to 20 do
     begin
       for y := 1 to 4 do
@@ -2025,7 +2025,7 @@ begin
         end;
       end;
     end;
-    for letter := 67 to 90 do
+    for letter := 65 to 90 do
     begin
       try
         if letter2[letter] = 1 then
