@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.49 $ $Date: 2005/01/25 15:37:32 $
+ *  $Revision: 1.50 $ $Date: 2005/01/27 10:43:35 $
  *****************************************************************************}
 
 
@@ -129,12 +129,11 @@ type
 
   TData = Class(TObject)
   public
-    lcdSmartieUpdate: Boolean;
-    lcdSmartieUpdateText: String;
+    lcdSmartieUpdate: Boolean;    // data+main threads
+    lcdSmartieUpdateText: String; // data+main threads
     mbmactive: Boolean;
-    dllcancheck: Boolean;
-    isconnected: Boolean;
-    gotEmail: Boolean;
+    isconnected: Boolean;         // data+main threads
+    gotEmail: Boolean;            // data+main threads
     cLastKeyPressed: Char;
     procedure ScreenStart;
     procedure ScreenEnd;
@@ -142,8 +141,8 @@ type
     function change(line: String; qstattemp: Integer = 1;
       bCacheResults: Boolean = false): String;
     function CallPlugin(uiDll: Integer; iFunc: Integer;
-                    sParam1: String; sParam2:String) : String;
-    function FindPlugin(sDllName: String): Cardinal;
+                    const sParam1: String; const sParam2:String) : String;
+    function FindPlugin(const sDllName: String): Cardinal;
     procedure updateMBMStats(Sender: TObject);
     procedure UpdateHTTP;
     procedure UpdateGameStats;
@@ -152,6 +151,7 @@ type
     destructor Destroy; override;
     function CanExit: Boolean;
   private
+    localeFormat : TFormatSettings;
     cacheresult_lastFindPlugin: Cardinal;
     cache_lastFindPlugin: String;
     uiScreenStartTime: Cardinal; // time that new start refresh started (used by plugin cache code)
@@ -162,29 +162,33 @@ type
     sDllResults: array of string;
     iDllResults: Integer;
     doHTTPUpdate, doGameUpdate, doEmailUpdate: Boolean;
-    STUsername, STComputername, STCPUType, STCPUSpeed: String;
+    STUsername, STComputername, STCPUType: String;
     STPageFree, STPageTotal: Int64;
-    STMemFree, STMemTotal: Int64;
+    STMemFree, STMemTotal: Int64;          // cpu + main thread.
     STHDFree, STHDTotal: Array[65..90] of Int64;
-    CPUUsage: Array [1..5] of Cardinal;
-    CPUUsageCount: Cardinal;
-    CPUUsagePos: Cardinal;
-    STCPUUsage: Cardinal;
-    lastSpdUpdate: LongWord;
-    iUptime: Int64;
-    iLastUptime: Cardinal;
+    CPUUsage: Array [1..5] of Cardinal;   //cpu thread only
+    CPUUsageCount: Cardinal;              //cpu thread only
+    CPUUsagePos: Cardinal;                //cpu thread only
+    STCPUUsage: Cardinal;                 //cpu + main thread
+    lastSpdUpdate: LongWord;              //cpu thread only
+    STCPUSpeed: String;                   // Guarded by dataCs, cpu + main thread
+    iUptime: Int64;                       //cpu thread only
+    iLastUptime: Cardinal;                //cpu thread only
+    dataCs: TCriticalSection;  // data + main thread
+    uptimereg, uptimeregs: String;        // Guarded by dataCs, cpu + main thread
     dataThread, cpuThread: TMyThread;
-    replline,
-      screenResolution: String;
-    netadaptername: Array[0..MAXNETSTATS-1] of String;
-    iNetTotalDown, iNetTotalDownOld, iPrevSysNetTotalDown: Array[0..9] of Int64;
-    iNetTotalUp, iNetTotalUpOld, iPrevSysNetTotalUp: Array[0..9] of Int64;
+    screenResolution: String;
+    netadaptername: Array[0..MAXNETSTATS-1] of String;  // Guarded by dataCs, cpu + main thread
+    iNetTotalDown, iNetTotalUp: Array[0..9] of Int64;  // cpu + main thread
+    iNetTotalDownOld, iPrevSysNetTotalDown: Array[0..9] of Int64; // cpu thread
+    iNetTotalUpOld, iPrevSysNetTotalUp: Array[0..9] of Int64;     // cpu thread
     uiNetUnicastDown, uiNetUnicastUp, uiNetNonUnicastDown,
       uiNetNonUnicastUp,  uiNetDiscardsDown, uiNetDiscardsUp,
-      uiNetErrorsDown, uiNetErrorsUp: Array[0..9] of Cardinal;
-    dNetSpeedDownK, dNetSpeedUpK, dNetSpeedDownM, dNetSpeedUpM: Array[0..9] of double;
-    ipaddress: String;
-    // Begin MBM Stats
+      uiNetErrorsDown, uiNetErrorsUp: Array[0..9] of Cardinal; // cpu + main thread
+    dNetSpeedDownK, dNetSpeedUpK,
+      dNetSpeedDownM, dNetSpeedUpM: Array[0..9] of double;    // cpu + main thread
+    ipaddress: String;                     //Guarded by dataCs, cpu + main thread
+    // Begin MBM Stats - main thread only
     Temperature: Array [1..11] of double;
     Voltage: Array [1..11] of double;
     Fan: Array [1..11] of double;
@@ -193,27 +197,25 @@ type
     VoltName: Array[1..11] of String;
     FanName: Array[1..11] of String;
     dMbmCpuUsage: double;
-    SharedData: PSharedData;
     // End MBM Stats
-    replline2, replline1, uptimereg, uptimeregs: String;
-    qstatreg1: Array[1..20, 1..4] of String;
-    qstatreg2: Array[1..20, 1..4] of String;
-    qstatreg3: Array[1..20, 1..4] of String;
-    STHDBar: String;
-    distributedlog: String;
-    srvr: String;
+    replline2, replline1: String;
+    qstatreg1: Array[1..20, 1..4] of String;  //Guarded by dataCs,  data+main thread
+    qstatreg2: Array[1..20, 1..4] of String;  //Guarded by dataCs,  data+main thread
+    qstatreg3: Array[1..20, 1..4] of String;  //Guarded by dataCs,  data+main thread
+    qstatreg4: Array[1..20, 1..4] of String;  //Guarded by dataCs,  data+main thread
     System1: Tsystem;
-    qstatreg4: Array[1..20, 1..4] of String;
-    DoNewsUpdate: Array [1..9] of Boolean;
+    DoNewsUpdate: Array [1..9] of Boolean;  // data thread only
     newsAttempts: Array [1..9] of Byte;
-    mail: Array [0..9] of TEmail;
+    mailCs: TCriticalSection;  // Protects mail, data + main thread
+    mail: Array [0..9] of TEmail; // Guarded by mailCs, data+main thread
     setiNumResults, setiCpuTime, setiAvgCpu, setiLastResult, setiUserTime,
-      setiTotalUsers, setiRank, setiShareRank, setiMoreWU: String;
+      setiTotalUsers, setiRank, setiShareRank, setiMoreWU: String; //Guarded by dataCs, data+main threads
     foldMemSince, foldLastWU, foldActProcsWeek, foldTeam, foldScore,
-      foldRank, foldWU: String;
-    rss: Array of TRss;
-    rssEntries: Cardinal;
-    httpCs: TCriticalSection;
+      foldRank, foldWU: String;                              //Guarded by dataCs, data+main threads
+    rssCs: TCriticalSection;  // protecting rss & rssCs
+    rss: Array of TRss;    // Guarded by rssCs, data + main thread
+    rssEntries: Cardinal;  // Guarded by rssCs, data + main thread
+    httpCs: TCriticalSection;  // data + main thread
     httpCopy: PHttp;   // so we can cancel the request. Guarded by httpCs
     pop3Copy: PPop3;   // so we can cancel the request. Guarded by httpCs
     procedure updateNetworkStats;
@@ -237,9 +239,8 @@ type
     procedure ProcessPlugin(var line: String; qstattemp: Integer;
       bCacheResults: Boolean);
     procedure LoadPlugin(sDllName: String; bDotNet: Boolean = false);
+    function stripspaces(FString: String): String;
   end;
-
-function stripspaces(FString: String): String;
 
 
 
@@ -310,6 +311,8 @@ var
 begin
   inherited;
 
+  GetLocaleFormatSettings(LOCALE_SYSTEM_DEFAULT, localeFormat);
+
   status := WSAStartup(MAKEWORD(2,0), WSAData);
   if status <> 0 then
      raise Exception.Create('WSAStartup failed');
@@ -318,7 +321,6 @@ begin
   isconnected := false;
   uiTotalDlls := 0;
   lcdSmartieUpdate := False;
-  distributedlog := config.distLog;
 
   // Get CPU speed first time:
   try
@@ -333,6 +335,9 @@ begin
   doGameUpdate := True;
 
   httpCs := TCriticalSection.Create();
+  rssCs := TCriticalSection.Create();
+  mailCs := TCriticalSection.Create();
+  dataCs := TCriticalSection.Create();
 
   // Start data collection thread
   dataThread := TMyThread.Create(self.doDataThread);
@@ -420,6 +425,9 @@ begin
     dataThread.Free();
 
     if Assigned(httpCs) then httpCs.Free;
+    if Assigned(rssCs) then rssCs.Free;
+    if Assigned(mailCs) then mailCs.Free;
+    if Assigned(dataCs) then dataCs.Free;
   end;
 
   WSACleanup();
@@ -527,15 +535,15 @@ begin
     if h > 0 then
     begin
       tempstr := tempstr + IntToStr(h) +  'hrs ';
-      tempstr := tempstr + formatfloat('00', m) +  'min ';
-      tempstr := tempstr + formatfloat('00', s) +  'sec';
+      tempstr := tempstr + formatfloat('00', m, localeFormat) +  'min ';
+      tempstr := tempstr + formatfloat('00', s, localeFormat) +  'sec';
     end
     else
     begin
       if m > 0 then
       begin
         tempstr := tempstr + IntToStr(m) +  'min ';
-        tempstr := tempstr + formatfloat('00', s) +  'sec';
+        tempstr := tempstr + formatfloat('00', s, localeFormat) +  'sec';
       end
       else
       begin
@@ -558,15 +566,15 @@ begin
     if h > 0 then
     begin
       tempstr := tempstr + IntToStr(h) +  'hrs ';
-      tempstr := tempstr + formatfloat('00', m) +  'min ';
-      tempstr := tempstr + formatfloat('00', s) +  'sec';
+      tempstr := tempstr + formatfloat('00', m, localeFormat) +  'min ';
+      tempstr := tempstr + formatfloat('00', s, localeFormat) +  'sec';
     end
     else
     begin
       if m > 0 then
       begin
         tempstr := tempstr + IntToStr(m) +  'min ';
-        tempstr := tempstr + formatfloat('00', s) +  'sec';
+        tempstr := tempstr + formatfloat('00', s, localeFormat) +  'sec';
       end
       else
       begin
@@ -589,15 +597,15 @@ begin
     if h > 0 then
     begin
       tempstr := tempstr + IntToStr(h) +  ':';
-      tempstr := tempstr + formatfloat('00', m) +  ':';
-      tempstr := tempstr + formatfloat('00', s);
+      tempstr := tempstr + formatfloat('00', m, localeFormat) +  ':';
+      tempstr := tempstr + formatfloat('00', s, localeFormat);
     end
     else
     begin
       if m > 0 then
       begin
         tempstr := tempstr + IntToStr(m) +  ':';
-        tempstr := tempstr + formatfloat('00', s);
+        tempstr := tempstr + formatfloat('00', s, localeFormat);
       end
       else
       begin
@@ -620,15 +628,15 @@ begin
     if h > 0 then
     begin
       tempstr := tempstr + IntToStr(h) +  ':';
-      tempstr := tempstr + formatfloat('00', m) +  ':';
-      tempstr := tempstr + formatfloat('00', s);
+      tempstr := tempstr + formatfloat('00', m, localeFormat) +  ':';
+      tempstr := tempstr + formatfloat('00', s, localeFormat);
     end
     else
     begin
       if m > 0 then
       begin
         tempstr := tempstr + IntToStr(m) +  ':';
-        tempstr := tempstr + formatfloat('00', s);
+        tempstr := tempstr + formatfloat('00', s, localeFormat);
       end
       else
       begin
@@ -663,15 +671,15 @@ begin
     if h > 0 then
     begin
       tempstr := tempstr + IntToStr(h) +  'hrs ';
-      tempstr := tempstr + formatfloat('00', m) +  'min ';
-      tempstr := tempstr + formatfloat('00', s) +  'sec';
+      tempstr := tempstr + formatfloat('00', m, localeFormat) +  'min ';
+      tempstr := tempstr + formatfloat('00', s, localeFormat) +  'sec';
     end
     else
     begin
       if m > 0 then
       begin
         tempstr := tempstr + IntToStr(m) +  'min ';
-        tempstr := tempstr + formatfloat('00', s) +  'sec';
+        tempstr := tempstr + formatfloat('00', s, localeFormat) +  'sec';
       end
       else
       begin
@@ -693,15 +701,15 @@ begin
     if h > 0 then
     begin
       tempstr := tempstr + IntToStr(h) + ':';
-      tempstr := tempstr + formatfloat('00', m) + ':';
-      tempstr := tempstr + formatfloat('00', s);
+      tempstr := tempstr + formatfloat('00', m, localeFormat) + ':';
+      tempstr := tempstr + formatfloat('00', s, localeFormat);
     end
     else
     begin
       if m > 0 then
       begin
         tempstr := tempstr + IntToStr(m) + ':';
-        tempstr := tempstr + formatfloat('00', s);
+        tempstr := tempstr + formatfloat('00', s, localeFormat);
       end
       else
       begin
@@ -748,7 +756,12 @@ begin
     try
       RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
-      line := prefix + netadaptername[adapterNum] + postfix;
+      dataCs.Enter();
+      try
+        line := prefix + netadaptername[adapterNum] + postfix;
+      finally
+        dataCs.Leave();
+      end;
     except
       on E: Exception do line := prefix + '[NetAdapter: '
         + CleanString(E.Message) + ']' + postfix;
@@ -761,7 +774,7 @@ begin
       RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
       line := prefix + FloatToStrF(Round(iNetTotalDown[adapterNum]/1024*10)/10,
-        ffFixed, 18, 1) + postfix;
+        ffFixed, 18, 1, localeFormat) + postfix;
     except
       on E: Exception do line := prefix + '[NetDownK: '
         + CleanString(E.Message) + ']' + postfix;
@@ -774,7 +787,7 @@ begin
       RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
       line := prefix + FloatToStrF(Round(iNetTotalUp[adapterNum]/1024*10)/10,
-        ffFixed, 18, 1) + postfix;
+        ffFixed, 18, 1, localeFormat) + postfix;
     except
       on E: Exception do line := prefix + '[NetUpK: ' + CleanString(E.Message)
         + ']' + postfix;
@@ -788,7 +801,7 @@ begin
       adapterNum := StrToInt(args[1]);
       line := prefix +
          FloatToStrF(Round((iNetTotalDown[adapterNum] div 1024)/1024*10)/10,
-         ffFixed, 18, 1) + postfix;
+         ffFixed, 18, 1, localeFormat) + postfix;
     except
       on E: Exception do line := prefix + '[NetDownM: '
         + CleanString(E.Message) + ']' + postfix;
@@ -802,7 +815,7 @@ begin
       adapterNum := StrToInt(args[1]);
       line := prefix +
         FloatToStrF(Round((iNetTotalUp[adapterNum] div 1024)/1024*10)/10,
-        ffFixed, 18, 1) + postfix;
+        ffFixed, 18, 1, localeFormat) + postfix;
     except
       on E: Exception do line := prefix + '[NetUpM: '
         + CleanString(E.Message) + ']' + postfix;
@@ -816,7 +829,7 @@ begin
       adapterNum := StrToInt(args[1]);
       line := prefix +
         FloatToStrF(Round((iNetTotalDown[adapterNum] div (1024*1024))/1024*10)/10,
-        ffFixed, 18, 1) +
+        ffFixed, 18, 1, localeFormat) +
         postfix;
     except
       on E: Exception do line := prefix + '[NetDownG: '
@@ -831,7 +844,7 @@ begin
       adapterNum := StrToInt(args[1]);
       line := prefix +
         FloatToStrF(Round((iNetTotalUp[adapterNum] div (1024*1024))/1024*10)/10,
-        ffFixed, 18, 1) + postfix;
+        ffFixed, 18, 1, localeFormat) + postfix;
     except
       on E: Exception do line := prefix + '[NetUpG: ' +
         CleanString(E.Message) + ']' + postfix;
@@ -1007,7 +1020,7 @@ begin
     try
       RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
-      line := prefix + FloatToStrF(dNetSpeedDownK[adapterNum], ffFixed, 18, 1)
+      line := prefix + FloatToStrF(dNetSpeedDownK[adapterNum], ffFixed, 18, 1, localeFormat)
         + postfix;
     except
       on E: Exception do line := prefix + '[NetSpDownK: '
@@ -1021,7 +1034,7 @@ begin
     try
       RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
-      line := prefix + FloatToStrF(dNetSpeedUpK[adapterNum], ffFixed, 18, 1)
+      line := prefix + FloatToStrF(dNetSpeedUpK[adapterNum], ffFixed, 18, 1, localeFormat)
         + postfix;
     except
       on E: Exception do line := prefix + '[NetSpUpK: '
@@ -1035,7 +1048,7 @@ begin
     try
       RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
-      line := prefix + FloatToStrF(dNetSpeedDownM[adapterNum], ffFixed, 18, 1)
+      line := prefix + FloatToStrF(dNetSpeedDownM[adapterNum], ffFixed, 18, 1, localeFormat)
         + postfix;
     except
       on E: Exception do line := prefix + '[NetSpDownM: '
@@ -1049,7 +1062,7 @@ begin
     try
       RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
-      line := prefix + FloatToStrF(dNetSpeedUpM[adapterNum], ffFixed, 18, 1)
+      line := prefix + FloatToStrF(dNetSpeedUpM[adapterNum], ffFixed, 18, 1, localeFormat)
         + postfix;
     except
       on E: Exception do line := prefix + '[NetSpUpM: '
@@ -1180,11 +1193,15 @@ begin
         LoadPlugin(dlls[uiDll].sName, true);
       end;
     end;
+  end
+  else
+  begin
+    raise Exception.Create('LoadLibrary failed with ' + ErrMsg(GetLastError));
   end;
 end;
 
 
-function TData.FindPlugin(sDllName: String): Cardinal;
+function TData.FindPlugin(const sDllName: String): Cardinal;
 var
   uiDll: Cardinal;
   sLoadDllName: String;
@@ -1222,7 +1239,7 @@ begin
 end;
 
 function TData.CallPlugin(uiDll: Integer; iFunc: Integer;
-                    sParam1: String; sParam2:String) : String;
+                    const sParam1: String; const sParam2:String) : String;
 begin
   if (dlls[uiDll].hDll <> 0) then
   begin
@@ -1351,6 +1368,7 @@ var
   found: Boolean;
   iBytesToRead: Integer;
   iPos1, iPos2, iPos3: Integer;
+  STHDBar: String;
 label
   endChange;
 begin
@@ -1530,14 +1548,19 @@ begin
 
     if (pos('$Email', line) <> 0) then
     begin
-      for x := 0 to 9 do
-      begin
-        line := StringReplace(line, '$Email' + IntToStr(x),
-          IntToStr(mail[x].messages), [rfReplaceAll]);
-        line := StringReplace(line, '$EmailSub' + IntToStr(x),
-          mail[x].lastSubject, [rfReplaceAll]);
-        line := StringReplace(line, '$EmailFrom' + IntToStr(x),
-          mail[x].lastFrom, [rfReplaceAll]);
+      mailCs.Enter();
+      try
+        for x := 0 to 9 do
+        begin
+          line := StringReplace(line, '$Email' + IntToStr(x),
+            IntToStr(mail[x].messages), [rfReplaceAll]);
+          line := StringReplace(line, '$EmailSub' + IntToStr(x),
+            mail[x].lastSubject, [rfReplaceAll]);
+          line := StringReplace(line, '$EmailFrom' + IntToStr(x),
+            mail[x].lastFrom, [rfReplaceAll]);
+        end;
+      finally
+        mailCs.Leave();
       end;
     end;
 
@@ -1632,10 +1655,26 @@ begin
 
     if pos('$Winamp', line) <> 0 then line := changeWinamp(line);
 
-    line := StringReplace(line, '$UpTime', uptimereg, [rfReplaceAll]);
-    line := StringReplace(line, '$UpTims', uptimeregs, [rfReplaceAll]);
+    if (pos('$UpTim', line) <> 0) then
+    begin
+      dataCs.Enter();
+      try
+        line := StringReplace(line, '$UpTime', uptimereg, [rfReplaceAll]);
+        line := StringReplace(line, '$UpTims', uptimeregs, [rfReplaceAll]);
+      finally
+        dataCs.Leave();
+      end;
+    end;
 
-    line := StringReplace(line, '$NetIPaddress', ipaddress, [rfReplaceAll]);
+    if (pos('$NetIPaddress', line) <> 0) then
+    begin
+      dataCs.Enter();
+      try
+        line := StringReplace(line, '$NetIPaddress', ipaddress, [rfReplaceAll]);
+      finally
+        dataCs.Leave();
+      end;
+    end;
 
     line := StringReplace(line, '$Username', STUsername, [rfReplaceAll]);
     line := StringReplace(line, '$Computername', STcomputername,
@@ -1643,7 +1682,12 @@ begin
     if (pos('$CPU', line) <> 0) then
     begin
       line := StringReplace(line, '$CPUType', STCPUType, [rfReplaceAll]);
-      line := StringReplace(line, '$CPUSpeed', STCPUSpeed, [rfReplaceAll]);
+      dataCs.Enter();
+      try
+        line := StringReplace(line, '$CPUSpeed', STCPUSpeed, [rfReplaceAll]);
+      finally
+        dataCs.Leave();
+      end;
       line := StringReplace(line, '$CPUUsage%', IntToStr(STCPUUsage),
         [rfReplaceAll]);
     end;
@@ -1655,7 +1699,7 @@ begin
         line := StringReplace(line, '$Tempname' + IntToStr(x), TempName[x],
           [rfReplaceAll]);
         line := StringReplace(line, '$Temp' + IntToStr(x),
-          FloatToStr(Temperature[x]), [rfReplaceAll]);
+          FloatToStr(Temperature[x], localeFormat), [rfReplaceAll]);
       end;
     end;
     if (pos('$Fan', line) <> 0) then
@@ -1665,7 +1709,7 @@ begin
         line := StringReplace(line, '$Fanname' + IntToStr(x), Fanname[x],
           [rfReplaceAll]);
         line := StringReplace(line, '$FanS' + IntToStr(x),
-          FloatToStr(Fan[x]), [rfReplaceAll]);
+          FloatToStr(Fan[x], localeFormat), [rfReplaceAll]);
       end;
     end;
 
@@ -1676,90 +1720,123 @@ begin
         line := StringReplace(line, '$Voltname' + IntToStr(x),Voltname[x],
           [rfReplaceAll]);
         line := StringReplace(line, '$Voltage' + IntToStr(x),
-          FloatToStr(Voltage[x]), [rfReplaceAll]);
+          FloatToStr(Voltage[x], localeFormat), [rfReplaceAll]);
       end;
     end;
 
     if (pos('$Half-life', line) <> 0) then
     begin
-      line := StringReplace(line, '$Half-life1', qstatreg1[activeScreen,
-        qstattemp], [rfReplaceAll]);
-      line := StringReplace(line, '$Half-life2', qstatreg2[activeScreen,
-        qstattemp], [rfReplaceAll]);
-      line := StringReplace(line, '$Half-life3', qstatreg3[activeScreen,
-        qstattemp], [rfReplaceAll]);
-      line := StringReplace(line, '$Half-life4', qstatreg4[activeScreen,
-        qstattemp], [rfReplaceAll]);
+      dataCs.Enter();
+      try
+        line := StringReplace(line, '$Half-life1', qstatreg1[activeScreen,
+          qstattemp], [rfReplaceAll]);
+        line := StringReplace(line, '$Half-life2', qstatreg2[activeScreen,
+          qstattemp], [rfReplaceAll]);
+        line := StringReplace(line, '$Half-life3', qstatreg3[activeScreen,
+          qstattemp], [rfReplaceAll]);
+        line := StringReplace(line, '$Half-life4', qstatreg4[activeScreen,
+          qstattemp], [rfReplaceAll]);
+      finally
+        dataCs.Leave();
+      end;
     end;
 
     if (pos('$Quake', line) <> 0) then
     begin
-      line := StringReplace(line, '$QuakeII1', qstatreg1[activeScreen,
-        qstattemp], [rfReplaceAll]);
-      line := StringReplace(line, '$QuakeIII1', qstatreg1[activeScreen,
-        qstattemp], [rfReplaceAll]);
-      line := StringReplace(line, '$QuakeII2', qstatreg2[activeScreen,
-        qstattemp], [rfReplaceAll]);
-      line := StringReplace(line, '$QuakeIII2', qstatreg2[activeScreen,
-        qstattemp], [rfReplaceAll]);
-      line := StringReplace(line, '$QuakeII3', qstatreg3[activeScreen,
-        qstattemp], [rfReplaceAll]);
-      line := StringReplace(line, '$QuakeIII3', qstatreg3[activeScreen,
-        qstattemp], [rfReplaceAll]);
-      line := StringReplace(line, '$QuakeII4', qstatreg4[activeScreen,
-        qstattemp], [rfReplaceAll]);
-      line := StringReplace(line, '$QuakeIII4', qstatreg4[activeScreen,
-        qstattemp], [rfReplaceAll]);
+      dataCs.Enter();
+      try
+        line := StringReplace(line, '$QuakeII1', qstatreg1[activeScreen,
+          qstattemp], [rfReplaceAll]);
+        line := StringReplace(line, '$QuakeIII1', qstatreg1[activeScreen,
+          qstattemp], [rfReplaceAll]);
+        line := StringReplace(line, '$QuakeII2', qstatreg2[activeScreen,
+          qstattemp], [rfReplaceAll]);
+        line := StringReplace(line, '$QuakeIII2', qstatreg2[activeScreen,
+          qstattemp], [rfReplaceAll]);
+        line := StringReplace(line, '$QuakeII3', qstatreg3[activeScreen,
+          qstattemp], [rfReplaceAll]);
+        line := StringReplace(line, '$QuakeIII3', qstatreg3[activeScreen,
+          qstattemp], [rfReplaceAll]);
+        line := StringReplace(line, '$QuakeII4', qstatreg4[activeScreen,
+          qstattemp], [rfReplaceAll]);
+        line := StringReplace(line, '$QuakeIII4', qstatreg4[activeScreen,
+          qstattemp], [rfReplaceAll]);
+      finally
+        dataCs.Leave();
+      end;
     end;
 
     if (Pos('$Unreal', line) <> 0) then
     begin
-      line := StringReplace(line, '$Unreal1', qstatreg1[activeScreen,
-        qstattemp], [rfReplaceAll]);
-      line := StringReplace(line, '$Unreal2', qstatreg2[activeScreen,
-        qstattemp], [rfReplaceAll]);
-      line := StringReplace(line, '$Unreal3', qstatreg3[activeScreen,
-        qstattemp], [rfReplaceAll]);
-      line := StringReplace(line, '$Unreal4', qstatreg4[activeScreen,
-        qstattemp], [rfReplaceAll]);
+      dataCs.Enter();
+      try
+        line := StringReplace(line, '$Unreal1', qstatreg1[activeScreen,
+          qstattemp], [rfReplaceAll]);
+        line := StringReplace(line, '$Unreal2', qstatreg2[activeScreen,
+          qstattemp], [rfReplaceAll]);
+        line := StringReplace(line, '$Unreal3', qstatreg3[activeScreen,
+          qstattemp], [rfReplaceAll]);
+        line := StringReplace(line, '$Unreal4', qstatreg4[activeScreen,
+          qstattemp], [rfReplaceAll]);
+      finally
+        dataCs.Leave();
+      end;
     end;
 
-    line := StringReplace(line, '$DnetDone', replline2, [rfReplaceAll]);
-    line := StringReplace(line, '$DnetSpeed', replline1, [rfReplaceAll]);
+    if (pos('$Dnet', line) <> 0) then
+    begin
+      dataCs.Enter();
+      try
+        line := StringReplace(line, '$DnetDone', replline2, [rfReplaceAll]);
+        line := StringReplace(line, '$DnetSpeed', replline1, [rfReplaceAll]);
+      finally
+        dataCs.Leave();
+      end;
+    end;
 
     if (pos('$SETI', line) <> 0) then
     begin
-      line := StringReplace(line, '$SETIResults', setiNumResults,
-        [rfReplaceAll]);
-      line := StringReplace(line, '$SETICPUTime', setiCpuTime,
-        [rfReplaceAll]);
-      line := StringReplace(line, '$SETIAverage', setiAvgCpu,
-        [rfReplaceAll]);
-      line := StringReplace(line, '$SETILastresult', setiLastResult,
-        [rfReplaceAll]);
-      line := StringReplace(line, '$SETIusertime', setiUserTime,
-        [rfReplaceAll]);
-      line := StringReplace(line, '$SETItotalusers', setiTotalUsers,
-        [rfReplaceAll]);
-      line := StringReplace(line, '$SETIrank', setiRank, [rfReplaceAll]);
-      line := StringReplace(line, '$SETIsharingrank', setiShareRank,
-        [rfReplaceAll]);
-      line := StringReplace(line, '$SETImoreWU', setiMoreWU,
-        [rfReplaceAll]);
+      dataCs.Enter();
+      try
+        line := StringReplace(line, '$SETIResults', setiNumResults,
+          [rfReplaceAll]);
+        line := StringReplace(line, '$SETICPUTime', setiCpuTime,
+          [rfReplaceAll]);
+        line := StringReplace(line, '$SETIAverage', setiAvgCpu,
+          [rfReplaceAll]);
+        line := StringReplace(line, '$SETILastresult', setiLastResult,
+          [rfReplaceAll]);
+        line := StringReplace(line, '$SETIusertime', setiUserTime,
+          [rfReplaceAll]);
+        line := StringReplace(line, '$SETItotalusers', setiTotalUsers,
+          [rfReplaceAll]);
+        line := StringReplace(line, '$SETIrank', setiRank, [rfReplaceAll]);
+        line := StringReplace(line, '$SETIsharingrank', setiShareRank,
+          [rfReplaceAll]);
+        line := StringReplace(line, '$SETImoreWU', setiMoreWU,
+          [rfReplaceAll]);
+      finally
+        dataCs.Leave();
+      end;
     end;
 
     if (pos('$FOLD', line) <> 0) then
     begin
-      line := StringReplace(line, '$FOLDmemsince', foldMemSince,
-        [rfReplaceAll]);
-      line := StringReplace(line, '$FOLDlastwu', foldLastWU,
-        [rfReplaceAll]);
-      line := StringReplace(line, '$FOLDactproc', foldActProcsWeek,
-        [rfReplaceAll]);
-      line := StringReplace(line, '$FOLDteam', foldTeam, [rfReplaceAll]);
-      line := StringReplace(line, '$FOLDscore', foldScore, [rfReplaceAll]);
-      line := StringReplace(line, '$FOLDrank', foldRank, [rfReplaceAll]);
-      line := StringReplace(line, '$FOLDwu', foldWU, [rfReplaceAll]);
+      dataCs.Enter();
+      try
+        line := StringReplace(line, '$FOLDmemsince', foldMemSince,
+          [rfReplaceAll]);
+        line := StringReplace(line, '$FOLDlastwu', foldLastWU,
+          [rfReplaceAll]);
+        line := StringReplace(line, '$FOLDactproc', foldActProcsWeek,
+          [rfReplaceAll]);
+        line := StringReplace(line, '$FOLDteam', foldTeam, [rfReplaceAll]);
+        line := StringReplace(line, '$FOLDscore', foldScore, [rfReplaceAll]);
+        line := StringReplace(line, '$FOLDrank', foldRank, [rfReplaceAll]);
+        line := StringReplace(line, '$FOLDwu', foldWU, [rfReplaceAll]);
+      finally
+        dataCs.Leave();
+      end;
     end;
 
     while pos('$Time(', line) <> 0 do
@@ -1769,7 +1846,7 @@ begin
         if (pos(')', line2) = 0) then
           raise Exception.Create('No ending bracket');
         line2 := copy(line2, 1, pos(')', line2)-1);
-        tempst := formatdatetime(line2, now);
+        tempst := formatdatetime(line2, now, localeFormat);
         line := StringReplace(line, '$Time(' + line2 + ')', tempst, []);
       except
         on E: Exception do line := StringReplace(line, '$Time(', '[Time: '
@@ -1811,7 +1888,7 @@ begin
           iPos2 := PosEx('#', tempst, iPos1);
         until (iPos1 = 1);
 
-        line := prefix + FloatToStr(ccount) + postfix;
+        line := prefix + FloatToStr(ccount, localeFormat) + postfix;
       except
         on E: Exception do line := prefix + '[Count: '
           + CleanString(E.Message) + ']' + postfix;
@@ -1835,64 +1912,74 @@ begin
       // locate entry
       jj := 0;
       found := false;
-      while (jj < rssEntries) and (not found) do
-      begin
-        if (rss[jj].url = args[1]) then found := true
-        else Inc(jj);
-      end;
-
-
-
+      rssCs.Enter();
       try
-        if (found) and (rss[jj].items > 0) and (Cardinal(StrToInt(args[3])) <=
-          rss[jj].items) then
+        while (jj < rssEntries) and (not found) do
         begin
+          if (rss[jj].url = args[1]) then found := true
+          else Inc(jj);
+        end;
 
-          // What Rss data do they want: t=title, d=description, b=both
-          if (args[2]='t') then
+        try
+          if (found) and (rss[jj].items > 0)
+            and (Cardinal(StrToInt(args[3])) <= rss[jj].items) then
           begin
-            line := prefix + rss[jj].title[StrToInt(args[3])] + postfix;
-          end
-          else
-            if (args[2]='d') then
+
+            // What Rss data do they want: t=title, d=description, b=both
+            if (args[2]='t') then
             begin
-              line := prefix + rss[jj].desc[StrToInt(args[3])] + postfix;
+              line := prefix + rss[jj].title[StrToInt(args[3])] + postfix;
             end
             else
-              if (args[2]='b') then
+            begin
+              if (args[2]='d') then
               begin
-                line := prefix + rss[jj].whole + postfix;
+                line := prefix + rss[jj].desc[StrToInt(args[3])] + postfix;
               end
-              else line := prefix + '[Error: Rss: bad arg #2]' + postfix;
-
-        end
-        else
-          if (found) then
-          begin
-
-          // We know about the Rss entry but have no data...
-            if (copy(rss[jj].whole, 1, 6) = '[Rss: ') then
-            begin
-            // Assume an error message is in whole
-              line := prefix + rss[jj].whole + postfix;
-            end
-            else
-            begin
-              line := prefix + '[Rss: No Data]' + postfix;
+              else
+              begin
+                if (args[2]='b') then
+                begin
+                  line := prefix + rss[jj].whole + postfix;
+                end
+                else line := prefix + '[Error: Rss: bad arg #2]' + postfix;
+              end;
             end;
 
           end
           else
           begin
+            if (found) then
+            begin
 
-          // Nothing known yet - waiting for data thread...
-            line := prefix + '[Rss: Waiting for data]' + postfix;
+              // We know about the Rss entry but have no data...
+              if (copy(rss[jj].whole, 1, 6) = '[Rss: ') then
+              begin
+                // Assume an error message is in whole
+                line := prefix + rss[jj].whole + postfix;
+              end
+              else
+              begin
+                line := prefix + '[Rss: No Data]' + postfix;
+              end;
 
+            end
+            else
+            begin
+
+              // Nothing known yet - waiting for data thread...
+              line := prefix + '[Rss: Waiting for data]' + postfix;
+
+            end;
           end;
-      except
-        on E: Exception do line := prefix + '[Rss: '
-          + CleanString(E.Message) + ']' + postfix;
+        except
+          on E: Exception do line := prefix + '[Rss: '
+            + CleanString(E.Message) + ']' + postfix;
+        end;
+      finally
+        rssCs.Leave();
       end;
+
     end;
 
     while decodeArgs(line, '$Bar', maxArgs, args, prefix, postfix, numargs)
@@ -1902,8 +1989,9 @@ begin
         RequiredParameters(numargs, 3, 3);
         spacecount := strtoint(args[3])*3;
 
-        if (StrToFloat(args[2]) <> 0) then x :=
-          round(StrToFloat(args[1])*spacecount/StrToFloat(args[2]))
+        if (StrToFloat(args[2], localeFormat) <> 0) then
+          x := round(StrToFloat(args[1], localeFormat)
+                    * spacecount / StrToFloat(args[2], localeFormat))
         else x := 0;
 
         if x > spacecount then x := spacecount;
@@ -1926,7 +2014,7 @@ begin
       try
         line2 := copy(line, pos('$Flash(', line) + 7, (pos('$)$',
           line))-(pos('$Flash(', line) + 7));
-        if (doesflash) then
+        if (form1.doesflash) then
         begin
           spaceline := '';
           for h := 1 to length(line2) do
@@ -2031,6 +2119,10 @@ begin
     begin
       count := 0;
       updateNetworkStats();
+      STMemfree := system1.availPhysmemory div (1024 * 1024);
+      STMemTotal := system1.totalPhysmemory div (1024 * 1024);
+      STPageTotal := system1.totalPageFile div (1024 * 1024);
+      STPageFree := system1.AvailPageFile div (1024 * 1024);
     end;
     if (not cpuThread.Terminated) then sleep(250);
   end;
@@ -2045,7 +2137,7 @@ var
   total, x: Cardinal;
   rawcpu: Double;
   uiRemaining: Cardinal;
-
+  sTempUptime: String;
 begin
 //try
   //cpuusage!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -2082,8 +2174,14 @@ begin
   if (t - lastSpdUpdate > (ticksperseconde * 2)) then
   begin                                                     // Update every 2 s
     lastSpdUpdate := t;
+
     try
-      STCPUSpeed := IntToStr(cxCpu[0].Speed.RawSpeed.AsNumber);
+      dataCs.Enter();
+      try
+        STCPUSpeed := IntToStr(cxCpu[0].Speed.RawSpeed.AsNumber);
+      finally
+        dataCs.Leave();
+      end;
     except
       // BUGBUG: This has been reported as failing when with Range check error,
       // they reported that it only occured when they ran a slow 16 bit app.
@@ -2103,67 +2201,70 @@ begin
   m := (iUptime div ticksperminute) mod 60;
   s := (iUptime div ticksperseconde) mod 60;
 
-  uptimereg := '';
-  if (y > 0) or (uptimereg<>'') then
-    uptimereg := uptimereg + IntToStr(y) +  'yrs ';
-  if (mo > 0) or (uptimereg<>'') then
-    uptimereg := uptimereg + IntToStr(mo) +  'mts ';
-  if (d > 0) or (uptimereg<>'') then
-    uptimereg := uptimereg + IntToStr(d) +  'dys ';
-  if (h > 0) or (uptimereg<>'') then
-    uptimereg := uptimereg + IntToStr(h) +  'hrs ';
-  if (m > 0) or (uptimereg<>'') then
-    uptimereg := uptimereg + IntToStr(m) +  'min ';
-  uptimereg := uptimereg + Format('%.2d',[s]) + 'secs';
+  sTempUptime := '';
+  if (y > 0) or (sTempUptime<>'') then
+    sTempUptime := sTempUptime + IntToStr(y) +  'yrs ';
+  if (mo > 0) or (sTempUptime<>'') then
+    sTempUptime := sTempUptime + IntToStr(mo) +  'mts ';
+  if (d > 0) or (sTempUptime<>'') then
+    sTempUptime := sTempUptime + IntToStr(d) +  'dys ';
+  if (h > 0) or (sTempUptime<>'') then
+    sTempUptime := sTempUptime + IntToStr(h) +  'hrs ';
+  if (m > 0) or (sTempUptime<>'') then
+    sTempUptime := sTempUptime + IntToStr(m) +  'min ';
+  sTempUptime := sTempUptime + Format('%.2d',[s], localeFormat) + 'secs';
+  dataCs.Enter();
+  uptimereg := sTempUptime;
+  dataCs.Leave();
 
   // Create the short uptime string
   // Display the three largest units, i.e. '15d 7h 12m' or '7h 12m 2s'
-  uptimeregs := '';
+  sTempUptime := '';
   uiRemaining := 0;
-  if (y>0) and (uptimeregs='') then uiRemaining := 3;
+  if (y>0) and (sTempUptime='') then uiRemaining := 3;
   if (uiRemaining > 0) then
   begin
     Dec(uiRemaining);
-    uptimeregs := uptimeregs + IntToStr(y) +'y ';
+    sTempUptime := sTempUptime + IntToStr(y) +'y ';
   end;
 
-  if (mo>0) and (uptimeregs='') then uiRemaining := 3;
+  if (mo>0) and (sTempUptime='') then uiRemaining := 3;
   if (uiRemaining > 0) then
   begin
     Dec(uiRemaining);
-    uptimeregs := uptimeregs + IntToStr(mo) +'m ';
+    sTempUptime := sTempUptime + IntToStr(mo) +'m ';
   end;
 
-  if (d>0) and (uptimeregs='') then uiRemaining := 3;
+  if (d>0) and (sTempUptime='') then uiRemaining := 3;
   if (uiRemaining > 0) then
   begin
     Dec(uiRemaining);
-    uptimeregs := uptimeregs + IntToStr(d) +'d ';
+    sTempUptime := sTempUptime + IntToStr(d) +'d ';
   end;
 
-  if (h>0) and (uptimeregs='') then uiRemaining := 3;
+  if (h>0) and (sTempUptime='') then uiRemaining := 3;
   if (uiRemaining > 0) then
   begin
     Dec(uiRemaining);
-    uptimeregs := uptimeregs + IntToStr(h) +'h ';
+    sTempUptime := sTempUptime + IntToStr(h) +'h ';
   end;
 
-  if (m>0) and (uptimeregs='') then uiRemaining := 3;
+  if (m>0) and (sTempUptime='') then uiRemaining := 3;
   if (uiRemaining > 0) then
   begin
     Dec(uiRemaining);
-    uptimeregs := uptimeregs + IntToStr(m) +'m ';
+    sTempUptime := sTempUptime + IntToStr(m) +'m ';
   end;
 
-  if (uptimeregs='') or (uiRemaining > 0) then
+  if (sTempUptime='') or (uiRemaining > 0) then
   begin
-    uptimeregs := uptimeregs + Format('%.2d', [s]) +'s ';
+    sTempUptime := sTempUptime + Format('%.2d', [s], localeFormat) +'s ';
   end;
 
-  // remove the trailing space
-  uptimeregs := MidStr(uptimeregs, 1, Length(uptimeregs)-1);
-
-  distributedlog := config.distLog;
+  // remove the trailing space and assign to class member
+  dataCs.Enter();
+  uptimeregs := MidStr(sTempUptime, 1, Length(sTempUptime)-1);
+  dataCs.Leave();
 
 //except
 //end;
@@ -2177,6 +2278,7 @@ function TData.ReadMBM5Data : Boolean;
 var
   myHandle, B, TotalCount : Integer;
   temptemp, tempfan, tempmhz, tempvolt: Integer;
+  SharedData: PSharedData;
 begin
   myHandle := OpenFileMapping(FILE_MAP_READ, False, '$M$B$M$5$S$D$');
   if myHandle > 0 then
@@ -2264,8 +2366,13 @@ begin
 
     GetHostName(Buffer, Sizeof(Buffer));
     phoste := GetHostByName(buffer);
-    if phoste = nil then ipaddress := '127.0.0.1'
-    else ipaddress := StrPas(inet_ntoa(PInAddr(phoste^.h_addr_list^)^));
+    dataCs.Enter();
+    try
+      if phoste = nil then ipaddress := '127.0.0.1'
+      else ipaddress := StrPas(inet_ntoa(PInAddr(phoste^.h_addr_list^)^));
+    finally
+      dataCs.Leave();
+    end;
 
     Size := 0;
     if GetIfTable(nil, Size, True) <> ERROR_INSUFFICIENT_BUFFER then Exit;
@@ -2281,7 +2388,12 @@ begin
         // Ignore everything except ethernet cards
         //if MibRow.dwType <> MIB_IF_TYPE_ETHERNET then Continue;
 
-          netadaptername[I] := stripspaces(PChar(@MibRow.bDescr[0]));
+          dataCs.Enter();
+          try
+            netadaptername[I] := stripspaces(PChar(@MibRow.bDescr[0]));
+          finally
+            dataCs.Leave();
+          end;
 
           // System values have a limit of 4Gb, so keep our own values,
           // and track overflows.
@@ -2352,6 +2464,8 @@ var
   line: String;
   z, y: Integer;
   screenline: String;
+  replline: String;
+  sTemp: String;
 
 begin
 
@@ -2375,11 +2489,6 @@ begin
 
   STComputername := system1.Computername;
   STUsername := system1.Username;
-
-  STMemfree := system1.availPhysmemory div (1024 * 1024);
-  STMemTotal := system1.totalPhysmemory div (1024 * 1024);
-  STPageTotal := system1.totalPageFile div (1024 * 1024);
-  STPageFree := system1.AvailPageFile div (1024 * 1024);
 
 // HD space!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   if hd = 1 then
@@ -2480,30 +2589,47 @@ begin
 
     if copy(replline, 1, 3) = 'RC5' then
     begin
-      replline1 := copy(replline, pos('- [', replline) + 3, pos(' keys',
+      sTemp := copy(replline, pos('- [', replline) + 3, pos(' keys',
         replline)-pos('- [', replline));
-      if length(replline1) > 7 then
+      if length(sTemp) > 7 then
       begin
-        replline1 := copy(replline1, 1, pos(',', copy(replline1, 3,
-          length(replline1))) + 1);
+        sTemp := copy(sTemp, 1, pos(',', copy(sTemp, 3,
+          length(sTemp))) + 1);
       end;
+      dataCs.Enter();
+      replline1 := sTemp;
+      dataCs.Leave();
+
       replline := copy(replline, pos('completion', replline) + 30, 200);
-      replline2 := copy(replline, pos('(', replline) + 1, pos('.',
+      sTemp := copy(replline, pos('(', replline) + 1, pos('.',
         replline)-pos('(', replline)-1);
+
+      dataCs.Enter();
+      replline2 := sTemp;
+      dataCs.Leave();
     end;
 
     if copy(replline, 1, 3) = 'OGR' then
     begin
-      replline1 := copy(replline, pos('- [', replline) + 3, pos(' nodes',
+      sTemp := copy(replline, pos('- [', replline) + 3, pos(' nodes',
         replline)-pos('- [', replline));
-      if length(replline1) > 7 then
+      if length(sTemp) > 7 then
       begin
-        replline1 := copy(replline1, 1, pos(',', copy(replline1, 3,
-          length(replline1))) + 1);
+        sTemp := copy(sTemp, 1, pos(',', copy(sTemp, 3,
+          length(sTemp))) + 1);
       end;
+
+      dataCs.Enter();
+      replline1 := sTemp;
+      dataCs.Leave();
+
       replline := copy(replline, pos('remain', replline) + 8, 100);
-      replline2 := copy(replline, pos('(', replline) + 1, pos('stats',
+      sTemp := copy(replline, pos('(', replline) + 1, pos('stats',
         replline)-pos('(', replline)-3);
+
+      dataCs.Enter();
+      replline2 := sTemp;
+      dataCs.Leave();
     end;
   end;
 end;
@@ -2719,11 +2845,16 @@ begin
       StartItemNode := XMLDoc.DocumentElement.ChildNodes.FindNode('userinfo');
       ANode := StartItemNode;
 
-      setiNumResults := ANode.ChildNodes['numresults'].Text;
-      setiCpuTime := ANode.ChildNodes['cputime'].Text;
-      setiAvgCpu := ANode.ChildNodes['avecpu'].Text;
-      setiLastResult := ANode.ChildNodes['lastresulttime'].Text;
-      setiUserTime := ANode.ChildNodes['usertime'].Text;
+      dataCs.Enter();
+      try
+        setiNumResults := ANode.ChildNodes['numresults'].Text;
+        setiCpuTime := ANode.ChildNodes['cputime'].Text;
+        setiAvgCpu := ANode.ChildNodes['avecpu'].Text;
+        setiLastResult := ANode.ChildNodes['lastresulttime'].Text;
+        setiUserTime := ANode.ChildNodes['usertime'].Text;
+      finally
+        dataCs.Leave();
+      end;
       // not used: 'regdate'
 
       // not used: group info.
@@ -2731,31 +2862,42 @@ begin
       StartItemNode := XMLDoc.DocumentElement.ChildNodes.FindNode('rankinfo');
       ANode := StartItemNode;
 
-      setiTotalUsers := ANode.ChildNodes['ranktotalusers'].Text;
-      setiRank := ANode.ChildNodes['rank'].Text;
-      setiShareRank := ANode.ChildNodes['num_samerank'].Text;
-      setiMoreWU :=
-        FloatToStr(100-StrToFloat(ANode.ChildNodes['top_rankpct'].Text));
+      dataCs.Enter();
+      try
+        setiTotalUsers := ANode.ChildNodes['ranktotalusers'].Text;
+        setiRank := ANode.ChildNodes['rank'].Text;
+        setiShareRank := ANode.ChildNodes['num_samerank'].Text;
+        setiMoreWU := FloatToStr(
+          100-StrToFloat(ANode.ChildNodes['top_rankpct'].Text, localeFormat),
+          localeFormat);
+      finally
+        dataCs.Leave();
+      end;
     end;
   except
     on EExiting do raise;
     on E: Exception do
     begin
-      setiNumResults := '[Seti: ' + E.Message + ']';
-      setiCpuTime := '[Seti: ' + E.Message + ']';
-      setiAvgCpu := '[Seti: ' + E.Message + ']';
-      setiLastResult := '[Seti: ' + E.Message + ']';
-      setiUserTime := '[Seti: ' + E.Message + ']';
-      setiTotalUsers := '[Seti: ' + E.Message + ']';
-      setiRank := '[Seti: ' + E.Message + ']';
-      setiShareRank := '[Seti: ' + E.Message + ']';
-      setiMoreWU := '[Seti: ' + E.Message + ']';
+      dataCs.Enter();
+      try
+        setiNumResults := '[Seti: ' + E.Message + ']';
+        setiCpuTime := '[Seti: ' + E.Message + ']';
+        setiAvgCpu := '[Seti: ' + E.Message + ']';
+        setiLastResult := '[Seti: ' + E.Message + ']';
+        setiUserTime := '[Seti: ' + E.Message + ']';
+        setiTotalUsers := '[Seti: ' + E.Message + ']';
+        setiRank := '[Seti: ' + E.Message + ']';
+        setiShareRank := '[Seti: ' + E.Message + ']';
+        setiMoreWU := '[Seti: ' + E.Message + ']';
+      finally
+        dataCs.Leave();
+      end;
     end;
   end;
 end;
 
 
-function stripspaces(FString: String): String;
+function TData.stripspaces(FString: String): String;
 begin
   FString := StringReplace(FString, chr(10), '', [rfReplaceAll]);
   FString := StringReplace(FString, chr(13), '', [rfReplaceAll]);
@@ -2825,7 +2967,8 @@ var
   fFile2: textfile;
   z, y: Integer;
   screenline: String;
-
+  srvr: String;
+  sTemp: String;
 begin
   doGameUpdate := False;
 
@@ -2869,45 +3012,55 @@ begin
             closefile(fFile2);
           end;
 
-          if (pos('$Unreal1', screenline) <> 0) or (pos('$QuakeIII1',
-            screenline) <> 0) or (pos('$QuakeII1', screenline) <> 0) or
-            (pos('$Half-life1', screenline) <> 0) then
+          if (pos('$Unreal1', screenline) <> 0)
+            or (pos('$QuakeIII1', screenline) <> 0)
+            or (pos('$QuakeII1', screenline) <> 0)
+            or (pos('$Half-life1', screenline) <> 0) then
           begin
-            qstatreg1[z, y] := copy(templine1[2], pos(' / ', templine1[2]) +
+            sTemp := copy(templine1[2], pos(' / ', templine1[2]) +
               3, length(templine1[2]));
-            qstatreg1[z, y] := stripspaces(copy(qstatreg1[z, y], pos(' ',
-              qstatreg1[z, y]) + 1, length(qstatreg1[z, y])));
+            sTemp := stripspaces(copy(sTemp, pos(' ', sTemp) + 1, length(sTemp)));
+
+            dataCs.Enter();
+            qstatreg1[z, y] := sTemp;
+            dataCs.Leave();
           end;
 
-          if (pos('$Unreal2', screenline) <> 0) or (pos('$QuakeIII2',
-            screenline) <> 0) or (pos('$QuakeII2', screenline) <> 0) or
-            (pos('$Half-life2', screenline) <> 0) then
+          if (pos('$Unreal2', screenline) <> 0)
+            or (pos('$QuakeIII2', screenline) <> 0)
+            or (pos('$QuakeII2', screenline) <> 0)
+            or (pos('$Half-life2', screenline) <> 0) then
           begin
-            qstatreg2[z, y] := copy(templine1[2], pos(':', templine1[2]),
-              length(templine1[2]));
-            qstatreg2[z, y] := copy(qstatreg2[z, y], pos('/', qstatreg2[z, y])
-              + 4, length(qstatreg2[z, y]));
-            qstatreg2[z, y] := copy(qstatreg2[z, y], 1, pos('/', qstatreg2[z,
-              y])-5);
-            qstatreg2[z, y] := stripspaces(copy(qstatreg2[z, y], pos(' ',
-              qstatreg2[z, y]) + 1, length(qstatreg2[z, y])));
+            sTemp := copy(templine1[2], pos(':', templine1[2]), length(templine1[2]));
+            sTemp := copy(sTemp, pos('/', sTemp) + 4, length(sTemp));
+            sTemp := copy(sTemp, 1, pos('/', sTemp)-5);
+            sTemp := stripspaces(copy(sTemp, pos(' ', sTemp) + 1, length(sTemp)));
+
+            dataCs.Enter();
+            qstatreg2[z, y] := sTemp;
+            dataCs.Leave();
           end;
 
-          if (pos('$Unreal3', screenline) <> 0) or (pos('$QuakeIII3',
-            screenline) <> 0) or (pos('$QuakeII3', screenline) <> 0) or
-            (pos('$Half-life3', screenline) <> 0) then
+          if (pos('$Unreal3', screenline) <> 0)
+            or (pos('$QuakeIII3', screenline) <> 0)
+            or (pos('$QuakeII3', screenline) <> 0)
+            or (pos('$Half-life3', screenline) <> 0) then
           begin
-            qstatreg3[z, y] := stripspaces(copy(templine1[2], pos(' ',
-              templine1[2]), length(templine1[2])));
-            qstatreg3[z, y] := stripspaces(copy(qstatreg3[z, y], 1, pos('/',
-              qstatreg3[z, y]) + 3));
+            sTemp := stripspaces(copy(templine1[2], pos(' ', templine1[2]),
+                 length(templine1[2])));
+            sTemp := stripspaces(copy(sTemp, 1, pos('/', sTemp) + 3));
+
+            dataCs.Enter();
+            qstatreg3[z, y] := sTemp;
+            dataCs.Leave();
           end;
 
-          if (pos('$Unreal4', screenline) <> 0) or (pos('$QuakeIII4',
-            screenline) <> 0) or (pos('$QuakeII4', screenline) <> 0) or
-            (pos('$Half-life4', screenline) <> 0) then
+          if (pos('$Unreal4', screenline) <> 0)
+            or (pos('$QuakeIII4', screenline) <> 0)
+            or (pos('$QuakeII4', screenline) <> 0)
+            or (pos('$Half-life4', screenline) <> 0) then
           begin
-            qstatreg4[z, y] := '';
+            sTemp := '';
             for counter2 := 1 to counter-3 do
             begin
               line := stripspaces(templine1[counter2 + 2]);
@@ -2916,18 +3069,26 @@ begin
               templine4 := stripspaces(copy(line, 2, pos(' frags ',
                 line)-1));
               line := templine2 + ':' + templine4 + ',';
-              qstatreg4[z, y] := qstatreg4[z, y] + line;
+              sTemp := sTemp + line;
             end;
+            dataCs.Enter();
+            qstatreg4[z, y] := sTemp;
+            dataCs.Leave();
           end;
         end;
       except
         on EExiting do raise;
         on E: Exception do
         begin
-          qstatreg1[z, y] := '[Exception: ' + E.Message + ']';
-          qstatreg2[z, y] := '[Exception: ' + E.Message + ']';
-          qstatreg3[z, y] := '[Exception: ' + E.Message + ']';
-          qstatreg4[z, y] := '[Exception: ' + E.Message + ']';
+          dataCs.Enter();
+          try
+            qstatreg1[z, y] := '[Exception: ' + E.Message + ']';
+            qstatreg2[z, y] := '[Exception: ' + E.Message + ']';
+            qstatreg3[z, y] := '[Exception: ' + E.Message + ']';
+            qstatreg4[z, y] := '[Exception: ' + E.Message + ']';
+          finally
+            dataCs.Leave();
+          end;
         end
       end;
     end;
@@ -2948,6 +3109,7 @@ var
   myRssCount: Integer;
   updateNeeded: Boolean;
   iFound: Integer;
+  iMaxFreq: Integer;
 begin
   doHTTPUpdate := False;
 
@@ -2970,25 +3132,38 @@ begin
           for x := 0 to myRssCount-1 do
             if (rss[x].url = args[1]) then iFound := x;
 
+          iMaxFreq := 0;
+          if (numargs >= 4) then
+          begin
+            try
+              iMaxFreq := StrToInt(args[4]) * 60;
+            except
+            end;
+          end;
+
           if (iFound = -1) then
           begin
-            // not found - add details:
-            if (myRssCount + 1 >= Length(rss)) then
-              SetLength(rss, myRssCount + 10);
-            if (rss[myRssCount].url <> args[1]) then
-            begin
-              rss[myRssCount].url := args[1];
-              rss[myRssCount].whole := '';
-              rss[myRssCount].items := 0;
-            end;
+            rssCs.Enter();
 
-            rss[myRssCount].maxfreq := 0;
-            if (numargs >= 4) then
-            begin
-              try
-                rss[myRssCount].maxfreq := StrToInt(args[4]) * 60
-              except
+            try
+              // not found - add details:
+              if (myRssCount + 1 >= Length(rss)) then
+                SetLength(rss, myRssCount + 10);
+
+              if (rss[myRssCount].url <> args[1]) then
+              begin
+                rss[myRssCount].url := args[1];
+                rss[myRssCount].whole := '';
+                rss[myRssCount].items := 0;
               end;
+
+              rss[myRssCount].maxfreq := 0;
+              if (numargs >= 4) then
+              begin
+                  rss[myRssCount].maxfreq := iMaxFreq
+              end;
+            finally
+              rssCs.Leave();
             end;
 
             Inc(myRssCount);
@@ -2997,10 +3172,15 @@ begin
           begin
             // seen this one before - raise the maxfreq if this one is higher.
             if (numargs >= 4)
-              and (rss[iFound].maxfreq < Cardinal(StrToInt(args[4]) * 60)) then
+              and (rss[iFound].maxfreq < Cardinal(iMaxFreq)) then
             begin
               try
-                rss[iFound].maxfreq := StrToInt(args[4]) * 60;
+                rssCs.Enter();
+                try
+                  rss[iFound].maxfreq := iMaxFreq;
+                finally
+                  rssCs.Leave();
+                end;
               except
               end;
             end;
@@ -3013,7 +3193,13 @@ begin
         if (pos('$FOLD', screenline) <> 0) then DoNewsUpdate[9] := true;
     end;
   end;
-  rssEntries := myRssCount;
+
+  rssCs.Enter();
+  try
+    rssEntries := myRssCount;
+  finally
+    rssCs.Leave();
+  end;
   if (myRssCount > 0) then DoNewsUpdate[1] := true;
 
   updateNeeded := False;
@@ -3029,10 +3215,13 @@ procedure TData.fetchHTTPUpdates;
 var
   counter, counter2: Integer;
   versionline: String;
-  titles, descs, whole: String;
+  sAllTitles, sAllDescs, sWhole: String;
   sFilename: String;
   tempstr, tempstr2: String;
   iPos1: Integer;
+  items: Cardinal;
+  titles: Array[0..maxRssItems] of String;
+  descs: Array[0..maxRssItems] of String;
 
 begin
   if DoNewsUpdate[1] then
@@ -3046,32 +3235,47 @@ begin
         if (dataThread.Terminated) then raise EExiting.Create('');
 
         try
-          rss[counter].items := getRss(rss[counter].url, rss[counter].title,
-            rss[counter].desc, maxRssItems, rss[counter].maxfreq);
+          items := getRss(rss[counter].url, titles,
+            descs, maxRssItems, rss[counter].maxfreq);
 
-          titles := '';
-          descs := '';
-          whole := '';
-          for counter2 := 1 to rss[counter].items do
-          begin
-            titles := titles + rss[counter].title[counter2] + ' | ';
-            descs := descs + rss[counter].desc[counter2] + ' | ';
-            whole := whole + rss[counter].title[counter2] + ':' +
-              rss[counter].desc[counter2] + ' | ';
+          rssCs.Enter();
+          try
+            rss[counter].items := items;
 
-            if (dataThread.Terminated) then raise EExiting.Create('');
+            sAllTitles := '';
+            sAllDescs := '';
+            sWhole := '';
+            for counter2 := 1 to items do
+            begin
+              rss[counter].title[counter2] := titles[counter2];
+              rss[counter].desc[counter2] := descs[counter2];
+
+              sAllTitles := sAllTitles + titles[counter2] + ' | ';
+              sAllDescs := sAllDescs + descs[counter2] + ' | ';
+              sWhole := sWhole + titles[counter2] + ':' +
+                descs[counter2] + ' | ';
+
+              if (dataThread.Terminated) then raise EExiting.Create('');
+            end;
+            rss[counter].whole := sWhole;
+            rss[counter].title[0] := sAllTitles;
+            rss[counter].desc[0] := sAllDescs;
+          finally
+            rssCs.Leave();
           end;
-          rss[counter].whole := whole;
-          rss[counter].title[0] := titles;
-          rss[counter].desc[0] := descs;
         except
           on EExiting do raise;
           on E: Exception do
           begin
-            rss[counter].items := 0;
-            rss[counter].title[0] := '[Rss: ' + E.Message + ']';
-            rss[counter].desc[0] := '[Rss: ' + E.Message + ']';
-            rss[counter].whole := '[Rss: ' + E.Message + ']';
+            rssCs.Enter();
+            try
+              rss[counter].items := 0;
+              rss[counter].title[0] := '[Rss: ' + E.Message + ']';
+              rss[counter].desc[0] := '[Rss: ' + E.Message + ']';
+              rss[counter].whole := '[Rss: ' + E.Message + ']';
+            finally
+              rssCs.Leave();
+            end;
           end;
         end;
       end;
@@ -3138,36 +3342,56 @@ begin
       tempstr := StringReplace(tempstr, chr(10), '', [rfReplaceAll]);
       tempstr := StringReplace(tempstr, chr(13), '', [rfReplaceAll]);
 
+      dataCs.Enter();
       foldMemSince := '[FOLDmemsince: not supported]';
+      dataCs.Leave();
 
       tempstr2 := copy(tempstr, pos('Date of last work unit', tempstr) + 22,
         500);
       tempstr2 := copy(tempstr2, 1, pos('</TR>', tempstr2)-1);
-      foldLastWU := stripspaces(stripHtml(tempstr2));
+      tempstr2 := stripspaces(stripHtml(tempstr2));
+      dataCs.Enter();
+      foldLastWU := tempstr2;
+      dataCs.Leave();
 
       tempstr2 := copy(tempstr, pos('Total score', tempstr) + 11, 100);
       tempstr2 := copy(tempstr2, 1, pos('</TR>', tempstr2)-1);
-      foldScore := stripspaces(stripHtml(tempstr2));
+      tempstr2 := stripspaces(stripHtml(tempstr2));
+      dataCs.Enter();
+      foldScore := tempstr2;
+      dataCs.Leave();
 
       tempstr2 := copy(tempstr, pos('Overall rank (if points are combined)',
         tempstr) + 37, 100);
       tempstr2 := copy(tempstr2, 1, pos('of', tempstr2)-1);
-      foldRank := stripspaces(stripHtml(tempstr2));
+      tempstr2 := stripspaces(stripHtml(tempstr2));
+      dataCs.Enter();
+      foldRank := tempstr2;
+      dataCs.Leave();
 
       tempstr2 := copy(tempstr, pos('Active processors (within 7 days)',
         tempstr) + 33, 100);
       tempstr2 := copy(tempstr2, 1, pos('</TR>', tempstr2)-1);
-      foldActProcsWeek := stripspaces(stripHtml(tempstr2));
+      tempstr2 := stripspaces(stripHtml(tempstr2));
+      dataCs.Enter();
+      foldActProcsWeek := tempstr2;
+      dataCs.Leave();
 
       tempstr2 := copy(tempstr, pos('Team', tempstr) + 4, 500);
       tempstr2 := copy(tempstr2, 1, pos('</TR>', tempstr2)-1);
-      foldTeam := stripspaces(stripHtml(foldTeam));
+      tempstr2 := stripspaces(stripHtml(tempstr2));
+      dataCs.Enter();
+      foldTeam := tempstr2;
+      dataCs.Leave();
 
       tempstr2 := copy(tempstr, pos('WU', tempstr) + 2, 500);
       tempstr2 := copy(tempstr2, 1, pos('</TR>', tempstr2)-1);
       if (pos('(', tempstr2) <> 0) then tempstr2 := copy(tempstr2, 1, pos('(',
         tempstr2)-1);
-      foldWU := stripspaces(stripHtml(tempstr2));
+      tempstr2 := stripspaces(stripHtml(tempstr2));
+      dataCs.Enter();
+      foldWU := tempstr2;
+      dataCs.Leave();
 
     except
       on EExiting do raise;
@@ -3180,13 +3404,18 @@ begin
         end
         else
         begin
-          foldMemSince := '[fold: ' + E.Message + ']';
-          foldLastWU := '[fold: ' + E.Message + ']';
-          foldActProcsWeek := '[fold: ' + E.Message + ']';
-          foldTeam := '[fold: ' + E.Message + ']';
-          foldScore := '[fold: ' + E.Message + ']';
-          foldRank := '[fold: ' + E.Message + ']';
-          foldWU := '[fold: ' + E.Message + ']';
+          dataCs.Enter();
+          try
+            foldMemSince := '[fold: ' + E.Message + ']';
+            foldLastWU := '[fold: ' + E.Message + ']';
+            foldActProcsWeek := '[fold: ' + E.Message + ']';
+            foldTeam := '[fold: ' + E.Message + ']';
+            foldScore := '[fold: ' + E.Message + ']';
+            foldRank := '[fold: ' + E.Message + ']';
+            foldWU := '[fold: ' + E.Message + ']';
+          finally
+            dataCs.Leave();
+          end;
         end;
       end;
     end;
@@ -3202,6 +3431,7 @@ var
   pop3: TIdPOP3;
   msg: TIdMessage;
   myGotEmail: Boolean;
+  messages: Integer;
 
 begin
   doEmailUpdate := False;
@@ -3215,12 +3445,12 @@ begin
         screenline := config.screen[z][y].text;
         for x := 0 to 9 do
         begin
-          if (pos('$Email' + IntToStr(x), screenline) <> 0) then mailz[x] :=
-            1;
-          if (pos('$EmailSub' + IntToStr(x), screenline) <> 0) then mailz[x]
-            := 1;
-          if (pos('$EmailFrom' + IntToStr(x), screenline) <> 0) then mailz[x]
-            := 1;
+          if (pos('$Email' + IntToStr(x), screenline) <> 0)
+            or (pos('$EmailSub' + IntToStr(x), screenline) <> 0)
+            or (pos('$EmailFrom' + IntToStr(x), screenline) <> 0) then
+          begin
+            mailz[x] := 1;
+          end;
         end;
     end;
   end;
@@ -3251,18 +3481,23 @@ begin
             pop3.Connect(30000);   // 30 seconds
             if (dataThread.Terminated) then raise EExiting.Create('');
 
-            mail[y].messages := pop3.CheckMessages;
-
-            if (mail[y].messages > 0) and
-              (pop3.RetrieveHeader(mail[y].messages, msg)) then
-            begin
-              mail[y].lastSubject := msg.Subject;
-              mail[y].lastFrom := msg.From.Name;
-            end
-            else
-            begin
-              mail[y].lastSubject := '[none]';
-              mail[y].lastFrom := '[none]';
+            messages := pop3.CheckMessages;
+            mailCs.Enter();
+            try
+              mail[y].messages := messages;
+              if (mail[y].messages > 0) and
+                (pop3.RetrieveHeader(mail[y].messages, msg)) then
+              begin
+                mail[y].lastSubject := msg.Subject;
+                mail[y].lastFrom := msg.From.Name;
+              end
+              else
+              begin
+                mail[y].lastSubject := '[none]';
+                mail[y].lastFrom := '[none]';
+              end;
+            finally
+              mailCs.Leave();
             end;
 
           finally
@@ -3282,9 +3517,14 @@ begin
         on EExiting do raise;
         on E: Exception do
         begin
-          mail[y].messages := 0;
-          mail[y].lastSubject := '[email: ' + E.Message + ']';
-          mail[y].lastFrom := '[email: ' + E.Message + ']';
+          mailCs.Enter();
+          try
+            mail[y].messages := 0;
+            mail[y].lastSubject := '[email: ' + E.Message + ']';
+            mail[y].lastFrom := '[email: ' + E.Message + ']';
+          finally
+            mailCs.Leave();
+          end;
         end;
       end;
     end;

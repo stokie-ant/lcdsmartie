@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.51 $ $Date: 2005/01/24 16:53:18 $
+ *  $Revision: 1.52 $ $Date: 2005/01/27 10:43:35 $
  *****************************************************************************}
 
 interface
@@ -35,6 +35,15 @@ type
   TChangeShow = (NoChange, ShowMainForm, HideMainForm, TotalHideMainForm);
 
   TForm1 = class(TForm)
+    // These are used in other units:
+    Timer2: TTimer;
+    Timer7: TTimer;
+    Timer6: TTimer;
+    Timer8: TTimer;
+    Timer9: TTimer;
+    Timer12: TTimer;
+    WinampCtrl1: TWinampCtrl;
+    // These are only used by us:
     PopupMenu1: TPopupMenu;
     Showwindow1: TMenuItem;
     Close1: TMenuItem;
@@ -73,20 +82,11 @@ type
     SpeedButton1: TSpeedButton;
     Panel5: TPanel;
     Timertrans: TTimer;
-    Timer2: TTimer;
     Timer3: TTimer;
     Timer4: TTimer;
     Timer5: TTimer;
-    Timer6: TTimer;
-    Timer7: TTimer;
-    Timer8: TTimer;
-    Timer9: TTimer;
     Timer11: TTimer;
-    Timer12: TTimer;
     TimerRefresh: TTimer;
-    WinampCtrl1: TWinampCtrl;
-    procedure DoFullDisplayDraw;
-    procedure UpdateTimersState;
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure Showwindow1Click(Sender: TObject);
@@ -173,14 +173,18 @@ type
     procedure WMQueryEndSession (var M: TWMQueryEndSession); message
       WM_QUERYENDSESSION;
     procedure WMPowerBroadcast (var M: TMessage); message WM_POWERBROADCAST;
-    procedure kleur();
-    procedure ChangeScreen(scr: Integer);
-    procedure customchar(fline: String);
-    procedure ReInitLCD();
-    procedure ResetScrollPositions;
-    procedure SetupAutoStart;
     procedure CoolTrayIcon1Startup(Sender: TObject;
       var ShowMainForm: Boolean);
+  public
+    doesflash: Boolean;
+    lcd: TLCD;
+    procedure DoFullDisplayDraw;
+    procedure UpdateTimersState;
+    procedure ChangeScreen(scr: Integer);
+    procedure ResetScrollPositions;
+    procedure SetupAutoStart;
+    procedure ReInitLCD();
+    procedure customchar(fline: String);
   private
     changeShow: TChangeShow;
     screenLcd: Array[1..4] of ^TPanel;
@@ -212,11 +216,15 @@ type
     ResetContrast: Boolean;
     flashdelay: Cardinal;
     bNewScreen: Boolean;
+    frozen: Boolean;
+    backlight: Integer;
+    data: TData;
+    aantalscreensheenweer: Integer;
+    procedure kleur();
     function doguess(line: Integer): Integer;
     procedure freeze();
     procedure doGPO(const ftemp1, ftemp2: Integer);
-    function scroll(const scrollvar: String;const line, speed: Integer):
-      String;
+    function scroll(const scrollvar: String;const line, speed: Integer): String;
     procedure scrollLine(line: Byte; direction: Integer);
     procedure doInteractions;
     procedure OnMinimize(Sender: TObject);
@@ -232,19 +240,9 @@ type
   end;
 
 var
-  Lcd: TLCD;
-  doesflash: Boolean;
   Form1: TForm1;
-  backlight: Integer;
   config: TConfig;
-  Data: TData;
-  frozen: Boolean;
-  tempscreen: Integer;
-  key: char;
   activeScreen : Integer;
-  aantalscreensheenweer: Integer;
-  combobox8temp: Integer;
-
 
 implementation
 

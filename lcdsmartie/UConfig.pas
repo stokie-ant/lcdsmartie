@@ -19,10 +19,12 @@ unit UConfig;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UConfig.pas,v $
- *  $Revision: 1.32 $ $Date: 2005/01/25 23:02:58 $
+ *  $Revision: 1.33 $ $Date: 2005/01/27 10:43:35 $
  *****************************************************************************}
 
 interface
+
+Uses  SysUtils;
 
 const
   sMyConfigFileFormatVersion = '1.0';
@@ -71,6 +73,7 @@ type
     procedure saveINI;
     procedure setSizeOption(con: Integer);
   public
+    localeFormat: TFormatSettings;
     bHideOnStartup: Boolean;
     bAutoStart, bAutoStartHide: Boolean;
     testDriver: TTestDriverSettings;
@@ -126,12 +129,13 @@ type
 
 implementation
 
-uses SysUtils, Forms, INIFiles, StrUtils, Windows;
+uses Forms, INIFiles, StrUtils, Windows;
 
 constructor TConfig.Create(filename: String);
 begin
   sFileName := filename;
   iMinFadeContrast := 0;
+  GetLocaleFormatSettings(LOCALE_SYSTEM_DEFAULT, localeFormat);
   inherited Create();
 end;
 
@@ -540,7 +544,7 @@ begin
 
   for x := 1 to 20 do
   begin
-    sScreen := 'Screen ' + Format('%.2u', [x]);
+    sScreen := 'Screen ' + Format('%.2u', [x], localeFormat);
     screen[x][1].enabled := initFile.ReadBool(sScreen, 'Enabled', false);
     screen[x][1].theme := initFile.ReadInteger(sScreen, 'Theme', 1)-1;
     screen[x][1].showTime := initFile.ReadInteger(sScreen, 'ShowTime', 10);
@@ -553,7 +557,7 @@ begin
 
     for y := 1 to 4 do
     begin
-      sLine := Format('%.2u', [y]);
+      sLine := Format('%.2u', [y], localeFormat);
       screen[x][y].text := initFile.ReadString(sScreen, 'Text' + sLine, '');
       screen[x][y].noscroll := initFile.ReadBool(sScreen, 'NoScroll' + sLine,
         true);
@@ -650,7 +654,7 @@ begin
   // Pop accounts
   for x := 0 to 9 do
   begin
-    sPOPAccount := Format('%.2u', [x]);
+    sPOPAccount := Format('%.2u', [x], localeFormat);
     pop[x].server := initFile.ReadString('POP Accounts', 'Server' +
       sPOPAccount, '');
     pop[x].user := initFile.ReadString('POP Accounts', 'User' + sPOPAccount,
@@ -665,8 +669,8 @@ begin
   begin
     for y := 1 to 4 do
     begin
-      sGameLine := 'GameServer' + Format('%.2u', [x]) + '-' + Format('%.2u',
-        [y]);
+      sGameLine := 'GameServer' + Format('%.2u', [x], localeFormat) + '-'
+        + Format('%.2u', [y], localeFormat);
       gameServer[x, y] := initfile.ReadString('Game Servers', sGameLine, '');
     end;
   end;
@@ -676,13 +680,13 @@ begin
   repeat
     x := x + 1;
     actionsArray[x, 1] := initfile.ReadString('Actions', 'Action' +
-      Format('%.2u', [x]) + 'Variable', '');
+      Format('%.2u', [x], localeFormat) + 'Variable', '');
     actionsArray[x, 2] := initfile.ReadString('Actions', 'Action' +
-      Format('%.2u', [x]) + 'Condition', '0');
+      Format('%.2u', [x], localeFormat) + 'Condition', '0');
     actionsArray[x, 3] := initfile.ReadString('Actions', 'Action' +
-      Format('%.2u', [x]) + 'ConditionValue', '');
+      Format('%.2u', [x], localeFormat) + 'ConditionValue', '');
     actionsArray[x, 4] := initfile.ReadString('Actions', 'Action' +
-      Format('%.2u', [x]) + 'Action', '')
+      Format('%.2u', [x], localeFormat) + 'Action', '')
   until (actionsArray[x, 1] = '') or (x = 99);
   totalactions := x - 1;
   uiActionsLoaded := totalactions;
@@ -734,7 +738,7 @@ begin
 
   for x := 1 to 20 do
   begin
-    sScreen := 'Screen ' + Format('%.2u', [x]);
+    sScreen := 'Screen ' + Format('%.2u', [x], localeFormat);
     initfile.WriteBool(sScreen, 'Enabled', screen[x][1].enabled);
     initFile.WriteInteger(sScreen, 'Theme', screen[x][1].theme + 1);
     initFile.WriteInteger(sScreen, 'ShowTime', screen[x][1].showTime);
@@ -746,27 +750,27 @@ begin
 
     for y := 1 to 4 do
     begin
-      sLine := Format('%.2u', [y]);
+      sLine := Format('%.2u', [y], localeFormat);
       initFile.WriteString(sScreen, 'Text' + sLine, '"' + screen[x][y].text +
         '"');
     end;
 
     for y := 1 to 4 do
     begin
-      sLine := Format('%.2u', [y]);
+      sLine := Format('%.2u', [y], localeFormat);
       initFile.WriteBool(sScreen, 'NoScroll' + sLine, screen[x][y].noscroll);
     end;
 
     for y := 1 to 4 do
     begin
-      sLine := Format('%.2u', [y]);
+      sLine := Format('%.2u', [y], localeFormat);
       initFile.WriteBool(sScreen, 'ContinueNextLine' + sLine,
         screen[x][y].contNextLine);
     end;
 
     for y := 1 to 4 do
     begin
-      sLine := Format('%.2u', [y]);
+      sLine := Format('%.2u', [y], localeFormat);
       initFile.WriteBool(sScreen, 'Center' + sLine, screen[x][y].center);
     end;
 
@@ -816,7 +820,7 @@ begin
   // Pop accounts
   for x := 0 to 9 do
   begin
-    sPOPAccount := Format('%.2u', [x]);
+    sPOPAccount := Format('%.2u', [x], localeFormat);
     initFile.WriteString('POP Accounts', 'Server' + sPOPAccount,
       pop[x].server);
     initFile.WriteString('POP Accounts', 'User' + sPOPAccount, '"' +
@@ -829,8 +833,8 @@ begin
   begin
     for y := 1 to 4 do
     begin
-      sGameLine := 'GameServer' + Format('%.2u', [x]) + '-' + Format('%.2u',
-        [y]);
+      sGameLine := 'GameServer' + Format('%.2u', [x], localeFormat) + '-'
+        + Format('%.2u', [y], localeFormat);
       initfile.WriteString('Game Servers', sGameLine, gameServer[x, y]);
     end;
   end;
@@ -841,7 +845,7 @@ begin
   // stored unused actions ]
   for x := 1 to uiActionsLoaded + 2 do
   begin
-    sPrefix := 'Action' + Format('%.2u', [x]);
+    sPrefix := 'Action' + Format('%.2u', [x], localeFormat);
     if (x <= totalactions) then
     begin
       initfile.WriteString('Actions', sPrefix + 'Variable', actionsArray[x, 1]);

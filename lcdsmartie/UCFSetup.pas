@@ -19,7 +19,7 @@ unit UCFSetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UCFSetup.pas,v $
- *  $Revision: 1.5 $ $Date: 2005/01/04 20:12:50 $
+ *  $Revision: 1.6 $ $Date: 2005/01/27 10:43:35 $
  *****************************************************************************}
 
 interface
@@ -72,7 +72,7 @@ end;
 procedure TForm5.TrackBar1Change(Sender: TObject);
 begin
   if (config.isCF) then
-    Lcd.setContrast(trackbar1.Position);
+    form1.lcd.setContrast(trackbar1.Position);
   config.CF_contrast := trackbar1.Position;
 end;
 
@@ -80,7 +80,7 @@ end;
 procedure TForm5.TrackBar2Change(Sender: TObject);
 begin
   if (config.isCF) then
-    Lcd.setBrightness(trackbar2.Position);
+    form1.lcd.setBrightness(trackbar2.Position);
   config.CF_brightness := trackbar2.Position;
 end;
 

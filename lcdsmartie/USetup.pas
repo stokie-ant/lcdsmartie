@@ -19,7 +19,7 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.30 $ $Date: 2005/01/25 15:39:09 $
+ *  $Revision: 1.31 $ $Date: 2005/01/27 10:43:35 $
  *****************************************************************************}
 
 interface
@@ -257,6 +257,8 @@ type
     procedure StickyClick(Sender: TObject);
   private
     setupbutton: Integer;
+    combobox8temp: Integer;
+    tempscreen: Integer;
     Procedure FocusToInputField;
     procedure SaveScreen(scr: Integer);
     procedure LoadScreen(scr: Integer);
@@ -264,8 +266,6 @@ type
 
 var
   Form2: TForm2;
-  proxytemp2, proxytemp1: String;
-  GPOsaan: Integer;
 
 implementation
 
@@ -336,7 +336,6 @@ begin
   //tabsheet13.Enabled := false;
   tabsheet13.Enabled := true;
 
-  GPOsaan := 0;
   setupbutton := 1;
 
   edit10.text := config.gameServer[1, 1];
@@ -392,10 +391,8 @@ begin
   AutoStart.Checked := config.bAutoStart;
   AutoStartHide.Checked := config.bAutoStartHide;
 
-  proxytemp1 := config.httpProxy;
   edit3.text := config.httpProxy;
-  proxytemp2 := IntToStr(config.httpProxyPort);
-  edit4.text := proxytemp2;
+  edit4.text := IntToStr(config.httpProxyPort);
   combobox8.itemindex := 0;
   edit11.text := config.pop[1].server;
   edit12.text := config.pop[1].user;
@@ -758,8 +755,6 @@ begin
   LoadScreen(tempscreen + 1);
 
   Form1.ChangeScreen(tempscreen + 1);
-
-  aantalscreensheenweer := 1;
 end;
 
 procedure TForm2.RadioButton1Click(Sender: TObject);

@@ -79,13 +79,15 @@ type
     FNReceiveBytes: TFNReceiveBytes;
     FNSendBytes: TFNSendBytes;
     FNSetTimeouts: TFNSetTimeouts;
-
+    localeFormat: TFormatSettings;
     procedure doReadThread;               // for Usb
     procedure writeDevice(buffer: string); overload;
     procedure writeDevice(byte: Byte); overload;
     function readDevice(var chr: Char): Boolean;
     Function OpenUsbPort: Boolean;
     procedure initLCD;
+    function GetVersion(sFile: String):String;
+    procedure LogInfo(sPath: String; sDll: String);
   end;
 
 implementation
@@ -94,6 +96,7 @@ uses UMain, Dialogs, Forms, Registry;
 
 constructor TLCD_MO.CreateSerial(uiPort: Byte; baudRate: Cardinal);
 begin
+  GetLocaleFormatSettings(LOCALE_SYSTEM_DEFAULT, localeFormat);
   serial := TSerial.Create(uiPort, baudRate, [RTS_ENABLE, DTR_ENABLE]);
 
   Create();
@@ -153,7 +156,7 @@ begin
   Result := bConnected;
 end;
 
-function GetVersion(sFile: String):String;
+function TLCD_MO.GetVersion(sFile: String):String;
 var
   iVerSize: Integer;
   iLen: Cardinal;
@@ -179,14 +182,14 @@ begin
         (fixedInfo.dwFileVersionLS and not $FFFF)  shr 16, (fixedInfo.dwFileVersionLS and $FFFF),
         (fixedInfo.dwProductVersionMS and not $FFFF) shr 16, (fixedInfo.dwProductVersionMS and $FFFF),
         (fixedInfo.dwFileVersionLS and not $FFFF) shr 16, (fixedInfo.dwFileVersionLS and $FFFF)
-        ]);
+        ], localeFormat);
     end;
     FreeMem(verInfo);
   end;
   Result := sVer;
 end;
 
-procedure LogInfo(sPath: String; sDll: String);
+procedure TLCD_MO.LogInfo(sPath: String; sDll: String);
 var
   fLog: textfile;
   winDir: PChar;
@@ -217,6 +220,7 @@ var
   path: String;
   sFile: String;
 begin
+  GetLocaleFormatSettings(LOCALE_SYSTEM_DEFAULT, localeFormat);
   usbPortLib := 0;
   usbPalm := INVALID_HANDLE_VALUE;
   bUsb := True;

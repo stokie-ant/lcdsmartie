@@ -19,15 +19,15 @@ type
     destructor Destroy;  override;
   end;
 
-  Function CenterText(sLine: String; iWidth: Integer): String;
+  Function CenterText(const sLine: String; iWidth: Integer): String;
   procedure AddPluginsToPath;
-  procedure CreateShortcut(sName, FileName,Args: string; uninstall: Boolean = False);
+  procedure CreateShortcut(const sName, FileName,Args: string; uninstall: Boolean = False);
   function errMsg(uError: Cardinal): String;
-  function decodeArgs(str: String; funcName: String; maxargs: Cardinal; var
+  function decodeArgs(const str: String; const funcName: String; maxargs: Cardinal; var
       args: Array of String; var prefix: String; var postfix: String; var
       numArgs: Cardinal): Boolean;
-  function StrToIntN(sStr: String; iStart: Integer; iSize: Integer): Integer;
-  function StrToFloatN(sStr: String; iStart: Integer; iSize: Integer): double;
+  function StrToIntN(const sStr: String; iStart: Integer; iSize: Integer): Integer;
+  function StrToFloatN(const sStr: String; iStart: Integer; iSize: Integer): double;
 
 
 implementation
@@ -53,7 +53,7 @@ begin
   exited.SetEvent();
 end;
 
-function StrToIntN(sStr: String; iStart: Integer; iSize: Integer): Integer;
+function StrToIntN(const sStr: String; iStart: Integer; iSize: Integer): Integer;
 var
   num: Integer;
   i: Integer;
@@ -78,7 +78,7 @@ begin
   Result := num;
 end;
 
-function StrToFloatN(sStr: String; iStart: Integer; iSize: Integer): double;
+function StrToFloatN(const sStr: String; iStart: Integer; iSize: Integer): double;
 var
   iDecPoint: Integer;
 begin
@@ -117,7 +117,7 @@ end;
 // and returns true(found) and numArgs=3 and an array with: '20', '30', '10'
 // postfix=' jterlktjer(fsdfs)sfsdf(sdf)'
 // prefix='C:'
-function decodeArgs(str: String; funcName: String; maxargs: Cardinal;
+function decodeArgs(const str: String; const funcName: String; maxargs: Cardinal;
   var args: Array of String; var prefix: String; var postfix: String; var
   numArgs: Cardinal): Boolean;
 var
@@ -203,7 +203,7 @@ end;
 
 // ** This code was posted on http://www.experts-exchange.com by 'inthe'
 // ** which was based on code by 'madshi'.
-procedure CreateShortcut(sName, FileName,Args: string; uninstall: Boolean = False);
+procedure CreateShortcut(const sName, FileName,Args: string; uninstall: Boolean = False);
 var
   LPUnknown : IUnknown;
   pShlLnk : IShellLink;
@@ -262,7 +262,7 @@ begin
   end;
 end;
 
-Function CenterText(sLine: String; iWidth: Integer): String;
+Function CenterText(const sLine: String; iWidth: Integer): String;
 var
   sSpace: String;
 begin

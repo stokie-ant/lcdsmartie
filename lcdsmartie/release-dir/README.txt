@@ -25,11 +25,13 @@ See: http://sourceforge.net/tracker/?func=browse&group_id=122330&atid=693136
 
 Changes
 =======
-5.3 Final
+5.3 rc2
 	- Fixed bug when used with high refresh rates (scrolling and
 	  other things just stopped working!)
 	- Fixed more crashes that happened whilst in setup. 
-5.3Beta4
+	- Fixed crashes caused by some thread-unsafe code.
+	- Update Memory/page stats every second instead of 30 seconds.
+5.3 rc1/Beta4
 	- Fixed bug in Rss code - didn't work with long urls.
 	- Plugins: Call SmartieFini just before unloading plugin (if
 	  plugin has the function).

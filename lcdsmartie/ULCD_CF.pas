@@ -2,7 +2,7 @@ unit ULCD_CF;
 
 interface
 
-uses ULCD, USerial, SyncObjs;
+uses ULCD, USerial, SyncObjs, SysUtils;
 
 const
   MaxPacketLen = 23;
@@ -33,6 +33,7 @@ type
     uiMaxContrast: Cardinal;
     version: TVersion;
     csKeys: TCriticalSection;
+    localeFormat : TFormatSettings;
     function CalcCrc(buffer: PByte; uiSize: Cardinal):Word;
     function PacketCmd(cmdCode: Byte): Boolean;  overload;
     function PacketCmd(cmdCode: Byte; data: Byte): Boolean;  overload;
@@ -45,7 +46,7 @@ type
 
 implementation
 
-uses UMain, SysUtils, Forms, Windows, StrUtils;
+uses UMain, Forms, Windows, StrUtils;
 
 const
   {=packet command codes=}
@@ -161,7 +162,7 @@ begin
   uiBytesToRemove := 0;
   repeat
     // give the display a chance to do some work.
-    Sleep(1);
+    //Sleep(1);
 
     assert(uiBytesAvail < MaxPacketLen);
     uiBytesRead := serial.Read(@packet[uiBytesAvail+1], MaxPacketLen - uiBytesAvail);
@@ -273,7 +274,7 @@ begin
     begin
       sFirmware := RightStr(sVersion, (Length(sVersion)-Pos(',', sVersion)-1));
       try
-        if (StrToFloat(sFirmware) < 1.9) then
+        if (StrToFloat(sFirmware, localeFormat) < 1.9) then
           version := Old633;
       except
       end;
@@ -290,6 +291,7 @@ end;
 constructor TLCD_CF.CreateSerial(uiPort: Cardinal; baudRate: Cardinal);
 begin
   csKeys := TCriticalSection.Create;
+  GetLocaleFormatSettings(LOCALE_SYSTEM_DEFAULT, localeFormat);
 
   serial := TSerial.Create(uiPort, baudRate, [RTS_ENABLE, DTR_ENABLE]);
 
