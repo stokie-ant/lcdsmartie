@@ -33,6 +33,7 @@ Changes
 	  this defines the lowest point of the fade. LCDs often go blank
 	  long before a contrast of 0 is reached and the fade can appear to
 	  be doing nothing.
+	- Support more USB Palms - needs PalmOrb 1.1a2 or above.
 5.3Alpha2
 	- Fixed 'Unable to locate the "Processor" performance object'
 	  exception. [Also added FAQ entry for problem.]
