@@ -65,9 +65,9 @@ Graph::BarGraph(unsigned int lineNum, string& outbuf)
     unsigned int size = cpuload->GetSize();
 
 	if (lineNum > height)
-		throw "[lineNum too high]";
+		throw string("[lineNum too high]");
 	if (lineNum < 1)
-		throw "[lineNum too low]";
+		throw string("[lineNum too low]");
     // ====== Fetch line ===========
     
     vector<unsigned int> values;
@@ -89,7 +89,7 @@ Graph::BarGraph(unsigned int lineNum, string& outbuf)
 	if (barFlags & TINY)
 	{ 
 		if ((direction == LEFT) || (direction == RIGHT))
-			throw "[Tiny: L/R direction not supported]";
+			throw string("[Tiny: L/R direction not supported]");
 		GetTinyGraph(outbuf, values);
 	}
 	else
@@ -110,7 +110,7 @@ Graph::BarGraph(unsigned int lineNum, string& outbuf)
 			if (sizeof(fonts)/sizeof(fonts[0]) > barStyle)
 				outbuf = fonts[barStyle][direction]; 
 			else
-				throw "[perf: no such barstyle]";
+				throw string("[perf: no such barstyle]");
 		}
 		else
 			outbuf = "";
@@ -120,7 +120,7 @@ Graph::BarGraph(unsigned int lineNum, string& outbuf)
 		assert(barStyle == 0);
    
 	if (sizeof(fontmap)/sizeof(fontmap[0]) <= barStyle)
-		throw "[perf: bad font map]";
+		throw string("[perf: bad font map]");
 
 	vector<unsigned int>::iterator p;
 	for (p=values.begin(); p != values.end(); p++)

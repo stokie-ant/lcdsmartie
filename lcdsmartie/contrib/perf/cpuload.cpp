@@ -29,12 +29,45 @@
 #include <cstdlib>
 #include <process.h>
 #include "assert.h"
+#include "PDHMsg.h"
 
 #undef PdhOpenQuery   //       PdhOpenQueryA or PdhOpenQueryW
 extern "C" long __stdcall 
 PdhOpenQuery (LPCSTR  szD, DWORD  dw, HQUERY  *phQ );
 
 using namespace std;
+
+string CpuLoad::errMsg(DWORD errCode)
+{
+	LPVOID buf;
+	string sError;
+
+	if (errCode != 0)
+	{
+		char sErrCode[100];
+
+		if (FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM
+			| FORMAT_MESSAGE_FROM_HMODULE,
+			GetModuleHandle( TEXT("PDH.DLL") ), errCode,
+			MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&buf, 0, 0 ) == 0)
+			buf = 0;
+
+		itoa(errCode, sErrCode, 16);
+		if (buf != 0)
+		{
+			sError = "#" + string(sErrCode) + ": " + string((LPTSTR)buf);
+			LocalFree(buf);
+		}
+		else
+		{
+			sError = "#" + string(sErrCode);
+		}
+	}
+	else
+		sError = "#0"; // don't put "operation completed successfully!" It's too confusing!
+
+	return sError;
+}
 
 unsigned int WINAPI 
 CpuLoad::MyThreadProc( LPVOID pParam )
@@ -63,7 +96,7 @@ CpuLoad::Collector()
           status = PdhCollectQueryData(query);
           if (status !=  ERROR_SUCCESS)
 		  {
-              //throw "[PdhCollectQueryData failed]";
+              //throw string("[PdhCollectQueryData failed]");
 		  } else {    
 			status = PdhGetFormattedCounterValue(*counter, 
 				  PDH_FMT_LONG | PDH_FMT_NOSCALE | PDH_FMT_NOCAP100,
@@ -71,11 +104,11 @@ CpuLoad::Collector()
 				&value);
 			if (status !=  ERROR_SUCCESS)
 			{
-				//throw "[PdhGetFormattedCounterValue failed]";
+				//throw string("[PdhGetFormattedCounterValue failed]");
 			} else if ((value.CStatus != PDH_CSTATUS_NEW_DATA) &&
 				(value.CStatus != PDH_CSTATUS_VALID_DATA))
 			{
-				//throw "[Invalid data]";
+				//throw string("[Invalid data]");
 			} else  {
 				Lock cs(dataCS);
 	          
@@ -97,15 +130,15 @@ CpuLoad::CpuLoad(int dataitems, int sampleTime, string& counterName)
     
     status = PdhOpenQuery(NULL, 0, &query);
     if (status !=  ERROR_SUCCESS)
-       throw "[PdhOpenQuery failed]";
+       throw string("[PdhOpenQuery failed]");
         
 	counter = (HCOUNTER *)GlobalAlloc(GPTR, sizeof(HCOUNTER));
 	if (counter == NULL)
-		throw "[No Memory]";
+		throw string("[No Memory]");
 
     status = PdhAddCounter(query, counterName.c_str(), 0, counter);
     if (status !=  ERROR_SUCCESS)
-       throw "[Bad Counter]";
+       throw string("[Bad Counter" + errMsg(status) + "]");
 
 	// The following calls are just to check that everything is going to work
 	// in the collector thread...
@@ -119,11 +152,11 @@ CpuLoad::CpuLoad(int dataitems, int sampleTime, string& counterName)
           NULL,
           &value);
     if (status !=  ERROR_SUCCESS)
-        throw "[Bad counter]";
+		throw string("[Bad counter: " + errMsg(status) + "]");
 
     if ((value.CStatus != PDH_CSTATUS_NEW_DATA) &&
          (value.CStatus != PDH_CSTATUS_VALID_DATA))
-          throw "[Invalid data]";
+          throw string("[Invalid data]");
           
 
     InitializeCriticalSection(&dataCS);
@@ -160,7 +193,7 @@ CpuLoad::~CpuLoad()
 	 status = PdhCloseQuery(query);
      if (status !=  ERROR_SUCCESS) 
 	 {	 // can fail with a timeout.
-	 	throw "PdhCloseQuery failed";   
+	 	throw string("PdhCloseQuery failed");   
 	 }
 	 else if (counter != NULL)
 	 {

@@ -44,6 +44,7 @@ class CpuLoad
            PDH_HQUERY query;
            PDH_HCOUNTER *counter;
            static unsigned int WINAPI MyThreadProc( LPVOID pParam );
+		   std::string errMsg(DWORD errCode);
            void Collector();
            HANDLE thread;
            bool exiting;

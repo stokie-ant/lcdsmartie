@@ -277,7 +277,11 @@ __stdcall  function1(const char *param1, const char *param2)
         
 	} catch (char *e) {
 		outbuf = e;
-	}
+	} catch (string s) {
+		outbuf = s;
+	} catch(...) {
+        outbuf = "Exception";
+    }
 
 	return const_cast<char *>(outbuf.c_str());
 }
@@ -313,6 +317,8 @@ __stdcall  function2(const char *graphName, const char *lineNum)
         
 	} catch (char *e) {
 		outbuf = e;
+	} catch (string s) {
+		outbuf = s;
 	} catch(...) {
         outbuf = "Exception";
     }
@@ -346,7 +352,11 @@ __stdcall  function4(const char *param1, const char *param2)
 		outbuf = c;
 	} catch (char *e) {
 		outbuf = e;
-	}
+	} catch (string s) {
+		outbuf = s;
+	} catch(...) {
+        outbuf = "Exception";
+    }
 
 	return const_cast<char *>(outbuf.c_str());
 }
