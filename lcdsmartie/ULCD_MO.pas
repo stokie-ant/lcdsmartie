@@ -37,13 +37,15 @@ type
   private
     bConnected: Boolean;
     serial: PTVACOMM;
-    bUsb: Boolean; input, output: Cardinal; // for Usb
-    eStopReadThread: THandle;            // for Usb
-    csRead: TCriticalSection;           // for Usb
-    readThread: TMyThread;              // for Usb
+    bUsb: Boolean;                        // for Usb
+    bUsbReadSupport: Boolean;             // for Usb
+    input, output: Cardinal;              // for Usb
+    eStopReadThread: THandle;             // for Usb
+    csRead: TCriticalSection;             // for Usb
+    readThread: TMyThread;                // for Usb
     readBuffer: array [0..readBufferSize-1] of Byte; // for Usb
-    uInPos, uOutPos: Cardinal;          // for Usb
-    procedure doReadThread;             // for Usb
+    uInPos, uOutPos: Cardinal;            // for Usb
+    procedure doReadThread;               // for Usb
     procedure writeDevice(str: String); overload;
     procedure writeDevice(byte: Byte); overload;
     function readDevice(var chr: Char): Boolean;
@@ -93,36 +95,79 @@ constructor TLCD_MO.CreateUsb(device: String);
 var
   symName: String;
 begin
+  eStopReadThread := INVALID_HANDLE_VALUE;
+  input := INVALID_HANDLE_VALUE;
+  output := INVALID_HANDLE_VALUE;
+  bUsbReadSupport := False;
   bUsb := True;
 
   symName := StringReplace(device, '\??\', '\\.\', []);
   //'\\.\USB#Vid_054c&Pid_0066#6&673a0bd&0&4#{a5dcbf10-6530-11d2-901f-00c04fb951ed}';
 
-  input := CreateFile (PChar(symName + '\PIPE02'), GENERIC_READ,
-    FILE_SHARE_READ, nil, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, 0);
-  if (input = INVALID_HANDLE_VALUE) then
-    raise exception.Create('Failed to open USB Palm for reading: '
-        + errMsg(GetLastError));
 
-  output := CreateFile (PChar(symName + '\PIPE03'), GENERIC_WRITE,
+  // So far we have found two different kinds of Palms:
+  //   old usb handspring/visor (pre-PalmOS 4.0) and
+  //   usb palms with PalmOS 4.0 and later.
+  // These two use different device files.
+
+  // This file works on both types of usb palm:
+  output := CreateFile (PChar(symName + '\PIPE01'), GENERIC_WRITE,
     FILE_SHARE_WRITE, nil, OPEN_EXISTING, 0, 0);
-  if (output = INVALID_HANDLE_VALUE) then
-    raise exception.Create('Failed to open USB Palm for writing: '
-        + errMsg(GetLastError));
+
+  if (output <> INVALID_HANDLE_VALUE) then
+  begin
+    input := CreateFile (PChar(symName + '\PIPE00'), GENERIC_READ,
+      FILE_SHARE_READ, nil, OPEN_EXISTING, 0, 0);
+    if (input = INVALID_HANDLE_VALUE) then
+      bUsbReadSupport := False
+    else
+      bUsbReadSupport := True;
+  end
+  else
+  begin
+    // This code only works for the newer usb palms:
+    // DON'T THINK THIS CODE IS NEEDED ANY MORE!
+    output := CreateFile (PChar(symName + '\PIPE03'), GENERIC_WRITE,
+      FILE_SHARE_WRITE, nil, OPEN_EXISTING, 0, 0);
+    if (output = INVALID_HANDLE_VALUE) then
+    begin
+      if (GetLastError = ERROR_PATH_NOT_FOUND) then
+        raise exception.Create('Failed to open USB Palm for writing: Please '
+          + 'ensure that ' + #10 + #13 + 'PalmOrb is running on your Palm.')
+      else
+        raise exception.Create('Failed to open USB Palm for writing: '
+          + errMsg(GetLastError));
+
+    end;
+
+    input := CreateFile (PChar(symName + '\PIPE02'), GENERIC_READ,
+      FILE_SHARE_READ, nil, OPEN_EXISTING, 0, 0);
+    if (input = INVALID_HANDLE_VALUE) then
+      raise exception.Create('Failed to open USB Palm for reading: '
+          + errMsg(GetLastError));
+    bUsbReadSupport := True;
+  end;
+
+
 
   // Do the standard setup now before creating the read thead.
   // The standard setup writes to the device, and so will detect any problems
   // communicating with it.
   Create;
 
+
   // CriticalSection to protect read buffer
   csRead := TCriticalSection.Create;
-  // event to wait up read Thread so we can exit it.
-  eStopReadThread := CreateEvent(nil, True, False, nil);
 
-  // read thread
-  readThread:= TMyThread.Create(self.doReadThread);
-  readThread.Resume;
+  if (bUsbReadSupport) then
+  begin
+    // event to wait up read Thread so we can exit it.
+    eStopReadThread := CreateEvent(nil, True, False, nil);
+
+    // start read thread
+    readThread:= TMyThread.Create(self.doReadThread);
+    readThread.Resume;
+  end;
 end;
 
 constructor TLCD_MO.Create;
@@ -169,6 +214,7 @@ begin
 
   if (bConnected) then
   begin
+    bConnected := False;
     setbacklight(false);
 
     for g := 1 to 8 do
@@ -182,17 +228,30 @@ begin
 
   if (bUsb) then
   begin
-    if Assigned(readThread) then begin
-      SetEvent(eStopReadThread);
+    if bUsbReadSupport then
+    begin
 
-      readThread.Terminate;
-      readThread.WaitFor;
-      readThread.Destroy;
+      if Assigned(readThread) then
+      begin
+        if (eStopReadThread <> INVALID_HANDLE_VALUE) then SetEvent(eStopReadThread);
 
-      CloseHandle(output);
-      CloseHandle(input);
-      CloseHandle(eStopReadThread);
+        // This is ugly but the palm driver doesn't seem to support cancelling,
+        // WaitFor..., or any other means we can use to avoid blocking on a read
+        // request.
+        // So instead we send the palm a command that causes it to send a byte.
+        // (we're asking for it's version).
+        writeDevice(#254+#54);
+
+        readThread.Terminate;
+        readThread.WaitFor;
+        readThread.Destroy;
+      end;
+
+      if (input <> INVALID_HANDLE_VALUE) then CloseHandle(input);
+      if (eStopReadThread <> INVALID_HANDLE_VALUE) then CloseHandle(eStopReadThread);
+
     end;
+    if (output <> INVALID_HANDLE_VALUE) then CloseHandle(output);
     if Assigned(csRead) then csRead.Free;
   end
   else
@@ -413,51 +472,37 @@ end;
 
 procedure TLCD_MO.doReadThread;
 var
-  bytesRead, bytesWritten: Cardinal;
-  buffer: Array [1..2] of Byte;
-  overlap: OVERLAPPED;
-  event: THandle;
+  bytesRead: Cardinal;
+  buffer: Byte;
   handles: TWOHandleArray;
   res: DWORD;
 
 begin
-  event := CreateEvent(nil, True, False, nil);
-
   handles[0] := eStopReadThread;
-  handles[1] := event;
+  handles[1] := input;
 
   try
-    While (not readThread.Terminated) do
+    While (bConnected) and (not readThread.Terminated) do
     begin
-      overlap.Offset := 0;
-      overlap.OffsetHigh := 0;
-      overlap.hEvent := event;
-
       bytesRead := 0;
-      if (not ReadFile(input, buffer[1], 1, bytesRead, @overlap)) then
+      res := WaitForMultipleObjects(2, @handles, False, INFINITE);
+
+      if (res = WAIT_OBJECT_0)
+        or (readThread.Terminated)
+        or (not bConnected) then Exit
+      else if (res = WAIT_OBJECT_0+1) then
       begin
-        if (GetLastError = ERROR_IO_PENDING) then
+        // There's something to read - sadly this doesn't work with the Palm
+        // driver - the WaitFor... doesn't block and the input handle is always
+        // signalled.
+        if (not ReadFile(input, buffer, 1, bytesRead, nil)) then
         begin
-          // We will wait for the read to finish or until we have to exit.
-          res := WaitForMultipleObjects(2, @handles, False, INFINITE);
-
-          if (res = WAIT_OBJECT_0) or (readThread.Terminated) then Exit
-          else if (res = WAIT_OBJECT_0+1) then
-          begin
-            // The read has finished.
-            if not GetOverlappedResult(input, overlap, bytesRead, False) then
-              raise Exception.create('GetOverlappedResult failed: '+errMsg(GetLastError));
-          end
-          else
-          begin
-            raise Exception.create('Unexpected return from WaitForMultipleObjects: ' + errMsg(res));
-          end;
-
-        end
-        else
-        begin
-            raise Exception.create('Reading USB Palm failed: '+errMsg(GetLastError));
+          raise Exception.create('Reading USB Palm failed: '+errMsg(GetLastError));
         end;
+      end
+      else
+      begin
+        raise Exception.create('Unexpected return from WaitForMultipleObjects: ' + errMsg(res));
       end;
 
       if (bytesRead>0) then
@@ -467,7 +512,7 @@ begin
         try
           if (((uInPos+1) mod ReadBufferSize) = uOutPos) then
             raise Exception.Create('Read buffer is full');
-          readBuffer[uInPos] := buffer[1];
+          readBuffer[uInPos] := buffer;
           Inc(uInPos);
           if (uInPos >= ReadBufferSize) then uInPos := 0;
         finally
@@ -483,17 +528,7 @@ begin
       if (bytesRead<=0) then Sleep(10);
     end;
   finally
-
-    // This is ugly but all other attempts to cancel the outstanding read request
-    // failed - I'm assuming the Palm USB driver doesn't support cancelling.
-    // So instead we send the palm a command that causes it to send a byte.
-    // (we're asking for it's version).
-    buffer[1]:=254;
-    buffer[2]:=54;
-    WriteFile(output, buffer[1], 2, bytesWritten, nil);
-
-    CancelIO(input);
-    CloseHandle(event);
+    //CancelIO(input);
   end;
 end;
 
