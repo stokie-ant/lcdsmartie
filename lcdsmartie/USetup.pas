@@ -19,7 +19,7 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.27 $ $Date: 2005/01/07 15:19:56 $
+ *  $Revision: 1.28 $ $Date: 2005/01/09 23:24:47 $
  *****************************************************************************}
 
 interface
@@ -54,7 +54,6 @@ type
     Label11: TLabel;
     Label12: TLabel;
     Label13: TLabel;
-    Label14: TLabel;
     Label15: TLabel;
     Label16: TLabel;
     SpeedButton1: TSpeedButton;
@@ -70,19 +69,12 @@ type
     Label37: TLabel;
     Label38: TLabel;
     SpinEdit6: TSpinEdit;
-    Label3: TLabel;
-    Label19: TLabel;
-    Label20: TLabel;
-    Label21: TLabel;
-    Label22: TLabel;
     Label35: TLabel;
-    Label39: TLabel;
     Label40: TLabel;
     TabSheet8: TTabSheet;
     ListBox3: TListBox;
     Edit1: TEdit;
     Label41: TLabel;
-    Label49: TLabel;
     TabSheet4: TTabSheet;
     Label31: TLabel;
     Label32: TLabel;
@@ -142,13 +134,11 @@ type
     SpinEdit7: TSpinEdit;
     GroupBox3: TGroupBox;
     Label1: TLabel;
-    Label2: TLabel;
     Label7: TLabel;
     Label8: TLabel;
     Edit3: TEdit;
     Edit4: TEdit;
     SpinEdit1: TSpinEdit;
-    ComboBox2: TComboBox;
     GroupBox2: TGroupBox;
     Label9: TLabel;
     Label10: TLabel;
@@ -189,7 +179,6 @@ type
     Label57: TLabel;
     Edit19: TEdit;
     Label6: TLabel;
-    ComboBox1: TComboBox;
     CheckBox14: TCheckBox;
     CheckBox2: TCheckBox;
     Button10: TButton;
@@ -207,6 +196,9 @@ type
     AutoStartHide: TRadioButton;
     GroupBox8: TGroupBox;
     HideOnStartup: TCheckBox;
+    Label2: TLabel;
+    ComboBox1: TComboBox;
+    ComboBox2: TComboBox;
     procedure Button2Click(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure ComboBox2Change(Sender: TObject);
