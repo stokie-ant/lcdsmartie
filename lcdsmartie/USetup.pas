@@ -19,7 +19,7 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.4 $ $Date: 2004/11/16 19:44:33 $
+ *  $Revision: 1.5 $ $Date: 2004/11/17 14:33:59 $
  *****************************************************************************}
 
 interface
@@ -1624,14 +1624,14 @@ end;
 procedure TForm2.ComboBox8Change(Sender: TObject);
 
 begin
-  config.pop[combobox8temp+1].server:= edit11.text;
-  config.pop[combobox8temp+1].user:= edit12.text;
-  config.pop[combobox8temp+1].pword:= edit13.text;
+  config.pop[(combobox8temp+1) mod 10].server:= edit11.text;
+  config.pop[(combobox8temp+1) mod 10].user:= edit12.text;
+  config.pop[(combobox8temp+1) mod 10].pword:= edit13.text;
 
   combobox8temp:=combobox8.itemindex;
-  edit11.text:=config.pop[combobox8temp+1].server;
-  edit12.text:=config.pop[combobox8temp+1].user;
-  edit13.text:=config.pop[combobox8temp+1].pword;
+  edit11.text:=config.pop[(combobox8temp+1) mod 10].server;
+  edit12.text:=config.pop[(combobox8temp+1) mod 10].user;
+  edit13.text:=config.pop[(combobox8temp+1) mod 10].pword;
 end;
 
 procedure TForm2.CheckBox7Click(Sender: TObject);
@@ -2010,9 +2010,9 @@ begin
     config.isUsbPalm:=False;
   end;
   config.baudrate:=combobox5.itemindex;
-  config.pop[combobox8.itemindex+1].server:=edit11.text;
-  config.pop[combobox8.itemindex+1].user:=edit12.text;
-  config.pop[combobox8.itemindex+1].pword:=edit13.text;
+  config.pop[(combobox8.itemindex+1) mod 10].server:=edit11.text;
+  config.pop[(combobox8.itemindex+1) mod 10].user:=edit12.text;
+  config.pop[(combobox8.itemindex+1) mod 10].pword:=edit13.text;
 
   config.isHD:=radiobutton1.checked;
   config.isMO:=radiobutton2.checked;
