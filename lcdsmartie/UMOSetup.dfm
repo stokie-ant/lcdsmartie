@@ -94,5 +94,6 @@ object Form3: TForm3
     Height = 17
     Caption = '202-USB MX3 connected'
     TabOrder = 6
+    Visible = False
   end
 end
