@@ -22,7 +22,7 @@ Changes
 	- Fixed screen timings, esp. when using GotoScreen action.
 	- Fixed bug: only one $Chr was processed per a line.
 	- Slowed down flashing.
-	- Added an xmas screen.
+	- Added a holiday screen.
 	- Made demo screen more friendly to slow or 1 line displays.
 	- Added a timing multiplier option for HD44780s, some were failing as
 	 delays were too short.
