@@ -39,6 +39,7 @@ Changes
 	- Fixed bug in Rss code - didn't work with long urls.
 	- Plugins: Call SmartieFini just before unloading plugin (if
 	  plugin has the function).
+	- Process commands even if the screen is not enabled.
 5.3Beta3
 	- Removed the need to restart smartie when some settings are changed.
 	- Added options for auto starting with windows and hiding on startup.

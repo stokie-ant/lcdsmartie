@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.44 $ $Date: 2005/01/16 19:16:38 $
+ *  $Revision: 1.45 $ $Date: 2005/01/18 13:38:30 $
  *****************************************************************************}
 
 
@@ -2155,8 +2155,7 @@ begin
   begin
     for y := 1 to 4 do
     begin
-      if (config.screen[z][y].enabled) and (pos('$Net',
-        config.screen[z][y].text) <> 0) then network := 1;
+      if (pos('$Net', config.screen[z][y].text) <> 0) then network := 1;
     end;
   end;
 
@@ -2264,16 +2263,13 @@ begin
   begin
     for y := 1 to 4 do
     begin
-      if (config.screen[z][y].enabled) then
-      begin
-        screenline := config.screen[z][y].text;
-        if (pos('$Fan', screenline) <> 0) then mbm := 1;
-        if (pos('$Volt', screenline) <> 0) then mbm := 1;
-        if (pos('$Temp', screenline) <> 0) then mbm := 1;
-        if (pos('$CPUUsage', screenline) <> 0) then mbm := 1; // used as backup.
-        if (pos('$HD', screenline) <> 0) then hd := 1;
-        if (pos('$Dnet', screenline) <> 0) then replz := 1;
-      end;
+      screenline := config.screen[z][y].text;
+      if (pos('$Fan', screenline) <> 0) then mbm := 1;
+      if (pos('$Volt', screenline) <> 0) then mbm := 1;
+      if (pos('$Temp', screenline) <> 0) then mbm := 1;
+      if (pos('$CPUUsage', screenline) <> 0) then mbm := 1; // used as backup.
+      if (pos('$HD', screenline) <> 0) then hd := 1;
+      if (pos('$Dnet', screenline) <> 0) then replz := 1;
     end;
   end;
 
@@ -2739,9 +2735,10 @@ begin
     begin
       try
         screenline := config.screen[z][y].text;
-        if (config.screen[z][y].enabled) and ((pos('$Unreal', screenline) <>
-          0) or (pos('$QuakeIII', screenline) <> 0) or (pos('$QuakeII',
-          screenline) <> 0) or (pos('$Half-life', screenline) <> 0)) then
+        if ((pos('$Unreal', screenline) <> 0)
+          or (pos('$QuakeIII', screenline) <> 0)
+          or (pos('$QuakeII', screenline) <> 0)
+          or (pos('$Half-life', screenline) <> 0)) then
         begin
 
           if (dataThread.Terminated) then raise EExiting.Create('');
@@ -2864,8 +2861,6 @@ begin
   begin
     for y := 1 to 4 do
     begin
-      if (config.screen[z][y].enabled) then
-      begin
         screenline := config.screen[z][y].text;
         while decodeArgs(screenline, '$Rss', maxArgs, args, prefix, postfix,
           numargs) do
@@ -2916,7 +2911,6 @@ begin
         end;
         if (pos('$SETI', screenline) <> 0) then DoNewsUpdate[7] := true;
         if (pos('$FOLD', screenline) <> 0) then DoNewsUpdate[9] := true;
-      end;
     end;
   end;
   rssEntries := myRssCount;
@@ -3110,8 +3104,6 @@ begin
   begin
     for y := 1 to 4 do
     begin
-      if (config.screen[z][y].enabled) then
-      begin
         screenline := config.screen[z][y].text;
         for x := 0 to 9 do
         begin
@@ -3122,7 +3114,6 @@ begin
           if (pos('$EmailFrom' + IntToStr(x), screenline) <> 0) then mailz[x]
             := 1;
         end;
-      end;
     end;
   end;
 
