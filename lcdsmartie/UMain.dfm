@@ -552,24 +552,11 @@ object Form1: TForm1
     Left = 136
     Top = 128
   end
-  object Timer10: TTimer
-    Enabled = False
-    OnTimer = Timer10Timer
-    Left = 160
-    Top = 128
-  end
   object Timer11: TTimer
     Enabled = False
     Interval = 5000
     OnTimer = Timer11Timer
     Left = 184
-    Top = 128
-  end
-  object Timer13: TTimer
-    Enabled = False
-    Interval = 50
-    OnTimer = Timer13Timer
-    Left = 208
     Top = 128
   end
   object Timertrans: TTimer
@@ -584,9 +571,5 @@ object Form1: TForm1
     OnTimer = Timer12Timer
     Left = 16
     Top = 152
-  end
-  object WinAmpTimer: TTimer
-    Interval = 250
-    OnTimer = WinAmpTimerCheck
   end
 end

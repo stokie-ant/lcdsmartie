@@ -40,6 +40,11 @@ Changes
 	- Plugins: Call SmartieFini just before unloading plugin (if
 	  plugin has the function).
 	- Process commands even if the screen is not enabled.
+	- Fixed a crash that happened whilst in setup.
+	- fixed bug in screen 'interactions'
+	- Limit data updates from plugins to 300ms - unless plugin states a
+	  different value.
+	- Profiled code, and made some optimizations.
 5.3Beta3
 	- Removed the need to restart smartie when some settings are changed.
 	- Added options for auto starting with windows and hiding on startup.

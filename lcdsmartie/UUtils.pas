@@ -26,6 +26,8 @@ type
   function decodeArgs(str: String; funcName: String; maxargs: Cardinal; var
       args: Array of String; var prefix: String; var postfix: String; var
       numArgs: Cardinal): Boolean;
+  function StrToIntN(sStr: String; iStart: Integer; iSize: Integer): Integer;
+  function StrToFloatN(sStr: String; iStart: Integer; iSize: Integer): double;
 
 
 implementation
@@ -49,6 +51,46 @@ procedure TMyThread.Execute;
 begin
   method();
   exited.SetEvent();
+end;
+
+function StrToIntN(sStr: String; iStart: Integer; iSize: Integer): Integer;
+var
+  num: Integer;
+  i: Integer;
+begin
+  num := 0;
+  // skip space space
+  while (iSize > 0) and (sStr[iStart] = ' ') do
+  begin
+    iStart := iStart + 1;
+    iSize := iSize - 1;
+  end;
+
+  if (iSize <= 0) then
+    raise Exception.Create('invalid number');
+
+  for i := iStart to iStart+iSize-1 do
+  begin
+    if (sStr[i] < '0') or (sStr[i] > '9') then
+      raise Exception.Create('invalid number: ' + MidStr(sStr,iStart,iSize));
+    num := num * 10 + Ord(sStr[i]) - Ord('0');
+  end;
+  Result := num;
+end;
+
+function StrToFloatN(sStr: String; iStart: Integer; iSize: Integer): double;
+var
+  iDecPoint: Integer;
+begin
+  iDecPoint := PosEx('.', sStr, iStart);
+
+  if (iDecPoint = 0) or (iDecPoint > iStart+iSize) then
+    Result := StrToIntN(sStr, iStart, iSize)
+  else
+    Result := StrToIntN(sStr, iStart, iDecPoint-iStart)
+      + StrToIntN(sStr, iDecPoint+1, (iStart+iSize)-(iDecPoint+1)) /
+      (10.0 * ((iStart+iSize)-(iDecPoint+1)));
+
 end;
 
 function errMsg(uError: Cardinal): String;
@@ -81,13 +123,21 @@ function decodeArgs(str: String; funcName: String; maxargs: Cardinal;
 var
   posFuncStart, posArgsStart, posArgsEnd, posComma, posComma2: Integer;
   posTemp: Integer;
-  tempStr: String;
   uiLevel: Cardinal;
+  iStrLen: Integer;
 begin
   Result := true;
   numArgs := 0;
+  iStrLen := Length(str);
 
-  posFuncStart := pos(funcName + '(', str);
+  // For speed reasons this is instead of: posFuncStart = Pos(funcName + '(', str):
+  posFuncStart := 0;
+  repeat
+    posFuncStart := PosEx(funcName, str, posFuncStart+1);
+    if (posFuncStart <> 0) and (posFuncStart < iStrLen)
+      and (str[posFuncStart+length(funcName)] = '(') then break;
+  until (posFuncStart = 0);
+
   if (posFuncStart <> 0) then
   begin
     posArgsStart := posFuncStart + length(funcName);
@@ -101,44 +151,47 @@ begin
       ')': Dec(uiLevel);
       end;
       Inc(posTemp);
-    until (uiLevel = 0) or (posTemp > Length(str));
+    until (uiLevel = 0) or (posTemp > iStrLen);
+
     if (uiLevel = 0) then
       posArgsEnd := posTemp-1
     else
-      posArgsEnd := length(str);
+      posArgsEnd := iStrLen;
 
-    prefix := copy(str, 1, posFuncStart-1);
-    postfix := copy(str, posArgsEnd + 1, length(str)-posArgsEnd + 1);
+    prefix := AnsiMidStr(str, 1, posFuncStart-1);
+    postfix := AnsiMidStr(str, posArgsEnd + 1, iStrLen-posArgsEnd + 1);
 
     if (posArgsStart <> 0) and (posArgsEnd <> 0) then
     begin
-      tempstr := copy(str, posArgsStart + 1, posArgsEnd-posArgsStart-1);
-      // tempstr is now something like: '20,30,10'
-      posComma2 := 0;
+      Dec(posArgsEnd);
+
+      // between posArgsStart+1 and posArgsEnd  is now something like: '20,30,10'
+      posComma2 := posArgsStart;
       repeat
         // Find next comma ignoring those in brackets.
         uiLevel := 0;
         posComma := posComma2;
         repeat
           Inc(posComma);
-          case (tempstr[posComma]) of
+          case (str[posComma]) of
           '(': Inc(uiLevel);
           ')': Dec(uiLevel);
           end;
-        until (posComma >= Length(tempstr)) or ((uiLevel = 0) and (tempstr[posComma] = ','));
+        until (posComma >= posArgsEnd)
+          or ((uiLevel = 0) and (str[posComma] = ','));
 
-        if (posComma >= Length(tempstr)) then
+        if (posComma >= posArgsEnd) then
         begin
-          args[numArgs] := copy(tempstr, posComma2+1, length(tempstr)-PosComma2);
+          args[numArgs] := AnsiMidStr(str, posComma2+1, posArgsEnd-PosComma2);
           Inc(numArgs);
         end
         else
         begin
-          args[numArgs] := copy(tempstr, posComma2+1, PosComma-(PosComma2+1));
+          args[numArgs] := AnsiMidStr(str, posComma2+1, PosComma-(PosComma2+1));
           Inc(numArgs);
         end;
         posComma2 := posComma;
-      until (poscomma >= Length(tempstr)) or (numArgs >= maxArgs);
+      until (poscomma >= posArgsEnd) or (numArgs >= maxArgs);
     end;
   end
   else Result := false;

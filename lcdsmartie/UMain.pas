@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.48 $ $Date: 2005/01/11 18:52:38 $
+ *  $Revision: 1.49 $ $Date: 2005/01/22 23:36:33 $
  *****************************************************************************}
 
 interface
@@ -82,12 +82,9 @@ type
     Timer7: TTimer;
     Timer8: TTimer;
     Timer9: TTimer;
-    Timer10: TTimer;
     Timer11: TTimer;
     Timer12: TTimer;
-    Timer13: TTimer;
     WinampCtrl1: TWinampCtrl;
-    WinAmpTimer: TTimer;
     procedure DoFullDisplayDraw;
     procedure UpdateTimersState;
     procedure FormCreate(Sender: TObject);
@@ -110,7 +107,6 @@ type
     procedure Timer7Timer(Sender: TObject);
     procedure Timer8Timer(Sender: TObject);
     procedure Timer9Timer(Sender: TObject);
-    procedure Timer10Timer(Sender: TObject);
     procedure Timer11Timer(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure Credits1Click(Sender: TObject);
@@ -172,7 +168,6 @@ type
     procedure Image17Click(Sender: TObject);
     procedure Image16Click(Sender: TObject);
     procedure SpeedButton1Click(Sender: TObject);
-    procedure Timer13Timer(Sender: TObject);
     procedure TimertransTimer(Sender: TObject);
     procedure Timer12Timer(Sender: TObject);
     procedure WMQueryEndSession (var M: TWMQueryEndSession); message
@@ -180,7 +175,6 @@ type
     procedure WMPowerBroadcast (var M: TMessage); message WM_POWERBROADCAST;
     procedure kleur();
     procedure ChangeScreen(scr: Integer);
-    procedure WinAmpTimerCheck(Sender: TObject);
     procedure customchar(fline: String);
     procedure ReInitLCD();
     procedure ResetScrollPositions;
@@ -204,6 +198,7 @@ type
     Oldline: Array[1..4] of String;
     Newline: Array[1..4] of String;
     Gotnewlines: Boolean;
+    TransStart: Cardinal;
     transActietemp, transActietemp2, TransCycle,
       timertransIntervaltemp: Integer;
     gamesArray: Array[1..4, 1..40] of Boolean;
@@ -253,7 +248,7 @@ var
 
 implementation
 
-uses Windows, SysUtils, Graphics, Dialogs, ShellAPI, mmsystem,
+uses Windows, SysUtils, Graphics, Dialogs, ShellAPI, mmsystem, StrUtils,
   USetup, UCredits, ULCD_MO, ULCD_CF, ULCD_HD, ULCD_Test, ExtActns, UUtils;
 
 function TForm1.EscapeAmp(const sStr: string): String;
@@ -329,6 +324,7 @@ begin
   ResetScrollPositions();
 
   gotnewlines := false;
+  TransStart := GetTickCount();
   TransCycle := 0;
 
   for y := 1 to 40 do
@@ -398,21 +394,25 @@ begin
   result := x;
 end;
 
+
+
 procedure TForm1.customchar(fline: String);
 var
   character: Integer;
   waarde: Array[0..7] of Byte;
   i: Integer;
+  iPosStart, iPosEnd: Integer;
 
 begin
-  character := StrToInt(copy(fline, 1, pos(',', fline)-1));
-  fline := copy(fline, pos(',', fline) + 1, length(fline));
+  iPosEnd := pos(',', fline);
+  character := StrToIntN(fline, 1, iPosEnd-1);
   for i := 0 to 6 do
   begin
-    waarde[i] := StrToInt(copy(fline, 1, pos(',', fline)-1));
-    fline := copy(fline, pos(',', fline) + 1, length(fline));
+    iPosStart := iPosEnd + 1;
+    iPosEnd := PosEx(',', fline, iPosStart);
+    waarde[i] := StrToIntN(fline, iPosStart, iPosEnd-iPosStart);
   end;
-  waarde[7] := StrToInt(copy(fline, 1, length(fline)));
+  waarde[7] := StrToIntN(fline, iPosEnd+1, length(fline)-iPosEnd);
 
   // Only send if not already defined.
   i := 0;
@@ -642,11 +642,11 @@ end;
 procedure TForm1.FiniLCD();
 begin
   timer11.enabled := false; // stop any startup of the HD44780 driver
+  timer1.enabled := false;  // stop updates to lcd
   try
     if (Lcd <> nil) Then Lcd.Destroy();
   except
   end;
-  timer1.enabled := false;  // stop updates to lcd
   Lcd := nil;
 end;
 
@@ -759,7 +759,8 @@ var
 
 begin
   // Changing screen - do any interactions required.
-  TransCycle := TransCycle + 1;
+  //TransCycle := TransCycle + 1;
+  TransCycle := (GetTickCount()-TransStart) div timer1.Interval;
   maxTransCycles := timertrans.Interval div timer1.Interval;
 
   if (TransCycle > maxTransCycles) then Exit;
@@ -1470,10 +1471,8 @@ begin
   while timer7.enabled = true do timer7.enabled := false;
   while timer8.enabled = true do timer8.enabled := false;
   while timer9.enabled = true do timer9.enabled := false;
-  while timer10.enabled = true do timer10.enabled := false;
   while timer11.enabled = true do timer11.enabled := false;
   while timer12.enabled = true do timer12.enabled := false;
-  while timer13.enabled = true do timer13.enabled := false;
   while timertrans.enabled = true do timertrans.enabled := false;
 
   FiniLCD();
@@ -1487,7 +1486,10 @@ begin
     end;  // otherwise just leak it.
   end;
   if (Data = nil) and (config <> nil) then
+  begin
     config.Free();
+    config := nil;
+  end;
 end;
 
 procedure TForm1.Timer8Timer(Sender: TObject);
@@ -1511,6 +1513,7 @@ var
   prefix, postfix: String;
   numArgs: Cardinal;
   sSecondAction: String;
+  uiPlugin: Cardinal;
 begin
   // Handle actions have do something when they are activated and de-activated.
   if (pos('Backlight(', sAction) <> 0) then
@@ -1597,7 +1600,8 @@ begin
       if (numargs = 4) then
       begin
         try
-          sSecondAction := data.CallPlugin(args[0], StrToInt(args[1]), args[2], args[3]);
+          uiPlugin := data.FindPlugin(args[0]);
+          sSecondAction := data.CallPlugin(uiPlugin, StrToInt(args[1]), args[2], args[3]);
           ProcessAction(True, sSecondAction);
         except
           on EConvertError do begin {ignore} end;
@@ -1674,7 +1678,6 @@ begin
       timer6.interval := 10;
       timer8.interval := 10;
       timer9.interval := 10;
-      timer10.interval := 10;
     end;
 
     if pos('BacklightToggle', sAction) <> 0 then
@@ -1800,6 +1803,8 @@ var
   bNum: Boolean;
   bDoAction: Boolean;
   doAction: Array[1..99] of Boolean;
+  iLeftStrLen: Integer;
+  iRightStrLen: Integer;
 
 begin
 
@@ -1826,15 +1831,18 @@ begin
     // Check if both left and right are numberic.
     bNum := False;
     iTemp := 1;
-    while (iTemp <= length(sLeftValue)) and (sLeftValue[iTemp]>='0')
-      and (sLeftValue[iTemp]<='9') do Inc(iTemp);
-    if (iTemp > length(sLeftValue)) then
+    iLeftStrLen := Length(sLeftValue);
+    while (iTemp <= iLeftStrLen) and (sLeftValue[iTemp]>='0')
+      and (sLeftValue[iTemp]<='9') do iTemp := iTemp +1 ;
+
+    if (iTemp > iLeftStrLen) then
     begin
       iTemp := 1;
-      while (iTemp <= length(sRightValue)) and (sRightValue[iTemp]>='0')
-        and (sRightValue[iTemp]<='9') do Inc(iTemp);
+      iRightStrLen := Length(sRightValue);
+      while (iTemp <= iRightStrLen) and (sRightValue[iTemp]>='0')
+        and (sRightValue[iTemp]<='9') do iTemp := iTemp + 1;
 
-      if (iTemp > length(sRightValue)) then bNum := True;
+      if (iTemp > iRightStrLen) then bNum := True;
     end;
 
     if (bNum) then
@@ -1875,7 +1883,7 @@ begin
   data.cLastKeyPressed := Chr(0);
 
   // Reset new screen - the following actions may set this again.
-    data.NewScreen(False);;
+  data.NewScreen(False);
 
   //
   // Run any required actions.
@@ -1913,13 +1921,6 @@ end;
 procedure TForm1.BacklightOn1Click(Sender: TObject);
 begin
   backlit();
-end;
-
-procedure TForm1.Timer10Timer(Sender: TObject);
-begin
-  Data.updateNetworkStats(Sender);
-  timer10.Interval := 0;
-  timer10.interval := 1000;
 end;
 
 
@@ -2057,9 +2058,7 @@ begin
   timer6.enabled := true;  // mbm update
   timer8.enabled := true;  // game update
   timer9.enabled := true;  // email update
-  timer10.enabled := true; // net update
   timer12.enabled := true; // scroll/flash
-  timer13.enabled := true; // dll check
 end;
 
 procedure TForm1.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
@@ -2425,13 +2424,6 @@ begin
   end;
 end;
 
-procedure TForm1.Timer13Timer(Sender: TObject);
-begin
-  timer13.Interval := 0;
-  timer13.Interval := config.dllPeriod;
-  Data.dllcancheck := true;
-end;
-
 procedure TForm1.WMQueryEndSession (var M: TWMQueryEndSession);
 begin
   inherited;
@@ -2455,11 +2447,6 @@ begin
     flashdelay := 0;
     canflash := true;
   end;
-end;
-
-procedure TForm1.WinAmpTimerCheck(Sender: TObject);
-begin
-  WinampCtrl1.CheckIfSongChanged;
 end;
 
 procedure TForm1.OnMinimize(Sender: TObject);

@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.45 $ $Date: 2005/01/18 13:38:30 $
+ *  $Revision: 1.46 $ $Date: 2005/01/22 23:36:18 $
  *****************************************************************************}
 
 
@@ -123,6 +123,8 @@ type
     functions: Array [1..iMaxPluginFuncs] of TMyProc;
     bridgeFunc: TBridgeProc;
     finiFunc: TFiniProc;
+    uiLastRefreshed: Cardinal;  // time when Dll results were refreshed.
+    uiMinRefreshInterval: Cardinal; // min Refresh interval between refreshes.
   end;
 
   TData = Class(TObject)
@@ -139,9 +141,9 @@ type
     procedure NewScreen(bYes: Boolean);
     function change(line: String; qstattemp: Integer = 1;
       bCacheResults: Boolean = false): String;
-    function CallPlugin(sDllName: String; iFunc: Integer;
+    function CallPlugin(uiDll: Integer; iFunc: Integer;
                     sParam1: String; sParam2:String) : String;
-    procedure updateNetworkStats(Sender: TObject);
+    function FindPlugin(sDllName: String): Cardinal;
     procedure updateMBMStats(Sender: TObject);
     procedure UpdateHTTP;
     procedure UpdateGameStats;
@@ -150,12 +152,15 @@ type
     destructor Destroy; override;
     function CanExit: Boolean;
   private
+    cacheresult_lastFindPlugin: Cardinal;
+    cache_lastFindPlugin: String;
+    uiScreenStartTime: Cardinal; // time that new start refresh started (used by plugin cache code)
     bNewScreenEvent: Boolean;
     dlls: Array of TDll;
     uiTotalDlls: Cardinal;
     sDllResults: array of string;
     iDllResults: Integer;
-    doHTTPUpdate, doGameUpdate, doEmailUpdate, doCpuUpdate: Boolean;
+    doHTTPUpdate, doGameUpdate, doEmailUpdate: Boolean;
     STUsername, STComputername, STCPUType, STCPUSpeed: String;
     STPageFree, STPageTotal: Int64;
     STMemFree, STMemTotal: Int64;
@@ -210,6 +215,7 @@ type
     httpCs: TCriticalSection;
     httpCopy: PHttp;   // so we can cancel the request. Guarded by httpCs
     pop3Copy: PPop3;   // so we can cancel the request. Guarded by httpCs
+    procedure updateNetworkStats;
     procedure emailUpdate;
     procedure fetchHTTPUpdates;
     procedure httpUpdate;
@@ -247,18 +253,17 @@ uses cxCpu40, adCpuUsage, UMain, Windows, Forms, IpHlpApi,
 procedure TData.NewScreen(bYes: Boolean);
 begin
   bNewScreenEvent := bYes;
-  // force a dll check on a new screen.
-  if (bYes) then  dllcancheck := true;
 end;
 
 procedure TData.ScreenStart;
 begin
   iDllResults := 0;
+  uiScreenStartTime := GetTickCount();
 end;
 
 procedure TData.ScreenEnd;
 begin
-  dllcancheck := false;
+ // nothing here yet...
 end;
 
 procedure TData.RequiredParameters(uiArgs: Cardinal; uiMinArgs: Cardinal; uiMaxArgs: Cardinal = 0);
@@ -323,7 +328,6 @@ begin
   doEmailUpdate := True;
   doHTTPUpdate := True;
   doGameUpdate := True;
-  doCpuUpdate := True;
 
   httpCs := TCriticalSection.Create();
 
@@ -1055,11 +1059,15 @@ end;
 
 procedure TData.LoadPlugin(sDllName: String; bDotNet: Boolean = false);
 type
-  TBridgeInit = function(dll: PChar; var error: Integer): PChar; stdcall;
+  TBridgeInit = function(dll: PChar; var id: Integer; var refresh: Integer): PChar; stdcall;
+  TMinRefreshFunc = function: Integer; stdcall;
 var
   uiDll: Cardinal;
   i: Integer;
+  id: Integer;
+  minRefresh: Integer;
   initFunc:  procedure; stdcall;
+  minRefreshFunc: TMinRefreshFunc;
   bridgeInitFunc: TBridgeInit;
   bFound: Boolean;
   sLibraryPath: String;
@@ -1072,6 +1080,8 @@ begin
   Inc(uiTotalDlls);
   SetLength(dlls, uiTotalDlls);
   dlls[uiDll].sName := sDllName;
+  dlls[uiDll].uiLastRefreshed := 0;
+  dlls[uiDll].uiMinRefreshInterval := 300;
 
   dlls[uiDll].bBridge := bDotNet;
   if (bDotNet) then
@@ -1106,25 +1116,24 @@ begin
 
     if (bDotNet) then
     begin
-      @bridgeInitFunc := getprocaddress(dlls[uiDll].hDll, PChar('_BridgeInit@8'));
+      @bridgeInitFunc := getprocaddress(dlls[uiDll].hDll, PChar('_BridgeInit@12'));
       if (@bridgeInitFunc = nil) then
         raise Exception.Create('Could not init bridge');
 
       try
-        sResult := bridgeInitFunc(PChar(dlls[uiDll].sName), i);
-        dlls[uiDll].iBridgeId := i;
+        sResult := bridgeInitFunc(PChar(dlls[uiDll].sName), id, minRefresh);
       except
         on E: Exception do
           raise Exception.Create('Bridge Init for '+dlls[uiDll].sName+' had an exception: '
             + E.Message);
       end;
-      if (i = -1) or (sResult <> '') then
+      if (id = -1) or (sResult <> '') then
          raise Exception.Create('Bridge Init for '+dlls[uiDll].sName+' failed with: '
             + sResult);
-    end;
+      dlls[uiDll].iBridgeId := id;
+      if (minRefresh > 0) then
+        dlls[uiDll].uiMinRefreshInterval := minRefresh;
 
-    if (bDotNet) then
-    begin
       @dlls[uiDll].BridgeFunc := getprocaddress(dlls[uiDll].hDll,
         PChar('_BridgeFunc@16'));
       if (@dlls[uiDll].BridgeFunc = nil) then
@@ -1143,6 +1152,23 @@ begin
           bFound := True;
       end;
 
+      minRefreshFunc := getprocaddress(dlls[uiDll].hDll, PChar('GetMinRefreshInterval'));
+      if (not Assigned(minRefreshFunc)) then
+        minRefreshFunc := getprocaddress(dlls[uiDll].hDll, PChar('_GetMinRefreshInterval@0'));
+
+      if (@minRefreshFunc <> nil) then
+      begin
+        try
+          minRefresh := minRefreshFunc();
+        except
+          on E: Exception do
+            raise Exception.Create('Plugin '+sDllName
+              +' had an exception during GetMinRefreshInterval:' + E.Message);
+        end;
+        if (minRefresh > 0) then
+          dlls[uiDll].uiMinRefreshInterval := minRefresh;
+      end;
+
       if (not bFound) then
       begin
         if (dlls[uiDll].hDll <> 0) then FreeLibrary(dlls[uiDll].hDll);
@@ -1154,30 +1180,47 @@ begin
   end;
 end;
 
-function TData.CallPlugin(sDllName: String; iFunc: Integer;
-                    sParam1: String; sParam2:String) : String;
+
+function TData.FindPlugin(sDllName: String): Cardinal;
 var
   uiDll: Cardinal;
+  sLoadDllName: String;
 begin
-  // check if we have seen this dll before
-  if (Pos('.DLL', UpperCase(sDllName)) = 0) then
-    sDllName := sDllName + '.dll';
-  uiDll:=1;
-  while (uiDll<=uiTotalDlls) and (dlls[uiDll-1].sName <> sDllName) do
-    Inc(uiDll);
+  // for speed reason - check if this is the same plugin as the last one:
+  if (sDllName = cache_lastFindPlugin) then
+    Result := cacheresult_lastFindPlugin
+  else
+  begin
 
-  Dec(uiDll);
+    // check if we have seen this dll before
+    sLoadDllName := sDllName;
+    if (Pos('.DLL', UpperCase(sLoadDllName)) = 0) then
+      sLoadDllName := sLoadDllName + '.dll';
+    uiDll:=1;
+    while (uiDll<=uiTotalDlls) and (dlls[uiDll-1].sName <> sLoadDllName) do
+      Inc(uiDll);
+    Dec(uiDll);
 
-  if (uiDll >= uiTotalDlls) then
-  begin // we havent seen this one before - load it
-    try
-      LoadPlugin(sDllName);
-    except
-      on E: Exception do
-        showmessage('Load of plugin failed: ' + e.Message)
+    if (uiDll >= uiTotalDlls) then
+    begin // we havent seen this one before - load it
+      try
+        LoadPlugin(sLoadDllName);
+      except
+        on E: Exception do
+          showmessage('Load of plugin failed: ' + e.Message)
+      end;
     end;
-  end;
 
+    cacheresult_lastFindPlugin := uiDll;
+    cache_lastFindPlugin := sDllName;
+
+    Result := uiDll;
+  end;
+end;
+
+function TData.CallPlugin(uiDll: Integer; iFunc: Integer;
+                    sParam1: String; sParam2:String) : String;
+begin
   if (dlls[uiDll].hDll <> 0) then
   begin
     if (iFunc >= 0) and (iFunc <= iMaxPluginFuncs) then
@@ -1216,18 +1259,43 @@ var
   numArgs: Cardinal;
   sParam1, sParam2: String;
   sAnswer: String;
+  uiPlugin: Cardinal;
+  uiMinRefresh: Cardinal;
+  bCallPlugin: Boolean;
 begin
   while decodeArgs(line, '$dll', maxArgs, args, prefix, postfix, numargs) do
   begin
     try
       RequiredParameters(numargs, 4, 4);
 
-      if (not bCacheResults) or (dllcancheck) then
+      uiPlugin := FindPlugin(args[0]);
+      if (bCacheResults) then
+      begin
+        if (dlls[uiPlugin].uiMinRefreshInterval < config.dllPeriod) then
+          uiMinRefresh := config.dllPeriod
+        else
+          uiMinRefresh := dlls[uiPlugin].uiMinRefreshInterval;
+
+        if (abs(uiScreenStartTime - dlls[uiPlugin].uiLastRefreshed)
+            > uiMinRefresh)
+          or (uiScreenStartTime = dlls[uiPlugin].uiLastRefreshed) then
+        begin
+          dlls[uiPlugin].uiLastRefreshed := uiScreenStartTime;
+
+          bCallPlugin := True;
+        end
+        else
+          bCallPlugin := False;
+      end
+      else
+        bCallPlugin := True;
+
+      if (bCallPlugin) then
       begin
         sParam1 := change(args[2], qstattemp);
         sParam2 := change(args[3], qstattemp);
         try
-          sAnswer := CallPlugin(args[0], StrToInt(args[1]), sParam1, sParam2);
+          sAnswer := CallPlugin(uiPlugin, StrToInt(args[1]), sParam1, sParam2);
         except
           on E: Exception do
             sAnswer := '[Dll: ' + CleanString(E.Message) + ']';
@@ -1240,7 +1308,7 @@ begin
         if (iDllResults >= Length(sDllResults)) then
            SetLength(sDllResults, iDllResults + 5);
 
-        if (dllcancheck) then
+        if (bCallPlugin) then
           sDllResults[iDllResults] := sAnswer // save result
         else
           sAnswer := sDllResults[iDllResults]; // get cached result
@@ -1279,98 +1347,33 @@ var
   jj: Cardinal;
   found: Boolean;
   iBytesToRead: Integer;
+  iPos1, iPos2, iPos3: Integer;
+label
+  endChange;
 begin
   try
-
     ProcessPlugin(line, qstattemp, bCacheResults);
 
-    hdcounter := 0;
-    while decodeArgs(line, '$LogFile', maxArgs, args, prefix, postfix,
-      numargs) do
+    if (Pos('$', line) = 0) then goto endChange;
+
+    if decodeArgs(line, '$MObutton', maxArgs, args, prefix, postfix, numargs)
+      then
     begin
-      try
-        hdcounter := hdcounter + 1;
-        if hdcounter > 4 then line := StringReplace(line, '$LogFile(',
-          'error', []);
+      spacecount := 0;
+      if (numargs = 1) and (cLastKeyPressed = args[1]) then spacecount := 1;
 
-        sFileloc := args[1];
-        if (sFileloc[1] = '"') and (sFileloc[Length(sFileLoc)] = '"') then
-          sFileloc := copy(sFileloc, 2, Length(sFileloc)-2);
-
-        if (not FileExists(sFileloc)) then
-          raise Exception.Create('No such file');
-
-        RequiredParameters(numargs, 2, 2);
-        iFileline := StrToInt(args[2]);
-
-        if iFileline > 3 then iFileline := 3;
-        if iFileline < 0 then iFileline := 0;
-
-        FileStream := TFileStream.Create(sFileloc, fmOpenRead or fmShareDenyNone);
-        iBytesToRead := 1024;
-        if (FileStream.Size < iBytesToRead) then
-          iBytesToRead := FileStream.Size;
-        SetLength(spaceline, iBytesToRead);
-
-        FileStream.Seek(-1 * iBytesToRead, soFromEnd);
-        FileStream.ReadBuffer(spaceline[1], iBytesToRead);
-        FileStream.Free;
-
-        Lines := TStringList.Create;
-        Lines.Text := spaceline;
-        spaceline := stripspaces(lines[lines.count - iFileline]);
-        if (pos('] ', spaceline) <> 0) then
-          spaceline := copy(spaceline, pos('] ', spaceline) + 2, length(spaceline));
-
-        for i := 0 to 7 do spaceline := StringReplace(spaceline, chr(i), '',
-          [rfReplaceAll]);
-        Lines.Free;
-        line := prefix + spaceline + postfix;
-      except
-        on E: Exception do line := prefix + '[LogFile: '
-          + CleanString(E.message) + ']' + postfix;
-      end;
+      line := prefix + intToStr(spacecount) + postfix;
     end;
 
-    while decodeArgs(line, '$File', maxArgs, args, prefix, postfix, numargs) do
+    if pos('$ScreenChanged', line) <> 0 then
     begin
-      sFileloc := args[1];
-      if (sFileloc[1] = '"') and (sFileloc[Length(sFileLoc)] = '"') then
-        sFileloc := copy(sFileloc, 2, Length(sFileloc)-2);
+      spacecount := 0;
+      if (bNewScreenEvent) then
+        spacecount := 1;
 
-      try
-        RequiredParameters(numargs, 2, 2);
-        iFileline := StrToInt(args[2]);
-        if (not FileExists(sFileloc)) then
-          raise Exception.Create('No such file');
-        assignfile(fFile3, sFileloc);
-        reset(fFile3);
-        for counter3 := 1 to iFileline do readln(fFile3, line3);
-        closefile(fFile3);
-        line := prefix + line3 + postfix;
-      except
-        on E: Exception do line := prefix + '[File: '
-          + CleanString(E.Message) + ']' + postfix;
-      end;
+      line := StringReplace(line, '$ScreenChanged', IntToStr(spacecount), [rfReplaceAll]);
     end;
 
-    if pos('$Winamp', line) <> 0 then line := changeWinamp(line);
-
-    line := StringReplace(line, '$UpTime', uptimereg, [rfReplaceAll]);
-    line := StringReplace(line, '$UpTims', uptimeregs, [rfReplaceAll]);
-
-    line := StringReplace(line, '$NetIPaddress', ipaddress, [rfReplaceAll]);
-
-    line := StringReplace(line, '$Username', STUsername, [rfReplaceAll]);
-    line := StringReplace(line, '$Computername', STcomputername,
-      [rfReplaceAll]);
-    if (pos('$CPU', line) <> 0) then
-    begin
-      line := StringReplace(line, '$CPUType', STCPUType, [rfReplaceAll]);
-      line := StringReplace(line, '$CPUSpeed', STCPUSpeed, [rfReplaceAll]);
-      line := StringReplace(line, '$CPUUsage%', IntToStr(STCPUUsage),
-        [rfReplaceAll]);
-    end;
     line := StringReplace(line, '$MemFree', IntToStr(STMemFree),
       [rfReplaceAll]);
     line := StringReplace(line, '$MemUsed', IntToStr(STMemTotal-STMemFree),
@@ -1385,141 +1388,6 @@ begin
       [rfReplaceAll]);
     line := StringReplace(line, '$ScreenReso', screenResolution,
       [rfReplaceAll]);
-
-    if (pos('$Temp', line) <> 0) then
-    begin
-      for x := 1 to 10 do
-      begin
-        line := StringReplace(line, '$Tempname' + IntToStr(x), TempName[x],
-          [rfReplaceAll]);
-        line := StringReplace(line, '$Temp' + IntToStr(x),
-          FloatToStr(Temperature[x]), [rfReplaceAll]);
-      end;
-    end;
-    if (pos('$Fan', line) <> 0) then
-    begin
-      for x := 1 to 10 do
-      begin
-        line := StringReplace(line, '$Fanname' + IntToStr(x), Fanname[x],
-          [rfReplaceAll]);
-        line := StringReplace(line, '$FanS' + IntToStr(x),
-          FloatToStr(Fan[x]), [rfReplaceAll]);
-      end;
-    end;
-
-    if (pos('$Volt', line) <> 0) then
-    begin
-      for x := 1 to 10 do
-      begin
-        line := StringReplace(line, '$Voltname' + IntToStr(x),Voltname[x],
-          [rfReplaceAll]);
-        line := StringReplace(line, '$Voltage' + IntToStr(x),
-          FloatToStr(Voltage[x]), [rfReplaceAll]);
-      end;
-    end;
-
-    line := StringReplace(line, '$Half-life1', qstatreg1[activeScreen,
-      qstattemp], [rfReplaceAll]);
-    line := StringReplace(line, '$QuakeII1', qstatreg1[activeScreen,
-      qstattemp], [rfReplaceAll]);
-    line := StringReplace(line, '$QuakeIII1', qstatreg1[activeScreen,
-      qstattemp], [rfReplaceAll]);
-    line := StringReplace(line, '$Unreal1', qstatreg1[activeScreen,
-      qstattemp], [rfReplaceAll]);
-    line := StringReplace(line, '$Half-life2', qstatreg2[activeScreen,
-      qstattemp], [rfReplaceAll]);
-    line := StringReplace(line, '$QuakeII2', qstatreg2[activeScreen,
-      qstattemp], [rfReplaceAll]);
-    line := StringReplace(line, '$QuakeIII2', qstatreg2[activeScreen,
-      qstattemp], [rfReplaceAll]);
-    line := StringReplace(line, '$Unreal2', qstatreg2[activeScreen,
-      qstattemp], [rfReplaceAll]);
-    line := StringReplace(line, '$Half-life3', qstatreg3[activeScreen,
-      qstattemp], [rfReplaceAll]);
-    line := StringReplace(line, '$QuakeII3', qstatreg3[activeScreen,
-      qstattemp], [rfReplaceAll]);
-    line := StringReplace(line, '$QuakeIII3', qstatreg3[activeScreen,
-      qstattemp], [rfReplaceAll]);
-    line := StringReplace(line, '$Unreal3', qstatreg3[activeScreen,
-      qstattemp], [rfReplaceAll]);
-    line := StringReplace(line, '$Half-life4', qstatreg4[activeScreen,
-      qstattemp], [rfReplaceAll]);
-    line := StringReplace(line, '$QuakeII4', qstatreg4[activeScreen,
-      qstattemp], [rfReplaceAll]);
-    line := StringReplace(line, '$QuakeIII4', qstatreg4[activeScreen,
-      qstattemp], [rfReplaceAll]);
-    line := StringReplace(line, '$Unreal4', qstatreg4[activeScreen,
-      qstattemp], [rfReplaceAll]);
-
-    if (pos('$Email', line) <> 0) then
-    begin
-      for x := 0 to 9 do
-      begin
-        line := StringReplace(line, '$Email' + IntToStr(x),
-          IntToStr(mail[x].messages), [rfReplaceAll]);
-        line := StringReplace(line, '$EmailSub' + IntToStr(x),
-          mail[x].lastSubject, [rfReplaceAll]);
-        line := StringReplace(line, '$EmailFrom' + IntToStr(x),
-          mail[x].lastFrom, [rfReplaceAll]);
-      end;
-    end;
-
-
-    line := StringReplace(line, '$DnetDone', replline2, [rfReplaceAll]);
-    line := StringReplace(line, '$DnetSpeed', replline1, [rfReplaceAll]);
-
-    if (pos('$SETI', line) <> 0) then
-    begin
-      line := StringReplace(line, '$SETIResults', setiNumResults,
-        [rfReplaceAll]);
-      line := StringReplace(line, '$SETICPUTime', setiCpuTime,
-        [rfReplaceAll]);
-      line := StringReplace(line, '$SETIAverage', setiAvgCpu,
-        [rfReplaceAll]);
-      line := StringReplace(line, '$SETILastresult', setiLastResult,
-        [rfReplaceAll]);
-      line := StringReplace(line, '$SETIusertime', setiUserTime,
-        [rfReplaceAll]);
-      line := StringReplace(line, '$SETItotalusers', setiTotalUsers,
-        [rfReplaceAll]);
-      line := StringReplace(line, '$SETIrank', setiRank, [rfReplaceAll]);
-      line := StringReplace(line, '$SETIsharingrank', setiShareRank,
-        [rfReplaceAll]);
-      line := StringReplace(line, '$SETImoreWU', setiMoreWU,
-        [rfReplaceAll]);
-    end;
-
-    if (pos('$FOLD', line) <> 0) then
-    begin
-      line := StringReplace(line, '$FOLDmemsince', foldMemSince,
-        [rfReplaceAll]);
-      line := StringReplace(line, '$FOLDlastwu', foldLastWU,
-        [rfReplaceAll]);
-      line := StringReplace(line, '$FOLDactproc', foldActProcsWeek,
-        [rfReplaceAll]);
-      line := StringReplace(line, '$FOLDteam', foldTeam, [rfReplaceAll]);
-      line := StringReplace(line, '$FOLDscore', foldScore, [rfReplaceAll]);
-      line := StringReplace(line, '$FOLDrank', foldRank, [rfReplaceAll]);
-      line := StringReplace(line, '$FOLDwu', foldWU, [rfReplaceAll]);
-    end;
-
-    while pos('$Time(', line) <> 0 do
-    begin
-      try
-        line2 := copy(line, pos('$Time(', line) + 6, length(line));
-        if (pos(')', line2) = 0) then
-          raise Exception.Create('No ending bracket');
-        line2 := copy(line2, 1, pos(')', line2)-1);
-        tempst := formatdatetime(line2, now);
-        line := StringReplace(line, '$Time(' + line2 + ')', tempst, []);
-      except
-        on E: Exception do line := StringReplace(line, '$Time(', '[Time: '
-          + CleanString(E.Message) + ']', []);
-      end;
-    end;
-
-    if (pos('$Net', line) <> 0) then line := changeNet(line);
-
 
     if pos('$MemF%', line) <> 0 then
     begin
@@ -1657,23 +1525,258 @@ begin
       end;
     end;
 
-    if pos('$ScreenChanged', line) <> 0 then
+    if (pos('$Email', line) <> 0) then
     begin
-      spacecount := 0;
-      if (bNewScreenEvent) then
-        spacecount := 1;
-
-      line := StringReplace(line, '$ScreenChanged', IntToStr(spacecount), [rfReplaceAll]);
+      for x := 0 to 9 do
+      begin
+        line := StringReplace(line, '$Email' + IntToStr(x),
+          IntToStr(mail[x].messages), [rfReplaceAll]);
+        line := StringReplace(line, '$EmailSub' + IntToStr(x),
+          mail[x].lastSubject, [rfReplaceAll]);
+        line := StringReplace(line, '$EmailFrom' + IntToStr(x),
+          mail[x].lastFrom, [rfReplaceAll]);
+      end;
     end;
 
-    if decodeArgs(line, '$MObutton', maxArgs, args, prefix, postfix, numargs)
-      then
+    iPos1 :=  pos('$CustomChar(', line);
+    while (iPos1 <> 0) do
     begin
-      spacecount := 0;
-      if (numargs = 1) and (cLastKeyPressed = args[1]) then spacecount := 1;
+      try
+        iPos2 := PosEx(')', line, iPos1+12);
+        if (iPos2 = 0) then
+          raise Exception.Create('No ending bracket');
+        Form1.customchar(AnsiMidStr(line, iPos1+12, iPos2-(iPos1+12)));
+        Delete(line, iPos1, iPos2-iPos1+1);
+      except
+        on E: Exception do line := StringReplace(line, '$CustomChar(',
+          '[CustomChar: ' + CleanString(E.Message) + ']', []);
+      end;
 
-      line := prefix + intToStr(spacecount) + postfix;
+      iPos1 :=  PosEx('$CustomChar(', line, iPos1);
     end;
+
+    if (Pos('$', line) = 0) then goto endChange;
+
+    hdcounter := 0;
+    while decodeArgs(line, '$LogFile', maxArgs, args, prefix, postfix,
+      numargs) do
+    begin
+      try
+        hdcounter := hdcounter + 1;
+        if hdcounter > 4 then line := StringReplace(line, '$LogFile(',
+          'error', []);
+
+        sFileloc := args[1];
+        if (sFileloc[1] = '"') and (sFileloc[Length(sFileLoc)] = '"') then
+          sFileloc := copy(sFileloc, 2, Length(sFileloc)-2);
+
+        if (not FileExists(sFileloc)) then
+          raise Exception.Create('No such file');
+
+        RequiredParameters(numargs, 2, 2);
+        iFileline := StrToInt(args[2]);
+
+        if iFileline > 3 then iFileline := 3;
+        if iFileline < 0 then iFileline := 0;
+
+        FileStream := TFileStream.Create(sFileloc, fmOpenRead or fmShareDenyNone);
+        iBytesToRead := 1024;
+        if (FileStream.Size < iBytesToRead) then
+          iBytesToRead := FileStream.Size;
+        SetLength(spaceline, iBytesToRead);
+
+        FileStream.Seek(-1 * iBytesToRead, soFromEnd);
+        FileStream.ReadBuffer(spaceline[1], iBytesToRead);
+        FileStream.Free;
+
+        Lines := TStringList.Create;
+        Lines.Text := spaceline;
+        spaceline := stripspaces(lines[lines.count - iFileline]);
+        if (pos('] ', spaceline) <> 0) then
+          spaceline := copy(spaceline, pos('] ', spaceline) + 2, length(spaceline));
+
+        for i := 0 to 7 do spaceline := StringReplace(spaceline, chr(i), '',
+          [rfReplaceAll]);
+        Lines.Free;
+        line := prefix + spaceline + postfix;
+      except
+        on E: Exception do line := prefix + '[LogFile: '
+          + CleanString(E.message) + ']' + postfix;
+      end;
+    end;
+
+    while decodeArgs(line, '$File', maxArgs, args, prefix, postfix, numargs) do
+    begin
+      sFileloc := args[1];
+      if (sFileloc[1] = '"') and (sFileloc[Length(sFileLoc)] = '"') then
+        sFileloc := copy(sFileloc, 2, Length(sFileloc)-2);
+
+      try
+        RequiredParameters(numargs, 2, 2);
+        iFileline := StrToInt(args[2]);
+        if (not FileExists(sFileloc)) then
+          raise Exception.Create('No such file');
+        assignfile(fFile3, sFileloc);
+        reset(fFile3);
+        for counter3 := 1 to iFileline do readln(fFile3, line3);
+        closefile(fFile3);
+        line := prefix + line3 + postfix;
+      except
+        on E: Exception do line := prefix + '[File: '
+          + CleanString(E.Message) + ']' + postfix;
+      end;
+    end;
+
+    if pos('$Winamp', line) <> 0 then line := changeWinamp(line);
+
+    line := StringReplace(line, '$UpTime', uptimereg, [rfReplaceAll]);
+    line := StringReplace(line, '$UpTims', uptimeregs, [rfReplaceAll]);
+
+    line := StringReplace(line, '$NetIPaddress', ipaddress, [rfReplaceAll]);
+
+    line := StringReplace(line, '$Username', STUsername, [rfReplaceAll]);
+    line := StringReplace(line, '$Computername', STcomputername,
+      [rfReplaceAll]);
+    if (pos('$CPU', line) <> 0) then
+    begin
+      line := StringReplace(line, '$CPUType', STCPUType, [rfReplaceAll]);
+      line := StringReplace(line, '$CPUSpeed', STCPUSpeed, [rfReplaceAll]);
+      line := StringReplace(line, '$CPUUsage%', IntToStr(STCPUUsage),
+        [rfReplaceAll]);
+    end;
+
+    if (pos('$Temp', line) <> 0) then
+    begin
+      for x := 1 to 10 do
+      begin
+        line := StringReplace(line, '$Tempname' + IntToStr(x), TempName[x],
+          [rfReplaceAll]);
+        line := StringReplace(line, '$Temp' + IntToStr(x),
+          FloatToStr(Temperature[x]), [rfReplaceAll]);
+      end;
+    end;
+    if (pos('$Fan', line) <> 0) then
+    begin
+      for x := 1 to 10 do
+      begin
+        line := StringReplace(line, '$Fanname' + IntToStr(x), Fanname[x],
+          [rfReplaceAll]);
+        line := StringReplace(line, '$FanS' + IntToStr(x),
+          FloatToStr(Fan[x]), [rfReplaceAll]);
+      end;
+    end;
+
+    if (pos('$Volt', line) <> 0) then
+    begin
+      for x := 1 to 10 do
+      begin
+        line := StringReplace(line, '$Voltname' + IntToStr(x),Voltname[x],
+          [rfReplaceAll]);
+        line := StringReplace(line, '$Voltage' + IntToStr(x),
+          FloatToStr(Voltage[x]), [rfReplaceAll]);
+      end;
+    end;
+
+    if (pos('$Half-life', line) <> 0) then
+    begin
+      line := StringReplace(line, '$Half-life1', qstatreg1[activeScreen,
+        qstattemp], [rfReplaceAll]);
+      line := StringReplace(line, '$Half-life2', qstatreg2[activeScreen,
+        qstattemp], [rfReplaceAll]);
+      line := StringReplace(line, '$Half-life3', qstatreg3[activeScreen,
+        qstattemp], [rfReplaceAll]);
+      line := StringReplace(line, '$Half-life4', qstatreg4[activeScreen,
+        qstattemp], [rfReplaceAll]);
+    end;
+
+    if (pos('$Quake', line) <> 0) then
+    begin
+      line := StringReplace(line, '$QuakeII1', qstatreg1[activeScreen,
+        qstattemp], [rfReplaceAll]);
+      line := StringReplace(line, '$QuakeIII1', qstatreg1[activeScreen,
+        qstattemp], [rfReplaceAll]);
+      line := StringReplace(line, '$QuakeII2', qstatreg2[activeScreen,
+        qstattemp], [rfReplaceAll]);
+      line := StringReplace(line, '$QuakeIII2', qstatreg2[activeScreen,
+        qstattemp], [rfReplaceAll]);
+      line := StringReplace(line, '$QuakeII3', qstatreg3[activeScreen,
+        qstattemp], [rfReplaceAll]);
+      line := StringReplace(line, '$QuakeIII3', qstatreg3[activeScreen,
+        qstattemp], [rfReplaceAll]);
+      line := StringReplace(line, '$QuakeII4', qstatreg4[activeScreen,
+        qstattemp], [rfReplaceAll]);
+      line := StringReplace(line, '$QuakeIII4', qstatreg4[activeScreen,
+        qstattemp], [rfReplaceAll]);
+    end;
+
+    if (Pos('$Unreal', line) <> 0) then
+    begin
+      line := StringReplace(line, '$Unreal1', qstatreg1[activeScreen,
+        qstattemp], [rfReplaceAll]);
+      line := StringReplace(line, '$Unreal2', qstatreg2[activeScreen,
+        qstattemp], [rfReplaceAll]);
+      line := StringReplace(line, '$Unreal3', qstatreg3[activeScreen,
+        qstattemp], [rfReplaceAll]);
+      line := StringReplace(line, '$Unreal4', qstatreg4[activeScreen,
+        qstattemp], [rfReplaceAll]);
+    end;
+
+    line := StringReplace(line, '$DnetDone', replline2, [rfReplaceAll]);
+    line := StringReplace(line, '$DnetSpeed', replline1, [rfReplaceAll]);
+
+    if (pos('$SETI', line) <> 0) then
+    begin
+      line := StringReplace(line, '$SETIResults', setiNumResults,
+        [rfReplaceAll]);
+      line := StringReplace(line, '$SETICPUTime', setiCpuTime,
+        [rfReplaceAll]);
+      line := StringReplace(line, '$SETIAverage', setiAvgCpu,
+        [rfReplaceAll]);
+      line := StringReplace(line, '$SETILastresult', setiLastResult,
+        [rfReplaceAll]);
+      line := StringReplace(line, '$SETIusertime', setiUserTime,
+        [rfReplaceAll]);
+      line := StringReplace(line, '$SETItotalusers', setiTotalUsers,
+        [rfReplaceAll]);
+      line := StringReplace(line, '$SETIrank', setiRank, [rfReplaceAll]);
+      line := StringReplace(line, '$SETIsharingrank', setiShareRank,
+        [rfReplaceAll]);
+      line := StringReplace(line, '$SETImoreWU', setiMoreWU,
+        [rfReplaceAll]);
+    end;
+
+    if (pos('$FOLD', line) <> 0) then
+    begin
+      line := StringReplace(line, '$FOLDmemsince', foldMemSince,
+        [rfReplaceAll]);
+      line := StringReplace(line, '$FOLDlastwu', foldLastWU,
+        [rfReplaceAll]);
+      line := StringReplace(line, '$FOLDactproc', foldActProcsWeek,
+        [rfReplaceAll]);
+      line := StringReplace(line, '$FOLDteam', foldTeam, [rfReplaceAll]);
+      line := StringReplace(line, '$FOLDscore', foldScore, [rfReplaceAll]);
+      line := StringReplace(line, '$FOLDrank', foldRank, [rfReplaceAll]);
+      line := StringReplace(line, '$FOLDwu', foldWU, [rfReplaceAll]);
+    end;
+
+    while pos('$Time(', line) <> 0 do
+    begin
+      try
+        line2 := copy(line, pos('$Time(', line) + 6, length(line));
+        if (pos(')', line2) = 0) then
+          raise Exception.Create('No ending bracket');
+        line2 := copy(line2, 1, pos(')', line2)-1);
+        tempst := formatdatetime(line2, now);
+        line := StringReplace(line, '$Time(' + line2 + ')', tempst, []);
+      except
+        on E: Exception do line := StringReplace(line, '$Time(', '[Time: '
+          + CleanString(E.Message) + ']', []);
+      end;
+    end;
+
+    if (pos('$Net', line) <> 0) then line := changeNet(line);
+
+
 
     while decodeArgs(line, '$Chr', maxArgs, args, prefix, postfix, numargs) do
     begin
@@ -1693,12 +1796,17 @@ begin
       try
         RequiredParameters(numargs, 1, 1);
         tempst := args[1];
-        while pos('#', tempst) <> 0 do
-        begin
-          ccount := ccount + StrToInt(copy(tempst, 1, pos('#', tempst)-1));
-          tempst := copy(tempst, pos('#', tempst) + 1, length(tempst));
-        end;
-        ccount := ccount + StrToInt(copy(tempst, 1, length(tempst)));
+        iPos1 := 1;
+        iPos2 := pos('#', tempst);
+
+        repeat
+          if (iPos2 = 0) then
+            ccount := ccount + StrToFloatN(tempst, iPos1, length(tempst)-iPos1+1)
+          else
+            ccount := ccount + StrToFloatN(tempst, iPos1, iPos2-iPos1);
+          iPos1 := iPos2 + 1;
+          iPos2 := PosEx('#', tempst, iPos1);
+        until (iPos1 = 1);
 
         line := prefix + FloatToStr(ccount) + postfix;
       except
@@ -1707,20 +1815,6 @@ begin
       end;
     end;
 
-    while (pos('$CustomChar(', line) <> 0) do
-    begin
-      try
-        line2 := copy(line, pos('$CustomChar(', line) + 12, length(line));
-         if (pos(')', line2) = 0) then
-          raise Exception.Create('No ending bracket');
-        line2 := copy(line2, 1, pos(')', line2)-1);
-        Form1.customchar(line2);
-        line := StringReplace(line, '$CustomChar(' + line2 + ')', '', []);
-      except
-        on E: Exception do line := StringReplace(line, '$CustomChar(',
-          '[CustomChar: ' + CleanString(E.Message) + ']', []);
-      end;
-    end;
 
     // $Rss(URL, TYPE [, NUM [, FREQ]])
     //   TYPE is t=title, d=desc, b=both
@@ -1865,39 +1959,32 @@ begin
       end;
     end;
 
-
-    while pos('$Right(', line) <> 0 do
+    iPos1 := pos('$Right(', line);
+    while iPos1 <> 0 do
     begin
       try
-        line2 := copy(line, pos('$Right(', line), length(line));
-        if (pos(',$', line2) = 0) then
+        iPos2 := PosEx(',$', line, iPos1+1);
+        if (iPos2 = 0) then
           raise Exception.Create('Missing ",$"');
-        if (pos(',$', line2) = 0) then
-          raise Exception.Create('Missing "%)"');
-        spacecount := StrToInt(copy(line2, pos(',$', line2) + 2, pos('%)',
-          line2)-pos(',$', line2)-2));
-        line2 := copy(line2, pos('$Right(', line2) + 7, pos(',$',
-          line2)-pos('$Right(', line2)-7);
 
-        spaceline := '';
-        if spacecount > length(line2) then
-        begin
-          for h := 1 to spacecount - length(line2) do
-          begin
-            spaceline := ' ' + spaceline;
-          end;
-        end;
-        spaceline := spaceline + line2;
-        line := StringReplace(line, '$Right(' + line2 + ',$' +
-          IntToStr(spacecount) + '%)', spaceline, []);
+        iPos3 := PosEx('%)', line, iPos2+2);
+        if (iPos3 = 0) then
+          raise Exception.Create('Missing "%)"');
+
+        spacecount := StrToIntN(line, iPos2 + 2, iPos3-(iPos2+2));
+        Delete(line, iPos2, (iPos3+2)-iPos2);
+        Delete(line, iPos1, 7);
+        if (spacecount >  iPos2-(iPos1+7)) then
+          Insert(DupeString(' ', spacecount-(iPos2-(iPos1+7))), line, iPos1);
       except
         on E: Exception do line := StringReplace(line, '$Right(', '[Right: '
           + CleanString(E.Message) + ']', []);
       end;
+
+      iPos1 := PosEx('$Right(',line,iPos1); 
     end;
 
-    while decodeArgs(line, '$Fill', maxArgs, args, prefix, postfix, numargs)
-      do
+    while decodeArgs(line, '$Fill', maxArgs, args, prefix, postfix, numargs) do
     begin
       try
         RequiredParameters(numargs, 1, 1);
@@ -1913,6 +2000,7 @@ begin
           postfix;
       end;
     end;
+endChange:
   except
     on E: Exception do line := '[Unhandled Exception: '
       + CleanString(E.Message) + ']';
@@ -1925,12 +2013,22 @@ end;
 
 // Runs in data thread
 procedure TData.doCpuThread;
+var
+  count: Integer; // count used to update net stats every second.
 begin
+  count := 0;
   coinitialize(nil);
 
   while (not cpuThread.Terminated) do
   begin
+    Inc(count);
+
     cpuUpdate();
+    if (not cpuThread.Terminated) and (count > 4) then
+    begin
+      count := 0;
+      updateNetworkStats();
+    end;
     if (not cpuThread.Terminated) then sleep(250);
   end;
 
@@ -1946,7 +2044,6 @@ var
   uiRemaining: Cardinal;
 
 begin
-  doCpuUpdate := False;
 //try
   //cpuusage!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   //Application.ProcessMessages;
@@ -2135,7 +2232,7 @@ begin
   else result := false;
 end;
 
-procedure TData.updateNetworkStats(Sender: TObject);
+procedure TData.updateNetworkStats;
 //NETWORKS STATS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 var
   network: Integer;
