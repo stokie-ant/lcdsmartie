@@ -454,10 +454,14 @@ end;
 
 procedure TLCD_MO.setFan(t1, t2: Integer);
 begin
-  writeDevice($FE);                         //set speed
-  writeDevice($C0);
-  writeDevice(t1);
-  writeDevice(t2);
+  if (t1 >= 0) and (t1 <= 255)
+    and (t2 >= 0) and (t2 <= 255) then
+  begin
+    writeDevice($FE);                         //set speed
+    writeDevice($C0);
+    writeDevice(t1);
+    writeDevice(t2);
+  end;
 
   {
     form1.VaComm1.WriteChar(chr($FE));                         //remember startup state

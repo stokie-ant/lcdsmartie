@@ -25,6 +25,7 @@ Changes
 =======
 5.3Beta1
 	- Fixed bug: action of GotoScreen(1) caused a crash.
+	- Fixed some bugs in the action code.
 5.3Alpha6
 	- Crystalfontz: Experimental support for 631 & 633 displays; includes
 	  keypad support.

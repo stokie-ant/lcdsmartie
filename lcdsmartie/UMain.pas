@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.27 $ $Date: 2004/12/14 12:28:16 $
+ *  $Revision: 1.28 $ $Date: 2004/12/14 13:14:08 $
  *****************************************************************************}
 
 interface
@@ -211,6 +211,7 @@ type
     procedure scrollLine(line: Byte; direction: Integer);
     procedure doInteractions;
     procedure OnMinimize(Sender: TObject);
+    procedure backlit(iOn: Integer = -1);
   end;
 
 var
@@ -229,7 +230,6 @@ var
   aantalscreensheenweer: Integer;
   combobox8temp: Integer;
 procedure customchar(fline: String);
-procedure backlit();
 
 implementation
 
@@ -1011,15 +1011,20 @@ begin
 end;
 
 
-// toggles backlight
-procedure backlit;
+// sets backlight - toggles if no parameter given
+procedure TForm1.backlit(iOn: Integer = -1);
 begin
-  backlight := 1-backlight;
-  Lcd.setbacklight(backlight = 1);
+  if (iOn = -1) then
+    backlight := 1-backlight
+  else
+    backlight := iOn;
 
-  if backlight = 0 then Form1.popupmenu1.Items[0].Items[0].Caption :=
-    '&Backlight On'
-  else Form1.popupmenu1.Items[0].Items[0].Caption := '&Backlight Off';
+  Lcd.setbacklight(backlight >= 1);
+
+  if backlight = 0 then
+    Form1.popupmenu1.Items[0].Items[0].Caption := '&Backlight On'
+  else
+    Form1.popupmenu1.Items[0].Items[0].Caption := '&Backlight Off';
   Form1.kleur();
 end;
 
@@ -1359,6 +1364,7 @@ procedure TForm1.Timer3Timer(Sender: TObject);
 var
   counter: Integer;
   temp1, temp2: String;
+  iTemp: Integer;
   cKey: Char;
   iLeftValue, iRightValue: Integer;
   sLeftValue, sRightValue, sAction: String;
@@ -1414,46 +1420,42 @@ begin
       begin
         if (pos('Backlight(', sAction) <> 0) then
         begin
-          if (bDoAction) then
+          temp1 := copy(sAction, pos('(', sAction) + 1, 1);
+
+          if (temp1 = '0') or (temp1 = '1') then
           begin
-            temp1 := copy(sAction, pos('(', sAction) + 1, 1);
-            if temp1 = '1' then backlight := 0;
-            if temp1 = '0' then backlight := 1;
-            if (temp1 = '1') or (temp1 = '0') then backlit();
-          end
-          else
-          begin
-            temp1 := copy(sAction, pos('(', sAction) + 1, 1);
-            if temp1 = '0' then backlight := 0;
-            if temp1 = '1' then backlight := 1;
-            if (temp1 = '1') or (temp1 = '0') then backlit();
+            iTemp := 1;
+            if temp1 = '0' then iTemp := 0;
+
+            if (not bDoAction) then
+              iTemp := 1 - iTemp;
+
+            backlit(iTemp);
           end;
         end;
 
         if (pos('GPO(', sAction) <> 0) and (config.isMO) then
         begin
-          try
-            if (bDoAction) then
+          temp1 := copy(sAction, pos('(', sAction) + 1,
+            pos(',', sAction)-pos('(', sAction)-1);
+          temp2 := copy(sAction, pos(',', sAction) + 1,
+            pos(')', sAction)-pos(',', sAction)-1);
+
+          if (temp2 = '1') or (temp2 = '0') then
+          begin
+            if (not bDoAction) then
             begin
-              temp1 := copy(sAction, pos('(', sAction) + 1,
-                pos(',', sAction)-pos('(', sAction)-1);
-              temp2 := copy(sAction, pos(',', sAction) + 1,
-                pos(')', sAction)-pos(',', sAction)-1);
-              if (temp2 = '1') or (temp2 = '0') then doGPO(StrToInt(temp1),
-                StrToInt(temp2));
-            end
-            else
-            begin
-              temp1 := copy(sAction, pos('(', sAction) + 1,
-                pos(',', sAction)-pos('(', sAction)-1);
-              temp2 := copy(sAction, pos(',', sAction) + 1,
-                pos(')', sAction)-pos(',', sAction)-1);
+              // invert setting
               if temp2='1' then temp2 := '0'
               else temp2 := '1';
-              if (temp2 = '1') or (temp2 = '0') then doGPO(StrToInt(temp1),
-                StrToInt(temp2));
             end;
-          except
+
+            try
+              doGPO(StrToInt(temp1), StrToInt(temp2));
+            except
+              on EConvertError do begin {ignore} end;
+              else raise;
+            end;
           end;
         end;
       end;
@@ -1493,14 +1495,28 @@ begin
 
         if (pos('GotoTheme(', sAction) <> 0) then
         begin
-          activetheme := StrToInt(copy(sAction, pos('1GotoTheme(', sAction) + 11,
-            pos(')', sAction)-pos('1GotoTheme(', sAction)-11))-1;
+          try
+            iTemp := StrToInt(copy(sAction, pos('GotoTheme(', sAction) + 11,
+              pos(')', sAction)-pos('GotoTheme(', sAction)-11))-1;
+            if (iTemp >= 0) and (iTemp < 10) then
+              activetheme := iTemp;
+          except
+            on EConvertError do begin {ignore} end;
+            else raise;
+          end;
         end;
 
         if (pos('GotoScreen(', sAction) <> 0) then
         begin
-          ChangeScreen(StrToInt(copy(sAction, pos('1GotoScreen(', sAction) + 12,
-            pos(')', sAction)-pos('1GotoScreen(', sAction)-12)));
+          try
+            iTemp := StrToInt(copy(sAction, pos('GotoScreen(', sAction) + 12,
+              pos(')', sAction)-pos('GotoScreen(', sAction)-12));
+            if (iTemp >= 1) and (iTemp <= 20) then
+              ChangeScreen(iTemp);
+          except
+            on EConvertError do begin {ignore} end;
+            else raise;
+          end;
         end;
         if pos('FreezeScreen', sAction) <> 0 then
         begin
@@ -1525,20 +1541,25 @@ begin
         begin
           temp1 := copy(sAction, pos('(', sAction) + 1, pos(')', sAction)
             - pos('(', sAction)-1);
-          flash := StrToInt(temp1)*2;
+          try
+            flash := StrToInt(temp1)*2;
+          except
+            on EConvertError do begin {ignore} end;
+            else raise;
+          end;
         end;
 
         if pos('Wave[', sAction) <> 0 then
         begin
-          temp1 := copy(sAction, pos('1Wave[', sAction) + 6, pos(']', sAction)
-            - pos('1Wave[', sAction)-6);
+          temp1 := copy(sAction, pos('Wave[', sAction) + 6, pos(']', sAction)
+            - pos('Wave[', sAction)-6);
           playsound(Pchar(temp1), 0, SND_FILENAME);
         end;
 
         if pos('Exec[', sAction) <> 0 then
         begin
-          temp1 := copy(sAction, pos('1Exec[', sAction) + 6, pos(']', sAction)
-            - pos('1Exec[', sAction)-6);
+          temp1 := copy(sAction, pos('Exec[', sAction) + 6, pos(']', sAction)
+            - pos('Exec[', sAction)-6);
           shellexecute(0, 'open', PChar(temp1), '', '', SW_SHOW);
         end;
 
@@ -1587,6 +1608,8 @@ begin
               pos(')', sAction)-pos(',', sAction)-1);
             gpoflash := StrToInt(temp2)*2;
           except
+            on EConvertError do begin {ignore} end;
+            else raise;
           end;
         end;
 
@@ -1597,10 +1620,12 @@ begin
               - pos('(', sAction)-1);
             dogpo(StrToInt(temp1), 2)
           except
+            on EConvertError do begin {ignore} end;
+            else raise;
           end;
         end;
 
-        if pos('1Fan(', sAction) <> 0 then
+        if pos('Fan(', sAction) <> 0 then
         begin
           try
             temp1 := copy(sAction, pos('(', sAction) + 1, pos(',', sAction)
@@ -1610,6 +1635,8 @@ begin
 
             Lcd.setFan(StrToInt(temp1), StrToInt(temp2));
           except
+            on EConvertError do begin {ignore} end;
+            else raise;
           end;
         end;
       end;
@@ -1619,7 +1646,7 @@ begin
       // If action was caused by a key press then don't record that we have
       // done it - this will reduce the delay required to reset actions.
       // This delay impacts the user experience when using keys.
-      if (Pos('MObutton', sLeftValue)<>0) then
+      if (Pos('MObutton', config.actionsArray[counter, 1]) <> 0) then
         didAction[counter] := false;
     end;
   end;
