@@ -26,7 +26,8 @@ uses
   ULCD_MO in 'ULCD_MO.pas',
   ULCD_HD in 'ULCD_HD.pas',
   ULCD_CF in 'ULCD_CF.pas',
-  UData in 'UData.pas';
+  UData in 'UData.pas',
+  SYSTEM2EX in 'System2Ex.pas';
 
 {$R *.RES}
 

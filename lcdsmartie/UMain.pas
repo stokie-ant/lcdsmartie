@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.7 $ $Date: 2004/11/16 19:44:33 $
+ *  $Revision: 1.8 $ $Date: 2004/11/17 11:42:46 $
  *****************************************************************************}
 
 interface
@@ -27,7 +27,7 @@ interface
 uses Messages, IdHTTP, IdBaseComponent, IdComponent, IdTCPConnection,
   IdTCPClient, IdMessageClient, IdPOP3, VaClasses, VaComm, CoolTrayIcon,
   Menus, WinampCtrl, ExtCtrls, Controls, StdCtrls, Buttons, Classes, Forms,
-  parport, system2, UConfig, ULCD, UData, xmldom, XMLIntf, msxmldom, XMLDoc;
+  parport, UConfig, ULCD, UData, xmldom, XMLIntf, msxmldom, XMLDoc;
 
 const
   WM_ICONTRAY = WM_USER + 1;   // User-defined message
@@ -322,8 +322,8 @@ function TForm1.scroll(const scrollvar:string;const line,speed:integer):string;
 var
   scrolltext:string;
   len: Integer;
-
 begin
+
   if length(scrollvar) > config.width then begin
     scrollPos[line]:=scrollPos[line]+speed;
     if (scrollPos[line]>length(scrollvar)) then scrollPos[line]:=1;

@@ -19,13 +19,13 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.3 $ $Date: 2004/11/16 19:44:33 $
+ *  $Revision: 1.4 $ $Date: 2004/11/17 11:42:46 $
  *****************************************************************************}
 
 
 interface
 
-uses Classes, System2, xmldom, XMLIntf, SysUtils, xercesxmldom, XMLDoc,
+uses Classes, System2, System2Ex, xmldom, XMLIntf, SysUtils, xercesxmldom, XMLDoc,
  msxmldom, ComCtrls, ComObj;
 
 const
@@ -134,9 +134,9 @@ type
     private
       doHTTPUpdate, doGameUpdate, doEmailUpdate: Boolean;
       STUsername, STComputername, STCPUType, STCPUSpeed: string;
-      STPageFree,STPageTotal:Integer;
-      STMemFree, STMemTotal: Integer;
-      STHDFree,STHDTotal:array[67..90] of Integer;
+      STPageFree,STPageTotal:Int64;
+      STMemFree, STMemTotal: Int64;
+      STHDFree,STHDTotal:array[67..90] of Int64;
       CPUUsage: array [1..5] of Cardinal;
       CPUUsageCount: Cardinal;
       CPUUsagePos: Cardinal;
@@ -183,6 +183,7 @@ type
       distributedlog: String;
       srvr:string;
       System1:Tsystem;
+      System1Ex:TsystemEx;
       qstatreg4: array[1..20,1..4] of string;
       DoNewsUpdate: Array [1..9] of Boolean;
       newsAttempts: Array [1..9] of Byte;
@@ -813,6 +814,7 @@ var
   args: Array [1..maxArgs] of String;
   prefix, postfix: String;
   numArgs: Cardinal;
+  mem: Int64;
   jj: Cardinal;
   found: Boolean;
 
@@ -979,11 +981,28 @@ begin
     if (pos('$Net', regel)<>0) then regel:=changeNet(regel);
 
 
-    if pos('$MemF%',regel) <> 0 then regel:=StringReplace(regel,'$MemF%', IntToStr(round(100/STMemTotal*STMemfree)),[rfReplaceAll]);
-    if pos('$MemU%',regel) <> 0 then regel:=StringReplace(regel,'$MemU%', IntToStr(round(100/STMemTotal*(STMemTotal-STMemfree))),[rfReplaceAll]);
+    if pos('$MemF%',regel) <> 0 then begin
+      if (STMemTotal>0) then mem:= round(100/STMemTotal*STMemfree)
+      else mem:=0;
+      regel:=StringReplace(regel,'$MemF%', IntToStr(mem),[rfReplaceAll]);
+    end;
+    if pos('$MemU%',regel) <> 0 then begin
+      if (STMemTotal>0) then mem:=round(100/STMemTotal*(STMemTotal-STMemfree))
+      else mem:=0;
+      regel:=StringReplace(regel,'$MemU%', IntToStr(mem),[rfReplaceAll]);
+    end;
 
-    if pos('$PageF%',regel) <> 0 then regel:=StringReplace(regel,'$PageF%', IntToStr(round(100/STPageTotal*STPagefree)),[rfReplaceAll]);
-    if pos('$PageU%',regel) <> 0 then regel:=StringReplace(regel,'$PageU%', IntToStr(round(100/STPageTotal*(STPageTotal-STPagefree))),[rfReplaceAll]);
+    if pos('$PageF%',regel) <> 0 then begin
+      if (STPageTotal>0) then mem:= round(100/STPageTotal*STPagefree)
+      else mem:=0;
+      regel:=StringReplace(regel,'$PageF%', IntToStr(mem),[rfReplaceAll]);
+    end;
+
+    if pos('$PageU%',regel) <> 0 then begin
+      if (STPageTotal>0) then mem:=round(100/STPageTotal*(STPageTotal-STPagefree))
+      else mem:=0;
+      regel:=StringReplace(regel,'$PageU%', IntToStr(0),[rfReplaceAll]);
+    end;
 
     while decodeArgs(regel, '$HDFreg', maxArgs, args, prefix, postfix, numargs) do begin
       try
@@ -1017,7 +1036,7 @@ begin
     while decodeArgs(regel, '$HDUsed', maxArgs, args, prefix, postfix, numargs) do begin
       try
         letter:=ord(upcase(args[1][1]));
-        regel2:=IntToStr(round(STHDTotal[letter]-STHDFree[letter]));
+        regel2:=IntToStr(STHDTotal[letter]-STHDFree[letter]);
         regel:=prefix+regel2+postfix;
       except
         on E: Exception do regel:=prefix+'[HDUsed: '+E.Message+']'+postfix;
@@ -1515,6 +1534,7 @@ var
   regel:string;
   z, y: Integer;
   screenline: String;
+  oviVersionInfo: TOSVERSIONINFO;
 
 begin
 
@@ -1535,14 +1555,30 @@ begin
     end;
   end;
 
+oviVersionInfo.dwOSVersionInfoSize := SizeOf(oviVersionInfo);
 
+if not GetVersionEx(oviVersionInfo) then
+ raise Exception.Create('Can''t get the Windows version');
+
+if (oviVersionInfo.dwPlatformId = VER_PLATFORM_WIN32_NT) and
+   (oviVersionInfo.dwMajorVersion >= 5) then begin
+  STComputername:=system1Ex.Computername;
+  STUsername:=system1Ex.Username;
+
+  STMemfree:=system1Ex.availPhysmemory div (1024*1024);
+  STMemTotal:=system1Ex.totalPhysmemory div (1024*1024);
+  STPageTotal:=system1Ex.totalPageFile div (1024*1024);
+  STPageFree:=system1Ex.AvailPageFile div (1024*1024);
+end else begin
   STComputername:=system1.Computername;
   STUsername:=system1.Username;
 
-  STMemfree:=round(system1.availPhysmemory / 1024 / 1023.5);
-  STMemTotal:=round(system1.totalPhysmemory / 1024 /1023);
-  STPageTotal:=round(system1.totalPageFile / 1024 /1024);
-  STPageFree:=round(system1.AvailPageFile / 1024 /1024);
+  STMemfree:=system1.availPhysmemory div (1024 * 1024);
+  STMemTotal:=system1.totalPhysmemory div (1024 * 1024);
+  STPageTotal:=system1.totalPageFile div (1024 * 1024);
+  STPageFree:=system1.AvailPageFile div (1024 * 1024);
+end;   
+
 
 // HD space!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 if hd=1 then begin
