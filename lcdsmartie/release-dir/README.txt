@@ -35,6 +35,8 @@ See: http://sourceforge.net/tracker/?func=browse&group_id=122330&atid=693136
 
 Changes
 =======
+5.3Beta4
+	- Fixed bug in Rss code - didn't work with long urls.
 5.3Beta3
 	- Removed the need to restart smartie when some settings are changed.
 	- Added options for auto starting with windows and hiding on startup.

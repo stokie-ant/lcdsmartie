@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.41 $ $Date: 2005/01/11 19:26:07 $
+ *  $Revision: 1.42 $ $Date: 2005/01/16 17:29:14 $
  *****************************************************************************}
 
 
@@ -2400,11 +2400,17 @@ var
   Filename: String;
   lasttime: TDateTime;
   toonew: Boolean;
+  sRest: String;
+  iRest: Integer;
+  i: Integer;
 
 begin
   // Generate a filename for the cached Rss stream.
-  Filename := LowerCase(Url);
-  Filename := StringReplace(Filename, '\\', '_', [rfReplaceAll]);
+  Filename := copy(LowerCase(Url),1,30);
+  sRest := copy(LowerCase(Url),30,length(Url)-30);
+
+  Filename := StringReplace(Filename, 'http://', '_', [rfReplaceAll]);
+  Filename := StringReplace(Filename, '\', '_', [rfReplaceAll]);
   Filename := StringReplace(Filename, ':', '_', [rfReplaceAll]);
   Filename := StringReplace(Filename, '/', '_', [rfReplaceAll]);
   Filename := StringReplace(Filename, '"', '_', [rfReplaceAll]);
@@ -2415,6 +2421,13 @@ begin
   Filename := StringReplace(Filename, '?', '_', [rfReplaceAll]);
   Filename := StringReplace(Filename, '=', '_', [rfReplaceAll]);
   Filename := StringReplace(Filename, '.', '_', [rfReplaceAll]);
+  Filename := StringReplace(Filename, '%', '_', [rfReplaceAll]);
+  iRest := 0;
+  for i := 1 to length(sRest) do
+  begin
+     iRest := iRest + (Ord(sRest[i]) xor i);
+  end;
+  Filename := Filename + IntToHex(iRest, 0);
   Filename :=  extractfilepath(application.exename) + 'cache\\' + Filename + '.cache';
 
   try
