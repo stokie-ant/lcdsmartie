@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.34 $ $Date: 2004/12/30 16:47:48 $
+ *  $Revision: 1.35 $ $Date: 2004/12/31 19:39:49 $
  *****************************************************************************}
 
 interface
@@ -590,6 +590,13 @@ begin
   backlight := 1;
   kleur();
 
+  // ensure start up position is sensible
+  if form1.left < 0 then form1.left := 0;
+  if form1.top < 0 then form1.top := 0;
+  if form1.left + form1.Width > screen.desktopwidth then form1.left :=
+    screen.desktopwidth-form1.width;
+  if form1.top + form1.height > screen.desktopheight then form1.top :=
+    screen.desktopheight-form1.height;
 
   if (config.isMO) or (config.isCF) then
   begin
@@ -907,14 +914,6 @@ begin
     begin
       form1.formStyle := fsNormal;
     end;
-
-
-    if form1.left < 8 then form1.left := 0;
-    if form1.top < 8 then form1.top := 0;
-    if form1.left + form1.Width > screen.desktopwidth -8 then form1.left :=
-      screen.desktopwidth-form1.width;
-    if form1.top + form1.height > screen.desktopheight -34 then form1.top :=
-      screen.desktopheight-form1.height-28;
 
 
     if (config.width = 40) then
