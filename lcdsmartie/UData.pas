@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.33 $ $Date: 2005/01/04 01:04:22 $
+ *  $Revision: 1.34 $ $Date: 2005/01/04 10:49:16 $
  *****************************************************************************}
 
 
@@ -1017,8 +1017,8 @@ begin
     SetLength(dlls, uiTotalDlls);
     dlls[uiDll].sName := sDllName;
 
-    //dlls[uiDll].hDll := LoadLibrary(pchar(extractfilepath(application.exename) +
-    //  'plugins\' + sDllName));
+    dlls[uiDll].hDll := LoadLibrary(pchar(extractfilepath(application.exename) +
+      'plugins\' + sDllName));
 
     //dlls[uiDll].hDll := LoadLibrary(pchar(
     //    'c:\Documents and Settings\Administrator\My Documents\Visual Studio Projects\perf\Debug\perf.dll'));
@@ -1026,8 +1026,8 @@ begin
     //    'c:\Documents and Settings\Administrator\My Documents\Visual Studio Projects\bignum\Debug\bignum.dll'));
     //dlls[uiDll].hDll := LoadLibrary(pchar(
     //    'c:\Documents and Settings\Administrator\My Documents\Visual Studio Projects\menu\Debug\menu.dll'));
-    dlls[uiDll].hDll := LoadLibrary(pchar(
-        'c:\Documents and Settings\Administrator\Desktop\bridge\Bridge\Common\Bridge.dll'));
+   //dlls[uiDll].hDll := LoadLibrary(pchar(
+    //    'c:\Documents and Settings\Administrator\Desktop\bridge\Bridge\Common\Bridge.dll'));
 
     if (dlls[uiDll].hDll <> 0) then
     begin
