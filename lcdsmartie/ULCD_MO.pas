@@ -31,7 +31,7 @@ type
     procedure setContrast(level: Integer); override;
     procedure setBrightness(level: Integer); override;
     constructor CreateSerial(serial: PTVACOMM; uiPort: Cardinal; baudRate: TVaBaudrate);
-    constructor CreateUsb(device: String);
+    constructor CreateUsb(sDevice: String);
     constructor Create; override;
     destructor Destroy; override;
   private
@@ -45,17 +45,21 @@ type
     readThread: TMyThread;                // for Usb
     readBuffer: array [0..readBufferSize-1] of Byte; // for Usb
     uInPos, uOutPos: Cardinal;            // for Usb
+    sUsbPalmDeviceFile: String;           // for Usb
     procedure doReadThread;               // for Usb
     procedure writeDevice(str: String); overload;
     procedure writeDevice(byte: Byte); overload;
     function readDevice(var chr: Char): Boolean;
     function errMsg(uError: Cardinal): String;
-
+    Function DumpIoCtrl(fOutput: Cardinal; uiCode: Cardinal; uiBytes: Cardinal): String;
+    procedure GetUsbPalmFiles(const sDevice: String;
+      var sReadFile: String; var sWriteFile: String);
+    function UsbPalmConnected: Boolean;
   end;
 
 implementation
 
-uses UMain;
+uses UMain, Dialogs, Forms;
 
 constructor TMyThread.Create(myMethod: TThreadMethod);
 begin
@@ -84,16 +88,157 @@ var
   psError: pointer;
   sError: String;
 begin
-  FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER or FORMAT_MESSAGE_FROM_SYSTEM,
-    nil, uError, 0, @psError, 0, nil );
-  sError := '#' + IntToStr(uError) + ': ' + PChar(psError);
-  LocalFree(Cardinal(psError));
-  Result := sError;
+  if (uError <> 0) then
+  begin
+    FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER or FORMAT_MESSAGE_FROM_SYSTEM,
+      nil, uError, 0, @psError, 0, nil );
+    sError := '#' + IntToStr(uError) + ': ' + PChar(psError);
+    LocalFree(Cardinal(psError));
+    Result := sError;
+  end
+  else
+    Result := '#0'; // don't put "operation completed successfully! It's too confusing!
 end;
 
-constructor TLCD_MO.CreateUsb(device: String);
+Function TLCD_MO.DumpIoCtrl(fOutput: Cardinal; uiCode: Cardinal; uiBytes: Cardinal): String;
 var
-  symName: String;
+  buffer: Array [1..100] of Byte;
+  uiBytesOut: Cardinal;
+  sString: String;
+  x: Integer;
+begin
+  FillChar(buffer, SizeOf(buffer), 0);
+
+  sString := '';
+  uiBytesOut := 0;
+  if (DeviceIoControl(fOutput, uiCode, @buffer[1], uiBytes, @buffer[1], uiBytes,
+                    uiBytesOut, nil)) then
+  begin
+    sString := IntToStr(uiBytesOut) + ': ';
+    for x:= 1 to uiBytesOut do
+    begin
+      sString := sString + IntToHex(buffer[x], 2) + ' ';
+    end;
+  end
+  else
+  begin
+     sString := IntToStr(uiBytesOut) + ': [Error: ' + ErrMsg(getLasterror) +']';
+  end;
+
+  Result := sString;
+end;
+
+function TLCD_MO.UsbPalmConnected: Boolean;
+var
+  device: Cardinal;
+begin
+  device := CreateFile (PChar(sUsbPalmDeviceFile), GENERIC_WRITE or GENERIC_READ,
+    FILE_SHARE_WRITE or FILE_SHARE_READ, nil, OPEN_EXISTING, 0, 0);
+  if (device = INVALID_HANDLE_VALUE) then
+  begin
+    Result := false;
+  end
+  else
+  begin
+    Result := true;
+    CloseHandle(device);
+  end;
+end;
+
+procedure TLCD_MO.GetUsbPalmFiles(const sDevice: String;
+  var sReadFile: String; var sWriteFile: String);
+var
+  device, test: Cardinal;
+  fUsbLog: TextFile;
+  x: Integer;
+  iWorkedIn, iWorkedOut: Integer;
+begin
+  // Create a log file with possibly interesting information, it may be useful
+  // when users are having problems.
+
+  AssignFile(fUsbLog, 'usb.log');
+  Rewrite(fUsbLog);
+  WriteLn(fUsbLog, sDevice);
+  WriteLn(fUsbLog, '');
+
+  device := CreateFile (PChar(sDevice), GENERIC_WRITE or GENERIC_READ,
+    FILE_SHARE_WRITE or FILE_SHARE_READ, nil, OPEN_EXISTING, 0, 0);
+  if (device = INVALID_HANDLE_VALUE) then
+  begin
+   if (GetLastError = ERROR_PATH_NOT_FOUND) then
+      raise exception.Create('Failed to open USB Palm.' + #10+#13
+        + 'Please ensure that Hotsync manager is not running, and that '
+        + 'PalmOrb is already running on your Palm.')
+    else
+      raise exception.Create('Failed to open USB Palm: '
+        + errMsg(GetLastError));
+  end;
+
+  WriteLn(fUsbLog, '424: ' + DumpIoCtrl(device, $222424, $12));
+  WriteLn(fUsbLog, '004: ' + DumpIoCtrl(device, $222004, $8));
+  WriteLn(fUsbLog, '40C: ' + DumpIoCtrl(device, $22240C, $2));
+  WriteLn(fUsbLog, '00C: ' + DumpIoCtrl(device, $22200C, $8));
+  WriteLn(fUsbLog, '000: ' + DumpIoCtrl(device, $222000, $14));
+  WriteLn(fUsbLog, '');
+  CloseHandle(device);
+
+  iWorkedIn:=99;
+  iWorkedOut:=99;
+  for x:= 0 to 10 do
+  begin
+    test := CreateFile (PChar(sDevice+'\PIPE'+IntToHex(x,2)),
+       GENERIC_WRITE or GENERIC_READ, FILE_SHARE_WRITE or FILE_SHARE_READ,
+       nil, OPEN_EXISTING, 0, 0);
+    if (test = INVALID_HANDLE_VALUE) then
+    begin
+      WriteLn(fUsbLog, 'PIPE'+IntToHex(x,2)+': Failed: ' + errMsg(GetLastError));
+    end
+    else
+    begin
+      WriteLn(fUsbLog, 'PIPE'+IntToHex(x,2)+': Success');
+    end;
+    CloseHandle(test);
+
+    test := CreateFile (PChar(sDevice+'\IN_'+IntToHex(x,2)),
+       GENERIC_WRITE or GENERIC_READ, FILE_SHARE_WRITE or FILE_SHARE_READ,
+       nil, OPEN_EXISTING, 0, 0);
+    if (test = INVALID_HANDLE_VALUE) then
+    begin
+      WriteLn(fUsbLog, 'IN_'+IntToHex(x,2)+': Failed: ' + errMsg(GetLastError));
+    end
+    else
+    begin
+      WriteLn(fUsbLog, 'IN_'+IntToHex(x,2)+': Success');
+      if (iWorkedIn>x) then iWorkedIn := x;
+    end;
+    CloseHandle(test);
+
+    test := CreateFile (PChar(sDevice+'\OUT_'+IntToHex(x,2)),
+       GENERIC_WRITE or GENERIC_READ, FILE_SHARE_WRITE or FILE_SHARE_READ,
+       nil, OPEN_EXISTING, 0, 0);
+    if (test = INVALID_HANDLE_VALUE) then
+    begin
+      WriteLn(fUsbLog, 'OUT_'+IntToHex(x,2)+': Failed: ' + errMsg(GetLastError));
+    end
+    else
+    begin
+      WriteLn(fUsbLog, 'OUT_'+IntToHex(x,2)+': Success');
+      if (iWorkedOut>x) then iWorkedOut := x;
+    end;
+    CloseHandle(test);
+  end;
+
+  WriteLn(fUsbLog, 'Using: IN_'+IntToHex(iWorkedIn,2)+' & OUT_'+IntToHex(iWorkedOut,2));
+  CloseFile(fUsbLog);
+
+  sWriteFile := sDevice + '\OUT_' +IntToHex(iWorkedOut,2);
+  sReadFile := sDevice + '\IN_' + IntToHex(iWorkedIn,2);
+end;
+
+
+constructor TLCD_MO.CreateUsb(sDevice: String);
+var
+  sReadFile, sWriteFile: String;
 begin
   eStopReadThread := INVALID_HANDLE_VALUE;
   input := INVALID_HANDLE_VALUE;
@@ -101,54 +246,31 @@ begin
   bUsbReadSupport := False;
   bUsb := True;
 
-  symName := StringReplace(device, '\??\', '\\.\', []);
+  sDevice := StringReplace(sDevice, '\??\', '\\.\', []);
+  sUsbPalmDeviceFile := sDevice;
   //'\\.\USB#Vid_054c&Pid_0066#6&673a0bd&0&4#{a5dcbf10-6530-11d2-901f-00c04fb951ed}';
 
+  GetUsbPalmFiles(sDevice, sReadFile, sWriteFile);
 
-  // So far we have found two different kinds of Palms:
-  //   old usb handspring/visor (pre-PalmOS 4.0) and
-  //   usb palms with PalmOS 4.0 and later.
-  // These two use different device files.
-
-  // This file works on both types of usb palm:
-  output := CreateFile (PChar(symName + '\PIPE01'), GENERIC_WRITE,
-    FILE_SHARE_WRITE, nil, OPEN_EXISTING, 0, 0);
-
-  if (output <> INVALID_HANDLE_VALUE) then
+  input := CreateFile (PChar(sReadFile),  GENERIC_READ or GENERIC_WRITE,
+      FILE_SHARE_READ or FILE_SHARE_WRITE, nil, OPEN_EXISTING, 0, 0);
+  if (input = INVALID_HANDLE_VALUE) then
   begin
-    input := CreateFile (PChar(symName + '\PIPE00'), GENERIC_READ,
-      FILE_SHARE_READ, nil, OPEN_EXISTING, 0, 0);
-    if (input = INVALID_HANDLE_VALUE) then
-      bUsbReadSupport := False
+    if (GetLastError = ERROR_PATH_NOT_FOUND) then
+      raise exception.Create('Failed to open USB Palm for reading.' + #10+#13
+        + 'Please ensure that Hotsync manager is not running, and that '
+        + 'PalmOrb is already running on your Palm.')
     else
-      bUsbReadSupport := True;
-  end
-  else
-  begin
-    // This code only works for the newer usb palms:
-    // DON'T THINK THIS CODE IS NEEDED ANY MORE!
-    output := CreateFile (PChar(symName + '\PIPE03'), GENERIC_WRITE,
-      FILE_SHARE_WRITE, nil, OPEN_EXISTING, 0, 0);
-    if (output = INVALID_HANDLE_VALUE) then
-    begin
-      if (GetLastError = ERROR_PATH_NOT_FOUND) then
-        raise exception.Create('Failed to open USB Palm for writing.' + #10+#13
-          + 'Please ensure that Hotsync manager is not running, and that '
-          + 'PalmOrb is already running on your Palm.')
-      else
-        raise exception.Create('Failed to open USB Palm for writing: '
-          + errMsg(GetLastError));
-
-    end;
-
-    input := CreateFile (PChar(symName + '\PIPE02'), GENERIC_READ,
-      FILE_SHARE_READ, nil, OPEN_EXISTING, 0, 0);
-    if (input = INVALID_HANDLE_VALUE) then
       raise exception.Create('Failed to open USB Palm for reading: '
-          + errMsg(GetLastError));
-    bUsbReadSupport := True;
+        + errMsg(GetLastError));
   end;
+  bUsbReadSupport := True;
 
+  output := CreateFile (PChar(sWriteFile), GENERIC_WRITE or GENERIC_READ,
+      FILE_SHARE_WRITE or FILE_SHARE_READ, nil, OPEN_EXISTING, 0, 0);
+  if (output = INVALID_HANDLE_VALUE) then
+    raise exception.Create('Failed to open USB Palm for writing: '
+          + errMsg(GetLastError));
 
 
   // Do the standard setup now before creating the read thead.
@@ -175,36 +297,41 @@ constructor TLCD_MO.Create;
 var
   g: Integer;
 begin
+  bConnected := True;
 
-  for g := 1 to 8 do
-  begin
-    setGPO(g, false);
+  try
+    for g := 1 to 8 do
+    begin
+      setGPO(g, false);
+    end;
+
+    writeDevice($0FE);     //Cursor blink off
+    writeDevice('T');
+
+    writeDevice($0FE);     //clear screen
+    writeDevice('X');
+
+    writeDevice($0FE);     //Cursor off
+    writeDevice('K');
+
+    writeDevice($0FE);     //auto scroll off
+    writeDevice('R');
+
+    writeDevice($0FE);     //auto line wrap off
+    writeDevice('D');
+
+    writeDevice($0FE);   //auto transmit keys
+    writeDevice($041);
+
+    writeDevice($0FE);     //auto repeat off
+    writeDevice('`');
+
+    setbacklight(true);
+  except
+    bConnected := False;
+    raise;
   end;
 
-  writeDevice($0FE);     //Cursor blink off
-  writeDevice('T');
-
-  writeDevice($0FE);     //clear screen
-  writeDevice('X');
-
-  writeDevice($0FE);     //Cursor off
-  writeDevice('K');
-
-  writeDevice($0FE);     //auto scroll off
-  writeDevice('R');
-
-  writeDevice($0FE);     //auto line wrap off
-  writeDevice('D');
-
-  writeDevice($0FE);   //auto transmit keys
-  writeDevice($041);
-
-  writeDevice($0FE);     //auto repeat off
-  writeDevice('`');
-
-  setbacklight(true);
-
-  bConnected := True;
   inherited Create;
 end;
 
@@ -338,24 +465,17 @@ procedure TLCD_MO.setbacklight(on: Boolean);
 begin
   if (not on) then
   begin
-    writeDevice($0FE);
-    writeDevice('F');
+    writeDevice(Chr($0FE)+'F');
   end
   else
   begin
-    writeDevice($0FE);
-    writeDevice('B');
-    writeDevice(0);
+    writeDevice(Chr($0FE)+'B'+Chr(0));
   end;
 end;
 
 procedure TLCD_MO.setPosition(x, y: Integer);
 begin
-  writeDevice($0FE);
-  writeDevice('G');
-  writeDevice(x);
-  writeDevice(y);
-
+  writeDevice(Chr($0FE)+'G'+Chr(x)+Chr(y));
   inherited;
 end;
 
@@ -394,6 +514,8 @@ procedure TLCD_MO.writeDevice(str: String);
 var
   bytesWritten: Cardinal;
 begin
+  if (not bConnected) then Exit;
+
   if not bUsb then
   begin
 
@@ -403,11 +525,24 @@ begin
   else
   begin
 
-    if (not WriteFile(output, str[1], length(str), bytesWritten, nil))
-        or (bytesWritten <> Cardinal(length(str))) then
+    if (not WriteFile(output, str[1], length(str), bytesWritten, nil)) then
     begin
-      raise Exception.Create('Write USB Palm failed [' + IntToStr(length(str))
-        + ':' + IntToStr(bytesWritten) + ']: ' + errMsg(GetLastError));
+      if (UsbPalmConnected()) then
+        raise Exception.Create('Failed writing to USB Palm: ['
+          + IntToStr(length(str)) + ':' + IntToStr(bytesWritten) + ']: '
+          + errMsg(GetLastError))
+      else
+      begin
+        bConnected := False;
+        showmessage('The USB Palm has disconnected. LCD Smartie will now exit.');
+        application.Terminate;
+      end;
+    end
+    else if (bytesWritten <> Cardinal(length(str))) then
+    begin
+      // This can happen when the USB Palm is connected but powered off.
+      // just ignore - but sleep to avoid a busy loop.
+      Sleep(10);
     end;
 
   end;
@@ -418,6 +553,7 @@ procedure TLCD_MO.writeDevice(byte: Byte);
 var
   bytesWritten: Cardinal;
 begin
+  if (not bConnected) then Exit;
 
   if not bUsb then
   begin
@@ -428,10 +564,23 @@ begin
   else
   begin
 
-    if (not WriteFile(output, byte, 1, bytesWritten, nil))
-        or (bytesWritten <> 1) then
+    if (not WriteFile(output, byte, 1, bytesWritten, nil)) then
     begin
-      raise Exception.Create('Write USB Palm failed: ' + errMsg(GetLastError));
+      if (UsbPalmConnected()) then
+        raise Exception.Create('Failed writing to USB Palm: [1:'
+          + IntToStr(bytesWritten) + ']: ' + errMsg(GetLastError))
+      else
+      begin
+        bConnected := False;
+        showmessage('The USB Palm has disconnected. LCD Smartie will now exit.');
+        application.Terminate;
+      end;
+    end
+    else if (bytesWritten <> 1) then
+    begin
+      // This can happen when the USB Palm is connected but powered off.
+      // just ignore - but sleep to avoid a busy loop.
+      Sleep(1);
     end;
 
   end;
@@ -498,7 +647,10 @@ begin
         // signalled.
         if (not ReadFile(input, buffer, 1, bytesRead, nil)) then
         begin
-          raise Exception.create('Reading USB Palm failed: '+errMsg(GetLastError));
+          if (UsbPalmConnected()) then
+            raise Exception.create('Failed reading from USB Palm: '+errMsg(GetLastError))
+          else  // Sleep to avoid a busy loop, wait for write to detect loss of Palm.
+            Sleep(100);
         end;
       end
       else
