@@ -19,13 +19,18 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.9 $ $Date: 2004/11/23 19:22:08 $
+ *  $Revision: 1.10 $ $Date: 2004/11/23 21:58:17 $
  *****************************************************************************}
 
 interface
 
 uses Dialogs, Grids, StdCtrls, Controls, Spin, Buttons, ComCtrls, Classes,
   Forms;
+
+const
+  UPKEY = 38;
+  DOWNKEY = 40;
+
 
 type
   TForm2 = class(TForm)
@@ -2449,32 +2454,53 @@ begin
   form2.enabled := false;
 end;
 
-procedure TForm2.Edit8KeyDown(Sender: TObject; var Key: Word; Shift:
-  TShiftState);
-begin
-  if ord(key) = 38 then edit7.SetFocus;
-  if ord(key) = 40 then edit5.SetFocus;
-end;
 
 procedure TForm2.Edit5KeyDown(Sender: TObject; var Key: Word; Shift:
   TShiftState);
 begin
-  if ord(key) = 38 then edit8.SetFocus;
-  if ord(key) = 40 then edit6.SetFocus;
+  if ord(key) = UPKEY then
+  begin
+    // select bottom row
+    if (edit8.Enabled) and (edit8.Visible) then edit8.SetFocus
+    else if (edit7.Enabled) and (edit7.Visible) then edit7.SetFocus
+    else if (edit6.Enabled) and (edit6.Visible) then edit6.SetFocus;
+  end
+  else if ord(key) = DOWNKEY then
+  begin
+    // Select next row if used.
+    if (edit6.Enabled) and (edit6.Visible) then edit6.SetFocus;
+  end;
 end;
 
 procedure TForm2.Edit6KeyDown(Sender: TObject; var Key: Word; Shift:
   TShiftState);
 begin
-  if ord(key) = 38 then edit5.SetFocus;
-  if ord(key) = 40 then edit7.SetFocus;
+  if ord(key) = UPKEY then edit5.SetFocus
+  else if ord(key) = DOWNKEY then
+  begin
+    // Select next row if used otherwise go to top.
+    if (edit7.Enabled) and (edit7.Visible) then edit7.SetFocus
+    else edit5.SetFocus;
+  end;
 end;
 
 procedure TForm2.Edit7KeyDown(Sender: TObject; var Key: Word; Shift:
   TShiftState);
 begin
-  if ord(key) = 38 then edit6.SetFocus;
-  if ord(key) = 40 then edit8.SetFocus;
+  if ord(key) = UPKEY then edit6.SetFocus
+  else if ord(key) = DOWNKEY then
+  begin
+    // Select next row if used otherwise go to top.
+    if (edit8.Enabled) and (edit8.Visible) then edit8.SetFocus
+    else edit5.SetFocus;
+  end;
+end;
+
+procedure TForm2.Edit8KeyDown(Sender: TObject; var Key: Word; Shift:
+  TShiftState);
+begin
+  if ord(key) = UPKEY then edit7.SetFocus;
+  if ord(key) = DOWNKEY then edit5.SetFocus;
 end;
 
 end.

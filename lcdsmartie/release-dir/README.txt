@@ -14,15 +14,19 @@ reporting these bugs will increased LCD Smartie's stability.
 
 BUGS KNOWN
 ==========
-- Config changes not retained between releases; this is because Smartie
-  currently stores settings in files rather than using the registry.
-
-- Default screens are only for 4x40 screens (and not very good for 1x10
-  LCDs).
+See: http://sourceforge.net/tracker/?func=browse&group_id=122330&atid=693136
 
 
 Changes
 =======
+5.3Alpha3
+	- Actions moved from action.cfg to config.ini.
+	- Fixed bug [1071793] Exception: Cannot focus a disabled or
+	  invisible window.
+	- Added config option to improve contrast fade; MinFadeContrast -
+	  this defines the lowest point of the fade. LCDs often go blank
+	  long before a contrast of 0 is reached and the fade can appear to
+	  be doing nothing.
 5.3Alpha2
 	- Fixed 'Unable to locate the "Processor" performance object'
 	  exception. [Also added FAQ entry for problem.]
