@@ -19,7 +19,7 @@ unit UConfig;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UConfig.pas,v $
- *  $Revision: 1.8 $ $Date: 2004/11/17 20:37:41 $
+ *  $Revision: 1.9 $ $Date: 2004/11/17 21:10:00 $
  *****************************************************************************}
 
 interface
@@ -573,7 +573,7 @@ begin
   begin
     for y:= 1 to 4 do
     begin
-      sGameLine := 'Game Server ' + Format('%.2u', [x]) + '-' + Format('%.2u', [y]);
+      sGameLine := 'GameServer' + Format('%.2u', [x]) + '-' + Format('%.2u', [y]);
       gameServer[x,y]:=initfile.ReadString('Game Servers', sGameLine, '');
     end;
   end;
@@ -690,7 +690,7 @@ begin
   begin
     for y:= 1 to 4 do
     begin
-      sGameLine := 'Game Server ' + Format('%.2u', [x]) + '-' + Format('%.2u', [y]);
+      sGameLine := 'GameServer' + Format('%.2u', [x]) + '-' + Format('%.2u', [y]);
       initfile.WriteString('Game Servers', sGameLine, gameServer[x,y]);
     end;
   end;
