@@ -165,10 +165,11 @@ begin
     FILE_SHARE_WRITE or FILE_SHARE_READ, nil, OPEN_EXISTING, 0, 0);
   if (device = INVALID_HANDLE_VALUE) then
   begin
-   if (GetLastError = ERROR_PATH_NOT_FOUND) then
-      raise exception.Create('Failed to open USB Palm.' + #10+#13
-        + 'Please ensure that Hotsync manager is not running, and that '
-        + 'PalmOrb is already running on your Palm.')
+    if (GetLastError = ERROR_PATH_NOT_FOUND)
+      or (GetLastError = ERROR_FILE_NOT_FOUND) then
+        raise exception.Create('Failed to open USB Palm.' + #10+#13
+          + 'Please ensure that Hotsync manager is not running, and that '
+          + 'PalmOrb is already running on your Palm.')
     else
       raise exception.Create('Failed to open USB Palm: '
         + errMsg(GetLastError));
@@ -342,16 +343,18 @@ begin
 
   if (bConnected) then
   begin
-    bConnected := False;
-    setbacklight(false);
+    try
+      setbacklight(false);
 
-    for g := 1 to 8 do
-    begin
-      setGPO(g, false);
+      for g := 1 to 8 do
+      begin
+        setGPO(g, false);
+      end;
+
+      writeDevice($0FE);  //clear screen
+      writeDevice('X');
+    except
     end;
-
-    writeDevice($0FE);  //clear screen
-    writeDevice('X');
   end;
 
   if (bUsb) then
@@ -368,7 +371,10 @@ begin
         // request.
         // So instead we send the palm a command that causes it to send a byte.
         // (we're asking for it's version).
-        writeDevice(#254+#54);
+        try
+          writeDevice(#254+#54);
+        except
+        end;
 
         readThread.Terminate;
         readThread.WaitFor;
