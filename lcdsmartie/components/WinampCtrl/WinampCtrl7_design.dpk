@@ -1,4 +1,4 @@
-package WinampCtrl7;
+package WinampCtrl7_design;
 
 {$R *.res}
 {$ALIGN 8}
@@ -22,17 +22,16 @@ package WinampCtrl7;
 {$WRITEABLECONST OFF}
 {$MINENUMSIZE 1}
 {$IMAGEBASE $400000}
-{$DESCRIPTION 'Runtime package for WinampCtrl'}
-{$RUNONLY}
+{$DESCRIPTION 'Designtime package for WinampCtrl'}
+{$DESIGNONLY}
 {$IMPLICITBUILD OFF}
 
 requires
   rtl,
-  vcl,
-  vclactnband,
-  vclx;
+  Designide,
+  WinampCtrl7;
 
 contains
-  WinampCtrl in 'WinampCtrl.pas';
+  WinampCtrlReg in 'WinampCtrlReg.pas';
 
 end.

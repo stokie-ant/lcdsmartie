@@ -9,17 +9,9 @@ unit WinampCtrl;
 interface
 
 uses
-  Windows, Messages, SysUtils, Classes, Dialogs, DesignConst, DesignEditors, DesignIntf, ExtCtrls;
+  Windows, Messages, SysUtils, Classes, Dialogs,  ExtCtrls;
 
 type
-  TFileNameProperty = class(TPropertyEditor)
-  public
-    procedure Edit; override;
-    function GetAttributes: TPropertyAttributes; override;
-    function GetValue: string; override;
-    procedure SetValue(const Value: string); override;
-  end;
-
   TRunThread = class(TThread)
   public
     FileName: TFileName;
@@ -139,9 +131,7 @@ type
 
     property OnSongChanged: TNotifyEvent read FOnSongChanged write FOnSongChanged;
   end;
-
-procedure Register;
-
+  
 implementation
 
 var hwnd_winamp : integer;
@@ -757,43 +747,6 @@ procedure TRunThread.Execute;
 begin
      if NewInstance then WinExec(PChar(FileName+' /NEW'+' '+Params),SW_SHOW)
      else WinExec(PChar(FileName+' '+Params),SW_SHOW);
-end;
-
-// property editor -------------------------------------------------------------
-
-procedure TFileNameProperty.Edit;
-begin
-  with TOpenDialog.Create(nil) do
-  try
-    Filter:='WinAmp(Winamp.exe)|WinAmp.exe|Executables(*.exe)|*.exe|Any File|*.*';
-    Options:=Options+[ofFileMustExist,ofPathMustExist];
-    FileName := GetStrValue;
-    if Execute then
-      SetStrValue(FileName);
-  finally
-    Free;
-  end;
-end;
-
-function TFileNameProperty.GetValue: string;
-begin
-  Result := GetStrValue;
-end;
-
-procedure TFileNameProperty.SetValue(const Value: string);
-begin
-  SetStrValue(Value);
-end;
-
-function TFileNameProperty.GetAttributes: TPropertyAttributes;
-begin
-  Result := [paDialog];
-end;
-
-procedure Register;
-begin
-  RegisterComponents('MyPack', [TWinampCtrl]);
-  RegisterPropertyEditor(TypeInfo(TFileName), TWinampCtrl, 'WinAmpLocation', TFileNameProperty);
 end;
 
 end.

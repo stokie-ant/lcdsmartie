@@ -88,7 +88,7 @@ RemoteSymbols=0
 MinStackSize=16384
 MaxStackSize=1048576
 ImageBase=4194304
-ExeDescription=Runtime package for WinampCtrl
+ExeDescription=Designtime package for WinampCtrl
 [Directories]
 OutputDir=
 UnitOutputDir=
