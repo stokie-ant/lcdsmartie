@@ -799,6 +799,11 @@ object Form2: TForm2
         Top = 0
         Width = 185
         Height = 265
+        Font.Charset = ANSI_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -12
+        Font.Name = 'MS Sans Serif'
+        Font.Style = []
         ItemHeight = 13
         Items.Strings = (
           'Distributed.net RC5/OGR speed'
@@ -819,6 +824,8 @@ object Form2: TForm2
           '$Flash(text here$)$'
           '$CustomChar(1,31,31,31,31,31,31,31,31)'
           '$Rss(URL,t|d|b,ITEM#,MAXFREQHRS)')
+        ParentFont = False
+        ScrollWidth = 250
         TabOrder = 0
         OnClick = ListBox1Click
       end
@@ -950,8 +957,8 @@ object Form2: TForm2
     Enabled = False
     Font.Charset = ANSI_CHARSET
     Font.Color = clBlack
-    Font.Height = -11
-    Font.Name = 'Tahoma'
+    Font.Height = -12
+    Font.Name = 'MS Sans Serif'
     Font.Style = []
     ParentFont = False
     TabOrder = 1
@@ -1762,14 +1769,14 @@ object Form2: TForm2
         Left = 8
         Top = 240
         Width = 417
-        Height = 22
+        Height = 23
         TabStop = False
         BevelEdges = []
         Color = 10606500
         Font.Charset = ANSI_CHARSET
         Font.Color = clBlack
-        Font.Height = -11
-        Font.Name = 'Courier New'
+        Font.Height = -12
+        Font.Name = 'Fixedsys'
         Font.Style = []
         ParentFont = False
         TabOrder = 8
@@ -1780,14 +1787,14 @@ object Form2: TForm2
         Left = 8
         Top = 264
         Width = 417
-        Height = 22
+        Height = 23
         TabStop = False
         BevelEdges = []
         Color = clWhite
         Font.Charset = ANSI_CHARSET
         Font.Color = clBlack
-        Font.Height = -11
-        Font.Name = 'Courier New'
+        Font.Height = -12
+        Font.Name = 'Fixedsys'
         Font.Style = []
         ParentFont = False
         TabOrder = 9
@@ -1798,13 +1805,13 @@ object Form2: TForm2
         Left = 8
         Top = 288
         Width = 417
-        Height = 22
+        Height = 23
         TabStop = False
         BevelEdges = []
         Font.Charset = ANSI_CHARSET
         Font.Color = clBlack
-        Font.Height = -11
-        Font.Name = 'Courier New'
+        Font.Height = -12
+        Font.Name = 'Fixedsys'
         Font.Style = []
         ParentFont = False
         TabOrder = 10
@@ -1815,13 +1822,13 @@ object Form2: TForm2
         Left = 8
         Top = 312
         Width = 417
-        Height = 22
+        Height = 23
         TabStop = False
         BevelEdges = []
         Font.Charset = ANSI_CHARSET
         Font.Color = clBlack
-        Font.Height = -11
-        Font.Name = 'Courier New'
+        Font.Height = -12
+        Font.Name = 'Fixedsys'
         Font.Style = []
         ParentFont = False
         TabOrder = 11
