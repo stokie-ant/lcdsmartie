@@ -28,6 +28,7 @@ type
     packet: array [1..MaxPacketLen] of Byte;
     keyBuf: String;
     uiBytesAvail: Cardinal;
+    uiMaxContrast: Cardinal;
     function CalcCrc(buffer: PByte; uiSize: Cardinal):Word;
     function PacketCmd(cmdCode: Byte): Boolean;  overload;
     function PacketCmd(cmdCode: Byte; data: Byte): Boolean;  overload;
@@ -42,6 +43,7 @@ uses UMain, SysUtils, Forms, Windows;
 
 const
   CmdPing = 0;
+  CmdGetVersion = 1;
   CmdClearScreen = 6;
   CmdSetCustomChar = 9;
   CmdSetCursor = 12;
@@ -110,10 +112,12 @@ function TLCD_CF.PacketReply(cmdCode: Byte): Boolean;
 const
   CMDCODEPOS = 1;
   DATALENPOS = 2;
-  KEY_UL = 13;
-  KEY_UR = 14;
-  KEY_LL = 15;
-  KEY_LR = 16;
+  KEY_UL = 13;  KEY_UR = 14;
+  KEY_LL = 15;  KEY_LR = 16;
+  KEY_UP = 1; KEY_DOWN = 2;
+  KEY_LEFT = 3; KEY_RIGHT = 4;
+  KEY_ENTER = 5; KEY_CANCEL = 6;
+
 var
   uiStartTime: Cardinal;
   bDone: Boolean;
@@ -151,17 +155,47 @@ begin
             // packet is valid.
             // Is it the wanted packet?
             if (packet[CMDCODEPOS] = ($40 or cmdCode)) then
-              bDone := true               // success
+            begin
+              bDone := true;               // success
+
+              if (cmdCode = 1) and (packet[DATALENPOS]=16) then // version packet
+              begin
+                //  Data will be 'CFA633:hX.X,fY.Y'
+                if (packet[3] = Byte('C'))
+                  and (packet[4] = Byte('F'))
+                  and (packet[5] = Byte('A'))
+                  and (packet[6] = Byte('6'))
+                  and (packet[7] = Byte('3')) then
+                begin
+                  if (packet[8] = Byte('1')) then
+                  begin
+                    uiMaxContrast := 255;
+                  end
+                  else if (packet[8] = Byte('3')) then
+                  begin
+                    uiMaxContrast := 50;
+                  end;
+                end;
+              end;
+            end
             else  // unhandled packet - ignore it
             begin
               if (packet[CMDCODEPOS] = $80) and (packet[DATALENPOS]=1) then
               begin
                 // keyboard event
                 case packet[3] of
+                    // CFA631
                    KEY_UL: AddKey('A');
                    KEY_UR: AddKey('B');
                    KEY_LL: AddKey('C');
                    KEY_LR: AddKey('D');
+                    // CFA633
+                   KEY_UP: AddKey('E');
+                   KEY_DOWN: AddKey('F');
+                   KEY_LEFT: AddKey('G');
+                   KEY_RIGHT: AddKey('H');
+                   KEY_ENTER: AddKey('I');
+                   KEY_CANCEL: AddKey('J');
                    // else ignore
                 end;
               end
@@ -220,6 +254,7 @@ begin
 
   if (bPackets) then
   begin
+    PacketCmd(CmdGetVersion); // this is ugly; the reply is handled in the reading code
     PacketCmd(CmdSetCursor, 0); // hide cursor
   end
   else
@@ -264,8 +299,9 @@ procedure TLCD_CF.setContrast(level: Integer);
 begin
   if (bPackets) then
   begin
-    // range 0-255
-    PacketCmd(CmdSetContrast, (level*255) div 100);
+    // range 0-255 on CFA631, 0-50 on CFA633!
+    if (uiMaxContrast > 0) then
+      PacketCmd(CmdSetContrast, (Cardinal(level)*uiMaxContrast) div 100);
   end
   else
   begin
