@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.26 $ $Date: 2004/12/18 01:58:56 $
+ *  $Revision: 1.27 $ $Date: 2004/12/19 01:34:46 $
  *****************************************************************************}
 
 
@@ -121,7 +121,6 @@ type
     sName: String;
     hDll: Cardinal;
     functions: Array [1..10] of TMyProc;
-    results: Array [1..10] of String;
   end;
 
   TData = Class(TObject)
@@ -147,6 +146,8 @@ type
   private
     dlls: Array of TDll;
     uiTotalDlls: Cardinal;
+    sDllResults: array of String; // cached results for current screen.
+    iTotalDllResults: Integer;
     doHTTPUpdate, doGameUpdate, doEmailUpdate: Boolean; STUsername,
       STComputername, STCPUType, STCPUSpeed: String;
     STPageFree, STPageTotal: Int64;
@@ -235,7 +236,7 @@ uses cxCpu40, adCpuUsage, UMain, Windows, Forms, Registry, IpHlpApi,
 
 procedure TData.ScreenStart;
 begin
-  //totaldlls := 0;
+  iTotalDllResults := 0;
 end;
 
 procedure TData.ScreenEnd;
@@ -1424,6 +1425,7 @@ begin
 
     while decodeArgs(line, '$dll', maxArgs, args, prefix, postfix, numargs) do
     begin
+      Inc(iTotalDllResults);
       try
         RequiredParameters(numargs, 4, 4);
         // check if we have seen this dll before
@@ -1455,8 +1457,12 @@ begin
         plib := args[3];
         tlib := args[4];
 
-        if dllcancheck = true then
+        if (iTotalDllResults >= Length(sDllResults)) then
+            SetLength(sDllResults, iTotalDllResults + 5);
+
+        if (dllcancheck = true) then
         begin
+
           if (dlls[uiDll].hDll <> INVALID_HANDLE_VALUE) then
           begin
             if (nlib >= 0) and (nlib <= 9) then
@@ -1464,18 +1470,18 @@ begin
               if (nlib = 0) then nlib := 10;
 
               if @dlls[uiDll].functions[nlib] <> nil then
-                dlls[uiDll].results[nlib] := dlls[uiDll].functions[nlib](pchar(plib), pchar(tlib))
+                sDllResults[iTotalDllResults] := dlls[uiDll].functions[nlib](pchar(plib), pchar(tlib))
               else
-                dlls[uiDll].results[nlib] := '[Dll: Function not found]';
+                sDllResults[iTotalDllResults] := '[Dll: Function not found]';
             end
             else
-              dlls[uiDll].results[nlib] := '[Dll: out of range]';
+                sDllResults[iTotalDllResults] := '[Dll: out of range]';
           end
           else
-            dlls[uiDll].results[nlib] := '[Dll: Cant load dll: '
+            sDllResults[iTotalDllResults] := '[Dll: Cant load dll: '
               + CleanString(ErrMsg(GetLastError)) + ']';
         end;
-        line := prefix + dlls[uiDll].results[nlib] + postfix;
+        line := prefix +  sDllResults[iTotalDllResults] + postfix;
       except
         on E: Exception do
           line := prefix + '[Dll: ' + CleanString(E.Message) + ']' + postfix;
