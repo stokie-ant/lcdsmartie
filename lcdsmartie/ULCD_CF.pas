@@ -2,7 +2,7 @@ unit ULCD_CF;
 
 interface
 
-uses ULCD, USerial;
+uses ULCD, USerial, SyncObjs;
 
 const
   MaxPacketLen = 23;
@@ -32,6 +32,7 @@ type
     uiBytesAvail: Cardinal;
     uiMaxContrast: Cardinal;
     version: TVersion;
+    csKeys: TCriticalSection;
     function CalcCrc(buffer: PByte; uiSize: Cardinal):Word;
     function PacketCmd(cmdCode: Byte): Boolean;  overload;
     function PacketCmd(cmdCode: Byte; data: Byte): Boolean;  overload;
@@ -62,7 +63,12 @@ const
 
 procedure TLCD_CF.AddKey(key: char);
 begin
-  keyBuf := keyBuf + key;
+  csKeys.Enter;
+  try
+    keyBuf := keyBuf + key;
+  finally
+    csKeys.Leave;
+  end;
 end;
 
 function TLCD_CF.readKey(var key: Char): Boolean;
@@ -73,8 +79,13 @@ begin
 
   if (Length(keyBuf) > 0) then
   begin
-    key := keyBuf[1];
-    keyBuf := copy(keyBuf,2,length(keyBuf)-1);
+    csKeys.Enter;
+    try
+      key := keyBuf[1];
+      keyBuf := copy(keyBuf,2,length(keyBuf)-1);
+    finally
+      csKeys.Leave;
+    end;
     Result := true;
   end
   else
@@ -278,6 +289,8 @@ end;
 
 constructor TLCD_CF.CreateSerial(uiPort: Cardinal; baudRate: Cardinal);
 begin
+  csKeys := TCriticalSection.Create;
+
   serial := TSerial.Create(uiPort, baudRate, [RTS_ENABLE, DTR_ENABLE]);
 
   bPackets := false;
@@ -330,6 +343,8 @@ begin
     setbacklight(false);
     ClearScreen;
     serial.Destroy;
+
+    if Assigned(csKeys) then csKeys.Free;
   end;
  
   inherited;
