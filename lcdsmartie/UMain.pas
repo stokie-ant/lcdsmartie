@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.10 $ $Date: 2004/11/18 00:17:14 $
+ *  $Revision: 1.11 $ $Date: 2004/11/19 01:55:39 $
  *****************************************************************************}
 
 interface
@@ -204,6 +204,7 @@ type
     doesgpoflash: boolean;
     gpoflash, whatgpo:integer;
     flash: Integer;
+    ResetContrast: Boolean;
     function doguess(line: Integer): integer;
     procedure freeze();
     procedure doGPO(const ftemp1,ftemp2:integer);
@@ -637,7 +638,8 @@ begin
       screenLcd[x].caption:=StringReplace(gokreg[x],'&','&&',[rfReplaceAll]);
     end;
 
-  end else if transActietemp=6 then begin  //contrast fade
+  end else if (transActietemp=6) and (maxTransCycles>=2) then begin  //contrast fade
+    // The fade is a two step process, so we need at least two cycles.
 
     // For the first half of the cycles - lower the contrast
     if (TransCycle<maxTransCycles/2) then begin
@@ -647,7 +649,9 @@ begin
         x:=config.CF_contrast;
 
       foo:=round(x-(TransCycle*x/(MaxTransCycles/2)));
-      if foo < 0 then foo:=0;
+
+      if foo < 0 then foo:=0
+      else if foo > x then foo:=x;
       Lcd.setContrast(foo);
     end else begin
       // raise the contrast over the second half
@@ -661,10 +665,13 @@ begin
       else
         x:=config.CF_contrast;
 
-      foo:=round((TransCycle-(MaxTransCycles/2))*x/(MaxTransCycles/2-1));
-      if foo > x then foo:=x;
+      foo:=round((TransCycle-(MaxTransCycles/2))*x/(MaxTransCycles/2));
+
+      if foo > x then foo:=x
+      else if foo < 0 then foo:=0;
       Lcd.setContrast(foo);
     end;
+    ResetContrast:=True; // Just to be sure the contrast is back to correct levels.
   end;
 end;
 
@@ -834,6 +841,16 @@ begin
   end;
 
   if timertrans.Enabled=false then begin
+    if (ResetContrast) then begin
+      // A contrast fade "interaction" has just happened so reset the contrast
+      // just in case we failed to get the expected number of cycles (due to
+      // high cpu loads etc).
+      ResetContrast:=False;
+      if (config.isMO) then
+        Lcd.setContrast(config.contrast)
+      else if (config.isCF) then
+        Lcd.setContrast(config.CF_contrast);
+    end;
 
     if (canscroll) then begin
       canscroll:=false;
