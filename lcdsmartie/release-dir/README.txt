@@ -23,6 +23,10 @@ BUGS KNOWN
 
 Changes
 =======
+5.3Alpha2
+	- Fixed 'Unable to locate the "Processor" performance object'
+	  exception. [Also added FAQ entry for problem.]
+	- Fixed hang when a screen has a syntax error.
 5.3Alpha1
 	- Fixed some Rss bugs also improved error reporting.
 	- Fixed bug in contrast fade.
