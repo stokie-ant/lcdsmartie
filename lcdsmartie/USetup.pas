@@ -19,7 +19,7 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.16 $ $Date: 2004/12/08 23:39:29 $
+ *  $Revision: 1.17 $ $Date: 2004/12/08 23:44:07 $
  *****************************************************************************}
 
 interface
@@ -301,6 +301,7 @@ var
   i, blaat: Integer;
   iSelection: Integer;
   sLookFor: String;
+  uiTestPort: Cardinal;
 begin
   // Delete all entries in the Com Port list
   for i:= combobox4.Items.Count-1 downto 0 do
