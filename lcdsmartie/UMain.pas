@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.39 $ $Date: 2005/01/03 16:08:28 $
+ *  $Revision: 1.40 $ $Date: 2005/01/04 01:04:23 $
  *****************************************************************************}
 
 interface
@@ -1967,7 +1967,15 @@ procedure TForm1.Timer11Timer(Sender: TObject);
 begin
   timer11.Enabled := false;
 
-  Lcd := TLCD_HD.CreateParallel($ + config.parallelPort, config.width, config.height);
+  try
+    Lcd := TLCD_HD.CreateParallel($ + config.parallelPort, config.width, config.height);
+  except
+    on E: Exception do
+    begin
+      showmessage('Failed to open device: ' + E.Message);
+      Lcd := TLCD.Create();
+    end;
+  end;
   Lcd.setbacklight(true);
 
   customchar('1, 12, 18, 18, 12, 0, 0, 0, 0');

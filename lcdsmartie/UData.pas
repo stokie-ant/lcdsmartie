@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.32 $ $Date: 2005/01/02 23:19:04 $
+ *  $Revision: 1.33 $ $Date: 2005/01/04 01:04:22 $
  *****************************************************************************}
 
 
@@ -116,7 +116,7 @@ type
     maxfreq: Cardinal;                        // hours - 0 means no restriction
   end;
 
-  TMyProc = function(param1: pchar; param2: pchar): Pchar; stdcall;
+  TMyProc = function(param1: pchar; param2: pchar): Pchar stdcall;
 
   TDll = Record
     sName: String;
@@ -1000,6 +1000,7 @@ function TData.CallPlugin(sDllName: String; iFunc: Integer;
 var
   uiDll: Cardinal;
   i: Integer;
+  initFunc:  procedure stdcall;
 begin
   // check if we have seen this dll before
   if (Pos('.DLL', UpperCase(sDllName)) = 0) then
@@ -1015,8 +1016,9 @@ begin
     Inc(uiTotalDlls);
     SetLength(dlls, uiTotalDlls);
     dlls[uiDll].sName := sDllName;
-    dlls[uiDll].hDll := LoadLibrary(pchar(extractfilepath(application.exename) +
-      'plugins\' + sDllName));
+
+    //dlls[uiDll].hDll := LoadLibrary(pchar(extractfilepath(application.exename) +
+    //  'plugins\' + sDllName));
 
     //dlls[uiDll].hDll := LoadLibrary(pchar(
     //    'c:\Documents and Settings\Administrator\My Documents\Visual Studio Projects\perf\Debug\perf.dll'));
@@ -1024,9 +1026,26 @@ begin
     //    'c:\Documents and Settings\Administrator\My Documents\Visual Studio Projects\bignum\Debug\bignum.dll'));
     //dlls[uiDll].hDll := LoadLibrary(pchar(
     //    'c:\Documents and Settings\Administrator\My Documents\Visual Studio Projects\menu\Debug\menu.dll'));
+    dlls[uiDll].hDll := LoadLibrary(pchar(
+        'c:\Documents and Settings\Administrator\Desktop\bridge\Bridge\Common\Bridge.dll'));
 
     if (dlls[uiDll].hDll <> 0) then
     begin
+      initFunc := getprocaddress(dlls[uiDll].hDll, PChar('SmartieInit'));
+      if (not Assigned(initFunc)) then
+        initFunc := getprocaddress(dlls[uiDll].hDll, PChar('_SmartieInit@0'));
+
+      if (Assigned(initFunc)) then
+      begin
+        try
+          initFunc();
+        except
+          on E: Exception do
+            showmessage('Plugin '+sDllName+' had an exception during Init: '
+              + E.Message);
+        end;
+      end;
+
       for i:= 1 to 10 do
       begin
         @dlls[uiDll].functions[i] := getprocaddress(dlls[uiDll].hDll,
@@ -1045,7 +1064,14 @@ begin
       if (iFunc = 0) then iFunc := 10;
 
       if @dlls[uiDll].functions[iFunc] <> nil then
-        Result := dlls[uiDll].functions[iFunc]( pchar(sParam1), pchar(sParam2) )
+      begin
+        try
+          Result := dlls[uiDll].functions[iFunc]( pchar(sParam1), pchar(sParam2) )
+        except
+          on E: Exception do
+            Result := '[Dll: ' + CleanString(E.Message) + ']';
+        end;
+      end
       else
         Result := '[Dll: Function not found]';
     end
@@ -1071,27 +1097,28 @@ begin
     try
       RequiredParameters(numargs, 4, 4);
 
+      if (not bCacheResults) or (dllcancheck) then
+      begin
+        sParam1 := change(args[2], qstattemp);
+        sParam2 := change(args[3], qstattemp);
+        try
+          sAnswer := CallPlugin(args[0], StrToInt(args[1]), sParam1, sParam2);
+        except
+          on E: Exception do
+            sAnswer := '[Dll: ' + CleanString(E.Message) + ']';
+        end;
+      end;
+
       if (bCacheResults) then
       begin
         Inc(iDllResults);
         if (iDllResults >= Length(sDllResults)) then
            SetLength(sDllResults, iDllResults + 5);
 
-        // Get a fresh result if allowed.
-        if (dllcancheck = true) then
-        begin
-          sParam1 := change(args[2], qstattemp);
-          sParam2 := change(args[3], qstattemp);
-          sDllResults[iDllResults] := CallPlugin(args[0], StrToInt(args[1]), sParam1, sParam2);
-        end;
-
-        sAnswer := sDllResults[iDllResults];
-      end
-      else
-      begin
-        sParam1 := change(args[2], qstattemp);
-        sParam2 := change(args[3], qstattemp);
-        sAnswer := CallPlugin(args[0], StrToInt(args[1]), sParam1, sParam2);
+        if (dllcancheck) then
+          sDllResults[iDllResults] := sAnswer // save result
+        else
+          sAnswer := sDllResults[iDllResults]; // get cached result
       end;
 
       sAnswer := change(sAnswer, qstattemp);

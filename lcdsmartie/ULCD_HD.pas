@@ -19,7 +19,7 @@ unit ULCD_HD;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/Attic/ULCD_HD.pas,v $
- *  $Revision: 1.9 $ $Date: 2005/01/02 21:22:15 $
+ *  $Revision: 1.10 $ $Date: 2005/01/04 01:04:23 $
  *
  *  Based on code from the following (open-source) projects:
  *     WinAmp LCD Plugin
@@ -42,10 +42,6 @@ unit ULCD_HD;
 interface
 
 uses ULCD;
-
-procedure DlPortWritePortUchar(Port: Integer; Data: Byte); stdcall;  external 'dlportio.dll';
-function DlPortReadPortUchar(Port: Integer): Byte stdcall;  external 'dlportio.dll';
-
 
 const
   // control pins
@@ -73,6 +69,9 @@ const
   OOCursorNoBlink = 0;
 
 type
+  TDlPortWritePortUchar = procedure (Port: Integer; Data: Byte); stdcall;//  external 'dlportio.dll';
+  TDlPortReadPortUchar = function (Port: Integer): Byte stdcall;//  external 'dlportio.dll';
+
   TControllers = (All, C1, C2);
 
   TLCD_HD = class(TLCD)
@@ -84,6 +83,7 @@ type
       constructor CreateParallel(const poortadres: Word; const width, heigth: Byte);
       destructor Destroy; override;
     private
+      dlportio: HMODULE;
       FBaseAddr: Word;
       FCtrlAddr: Word;
       cursorx, cursory: Word;
@@ -91,6 +91,8 @@ type
       bTwoControllers: Boolean;
       bHighResTimers: Boolean;
       iHighResTimerFreq: Int64;
+      DlPortWritePortUchar: TDlPortWritePortUchar;
+      DlPortReadPortUchar: TDlPortReadPortUchar;
       procedure writectrl(const controllers: TControllers; const x: Byte);
       procedure writedata(const controllers: TControllers; const x: Byte);
       procedure writestring(const controllers: TControllers; s: String);
@@ -100,6 +102,8 @@ type
       procedure CtrlOut(const AValue: Byte);
       procedure DataOut(const AValue: Byte);
       procedure initClass;
+      procedure LoadDlPortIO;
+      procedure UnloadDlPortIO;
   end;
 
 implementation
@@ -110,11 +114,15 @@ constructor TLCD_HD.CreateParallel(const poortadres: Word; const width, heigth: 
 {var
   x, y: integer; }
 begin
+  bHighResTimers := QueryPerformanceFrequency(iHighResTimerFreq);
+
+  LoadDlPortIO();
+
   FBaseAddr := poortadres;
   FCtrlAddr := FBaseAddr + 2;
   self.width := width;
   self.height := heigth;
-  bHighResTimers := QueryPerformanceFrequency(iHighResTimerFreq);
+
   initClass;
 
      {    // DEBUG CODE for checking addressing.
@@ -133,12 +141,40 @@ begin
   writectrl(All, OnOffCtrl or OODisplayOff);
   UsecDelay(uiDelayShort);
 
+  UnloadDlPortIO();
+
+
   inherited;
 end;
 
+procedure TLCD_HD.LoadDlPortIO;
+begin
+  dlportio := LoadLibrary(PChar('dlportio.dll'));
+  if (dlportio = 0) then
+    raise Exception.Create(
+      'Unable to load dlportio.dll: Please ensure you have installed port95nt.');
+
+  DlPortWritePortUchar := TDlPortWritePortUchar(GetProcAddress(dlportio,
+    'DlPortWritePortUchar'));
+  DlPortReadPortUchar := TDlPortReadPortUchar(GetProcAddress(dlportio,
+    'DlPortReadPortUchar'));
+  if (not Assigned(DlPortWritePortUchar)) or (not Assigned(DlPortReadPortUchar)) then
+    raise Exception.Create('Unable to get required apis from dlportio');
+
+end;
+
+procedure TLCD_HD.UnloadDlPortIO;
+begin
+  if (dlportio <> 0) then FreeLibrary(dlportio);
+  dlportio := 0;
+  DlPortWritePortUchar := nil;
+  DlPortReadPortUchar := nil;
+end;
 
 procedure TLCD_HD.powerResume;
 begin
+  UnloadDlPortIO();
+  LoadDlPortIO();
   initClass;
 end;
 
@@ -456,12 +492,14 @@ end;
 
 procedure TLCD_HD.CtrlOut(const AValue: Byte);
 begin
-  DlPortWritePortUchar(FCtrlAddr, AValue xor CtrlMask);
+  if (@DlPortWritePortUchar <> nil) then
+    DlPortWritePortUchar(FCtrlAddr, AValue xor CtrlMask);
 end;
 
 procedure TLCD_HD.DataOut(const AValue: Byte);
 begin
-  DlPortWritePortUchar(FBaseAddr, AValue);
+  if (@DlPortWritePortUchar <> nil) then
+    DlPortWritePortUchar(FBaseAddr, AValue);
 end;
 
 {
