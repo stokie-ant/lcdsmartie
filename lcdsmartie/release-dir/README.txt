@@ -24,9 +24,9 @@ Please see our website for instructions and the latest information:
 *
 ****************************************
 * Help the project! Design screens for
-* use in the default config, I'm looking
-* for screens that don't use any plugins,
-* and those that use any/all plugins.
+* use in the default config(s), I'm looking
+* for screens that make use of plugins and
+* those that don't.
 * I'm also interested in screens for
 * different screen sizes.
 ****************************************

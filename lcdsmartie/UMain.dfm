@@ -1,6 +1,6 @@
 object Form1: TForm1
-  Left = 217
-  Top = 118
+  Left = 181
+  Top = 61
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsToolWindow
   Caption = 'LCD Smartie 5.3 Beta 3'
@@ -45,7 +45,9 @@ object Form1: TForm1
     Top = 64
     Width = 32
     Height = 27
-    Hint = 'LCD Smartie'
+    Hint = 'Access menu'
+    ParentShowHint = False
+    ShowHint = True
     OnClick = Image1Click
     OnDblClick = Image1DblClick
   end
@@ -78,6 +80,9 @@ object Form1: TForm1
     Top = 0
     Width = 16
     Height = 16
+    Hint = 'Scroll line right.'
+    ParentShowHint = False
+    ShowHint = True
     OnMouseDown = Image3MouseDown
     OnMouseUp = Image3MouseUp
   end
@@ -86,6 +91,9 @@ object Form1: TForm1
     Top = 16
     Width = 16
     Height = 16
+    Hint = 'Scroll line right.'
+    ParentShowHint = False
+    ShowHint = True
     OnMouseDown = Image4MouseDown
     OnMouseUp = Image4MouseUp
   end
@@ -94,6 +102,9 @@ object Form1: TForm1
     Top = 32
     Width = 16
     Height = 16
+    Hint = 'Scroll line right.'
+    ParentShowHint = False
+    ShowHint = True
     OnMouseDown = Image5MouseDown
     OnMouseUp = Image5MouseUp
   end
@@ -102,6 +113,9 @@ object Form1: TForm1
     Top = 48
     Width = 16
     Height = 16
+    Hint = 'Scroll line right.'
+    ParentShowHint = False
+    ShowHint = True
     OnMouseDown = Image6MouseDown
     OnMouseUp = Image6MouseUp
   end
@@ -110,6 +124,9 @@ object Form1: TForm1
     Top = 0
     Width = 16
     Height = 17
+    Hint = 'Scroll line left.'
+    ParentShowHint = False
+    ShowHint = True
     OnMouseDown = Image7MouseDown
     OnMouseUp = Image7MouseUp
   end
@@ -118,6 +135,9 @@ object Form1: TForm1
     Top = 16
     Width = 16
     Height = 16
+    Hint = 'Scroll line left.'
+    ParentShowHint = False
+    ShowHint = True
     OnMouseDown = Image8MouseDown
     OnMouseUp = Image8MouseUp
   end
@@ -126,6 +146,9 @@ object Form1: TForm1
     Top = 32
     Width = 16
     Height = 16
+    Hint = 'Scroll line left.'
+    ParentShowHint = False
+    ShowHint = True
     OnMouseDown = Image9MouseDown
     OnMouseUp = Image9MouseUp
   end
@@ -134,6 +157,9 @@ object Form1: TForm1
     Top = 48
     Width = 16
     Height = 16
+    Hint = 'Scroll line left.'
+    ParentShowHint = False
+    ShowHint = True
     OnMouseDown = Image10MouseDown
     OnMouseUp = Image10MouseUp
   end
@@ -142,6 +168,9 @@ object Form1: TForm1
     Top = 0
     Width = 16
     Height = 64
+    Hint = 'Next Screen.'
+    ParentShowHint = False
+    ShowHint = True
     OnClick = Image11Click
     OnMouseDown = Image11MouseDown
     OnMouseUp = Image11MouseUp
@@ -151,6 +180,9 @@ object Form1: TForm1
     Top = 0
     Width = 16
     Height = 64
+    Hint = 'Previous Screen.'
+    ParentShowHint = False
+    ShowHint = True
     OnClick = Image12Click
     OnMouseDown = Image12MouseDown
     OnMouseUp = Image12MouseUp
@@ -160,6 +192,9 @@ object Form1: TForm1
     Top = 69
     Width = 34
     Height = 16
+    Hint = 'Configure the display and/or screen content/layout.'
+    ParentShowHint = False
+    ShowHint = True
     OnClick = Image16Click
     OnMouseDown = Image16MouseDown
     OnMouseUp = Image16MouseUp
@@ -169,6 +204,9 @@ object Form1: TForm1
     Top = 69
     Width = 32
     Height = 16
+    Hint = 'Disappear! Will appear as an icon in the system tray.'
+    ParentShowHint = False
+    ShowHint = True
     OnClick = Image17Click
     OnMouseDown = Image17MouseDown
     OnMouseUp = Image17MouseUp
@@ -212,6 +250,7 @@ object Form1: TForm1
     Top = 16
     Width = 161
     Height = 17
+    Hint = 'Virtual display.'
     Alignment = taLeftJustify
     BevelOuter = bvNone
     Color = clNone
@@ -221,6 +260,8 @@ object Form1: TForm1
     Font.Name = 'Fixedsys'
     Font.Style = []
     ParentFont = False
+    ParentShowHint = False
+    ShowHint = True
     TabOrder = 2
   end
   object Panel3: TPanel
@@ -228,6 +269,7 @@ object Form1: TForm1
     Top = 32
     Width = 161
     Height = 17
+    Hint = 'Virtual display.'
     Alignment = taLeftJustify
     BevelOuter = bvNone
     Color = clNone
@@ -237,6 +279,8 @@ object Form1: TForm1
     Font.Name = 'Fixedsys'
     Font.Style = []
     ParentFont = False
+    ParentShowHint = False
+    ShowHint = True
     TabOrder = 3
   end
   object Panel4: TPanel
@@ -244,6 +288,7 @@ object Form1: TForm1
     Top = 48
     Width = 161
     Height = 17
+    Hint = 'Virtual display.'
     Alignment = taLeftJustify
     BevelOuter = bvNone
     Color = clNone
@@ -253,6 +298,8 @@ object Form1: TForm1
     Font.Name = 'Fixedsys'
     Font.Style = []
     ParentFont = False
+    ParentShowHint = False
+    ShowHint = True
     TabOrder = 4
   end
   object Button1: TButton
@@ -270,6 +317,7 @@ object Form1: TForm1
     Top = 0
     Width = 161
     Height = 17
+    Hint = 'Virtual display.'
     Alignment = taLeftJustify
     BevelOuter = bvNone
     Caption = 'LCD Smartie'
@@ -280,6 +328,8 @@ object Form1: TForm1
     Font.Name = 'Fixedsys'
     Font.Style = []
     ParentFont = False
+    ParentShowHint = False
+    ShowHint = True
     TabOrder = 6
   end
   object Panel5: TPanel
@@ -287,6 +337,7 @@ object Form1: TForm1
     Top = 72
     Width = 33
     Height = 17
+    Hint = 'Active theme number, Active screen Number'
     BevelOuter = bvNone
     Caption = '1 | 1'
     Color = clNavy
@@ -296,6 +347,8 @@ object Form1: TForm1
     Font.Name = 'Tahoma'
     Font.Style = []
     ParentFont = False
+    ParentShowHint = False
+    ShowHint = True
     TabOrder = 5
   end
   object Timer1: TTimer

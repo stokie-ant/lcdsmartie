@@ -1,6 +1,6 @@
 object Form2: TForm2
-  Left = 124
-  Top = 112
+  Left = 35
+  Top = 181
   ActiveControl = CheckBox3
   Anchors = []
   BiDiMode = bdLeftToRight
