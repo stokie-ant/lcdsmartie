@@ -23,6 +23,13 @@ BUGS KNOWN
 
 Changes
 =======
+5.3pAlpha3
+	- Added experimental USB Palm support (when used with PalmOrb)
+	  [Serial Palm Support already existed.]
+	- Fix range error with large pagefiles and/or memory; needs
+          further work for memory/pagefiles over 4GB.
+5.3pAlpha2
+	- experimental support for Resuming after being in standby.
 5.3pAlpha1
 	- large internal code changes, to help make it more maintainable.
 	- increased stability.

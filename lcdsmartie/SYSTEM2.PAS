@@ -18,7 +18,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/SYSTEM2.PAS,v $
- *  $Revision: 1.3 $ $Date: 2004/11/05 13:16:21 $
+ *  $Revision: 1.4 $ $Date: 2004/11/16 21:44:21 $
  *****************************************************************************}
 unit System2;
 
@@ -31,19 +31,19 @@ type
 
   TSystem = class(TComponent)
   private
-     function getTotalPhysMemory:longint;
-     function getAvailPhysMemory:longint;
-     function getTotalPageFile:longint;
-     function getAvailPageFile:longint;
+     function getTotalPhysMemory:DWORD;
+     function getAvailPhysMemory:DWORD;
+     function getTotalPageFile:DWORD;
+     function getAvailPageFile:DWORD;
      function getUsername:string;
      function getComputername:string;
   public
      constructor create(Aowner:TComponent);override;
   published
-     property totalPhysmemory:longint read gettotalphysmemory;
-     property AvailPhysmemory:longint read getavailphysmemory;
-     property totalPageFile:longint read gettotalPageFile;
-     property AvailPageFile:longint read getAvailPageFile;
+     property totalPhysmemory:DWORD read gettotalphysmemory;
+     property AvailPhysmemory:DWORD read getavailphysmemory;
+     property totalPageFile:DWORD read gettotalPageFile;
+     property AvailPageFile:DWORD read getAvailPageFile;
      property Username:string read getUsername;
      property Computername:string read getComputername;
      function diskindrive(lw:char;statusanzeige:boolean):boolean;
@@ -64,7 +64,7 @@ end;
 
 
 
-function tsystem.gettotalphysmemory:longint;
+function tsystem.gettotalphysmemory:DWORD;
 var
 memory:TMEMORYSTATUS;
 begin
@@ -72,7 +72,7 @@ begin
      gettotalphysmemory:=memory.dwtotalphys;
 end;
 
-function tsystem.getavailphysmemory:longint;
+function tsystem.getavailphysmemory:DWORD;
 var
 memory:TMEMORYSTATUS;
 begin
@@ -80,7 +80,7 @@ begin
      getavailphysmemory:=memory.dwavailphys;
 end;
 
-function tsystem.gettotalpagefile:longint;
+function tsystem.gettotalpagefile:DWORD;
 var
 memory:TMEMORYSTATUS;
 begin
@@ -88,7 +88,7 @@ begin
      gettotalpagefile:=memory.dwtotalpagefile;
 end;
 
-function tsystem.getavailpagefile:longint;
+function tsystem.getavailpagefile:DWORD;
 var
 memory:TMEMORYSTATUS;
 begin
