@@ -20,7 +20,7 @@ type
 
 implementation
 
-uses UMain, SysUtils;
+uses UMain, SysUtils, Forms;
 
 constructor TLCD_CF.CreateSerial(serial: PTVACOMM; uiPort: Cardinal; baudRate: TVaBaudrate);
 begin
@@ -38,8 +38,20 @@ begin
 end;
 
 destructor TLCD_CF.Destroy;
+var
+  x: Cardinal;
 begin
   setbacklight(false);
+
+  // Ensure all serial data has been writen out
+  // (close discards all remaining data)
+  x := 0;
+  While (serial.WriteBufUsed > 0) and (x<100) do
+  begin
+    Inc(x);
+    Application.ProcessMessages;
+    Sleep(10);
+  end;
   serial.close;
   inherited;
 end;
