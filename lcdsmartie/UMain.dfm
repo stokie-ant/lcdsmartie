@@ -3,7 +3,7 @@ object Form1: TForm1
   Top = 61
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsToolWindow
-  Caption = 'LCD Smartie 5.3 Beta 4'
+  Caption = 'LCD Smartie 5.3'
   ClientHeight = 90
   ClientWidth = 225
   Color = clBtnFace
@@ -351,10 +351,10 @@ object Form1: TForm1
     ShowHint = True
     TabOrder = 5
   end
-  object Timer1: TTimer
+  object TimerRefresh: TTimer
     Enabled = False
     Interval = 200
-    OnTimer = Timer1Timer
+    OnTimer = TimerRefreshTimer
     Left = 65528
     Top = 128
   end

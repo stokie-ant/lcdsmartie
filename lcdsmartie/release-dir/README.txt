@@ -25,6 +25,9 @@ See: http://sourceforge.net/tracker/?func=browse&group_id=122330&atid=693136
 
 Changes
 =======
+5.3 Final
+	- Fixed bug when used with high refresh rates (scrolling and
+	  other things just stopped working!)
 5.3Beta4
 	- Fixed bug in Rss code - didn't work with long urls.
 	- Plugins: Call SmartieFini just before unloading plugin (if

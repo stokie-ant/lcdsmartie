@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.50 $ $Date: 2005/01/23 20:35:36 $
+ *  $Revision: 1.51 $ $Date: 2005/01/24 16:53:18 $
  *****************************************************************************}
 
 interface
@@ -73,7 +73,6 @@ type
     SpeedButton1: TSpeedButton;
     Panel5: TPanel;
     Timertrans: TTimer;
-    Timer1: TTimer;
     Timer2: TTimer;
     Timer3: TTimer;
     Timer4: TTimer;
@@ -84,6 +83,7 @@ type
     Timer9: TTimer;
     Timer11: TTimer;
     Timer12: TTimer;
+    TimerRefresh: TTimer;
     WinampCtrl1: TWinampCtrl;
     procedure DoFullDisplayDraw;
     procedure UpdateTimersState;
@@ -98,7 +98,7 @@ type
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure Configure1Click(Sender: TObject);
     procedure BacklightOn1Click(Sender: TObject);
-    procedure Timer1Timer(Sender: TObject);
+    procedure TimerRefreshTimer(Sender: TObject);
     procedure Timer2Timer(Sender: TObject);
     procedure Timer3Timer(Sender: TObject);
     procedure Timer4Timer(Sender: TObject);
@@ -642,7 +642,7 @@ end;
 procedure TForm1.FiniLCD();
 begin
   timer11.enabled := false; // stop any startup of the HD44780 driver
-  timer1.enabled := false;  // stop updates to lcd
+  timerRefresh.enabled := false;  // stop updates to lcd
   try
     if (Lcd <> nil) Then Lcd.Destroy();
   except
@@ -760,8 +760,8 @@ var
 begin
   // Changing screen - do any interactions required.
   //TransCycle := TransCycle + 1;
-  TransCycle := (GetTickCount()-TransStart) div timer1.Interval;
-  maxTransCycles := timertrans.Interval div timer1.Interval;
+  TransCycle := (GetTickCount()-TransStart) div timerRefresh.Interval;
+  maxTransCycles := timertrans.Interval div timerRefresh.Interval;
 
   if (TransCycle > maxTransCycles) then Exit;
 
@@ -1017,15 +1017,15 @@ begin
   end;
 end;
 
-procedure TForm1.Timer1Timer(Sender: TObject);
+procedure TForm1.TimerRefreshTimer(Sender: TObject);
 var
   counter, h: Integer;
   line: String;
   scrollcount: Integer;
 
 begin
-  timer1.Interval := 0;
-  timer1.Interval := config.refreshRate;
+  //timerRefresh.Interval := 0;
+  timerRefresh.Interval := config.refreshRate;
 
   // This code can't go in FormCreate or FormShow because it either
   // doesn't work (FormCreate) or causes an exception (FormShow).
@@ -1221,8 +1221,8 @@ end;
 
 procedure TForm1.FormShow(Sender: TObject);
 begin
-  timer1.Interval := 0; // reset timer
-  timer1.Interval := 1; // make it short in case minimized has been selected.
+  timerRefresh.Interval := 0; // reset timer
+  timerRefresh.Interval := 1; // make it short in case minimized has been selected.
 
   cooltrayicon1.IconVisible := False;
 end;
@@ -1461,7 +1461,7 @@ begin
   //cooltrayicon1.IconVisible := False;
   //cooltrayicon1.Refresh;
 
-  while timer1.enabled = true do timer1.enabled := false;
+  while timerRefresh.enabled = true do timerRefresh.enabled := false;
   while timer2.enabled = true do timer2.enabled := false;
   while timer3.enabled = true do timer3.enabled := false;
   while timer4.enabled = true do timer4.enabled := false;
@@ -2050,14 +2050,16 @@ begin
     timertrans.enabled := false; // "interactions"
   end;
 
-  if (not timer11.enabled) then
-    timer1.enabled := true;  // update lcd and data
+
   timer2.enabled := true;  // http update
   timer3.enabled := true;  // actions
   timer6.enabled := true;  // mbm update
   timer8.enabled := true;  // game update
   timer9.enabled := true;  // email update
   timer12.enabled := true; // scroll/flash
+
+  if (not timer11.enabled) then
+    timerRefresh.enabled := true;  // update lcd and data
 end;
 
 procedure TForm1.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
@@ -2206,7 +2208,7 @@ begin
     'images\small_arrow_left_down1.bmp');
   line2scroll := 1;
   timer5.enabled := true;
-  timer1.enabled := false;
+  timerRefresh.enabled := false;
 end;
 
 procedure TForm1.Image3MouseUp(Sender: TObject; Button: TMouseButton; Shift:
@@ -2215,7 +2217,7 @@ begin
   image3.picture.LoadFromFile(extractfilepath(application.exename) +
     'images\small_arrow_left_up1.bmp');
   timer5.enabled := false;
-  timer1.enabled := true;
+  timerRefresh.enabled := true;
 end;
 
 procedure TForm1.Image4MouseDown(Sender: TObject; Button: TMouseButton; Shift:
@@ -2225,7 +2227,7 @@ begin
     'images\small_arrow_left_down2.bmp');
   line2scroll := 2;
   timer5.enabled := true;
-  timer1.enabled := false;
+  timerRefresh.enabled := false;
 end;
 
 procedure TForm1.Image5MouseDown(Sender: TObject; Button: TMouseButton; Shift:
@@ -2235,7 +2237,7 @@ begin
     'images\small_arrow_left_down3.bmp');
   line2scroll := 3;
   timer5.enabled := true;
-  timer1.enabled := false;
+  timerRefresh.enabled := false;
 end;
 
 procedure TForm1.Image6MouseDown(Sender: TObject; Button: TMouseButton; Shift:
@@ -2245,7 +2247,7 @@ begin
     'images\small_arrow_left_down4.bmp');
   line2scroll := 4;
   timer5.enabled := true;
-  timer1.enabled := false;
+  timerRefresh.enabled := false;
 end;
 
 procedure TForm1.Image7MouseDown(Sender: TObject; Button: TMouseButton; Shift:
@@ -2255,7 +2257,7 @@ begin
     'images\small_arrow_right_down1.bmp');
   line2scroll := 1;
   timer4.enabled := true;
-  timer1.enabled := false;
+  timerRefresh.enabled := false;
 end;
 
 procedure TForm1.Image8MouseDown(Sender: TObject; Button: TMouseButton; Shift:
@@ -2265,7 +2267,7 @@ begin
     'images\small_arrow_right_down2.bmp');
   line2scroll := 2;
   timer4.enabled := true;
-  timer1.enabled := false;
+  timerRefresh.enabled := false;
 end;
 
 procedure TForm1.Image9MouseDown(Sender: TObject; Button: TMouseButton; Shift:
@@ -2275,7 +2277,7 @@ begin
     'images\small_arrow_right_down3.bmp');
   line2scroll := 3;
   timer4.enabled := true;
-  timer1.enabled := false;
+  timerRefresh.enabled := false;
 end;
 
 procedure TForm1.Image10MouseDown(Sender: TObject; Button: TMouseButton;
@@ -2285,7 +2287,7 @@ begin
     'images\small_arrow_right_down4.bmp');
   line2scroll := 4;
   timer4.enabled := true;
-  timer1.enabled := false;
+  timerRefresh.enabled := false;
 end;
 
 procedure TForm1.Image4MouseUp(Sender: TObject; Button: TMouseButton; Shift:
@@ -2294,7 +2296,7 @@ begin
   image4.picture.LoadFromFile(extractfilepath(application.exename) +
     'images\small_arrow_left_up2.bmp');
   timer5.enabled := false;
-  timer1.enabled := true;
+  timerRefresh.enabled := true;
 end;
 
 procedure TForm1.Image5MouseUp(Sender: TObject; Button: TMouseButton; Shift:
@@ -2303,7 +2305,7 @@ begin
   image5.picture.LoadFromFile(extractfilepath(application.exename) +
     'images\small_arrow_left_up3.bmp');
   timer5.enabled := false;
-  timer1.enabled := true;
+  timerRefresh.enabled := true;
 end;
 
 procedure TForm1.Image6MouseUp(Sender: TObject; Button: TMouseButton; Shift:
@@ -2312,7 +2314,7 @@ begin
   image6.picture.LoadFromFile(extractfilepath(application.exename) +
     'images\small_arrow_left_up4.bmp');
   timer5.enabled := false;
-  timer1.enabled := true;
+  timerRefresh.enabled := true;
 end;
 
 procedure TForm1.Image7MouseUp(Sender: TObject; Button: TMouseButton; Shift:
@@ -2321,7 +2323,7 @@ begin
   image7.picture.LoadFromFile(extractfilepath(application.exename) +
     'images\small_arrow_right_up1.bmp');
   timer4.enabled := false;
-  timer1.enabled := true;
+  timerRefresh.enabled := true;
 end;
 
 procedure TForm1.Image8MouseUp(Sender: TObject; Button: TMouseButton; Shift:
@@ -2330,7 +2332,7 @@ begin
   image8.picture.LoadFromFile(extractfilepath(application.exename) +
     'images\small_arrow_right_up2.bmp');
   timer4.enabled := false;
-  timer1.enabled := true;
+  timerRefresh.enabled := true;
 end;
 
 procedure TForm1.Image9MouseUp(Sender: TObject; Button: TMouseButton; Shift:
@@ -2339,7 +2341,7 @@ begin
   image9.picture.LoadFromFile(extractfilepath(application.exename) +
     'images\small_arrow_right_up3.bmp');
   timer4.enabled := false;
-  timer1.enabled := true;
+  timerRefresh.enabled := true;
 end;
 
 procedure TForm1.Image10MouseUp(Sender: TObject; Button: TMouseButton; Shift:
@@ -2348,7 +2350,7 @@ begin
   image10.picture.LoadFromFile(extractfilepath(application.exename) +
     'images\small_arrow_right_up4.bmp');
   timer4.enabled := false;
-  timer1.enabled := true;
+  timerRefresh.enabled := true;
 end;
 
 procedure TForm1.Image11MouseDown(Sender: TObject; Button: TMouseButton;
