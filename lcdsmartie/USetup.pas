@@ -19,7 +19,7 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.2 $ $Date: 2004/11/11 22:48:33 $
+ *  $Revision: 1.3 $ $Date: 2004/11/14 22:35:25 $
  *****************************************************************************}
 
 interface
@@ -350,8 +350,8 @@ begin
 
   combobox3.itemindex:=0;
   tempscreen:=0;
-  LoadScreen( 1 );
-  UMain.activeScreen:=1;
+  LoadScreen( 1 );   // setup screen in setup form
+  Form1.ChangeScreen(1);   // setup screen in main form
 
   form2.spinEdit1.text:=IntToStr(config.refreshRate);
   form2.edit15.text:=config.winampLocation;
@@ -693,7 +693,7 @@ begin
 
   LoadScreen(tempscreen+1);
 
-  UMain.activeScreen :=tempscreen+1;
+  Form1.ChangeScreen(tempscreen+1);
 
   aantalscreensheenweer:=1;
 end;
@@ -1464,16 +1464,38 @@ var
 
 begin
   if listbox4.itemindex > -1 then begin
-    if listbox4.itemindex = 0 then Edit9.Text:='$Email1';
-    if listbox4.itemindex = 1 then Edit9.Text:='$Email2';
-    if listbox4.itemindex = 2 then Edit9.Text:='$Email3';
-    if listbox4.itemindex = 3 then Edit9.Text:='$Email4';
-    if listbox4.itemindex = 4 then Edit9.Text:='$Email5';
-    if listbox4.itemindex = 5 then Edit9.Text:='$Email6';
-    if listbox4.itemindex = 6 then Edit9.Text:='$Email7';
-    if listbox4.itemindex = 7 then Edit9.Text:='$Email8';
-    if listbox4.itemindex = 8 then Edit9.Text:='$Email9';
-    if listbox4.itemindex = 9 then Edit9.Text:='$Email0';
+    case listbox4.itemindex of
+      0: Edit9.Text:='$Email1';
+      1: Edit9.Text:='$EmailSub1';
+      2: Edit9.Text:='$EmailFrom1';
+      3: Edit9.Text:='$Email2';
+      4: Edit9.Text:='$EmailSub2';
+      5: Edit9.Text:='$EmailFrom2';
+      6: Edit9.Text:='$Email3';
+      7: Edit9.Text:='$EmailSub3';
+      8: Edit9.Text:='$EmailFrom3';
+      9: Edit9.Text:='$Email4';
+      10: Edit9.Text:='$EmailSub4';
+      11: Edit9.Text:='$EmailFrom4';
+      12: Edit9.Text:='$Email5';
+      13: Edit9.Text:='$EmailSub5';
+      14: Edit9.Text:='$EmailFrom5';
+      15: Edit9.Text:='$Email6';
+      16: Edit9.Text:='$EmailSub6';
+      17: Edit9.Text:='$EmailFrom6';
+      18: Edit9.Text:='$Email7';
+      19: Edit9.Text:='$EmailSub7';
+      20: Edit9.Text:='$EmailFrom7';
+      21: Edit9.Text:='$Email8';
+      22: Edit9.Text:='$EmailSub8';
+      23: Edit9.Text:='$EmailFrom8';
+      24: Edit9.Text:='$Email9';
+      25: Edit9.Text:='$EmailSub9';
+      26: Edit9.Text:='$EmailFrom9';
+      27: Edit9.Text:='$Email0';
+      28: Edit9.Text:='$EmailSub0';
+      29: Edit9.Text:='$EmailFrom0';
+    end;
     if UMain.setupbutton=1 then begin
       tempint1:=edit5.SelStart;
       tempint2:=edit5.SelLength;
@@ -1770,13 +1792,12 @@ var
 
   begin
   if listbox10.itemindex > -1 then begin
-    if listbox10.itemindex = 0 then Edit9.Text:='$FOLDmemsince';
+    if listbox10.itemindex = 0 then Edit9.Text:='$FOLDwu';
     if listbox10.itemindex = 1 then Edit9.Text:='$FOLDlastwu';
     if listbox10.itemindex = 2 then Edit9.Text:='$FOLDactproc';
     if listbox10.itemindex = 3 then Edit9.Text:='$FOLDteam';
     if listbox10.itemindex = 4 then Edit9.Text:='$FOLDscore';
     if listbox10.itemindex = 5 then Edit9.Text:='$FOLDrank';
-    if listbox10.itemindex = 6 then Edit9.Text:='$FOLDwu';
     if UMain.setupbutton=1 then begin
       tempint1:=edit5.SelStart;
       tempint2:=edit5.SelLength;

@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.5 $ $Date: 2004/11/11 22:48:33 $
+ *  $Revision: 1.6 $ $Date: 2004/11/14 22:35:25 $
  *****************************************************************************}
 
 interface
@@ -71,25 +71,6 @@ type
     Image17: TImage;
     SpeedButton1: TSpeedButton;
     Panel5: TPanel;
-    IdPOP31: TIdPOP3;  // aka pop3[1]
-    IdPOP32: TIdPOP3;  // aka pop3[2]
-    IdPOP33: TIdPOP3;  // aka pop3[3]
-    IdPOP34: TIdPOP3;  // aka pop3[4]
-    IdPOP35: TIdPOP3;  // aka pop3[5]
-    IdPOP36: TIdPOP3;  // aka pop3[6]
-    IdPOP37: TIdPOP3;  // aka pop3[7]
-    IdPOP38: TIdPOP3;  // aka pop3[8]
-    IdPOP39: TIdPOP3;  // aka pop3[9]
-    IdPOP310: TIdPOP3; // aka pop3[0]
-    IdHTTP1: TIdHTTP;
-    IdHTTP2: TIdHTTP;
-    IdHTTP3: TIdHTTP;
-    IdHTTP4: TIdHTTP;
-    IdHTTP5: TIdHTTP;
-    IdHTTP6: TIdHTTP;
-    IdHTTP7: TIdHTTP;
-    IdHTTP8: TIdHTTP;
-    IdHTTP9: TIdHTTP;
     Timertrans: TTimer;
     VaComm1: TVaComm;
     VaComm2: TVaComm;
@@ -194,8 +175,7 @@ type
     procedure Timer12Timer(Sender: TObject);
     procedure WMQueryEndSession (var M: TWMQueryEndSession); message WM_QUERYENDSESSION;
     procedure kleur();
-  public
-    pop3: Array [0..9] of ^TIdPOP3;
+    procedure ChangeScreen(scr: Integer);
   private
     screenLcd: Array [1..4] of ^TPanel;
     canflash: Boolean;
@@ -212,9 +192,8 @@ type
     forgroundcoloroff,forgroundcoloron,backgroundcoloroff,backgroundcoloron:integer;
     Oldline:array[1..4] of string;
     Newline:array[1..4] of string;
-    oldnewline:array[1..8] of string;
     Gotnewlines:boolean;
-    transActietemp,transActietemp2,counter,timertransIntervaltemp:integer;
+    transActietemp,transActietemp2,TransCycle,timertransIntervaltemp:integer;
     gokjesarray:array[1..4,1..40] of boolean;
     activetheme:integer;
     canscroll:boolean;
@@ -222,11 +201,12 @@ type
     doesgpoflash: boolean;
     gpoflash, whatgpo:integer;
     flash: Integer;
-    function doguess(regel:integer): integer;
+    function doguess(line: Integer): integer;
     procedure freeze();
     procedure doGPO(const ftemp1,ftemp2:integer);
-    function scroll(scrollvar:string;line,speed:integer):string;
+    function scroll(const scrollvar:string;const line,speed:integer):string;
     procedure scrollLine(line: Byte; direction: Integer);
+    procedure doInteractions;
 end;
 
 var
@@ -259,22 +239,48 @@ uses
   ShellAPI, mmsystem, USetup, UCredits,
   ULCD_MO, ULCD_CF, ULCD_HD, ExtActns;
 
-function TForm1.doguess(regel:integer): integer;
+procedure TForm1.ChangeScreen(scr: Integer);
+var
+  y: Integer;
+begin
+  activeScreen:=scr;
+  for y:= 1 to 4 do begin
+    scrollPos[y]:=0; // Reset scroll postion.
+  end;
+end;
+
+function TForm1.doguess(line:integer): integer;
 var
   goedgokje:boolean;
-  gokje:integer;
+  x:integer;
+  loopcount: Integer;
 
 begin
   goedgokje:=false;
-  gokje:=0;
+  x:=0;
+  loopcount:=0;
+
   while goedgokje = false do begin
-    gokje:=round(random(config.width)+1);
-    if gokjesarray[regel,gokje]=false then begin
-      gokjesarray[regel,gokje]:=true;
+    Inc(loopcount);
+    x:=round(random(config.width)+1);
+    if gokjesarray[line,x]=false then begin
       goedgokje:=true;
+    end else if (loopcount>config.width*2) then begin
+      // it's taking too long - use first unset element
+      x:=0;
+      repeat
+        Inc(x);
+        if (gokjesarray[line,x]=false) then goedgokje:=true;
+      until (x>=config.width) or (goedgokje);
+      if (not goedgokje) then begin
+        // all the elements are set - use 1 (arb.)
+        x:=1;
+        goedgokje:=true;
+      end;
     end;
   end;
-  result:=gokje;
+  gokjesarray[line,x]:=true;
+  result:=x;
 end;
 
 procedure customchar(fregel:string);
@@ -297,22 +303,25 @@ end;
 
 
 
-function TForm1.scroll(scrollvar:string;line,speed:integer):string;
+function TForm1.scroll(const scrollvar:string;const line,speed:integer):string;
 var
   scrolltext:string;
+  len: Integer;
 
 begin
   if length(scrollvar) > config.width then begin
-    if (scrollPos[line] < length(scrollvar)) and (scrollPos[line] <> 0) then
-      scrollPos[line]:=scrollPos[line]+speed
-    else
-      scrollPos[line]:=1;
-    scrolltext:=copy(scrollvar, scrollPos[line], config.width);
+    scrollPos[line]:=scrollPos[line]+speed;
+    if (scrollPos[line]>length(scrollvar)) then scrollPos[line]:=1;
+
+    len:=length(scrollvar)-scrollPos[line]+1;
+    if (len>config.width) then len:=config.width;
+    scrolltext:=copy(scrollvar, scrollPos[line], len);
 
     if length(scrolltext) < config.width then begin
-      scrolltext:=scrolltext+copy(scrollvar,1,config.width-length(scrolltext)+1);
+      scrolltext:=scrolltext+copy(scrollvar,1,config.width-length(scrolltext));
     end;
     result:=scrolltext;
+    
   end else result:=scrollvar;
 end;
 
@@ -330,22 +339,13 @@ begin
   Randomize;
 
   SetCurrentDir(extractfilepath(application.exename));
+  CreateDirectory('cache',nil);
 
   screenLcd[1]:=@Panel1;
   screenLcd[2]:=@Panel2;
   screenLcd[3]:=@Panel3;
   screenLcd[4]:=@Panel4;
 
-  pop3[1]:=@IdPOP31;
-  pop3[2]:=@IdPOP32;
-  pop3[3]:=@IdPOP33;
-  pop3[4]:=@IdPOP34;
-  pop3[5]:=@IdPOP35;
-  pop3[6]:=@IdPOP36;
-  pop3[7]:=@IdPOP37;
-  pop3[8]:=@IdPOP38;
-  pop3[9]:=@IdPOP39;
-  pop3[0]:=@IdPOP310;
 
 //SetWindowLong(Application.Handle, GWL_EXSTYLE, GetWindowLong(Application.Handle, GWL_EXSTYLE) or WS_EX_TOOLWINDOW and not WS_EX_APPWINDOW );
   try
@@ -428,27 +428,8 @@ begin
 
   form1.WinampCtrl1.WinampLocation:=config.winampLocation;
   file1:=config.distLog;
-  IDHTTP1.ProxyParams.ProxyServer:=config.httpProxy;
-  IDHTTP1.ProxyParams.ProxyPort:=config.httpProxyPort;
-  IDHTTP2.ProxyParams.ProxyServer:=config.httpProxy;
-  IDHTTP2.ProxyParams.ProxyPort:=config.httpProxyPort;
-  IDHTTP3.ProxyParams.ProxyServer:=config.httpProxy;
-  IDHTTP3.ProxyParams.ProxyPort:=config.httpProxyPort;
-  IDHTTP4.ProxyParams.ProxyServer:=config.httpProxy;
-  IDHTTP4.ProxyParams.ProxyPort:=config.httpProxyPort;
-  IDHTTP5.ProxyParams.ProxyServer:=config.httpProxy;
-  IDHTTP5.ProxyParams.ProxyPort:=config.httpProxyPort;
-  IDHTTP6.ProxyParams.ProxyServer:=config.httpProxy;
-  IDHTTP6.ProxyParams.ProxyPort:=config.httpProxyPort;
-  IDHTTP7.ProxyParams.ProxyServer:=config.httpProxy;
-  IDHTTP7.ProxyParams.ProxyPort:=config.httpProxyPort;
-  IDHTTP8.ProxyParams.ProxyServer:=config.httpProxy;
-  IDHTTP8.ProxyParams.ProxyPort:=config.httpProxyPort;
-  IDHTTP9.ProxyParams.ProxyServer:=config.httpProxy;
-  IDHTTP9.ProxyParams.ProxyPort:=config.httpProxyPort;
 
-
-  activeScreen:=1;
+  ChangeScreen(1);
 
   aantregelsoud:=config.height;
 
@@ -556,14 +537,130 @@ begin
   end;
 end;
 
+procedure TForm1.doInteractions;
+var
+  gokreg:array[1..4] of string;
+  tempstr: String;
+  line: Integer;
+  maxTransCycles: Integer;
+  gokje:integer;
+  x: Integer;
+  foo: Integer;
+
+begin
+  // Changing screen - do any interactions required.
+  TransCycle:=TransCycle+1;
+  maxTransCycles:=timertrans.Interval div timer1.Interval;
+
+  if (TransCycle>maxTransCycles) then Exit;
+
+  for x:=1 to config.height do begin
+    oldline[x]:=copy(oldline[x]+'                                        ',1,config.width);
+    newline[x]:=copy(newline[x]+'                                        ',1,config.width);
+  end;
+
+  if transActietemp=1 then begin  //left-->right
+
+    for x:=1 to config.height do begin
+      tempstr:=copy(newline[x]+'|'+oldline[x],
+                  round((config.width+2)-TransCycle*((config.width+2)/maxTransCycles)),
+                  config.width);
+      screenLcd[x].Caption:=StringReplace(tempstr,'&','&&',[rfReplaceAll]);
+    end;
+
+  end else if transActietemp=2 then begin  //right-->left
+
+    for x:=1 to config.height do begin
+      tempstr:=copy(oldline[x]+'|'+newline[x],
+                round(TransCycle*((config.width+2)/maxTransCycles)),
+                config.width);
+      screenLcd[x].Caption:=StringReplace(tempstr,'&','&&',[rfReplaceAll]);
+    end;
+
+  end else if transActietemp=3 then begin  //top-->bottom
+
+    line:=round(TransCycle*(config.height/maxTransCycles))+1;
+    for x:=1 to line-1 do begin
+      screenLcd[x].Caption:=StringReplace(newline[config.height-(line-1)+x],'&','&&',[rfReplaceAll]);
+    end;
+
+    if (line<=config.height) then
+      screenLcd[line].Caption:=copy('----------------------------------------', 1, config.width);
+
+    for x:=line+1 to config.height do begin
+      screenLcd[x].Caption:=StringReplace(oldline[x-(line+1)+1],'&','&&',[rfReplaceAll]);
+    end;
+
+  end else if transActietemp=4 then begin  //bottom-->top
+
+    line:=round(TransCycle*(config.height/maxTransCycles))+1;
+    for x:=1 to config.height-line do begin
+      screenLcd[x].Caption:=StringReplace(oldline[x+line-1],'&','&&',[rfReplaceAll]);
+    end;
+
+    if (config.height-line+1>0) then
+      screenLcd[config.height-line+1].Caption:=copy('----------------------------------------', 1, config.width);
+
+    for x:=config.height-line+2 to config.height do begin
+      screenLcd[x].Caption:=StringReplace(newline[x-(config.height-line+2)+1],'&','&&',[rfReplaceAll]);
+    end;
+
+  end else if transActietemp=5 then begin  //random blocks
+
+    for x:=1 to 4 do begin
+      gokreg[x]:=copy(screenLcd[x].caption+'                                        ',1,config.width);
+    end;
+
+    for x:= round((config.width/maxTransCycles)*(TransCycle-1)) to round((config.width/maxTransCycles)*TransCycle)-1 do begin
+      for line:=1 to 4 do begin
+        gokje:=doguess(line);
+        gokreg[line]:=copy(gokreg[line],1,gokje-1)
+                      +copy(newline[line],gokje,1)
+                      +copy(gokreg[line],gokje+1,config.width-gokje);
+      end;
+    end;
+    for x:=1 to 4 do begin
+      screenLcd[x].caption:=StringReplace(gokreg[x],'&','&&',[rfReplaceAll]);
+    end;
+
+  end else if transActietemp=6 then begin  //contrast fade
+
+    // For the first half of the cycles - lower the contrast
+    if (TransCycle<maxTransCycles/2) then begin
+      if (config.isMO)then
+        x:=config.contrast
+      else
+        x:=config.CF_contrast;
+
+      foo:=round(x-(TransCycle*x/(MaxTransCycles/2)));
+      if foo < 0 then foo:=0;
+      Lcd.setContrast(foo);
+    end else begin
+      // raise the contrast over the second half
+
+      for x:=1 to 4 do begin
+        screenLcd[x].Caption:=newline[x];
+      end;
+
+      if (config.isMO) then
+        x:=config.contrast
+      else
+        x:=config.CF_contrast;
+
+      foo:=round((TransCycle-(MaxTransCycles/2))*x/(MaxTransCycles/2-1));
+      if foo > x then foo:=x;
+      Lcd.setContrast(foo);
+    end;
+  end;
+end;
+
+
 procedure TForm1.Timer1Timer(Sender: TObject);
 var
-  foo,x:integer;
-  gokje:integer;
   teller, h: Integer;
   regel: String;
   scrollcount: Integer;
-  gokreg:array[1..4] of string;
+
 begin
   timer1.Interval:=config.refreshRate;
 
@@ -588,7 +685,7 @@ begin
     if form1.left+form1.Width > screen.desktopwidth -8 then form1.left:= screen.desktopwidth-form1.width;
     if form1.top+form1.height > screen.desktopheight -34 then form1.top:= screen.desktopheight-form1.height-28;
 
-    
+
     if (config.width=40) then begin
       form1.Width:=389;
       image1.left:=356;
@@ -670,12 +767,13 @@ begin
       end;
     end;
 
-    for teller:= 1 to aantregelsoud do begin
+    for teller:= 1 to config.height do begin
       //Application.ProcessMessages;
       regel:=config.screen[activeScreen][teller].text;
       Data.qstattemp:=teller;
-       regel:=Data.change(regel);
+      regel:=Data.change(regel);
 
+      // Center the line if requested.
       if config.screen[activeScreen][teller].center then begin
         if length(regel) < config.width-1 then begin
           for h:=1 to round((config.width - length(regel))/2 - 0.4) do begin
@@ -687,20 +785,17 @@ begin
       parsedLine[teller]:=regel;
       newline[teller]:=regel;  // Used by screen change interaction.
     end;
+    for h:= 1 to 4 do begin
+      // handle continuing on the next line (if req)
+      if (h<4) and (config.screen[activeScreen][h].contNextLine) then begin
+        parsedLine[h+1]:=copy(parsedLine[h],1+config.width,length(parsedLine[h]));
+      end;
+    end;
+
     gotnewlines:=true;
   end;
 
   if timertrans.Enabled=false then begin
-      for teller:= 1 to 4 do begin
-        screenLcd[teller].Caption:=StringReplace(copy(parsedLine[teller],1,config.width),'&','&&',[rfReplaceAll]);
-
-        // handle continuing on the next line (if req)
-        if (teller<4) and (config.screen[activeScreen][teller].contNextLine) then begin
-          //screenLcd[teller+1].Caption:=copy(parsedLine[teller],1+config.width,2*config.width);
-          parsedLine[teller+1]:=copy(parsedLine[teller],1+config.width,length(parsedLine[teller]));
-        end;
-      end;
-
 
     if (canscroll) then begin
       canscroll:=false;
@@ -715,134 +810,27 @@ begin
       scrollcount:=0;
     end;
 
+    // calculate scroll positions
     for teller:= 1 to config.height do begin
-       if not config.screen[activeScreen][teller].noscroll then begin
-          screenLcd[teller].Caption:=StringReplace(scroll(parsedLine[teller],teller,scrollcount),'&','&&',[rfReplaceAll]);
-       end;
+       if (not config.screen[activeScreen][teller].noscroll) then
+          screenLcd[teller].Caption:=StringReplace(scroll(parsedLine[teller],teller,scrollcount),'&','&&',[rfReplaceAll])
+       else if (scrollPos[teller]>1) then // maintain manual scroll postion
+          screenLcd[teller].Caption:=StringReplace(scroll(parsedLine[teller],teller,0),'&','&&',[rfReplaceAll])
+       else
+          screenLcd[teller].Caption:=StringReplace(copy(parsedLine[teller],1,config.width),'&','&&',[rfReplaceAll]);
     end;
 
-end else begin
-  // Changing screen - do any interactions required.
-
-  for x:=1 to config.height do begin
-    oldline[x]:=copy(oldline[x]+'                                        ',1,config.width);
-    newline[x]:=copy(newline[x]+'                                        ',1,config.width);
+  end else begin // timertrans.Enabled=true
+    doInteractions();
   end;
-  if transActietemp=1 then begin  //left-->right
-    counter:=counter+1;
-    for x:=1 to config.height do begin
-      screenLcd[x].Caption:=StringReplace(copy(newline[x]+oldline[x],config.width-round(counter*(config.width/(timertrans.interval/(timer1.interval*1.14)))),config.width),'&','&&',[rfReplaceAll]);
-    end;
-  end;
-  if transActietemp=2 then begin  //right-->left
-    counter:=counter+1;
-    for x:=1 to config.height do begin
-      screenLcd[x].Caption:=StringReplace(copy(oldline[x]+newline[x],round(counter*(config.width/(timertrans.interval/(timer1.interval*1.13)))),config.width),'&','&&',[rfReplaceAll]);
-    end;
-  end;
-  if transActietemp=3 then begin  //top-->bottum
-    counter:=counter+1;
-    oldnewline[1]:=newline[1];
-    oldnewline[2]:=newline[2];
-    if aantregelsoud>2 then oldnewline[3]:=newline[3] else oldnewline[3]:=newline[2];
-    if aantregelsoud>2 then oldnewline[4]:=newline[4] else oldnewline[4]:=newline[2];
-    if aantregelsoud>3 then oldnewline[4]:=newline[4];
-    oldnewline[5]:=oldline[1];
-    oldnewline[6]:=oldline[2];
-    if aantregelsoud>2 then oldnewline[7]:=oldline[3] else oldnewline[7]:=oldline[2];
-    if aantregelsoud>2 then oldnewline[8]:=oldline[4] else oldnewline[8]:=oldline[2];
-    if aantregelsoud>3 then oldnewline[8]:=oldline[4];
 
-    for x:=1 to 4 do begin
-      screenLcd[x].Caption:=StringReplace(oldnewline[4+x-round(counter*(aantregelsoud/(timertrans.interval/(timer1.interval*1.13))))],'&','&&',[rfReplaceAll]);
-    end;
-  end;
-  if transActietemp=4 then begin  //bottom-->top
-    counter:=counter+1;
-    oldnewline[1]:=oldline[1];
-    oldnewline[2]:=oldline[2];
-    if aantregelsoud>2 then oldnewline[3]:=oldline[3] else oldnewline[3]:=oldline[2];
-    if aantregelsoud>2 then oldnewline[4]:=oldline[4] else oldnewline[4]:=oldline[2];
-    if aantregelsoud>3 then oldnewline[4]:=oldline[4];
-    oldnewline[5]:=newline[1];
-    oldnewline[6]:=newline[2];
-    if aantregelsoud>2 then oldnewline[7]:=newline[3] else oldnewline[7]:=newline[2];
-    if aantregelsoud>2 then oldnewline[8]:=newline[4] else oldnewline[8]:=newline[2];
-    if aantregelsoud>3 then oldnewline[8]:=newline[4];
 
-    for x:=1 to 4 do begin
-      screenLcd[x].Caption:=StringReplace(oldnewline[x+round(counter*(aantregelsoud/(timertrans.interval/(timer1.interval*1.13))))],'&','&&',[rfReplaceAll]);
-    end;
-  end;
-  if transActietemp=5 then begin  //random blocks
-    for x:=1 to 4 do begin
-      gokreg[x]:=copy(screenLcd[x].caption+'                                        ',1,config.width);
-    end;
+  for h:=1 to config.height do begin
+    if tmpregel[h]<>copy(screenLcd[h].Caption + '                                        ',1,config.width) then begin
+      tmpregel[h]:=copy(StringReplace(screenLcd[h].Caption,'&&','&',[rfReplaceAll]) + '                                        ',1,config.width);
 
-    for x:= 1 to round(config.width/(timertrans.interval/(timer1.interval))) do begin
-      counter:=counter+1;
-      if counter<=config.width then begin
-        gokje:=doguess(1);
-        gokreg[1]:=copy(gokreg[1],1,gokje-1)+copy(newline[1],gokje,1)+copy(gokreg[1],gokje+1,config.width-gokje);
-        gokje:=doguess(2);
-        gokreg[2]:=copy(gokreg[2],1,gokje-1)+copy(newline[2],gokje,1)+copy(gokreg[2],gokje+1,config.width-gokje);
-        gokje:=doguess(3);
-        gokreg[3]:=copy(gokreg[3],1,gokje-1)+copy(newline[3],gokje,1)+copy(gokreg[3],gokje+1,config.width-gokje);
-        gokje:=doguess(4);
-        gokreg[4]:=copy(gokreg[4],1,gokje-1)+copy(newline[4],gokje,1)+copy(gokreg[4],gokje+1,config.width-gokje);
-      end;
-    end;
-    for x:=1 to 4 do begin
-      screenLcd[x].caption:=StringReplace(gokreg[x],'&','&&',[rfReplaceAll]);
-    end;
-  end;
-  if transActietemp=6 then begin  //contrast fade off
-    if (config.isMO) and (foo2<>1) then begin
-      x:=config.contrast;
-      counter:=counter+1;
-      foo:=round(x-(counter*x/(timertrans.Interval/2.1/timer1.Interval)));
-      if foo < 0 then foo:=0;
-      Lcd.setContrast(foo);
-      if foo < 25 then foo2:=1;
-    end;
-    if (config.isCF) and (foo2<>1) then begin
-      x:=config.CF_contrast;
-      counter:=counter+1;
-      foo:=round(x-(counter*x/(timertrans.Interval/2.1/timer1.Interval)));
-      if foo < 0 then foo:=0;
-      Lcd.setContrast(foo);
-      if foo < 15 then foo2:=1;
-    end;
-    if foo2 = 1 then begin
-      for x:=1 to 4 do begin
-        screenLcd[x].Caption:=newline[x];
-      end;
-    end;
-    if (config.isMO) and (foo2=1) then begin
-      x:=config.contrast;
-      counter:=counter-1;
-      foo:=round(x-(counter*x/(timertrans.Interval/1.8/timer1.Interval)));
-      if foo > x then foo:=x;
-      Lcd.setContrast(foo);
-    end;
-    if (config.isCF) and (foo2=1) then begin
-      x:=config.CF_contrast;
-
-      counter:=counter-1;
-      foo:=round(x-(counter*x/(timertrans.Interval/1.8/timer1.Interval)));
-      if foo > x then foo:=x;
-      Lcd.setContrast(foo);
-    end;
-  end;
-end;
-
-  for x:=1 to aantregelsoud do begin
-    if tmpregel[x]<>copy(screenLcd[x].Caption + '                                        ',1,config.width) then begin
-      tmpregel[x]:=copy(StringReplace(screenLcd[x].Caption,'&&','&',[rfReplaceAll]) + '                                        ',1,config.width);
-      //Application.ProcessMessages;
-
-      Lcd.setPosition(1, x);
-      Lcd.write(tmpregel[x]);
+      Lcd.setPosition(1, h);
+      Lcd.write(tmpregel[h]);
     end;
   end;
 
@@ -924,7 +912,7 @@ end;
 procedure TForm1.Timer2Timer(Sender: TObject);
 begin
   Data.checkIfNewsUpdatesRequired();
-  timer2.Interval:=config.newsRefresh*60000;
+  timer2.Interval:=config.newsRefresh*1000*60;
 end;
 
 procedure TForm1.kleur;
@@ -1062,6 +1050,7 @@ begin
   popupmenu1.Popup(form1.left+image1.left+round(image1.width/2),form1.top+image1.top+round(image1.height));
 end;
 
+// Only used when line scroll button is pressed.
 procedure TForm1.scrollLine(line: Byte; direction: Integer);
 begin
     screenLcd[line].caption:=StringReplace(scroll(parsedLine[line],line,direction),'&','&&',[rfReplaceAll]);
@@ -1070,12 +1059,13 @@ begin
     Lcd.write(tmpregel[line]);
 end;
 
-
+// For scrolling right when a line scroll button is pressed.
 procedure TForm1.Timer4Timer(Sender: TObject);
 begin
   scrollLine(regel2scroll, 1);
 end;
 
+// For scrolling left when a line scroll button is pressed.
 procedure TForm1.Timer5Timer(Sender: TObject);
 begin
   scrollLine(regel2scroll, -1);
@@ -1112,6 +1102,13 @@ end;
 
 procedure TForm1.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
+  application.minimize;
+  hide;
+  cooltrayicon1.HideTaskbarIcon;
+  cooltrayicon1.enabled:=False;
+  cooltrayicon1.IconVisible:=False;
+  cooltrayicon1.Refresh;
+
   try
     while timer1.enabled=true do timer1.enabled:=false;
     while timer2.enabled=true do timer2.enabled:=false;
@@ -1124,6 +1121,9 @@ begin
     while timer9.enabled=true do timer9.enabled:=false;
     while timer10.enabled=true do timer10.enabled:=false;
     while timer11.enabled=true do timer11.enabled:=false;
+    while timer12.enabled=true do timer12.enabled:=false;
+    while timer13.enabled=true do timer13.enabled:=false;
+    while timertrans.enabled=true do timertrans.enabled:=false;
   except
   end;
 
@@ -1150,9 +1150,8 @@ begin
     Vacomm1.close;
   end;
 
-  config.Destroy;
   Data.Destroy;
-
+  config.Destroy;
 end;
 
 procedure TForm1.Timer8Timer(Sender: TObject);
@@ -1295,7 +1294,7 @@ if (form2<>nil) and (form2.Visible=false) then begin
     if pos('1GotoScreen(',todo[teller])<>0 then begin
       if didgotoscreen[teller]=false then begin
         didgotoscreen[teller]:=true;
-        activeScreen:=StrToInt(copy(todo[teller],pos('1GotoScreen(',todo[teller])+12,pos(')',todo[teller])-pos('1GotoScreen(',todo[teller])-12))-1;
+        ChangeScreen(StrToInt(copy(todo[teller],pos('1GotoScreen(',todo[teller])+12,pos(')',todo[teller])-pos('1GotoScreen(',todo[teller])-12))-1);
       end;
     end;
     if pos('2GotoScreen',todo[teller])<>0 then begin
@@ -1556,26 +1555,25 @@ procedure TForm1.Timer7Timer(Sender: TObject);
 Label opnieuwscreen;
 var
   xx, x:integer;
-  activeScreenoud:integer;
   y: Integer;
   ascreen: TScreenLine;
+  tmpscreen: Integer;
 
 begin
-  activeScreenoud:=activeScreen;
+  tmpScreen:=activeScreen;
   x:=0;
   xx:=0;
 opnieuwscreen:
   x:=x+1;
   xx:=xx+1;
-  if config.randomScreens then begin
-    activeScreen:=round(random(20)+1);
-    if activeScreen>20 then activeScreen:=20;
-    if activeScreen<1 then activeScreen:=1;
-  end;
-  if not config.randomScreens then begin
-    activeScreen:=activeScreen+aantalscreensheenweer;
-    if activeScreen>20 then activeScreen:=1;
-    if activeScreen<1 then activeScreen:=20;
+  if (config.randomScreens) and (x<500) then begin
+    tmpScreen:=round(random(20)+1);
+    if tmpScreen>20 then tmpScreen:=20;
+    if tmpScreen<1 then tmpScreen:=1;
+  end else begin
+    tmpScreen:=tmpScreen+aantalscreensheenweer;
+    if tmpScreen>20 then tmpScreen:=1;
+    if tmpScreen<1 then tmpScreen:=20;
   end;
 
   if xx> 22 then begin
@@ -1592,14 +1590,14 @@ opnieuwscreen:
     for y:= 1 to 4 do begin
       config.screen[1][y].enabled:=True;
       config.screen[1][y].skip:=0;
-      config.screen[1][y].noscroll:=False;
+      //config.screen[1][y].noscroll:=False;
     end;
 
-    activeScreen:=1;
+    tmpScreen:=1;
     activetheme:=0;
   end;
 
-  ascreen:= config.screen[activeScreen][1];
+  ascreen:= config.screen[tmpScreen][1];
 
   if (ascreen.theme <> activetheme) then goto opnieuwscreen;
   if (not ascreen.enabled) then goto opnieuwscreen;
@@ -1613,15 +1611,12 @@ opnieuwscreen:
   if (ascreen.skip = 6) and (Data.gotEmail) then goto opnieuwscreen;
 
   if timertransIntervaltemp <> 0 then timertrans.Interval:=timertransIntervaltemp;
-  if (activeScreenoud<>activeScreen) then begin
-    timertrans.Enabled:=True;
-    for y:= 1 to 4 do begin
-      scrollPos[y]:=1; // Reset scroll postion.
-    end;
-  end;
+
   gotnewlines:=false;
-  counter:=0;
+  TransCycle:=0;
   foo2:=0;
+
+
 
   for x:=1 to 4 do begin
     oldline[x]:=screenLcd[x].Caption;
@@ -1647,11 +1642,16 @@ opnieuwscreen:
   if (config.width=40) then begin
     panel5.left:=135;
     panel5.width:=100;
-    Panel5.Caption:='Theme:' + IntToStr(activetheme+1) + ' Screen:' + IntToStr(activeScreen);
+    Panel5.Caption:='Theme:' + IntToStr(activetheme+1) + ' Screen:' + IntToStr(tmpScreen)+'  ';
   end else begin
     panel5.left:=90;
     panel5.width:=23;
-    Panel5.Caption:=IntToStr(activetheme+1) + ' | ' + IntToStr(activeScreen);
+    Panel5.Caption:=IntToStr(activetheme+1) + ' | ' + IntToStr(tmpScreen) + '  ';
+  end;
+
+  if (activeScreen<>tmpScreen) then begin
+    ChangeScreen(tmpScreen); // changes activeScreen
+    timertrans.Enabled:=True;
   end;
 end;
 

@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.1 $ $Date: 2004/11/11 22:48:33 $
+ *  $Revision: 1.2 $ $Date: 2004/11/14 22:35:25 $
  *****************************************************************************}
 
 
@@ -97,6 +97,12 @@ type
 
   PSharedData   = ^TSharedData;
 
+  TEmail = record
+    messages: Integer;
+    lastSubject: String;
+    lastFrom: String;
+  end;
+
   TRss = record
     url: String;
     title: Array [0..maxRssItems] of String; // 0 is all titles
@@ -123,7 +129,7 @@ type
       procedure checkIfNewsUpdatesRequired;
       procedure updateMBMStats(Sender: TObject);
       constructor Create;
-      destructor Destory;
+      destructor Destroy;   override;
     private
       STUsername, STComputername, STCPUType, STCPUSpeed: string;
       STPageFree,STPageTotal:Integer;
@@ -179,13 +185,11 @@ type
       HTTPthreadisrunning: Boolean;
       DoNewsUpdate: Array [1..9] of Boolean;
       newsAttempts: Array [1..9] of Byte;
-      CNNregel,aexregel,techregel,weerregel,tnetregel,timeregel: String;
       pop3threadisrunning: Boolean;
-      mailregel: Array [0..9] of Cardinal;
-      setireg1,setireg2,setireg3,setireg4,setireg5,setireg6,setireg7,setireg8,setireg9:string;
-      foldreg1, foldreg2, foldreg3, foldreg4, foldreg5, foldreg6, foldreg7:string;
-      locationnumber: String;
-      weather2: String;
+      mail: Array [0..9] of TEmail;
+      setiNumResults,setiCpuTime,setiAvgCpu,setiLastResult,setiUserTime,
+      setiTotalUsers,setiRank,setiShareRank,setiMoreWU:string;
+      foldMemSince, foldLastWU, foldActProcsWeek, foldTeam, foldScore, foldRank, foldWU:string;
       rss: Array [1..maxRss] of TRss;
       rssEntries: Cardinal;
       function ReadMBM5Data : Boolean;
@@ -197,6 +201,9 @@ type
          var args: array of String; var prefix: String; var postfix: String; var numArgs:Cardinal):Boolean;
       function changeWinamp(regel: String):String;
       function changeNet(regel: String):String;
+      procedure doSeti;
+      function getUrl(Url: String; maxfreq: Cardinal=0): String;
+      function fileToString(filename: String): String;
   end;
 
   function stripspaces(Fstring:string): string;
@@ -209,8 +216,8 @@ uses cxCpu40, adCpuUsage, UMain, Windows, Forms, Registry,
       IpHlpApi,  IpIfConst, IpRtrMib, WinSock, Dialogs, Buttons,
       Graphics,  ShellAPI, mmsystem,  ExtActns,
       Messages, IdHTTP, IdBaseComponent, IdComponent, IdTCPConnection,
-      IdTCPClient, IdMessageClient, IdPOP3, Menus, ExtCtrls, Controls, StdCtrls,
-      StrUtils, ActiveX, IdUri, DateUtils ;
+      IdTCPClient, IdMessageClient, IdPOP3, IdMessage, Menus, ExtCtrls, Controls, StdCtrls,
+      StrUtils, ActiveX, IdUri, DateUtils, IdGlobal;
 
 // Takes a string like: 'C:$Bar(20,30,10) jterlktjer(fsdfs)sfsdf(sdf)'
 // with funcName '$Bar'
@@ -272,7 +279,7 @@ end;
 constructor TMyThread.Create(myMethod: TThreadMethod);
 begin
   method:=myMethod;
-  inherited Create(false);
+  inherited Create(true);   // Create suspended.
 end;
 
 procedure TMyThread.Execute;
@@ -300,25 +307,27 @@ begin
   checkIfNewsUpdatesRequired();
 end;
 
-destructor TData.Destory;
+destructor TData.Destroy;
 begin
-  if HTTPthreadisrunning=true then begin
-    try
+  try
+    if HTTPthreadisrunning=true then begin
       assert(Assigned(HTTPThread));
       HTTPThread.Terminate;
       HTTPThread.WaitFor;
-      HTTPThread.Destroy;
-    except
     end;
+    if (Assigned(HTTPThread)) then HTTPThread.Destroy;
+
+  except
   end;
-  if pop3threadisrunning=true then  begin
-    try
+
+  try
+    if pop3threadisrunning=true then  begin
       assert(Assigned(pop3thread));
       pop3thread.Terminate;
       pop3thread.WaitFor;
-      pop3thread.Destroy;
-    except
     end;
+    if (Assigned(pop3Thread)) then pop3thread.Destroy;
+  except
   end;
   inherited;
 end;
@@ -335,6 +344,7 @@ begin
       end;
     end;
     pop3Thread:= TMyThread.Create(self.checkEmailUpdates);
+    pop3Thread.Resume;
   end;
 end;
 
@@ -813,7 +823,8 @@ var
   i, h : Integer;
   x: Integer;
   teller3:integer;
-  tempst,fileline,fileloc,spaceline, regel2,regel3:string;
+  tempst,fileloc,spaceline, regel2,regel3:string;
+  fileline: Integer;
   bestand3:textfile;
   ccount:double;
   hdteller:integer;
@@ -825,53 +836,56 @@ var
 
 begin
     hdteller:=0;
-    while pos('$LogFile("',regel) <> 0 do begin
+
+    while decodeArgs(regel, '$LogFile', maxArgs, args, prefix, postfix, numargs) do begin
+      assert(numargs=2);
       hdteller:=hdteller+1;
       if hdteller>4 then regel:=StringReplace(regel,'$LogFile("','error', []);
 
-      try
-        spaceline:=copy(regel, pos('$LogFile("',regel)+10,length(regel));
-        fileloc:=copy(spaceline, 1,pos('"',spaceline)-1);
-        fileline:=copy(spaceline,pos('",',spaceline)+2,pos(')',spaceline)-pos('",',spaceline)-2);
-        if fileline > '3' then fileline:='3';
-        if fileline < '0' then fileline:='0';
-        try
-          SetLength(spaceline, 1024);
-          FileStream:= TFileStream.Create(fileloc, fmOpenRead or fmShareDenyNone);
-          FileStream.Seek(-1 * 1024, soFromEnd);
-          FileStream.ReadBuffer(spaceline[1], 1024);
-          FileStream.Free;
+      fileloc:=args[1];
 
-          Lines:= TStringList.Create;
-          Lines.Text:= spaceline;
-          spaceline:=stripspaces(lines[lines.count-1-strtoint(fileline)]);
-          spaceline:=copy(spaceline, pos('] ',spaceline)+3,length(spaceline));
-          for i:=0 to 7 do spaceline:=StringReplace(spaceline, chr(I),'',[rfReplaceAll]);
-          Lines.Free;
-          regel:=StringReplace(regel,'$LogFile("' + fileloc + '",' + fileline + ')',spaceline, []);
-        except
-          regel:=StringReplace(regel,'$LogFile("','error', []);
-        end;
+      try
+        fileline:=StrToInt(args[2]);
+
+        if fileline > 3 then fileline:=3;
+        if fileline < 0 then fileline:=0;
+
+        SetLength(spaceline, 1024);
+
+        //****BUGBUG: This will cause an exception if there are less than 1024
+        // bytes in the file.
+        FileStream:= TFileStream.Create(fileloc, fmOpenRead or fmShareDenyNone);
+        FileStream.Seek(-1 * 1024, soFromEnd);
+        FileStream.ReadBuffer(spaceline[1], 1024);
+        FileStream.Free;
+
+        Lines:= TStringList.Create;
+        Lines.Text:= spaceline;
+        spaceline:=stripspaces(lines[lines.count-1-fileline]);
+        spaceline:=copy(spaceline, pos('] ',spaceline)+3,length(spaceline));
+        for i:=0 to 7 do spaceline:=StringReplace(spaceline, chr(I),'',[rfReplaceAll]);
+        Lines.Free;
+        regel:=prefix+spaceline+postfix;
       except
-        regel:=StringReplace(regel,'$LogFile("','error', []);
+        on E: Exception do regel:=prefix+'[Logfile: '+E.message+']'+postfix;
       end;
     end;
 
-    while pos('$File("',regel) <> 0 do begin
-      spaceline:=copy(regel, pos('$File("',regel)+7,length(regel));
-      fileloc:=copy(spaceline, 1,pos('"',spaceline)-1);
-      fileline:=copy(spaceline,pos('",',spaceline)+2,pos(')',spaceline)-pos('",',spaceline)-2);
+    while decodeArgs(regel, '$File', maxArgs, args, prefix, postfix, numargs) do begin
+      assert(numargs=2);
+      fileloc:=args[1];
 
       try
+        fileline:=StrToInt(args[2]);
+
         assignfile(bestand3, fileloc);
         reset(bestand3);
-        for teller3:= 1 to StrToInt(fileline) do
-       readln(bestand3, regel3);
+        for teller3:= 1 to fileline do
+          readln(bestand3, regel3);
         closefile(bestand3);
-        regel:=StringReplace(regel,'$File("' + fileloc + '",' + fileline + ')',regel3, []);
+        regel:=prefix+regel3+postfix;
       except
-        regel:=StringReplace(regel,fileloc,'', []);
-        regel:=StringReplace(regel,'$File("','', []);
+       on E: Exception do regel:=prefix+'[File: '+E.Message+']'+postfix;
       end;
     end;
 
@@ -898,71 +912,23 @@ begin
     regel:=StringReplace(regel,'$ScreenReso',screenResolution,[rfReplaceAll]);
 
     if (pos('$Temp', regel)<>0) then begin
-      regel:=StringReplace(regel,'$Tempname1',TempName[1],[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Tempname2',TempName[2],[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Tempname3',TempName[3],[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Tempname4',TempName[4],[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Tempname5',TempName[5],[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Tempname6',TempName[6],[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Tempname7',TempName[7],[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Tempname8',TempName[8],[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Tempname9',TempName[9],[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Tempname10',TempName[10],[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Temp1',FloatToStr(Temperature[1]),[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Temp2',FloatToStr(Temperature[2]),[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Temp3',FloatToStr(Temperature[3]),[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Temp4',FloatToStr(Temperature[4]),[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Temp5',FloatToStr(Temperature[5]),[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Temp6',FloatToStr(Temperature[6]),[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Temp7',FloatToStr(Temperature[7]),[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Temp8',FloatToStr(Temperature[8]),[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Temp9',FloatToStr(Temperature[9]),[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Temp10',FloatToStr(Temperature[10]),[rfReplaceAll]);
+      for x:=1 to 10 do begin
+        regel:=StringReplace(regel,'$Tempname'+IntToStr(x),TempName[x],[rfReplaceAll]);
+        regel:=StringReplace(regel,'$Temp'+IntToStr(x),FloatToStr(Temperature[x]),[rfReplaceAll]);
+      end;
     end;
     if (pos('$Fan', regel)<>0) then begin
-      regel:=StringReplace(regel,'$Fanname1',Fanname[1],[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Fanname2',Fanname[2],[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Fanname3',Fanname[3],[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Fanname4',Fanname[4],[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Fanname5',Fanname[5],[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Fanname6',Fanname[6],[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Fanname7',Fanname[7],[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Fanname8',Fanname[8],[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Fanname9',Fanname[9],[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Fanname10',Fanname[10],[rfReplaceAll]);
-      regel:=StringReplace(regel,'$FanS1',FloatToStr(Fan[1]),[rfReplaceAll]);
-      regel:=StringReplace(regel,'$FanS2',FloatToStr(Fan[2]),[rfReplaceAll]);
-      regel:=StringReplace(regel,'$FanS3',FloatToStr(Fan[3]),[rfReplaceAll]);
-      regel:=StringReplace(regel,'$FanS4',FloatToStr(Fan[4]),[rfReplaceAll]);
-      regel:=StringReplace(regel,'$FanS5',FloatToStr(Fan[5]),[rfReplaceAll]);
-      regel:=StringReplace(regel,'$FanS6',FloatToStr(Fan[6]),[rfReplaceAll]);
-      regel:=StringReplace(regel,'$FanS7',FloatToStr(Fan[7]),[rfReplaceAll]);
-      regel:=StringReplace(regel,'$FanS8',FloatToStr(Fan[8]),[rfReplaceAll]);
-      regel:=StringReplace(regel,'$FanS9',FloatToStr(Fan[9]),[rfReplaceAll]);
-      regel:=StringReplace(regel,'$FanS10',FloatToStr(Fan[10]),[rfReplaceAll]);
+      for x:=1 to 10 do begin
+        regel:=StringReplace(regel,'$Fanname'+IntToStr(x),Fanname[x],[rfReplaceAll]);
+        regel:=StringReplace(regel,'$FanS'+IntToStr(x),FloatToStr(Fan[x]),[rfReplaceAll]);
+      end;
     end;
 
     if (pos('$Volt', regel)<>0) then begin
-      regel:=StringReplace(regel,'$Voltname1',Voltname[1],[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Voltname2',Voltname[2],[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Voltname3',Voltname[3],[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Voltname4',Voltname[4],[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Voltname5',Voltname[5],[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Voltname6',Voltname[6],[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Voltname7',Voltname[7],[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Voltname8',Voltname[8],[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Voltname9',Voltname[9],[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Voltname10',Voltname[10],[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Voltage1',FloatToStr(Voltage[1]),[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Voltage2',FloatToStr(Voltage[2]),[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Voltage3',FloatToStr(Voltage[3]),[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Voltage4',FloatToStr(Voltage[4]),[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Voltage5',FloatToStr(Voltage[5]),[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Voltage6',FloatToStr(Voltage[6]),[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Voltage7',FloatToStr(Voltage[7]),[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Voltage8',FloatToStr(Voltage[8]),[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Voltage9',FloatToStr(Voltage[9]),[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Voltage10',FloatToStr(Voltage[10]),[rfReplaceAll]);
+      for x:= 1 to 10 do begin
+        regel:=StringReplace(regel,'$Voltname'+IntToStr(x),Voltname[x],[rfReplaceAll]);
+        regel:=StringReplace(regel,'$Voltage'+IntToStr(x),FloatToStr(Voltage[x]),[rfReplaceAll]);
+      end;
     end;
 
     regel:=StringReplace(regel,'$Half-life1',qstatreg1[activeScreen,qstattemp],[rfReplaceAll]);
@@ -982,24 +948,12 @@ begin
     regel:=StringReplace(regel,'$QuakeIII4',qstatreg4[activeScreen,qstattemp],[rfReplaceAll]);
     regel:=StringReplace(regel,'$Unreal4',qstatreg4[activeScreen,qstattemp],[rfReplaceAll]);
 
-    regel:=StringReplace(regel,'$CNN',CNNregel,[rfReplaceAll]);
-    regel:=StringReplace(regel,'$Stocks',aexregel,[rfReplaceAll]);
-    regel:=StringReplace(regel,'$TomsHW',techregel,[rfReplaceAll]);
-    regel:=StringReplace(regel,'$T.netHL',tnetregel,[rfReplaceAll]);
-    regel:=StringReplace(regel,'$DutchWeather',weerregel,[rfReplaceAll]);
-    regel:=StringReplace(regel,'$Weather.com('+locationnumber+')',weather2,[rfReplaceAll]);
-
     if (pos('$Email', regel) <> 0) then begin
-      regel:=StringReplace(regel,'$Email0',IntToStr(mailregel[0]),[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Email1',IntToStr(mailregel[1]),[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Email2',IntToStr(mailregel[2]),[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Email3',IntToStr(mailregel[3]),[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Email4',IntToStr(mailregel[4]),[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Email5',IntToStr(mailregel[5]),[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Email6',IntToStr(mailregel[6]),[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Email7',IntToStr(mailregel[7]),[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Email8',IntToStr(mailregel[8]),[rfReplaceAll]);
-      regel:=StringReplace(regel,'$Email9',IntToStr(mailregel[9]),[rfReplaceAll]);
+      for x:=0 to 9 do begin
+        regel:=StringReplace(regel,'$Email'+IntToStr(x),IntToStr(mail[x].messages),[rfReplaceAll]);
+        regel:=StringReplace(regel,'$EmailSub'+IntToStr(x),mail[x].lastSubject,[rfReplaceAll]);
+        regel:=StringReplace(regel,'$EmailFrom'+IntToStr(x),mail[x].lastFrom,[rfReplaceAll]);
+      end;
     end;
 
 
@@ -1007,35 +961,35 @@ begin
     regel:=StringReplace(regel,'$DnetSpeed',koeregel1,[rfReplaceAll]);
 
     if (pos('$SETI',regel)<>0) then begin
-      regel:=StringReplace(regel,'$SETIResults',setireg1,[rfReplaceAll]);
-      regel:=StringReplace(regel,'$SETICPUTime',setireg2,[rfReplaceAll]);
-      regel:=StringReplace(regel,'$SETIAverage',setireg3,[rfReplaceAll]);
-      regel:=StringReplace(regel,'$SETILastresult',setireg4,[rfReplaceAll]);
-      regel:=StringReplace(regel,'$SETIusertime',setireg5,[rfReplaceAll]);
-      regel:=StringReplace(regel,'$SETItotalusers',setireg6,[rfReplaceAll]);
-      regel:=StringReplace(regel,'$SETIrank',setireg7,[rfReplaceAll]);
-      regel:=StringReplace(regel,'$SETIsharingrank',setireg8,[rfReplaceAll]);
-      regel:=StringReplace(regel,'$SETImoreWU',setireg9,[rfReplaceAll]);
+      regel:=StringReplace(regel,'$SETIResults',setiNumResults,[rfReplaceAll]);
+      regel:=StringReplace(regel,'$SETICPUTime',setiCpuTime,[rfReplaceAll]);
+      regel:=StringReplace(regel,'$SETIAverage',setiAvgCpu,[rfReplaceAll]);
+      regel:=StringReplace(regel,'$SETILastresult',setiLastResult,[rfReplaceAll]);
+      regel:=StringReplace(regel,'$SETIusertime',setiUserTime,[rfReplaceAll]);
+      regel:=StringReplace(regel,'$SETItotalusers',setiTotalUsers,[rfReplaceAll]);
+      regel:=StringReplace(regel,'$SETIrank',setiRank,[rfReplaceAll]);
+      regel:=StringReplace(regel,'$SETIsharingrank',setiShareRank,[rfReplaceAll]);
+      regel:=StringReplace(regel,'$SETImoreWU',setiMoreWU,[rfReplaceAll]);
     end;
 
     if (pos('$FOLD',regel)<>0) then begin
-      regel:=StringReplace(regel,'$FOLDmemsince',foldreg1,[rfReplaceAll]);
-      regel:=StringReplace(regel,'$FOLDlastwu',foldreg2,[rfReplaceAll]);
-      regel:=StringReplace(regel,'$FOLDactproc',foldreg3,[rfReplaceAll]);
-      regel:=StringReplace(regel,'$FOLDteam',foldreg4,[rfReplaceAll]);
-      regel:=StringReplace(regel,'$FOLDscore',foldreg5,[rfReplaceAll]);
-      regel:=StringReplace(regel,'$FOLDrank',foldreg6,[rfReplaceAll]);
-      regel:=StringReplace(regel,'$FOLDwu',foldreg7,[rfReplaceAll]);
+      regel:=StringReplace(regel,'$FOLDmemsince',foldMemSince,[rfReplaceAll]);
+      regel:=StringReplace(regel,'$FOLDlastwu',foldLastWU,[rfReplaceAll]);
+      regel:=StringReplace(regel,'$FOLDactproc',foldActProcsWeek,[rfReplaceAll]);
+      regel:=StringReplace(regel,'$FOLDteam',foldTeam,[rfReplaceAll]);
+      regel:=StringReplace(regel,'$FOLDscore',foldScore,[rfReplaceAll]);
+      regel:=StringReplace(regel,'$FOLDrank',foldRank,[rfReplaceAll]);
+      regel:=StringReplace(regel,'$FOLDwu',foldWU,[rfReplaceAll]);
     end;
 
-
-    while decodeArgs(regel, '$Time', maxArgs, args, prefix, postfix, numargs) do begin
-      assert(numargs=1);
+    while pos('$Time(',regel) <> 0 do begin
       try
-        timeregel:=formatdatetime(args[1],now);
-        regel:=prefix+timeregel+postfix;
+        regel2:=copy(regel, pos('$Time(',regel)+6,length(regel));
+        regel2:=copy(regel2, 1, pos(')',regel2)-1);
+        tempst:=formatdatetime(regel2,now);
+        regel:=StringReplace(regel,'$Time('+regel2+')',tempst,[]);
       except
-        regel:=prefix+'[Error:Time]'+postfix;
+        regel:=StringReplace(regel,'$Time(','error',[]);
       end;
     end;
 
@@ -1270,7 +1224,7 @@ begin
       found:=false;
       repeat
         Inc(jj);
-        if (rss[jj].url = args[jj]) then found:=true;
+        if (rss[jj].url = args[1]) then found:=true;
       until (jj>=rssEntries) or (found);
 
       if (found) and (rss[jj].items>0) and (Cardinal(StrToInt(args[3]))<=rss[jj].items) then begin
@@ -1290,8 +1244,8 @@ begin
       try
         spacecount:=strtoint(args[3])*3;
 
-        if (StrToInt(args[2])<> 0) then
-          x:=round(StrToInt(args[1])*spacecount/StrToInt(args[2]))
+        if (StrToFloat(args[2])<> 0) then
+          x:=round(StrToFloat(args[1])*spacecount/StrToFloat(args[2]))
         else
           x:=0;
 
@@ -1397,35 +1351,34 @@ try
       end;
     end;
     HTTPThread:=TMyThread.Create(self.checkHTTPUpdates);
+    HTTPThread.Resume;
   end;
 
-//cpuusage!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-//Application.ProcessMessages;
-t:=GetTickCount;
-if (t - lastCpuUpdate > (ticksperseconde div 4)) then begin
-  lastCpuUpdate := t;
-  try
-  {  CPUUsage[CPUUsagePos]:=cxCpu[0].Usage.Value.AsNumber;}
-    CollectCPUData;
-    rawcpu:= adCpuUsage.GetCPUUsage(0);
+  //cpuusage!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  //Application.ProcessMessages;
+  t:=GetTickCount;
+  if (t - lastCpuUpdate > (ticksperseconde div 4)) then begin
+    lastCpuUpdate := t;
+    try
+      {  CPUUsage[CPUUsagePos]:=cxCpu[0].Usage.Value.AsNumber;}
+      CollectCPUData;
+      rawcpu:= adCpuUsage.GetCPUUsage(0);
 
-    if (rawcpu <= 1.1) and (rawcpu >= -0.1) then begin
-      CPUUsage[CPUUsagePos]:=Trunc(abs(rawcpu) * 100);
-      Inc(CPUUsagePos);
-      if (CPUUsagePos>5) then CPUUsagePos:=1;
-      if (CPUUsageCount<5) then Inc(CPUUsageCount);
-    end ;
-
-  except
+      if (rawcpu <= 1.1) and (rawcpu >= -0.1) then begin
+        CPUUsage[CPUUsagePos]:=Trunc(abs(rawcpu) * 100);
+        Inc(CPUUsagePos);
+        if (CPUUsagePos>5) then CPUUsagePos:=1;
+        if (CPUUsageCount<5) then Inc(CPUUsageCount);
+      end;
+    except
+    end;
+    total:=0;
+    for y:=1 to CPUUsageCount do total:=total+CPUUsage[y];
+    if (CPUUsageCount>0) then STCPUUsage:=total div CPUUsageCount;
   end;
-  total:=0;
-  for y:=1 to CPUUsageCount do total:=total+CPUUsage[y];
-  if (CPUUsageCount>0) then STCPUUsage:=total div CPUUsageCount;
-
-end;
 
 
-//time/uptime!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  //time/uptime!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   t:=GetTickCount;
   w := t div ticksperweek;
   t:=t -w*ticksperweek;
@@ -1436,17 +1389,17 @@ end;
   m := t div ticksperminute;
   t:=t -m * ticksperminute;
   s := t div ticksperseconde;
-uptimereg:='';
-uptimeregs:='';
-if w>0 then uptimereg:=uptimereg+IntToStr(w)+ 'wks ';
-if d>0 then uptimereg:=uptimereg+IntToStr(d)+ 'dys ';
-if h>0 then uptimereg:=uptimereg+IntToStr(h)+ 'hrs ';
-if m>0 then uptimereg:=uptimereg+IntToStr(m)+ 'min ';
-uptimereg:=uptimereg+IntToStr(s) + 'secs';
+  uptimereg:='';
+  uptimeregs:='';
+  if w>0 then uptimereg:=uptimereg+IntToStr(w)+ 'wks ';
+  if d>0 then uptimereg:=uptimereg+IntToStr(d)+ 'dys ';
+  if h>0 then uptimereg:=uptimereg+IntToStr(h)+ 'hrs ';
+  if m>0 then uptimereg:=uptimereg+IntToStr(m)+ 'min ';
+  uptimereg:=uptimereg+IntToStr(s) + 'secs';
 
-uptimeregs:=uptimeregs+IntToStr(d)+ ':';
-uptimeregs:=uptimeregs+IntToStr(h)+ ':';
-uptimeregs:=uptimeregs+IntToStr(m);
+  uptimeregs:=uptimeregs+IntToStr(d)+ ':';
+  uptimeregs:=uptimeregs+IntToStr(h)+ ':';
+  uptimeregs:=uptimeregs+IntToStr(m);
 
   totaldlls:=0;
 
@@ -1456,7 +1409,6 @@ uptimeregs:=uptimeregs+IntToStr(m);
 
 except
 end;
-
 
 end;
 
@@ -1510,8 +1462,8 @@ begin
     end;
     UnMapViewOfFile(SharedData);
     Result := True;
+    CloseHandle(myHandle);
   end else result := false;
-  CloseHandle(myHandle);
 end;
 
 function TData.GetCpuSpeedRegistry(proc: Byte): string;
@@ -1710,7 +1662,7 @@ begin
 
   // TODO: this should only be done when the config changes...
   myRssCount:=0;
-  DoNewsUpdate[6]:=true;
+  DoNewsUpdate[6]:=config.checkUpdates;;
   for z:= 1 to 20 do begin
     for y:= 1 to 4 do begin
       if (config.screen[z][y].enabled) then begin
@@ -1722,19 +1674,11 @@ begin
             rss[myRssCount].whole:='';
             rss[myRssCount].items:=0;
           end;
-          if (numargs>=4) then rss[myRssCount].maxfreq := StrToInt(args[4]);
+          if (numargs>=4) then rss[myRssCount].maxfreq := StrToInt(args[4])*60;
           screenline:=prefix+postfix;
         end;
-        if (pos('$DutchWeather',screenline) <> 0) then DoNewsUpdate[2]:=true;
-        if (pos('$TomsHW',screenline) <> 0) then DoNewsUpdate[3]:=true;
-        if (pos('$Stocks',screenline) <> 0) then DoNewsUpdate[4]:=true;
-        if (pos('$CNN',screenline) <> 0) then DoNewsUpdate[5]:=true;
         if (pos('$SETI',screenline) <> 0) then DoNewsUpdate[7]:=true;
         if (pos('$FOLD',screenline) <> 0) then DoNewsUpdate[9]:=true;
-        if (pos('$Weather.com(',screenline) <> 0) then begin
-          locationnumber:=copy(screenline,pos('(',screenline)+1,pos(')',screenline)-pos('(',screenline)-1);
-          DoNewsUpdate[8]:=true;
-        end;
       end;
     end;
   end;
@@ -1750,9 +1694,8 @@ var
   letter2:array [67..90] of integer;
   x:integer;
   bestand:textfile;
-  koez,hd,mbm,teller:integer;
+  koez, hd, mbm, teller: Integer;
   regel:string;
-{  cpuinfo:tcpuinfo;    }
   z, y: Integer;
   screenline: String;
 
@@ -1880,6 +1823,65 @@ if koez=1 then begin
 end;
 end;
 
+// Download URL and return file location.
+// Just return cached file if newer than maxfreq minutes.
+function TData.getUrl(Url: String; maxfreq: Cardinal=0): String;
+var
+  HTTP: TIdHTTP;
+  sl: TStringList;
+  Filename: String;
+  lasttime: TDateTime;
+  toonew: Boolean;
+
+begin
+  // Generate a filename for the cached Rss stream.
+  Filename:=LowerCase(Url);
+  Filename:=StringReplace(Filename,'\\','_',[rfReplaceAll]);
+  Filename:=StringReplace(Filename,':','_',[rfReplaceAll]);
+  Filename:=StringReplace(Filename,'/','_',[rfReplaceAll]);
+  Filename:=StringReplace(Filename,'"','_',[rfReplaceAll]);
+  Filename:=StringReplace(Filename,'|','_',[rfReplaceAll]);
+  Filename:=StringReplace(Filename,'<','_',[rfReplaceAll]);
+  Filename:=StringReplace(Filename,'>','_',[rfReplaceAll]);
+  Filename:=StringReplace(Filename,'&','_',[rfReplaceAll]);
+  Filename:=StringReplace(Filename,'?','_',[rfReplaceAll]);
+  Filename:=StringReplace(Filename,'=','_',[rfReplaceAll]);
+  Filename:=StringReplace(Filename,'.','_',[rfReplaceAll]);
+  Filename:='cache\\'+Filename+'.cache';
+
+  try
+    toonew:=false;
+    sl:=TStringList.create;
+    HTTP:= TIdHTTP.Create(nil);
+
+    try
+      // Only fetch new data if it's newer than the cache files' date.
+      // and if it's older than maxfreq hours.
+      if FileExists(Filename) then begin
+        lasttime:=FileDateToDateTime(FileAge(Filename));
+        if (MinutesBetween(Now, lasttime) < maxfreq) then toonew:=true;
+        HTTP.Request.LastModified := lasttime;
+      end;
+
+      if (not toonew) then begin
+        HTTP.HandleRedirects := True;
+        if (config.httpProxy<>'') and (config.httpProxyPort<>0) then begin
+          HTTP.ProxyParams.ProxyServer:=config.httpProxy;
+          HTTP.ProxyParams.ProxyPort:=config.httpProxyPort;
+        end;
+        sl.Text:=HTTP.Get(Url);
+        sl.savetofile(Filename);
+      end;
+    finally
+      sl.Free;
+      HTTP.Free;
+    end;
+  except
+  end;
+
+  // Even if we fail to download - give the filename so they can use the old data.
+  Result:=filename;
+end;
 
 
 function TData.getRss(Url: String;var titles, descs: array of string; maxitems:Cardinal; maxfreq:Cardinal=0): Cardinal;
@@ -1888,55 +1890,20 @@ var
   ANode : IXMLNode;
   XMLDoc : IXMLDocument;
   items: Cardinal;
-  HTTP: TIdHTTP;
-  sl: TStringList;
-  lasttime: TDateTime;
-  RssFilename: String;
-  toonew: Boolean;
+  rssFilename: String;
 
 begin
   items:=0;
 
-  // Generate a filename for the cached Rss stream.
-  RssFilename:=LowerCase(Url);
-  RssFilename:=StringReplace(RssFilename,'\\','_',[rfReplaceAll]);
-  RssFilename:=StringReplace(RssFilename,':','_',[rfReplaceAll]);
-  RssFilename:=StringReplace(RssFilename,'/','_',[rfReplaceAll]);
-  RssFilename:=StringReplace(RssFilename,'"','_',[rfReplaceAll]);
-  RssFilename:=StringReplace(RssFilename,'|','_',[rfReplaceAll]);
-  RssFilename:=StringReplace(RssFilename,'<','_',[rfReplaceAll]);
-  RssFilename:=StringReplace(RssFilename,'>','_',[rfReplaceAll]);
-  RssFilename:=StringReplace(RssFilename,'&','_',[rfReplaceAll]);
-  RssFilename:=StringReplace(RssFilename,'?','_',[rfReplaceAll]);
-  RssFilename:=StringReplace(RssFilename,'=','_',[rfReplaceAll]);
-  RssFilename:=StringReplace(RssFilename,'.','_',[rfReplaceAll]);
-  RssFilename:=RssFilename+'.rss';
-
+  //
   // Fetch the Rss data
-  try
-    toonew:=false;
-    sl:=TStringList.create;
-    HTTP:= TIdHTTP.Create(nil);
+  //
 
-    // Only fetch new data if it's newer than the cache files' date.
-    // and if it's older than maxfreq hours.
-    if FileExists(RssFilename) then begin
+  // Use newRefresh as a maxfreq if none given - this is mostly in case
+  // the application is stopped and started quickly.
+  if (maxfreq=0) then maxfreq:=config.newsRefresh;
+  RssFileName:=getUrl(Url, maxfreq);
 
-      lasttime:=FileDateToDateTime(FileAge(RssFilename));
-      if (HoursBetween(lasttime, Now) < maxfreq) then toonew:=true;
-      HTTP.Request.LastModified := lasttime;
-    end;
-    try
-      if (not toonew) then begin
-        sl.Text:=HTTP.Get(Url);
-        sl.savetofile(RssFilename);
-      end;
-    finally
-      sl.Free;
-      HTTP.Free;
-    end;
-  except
-  end;
 
   // Parse the Xml data
   try
@@ -1963,12 +1930,81 @@ begin
   Result:=items;
 end;
 
+function TData.fileToString(filename: String): String;
+var
+  sl: TStringList;
+begin
+  sl:=TStringList.Create;
+  try
+    try
+      sl.LoadFromFile(filename);
+      Result:=sl.Text;
+    except
+      Result:='';
+    end;
+  finally
+    sl.Free;
+  end;
+end;
+
+procedure TData.doSeti;
+var
+  StartItemNode : IXMLNode;
+  ANode : IXMLNode;
+  XMLDoc : IXMLDocument;
+  Filename: String;
+
+begin
+
+  // Fetch the Rss data  (but not more oftern than 24 hours)
+  FileName:=getUrl('http://setiathome2.ssl.berkeley.edu/fcgi-bin/fcgi?cmd=user_xml&email=' + config.setiEmail, 12*60);
+
+  // Parse the Xml data
+  try
+    if FileExists(Filename) then begin
+      XMLDoc := LoadXMLDocument(Filename);
+
+      StartItemNode:=XMLDoc.DocumentElement.ChildNodes.FindNode('userinfo');
+      ANode := StartItemNode;
+
+      setiNumResults:=ANode.ChildNodes['numresults'].Text;
+      setiCpuTime:=ANode.ChildNodes['cputime'].Text;
+      setiAvgCpu:=ANode.ChildNodes['avecpu'].Text;
+      setiLastResult:=ANode.ChildNodes['lastresulttime'].Text;
+      setiUserTime:=ANode.ChildNodes['usertime'].Text;
+      // not used: 'regdate'
+
+      // not used: group info.
+
+      StartItemNode:=XMLDoc.DocumentElement.ChildNodes.FindNode('rankinfo');
+      ANode := StartItemNode;
+
+      setiTotalUsers:=ANode.ChildNodes['ranktotalusers'].Text;
+      setiRank:=ANode.ChildNodes['rank'].Text;
+      setiShareRank:=ANode.ChildNodes['num_samerank'].Text;
+      setiMoreWU:=FloatToStr(100-StrToFloat(ANode.ChildNodes['top_rankpct'].Text));
+    end;
+  except
+      setiNumResults:='[Seti: Error]';
+      setiCpuTime:='[Seti: Error]';
+      setiAvgCpu:='[Seti: Error]';
+      setiLastResult:='[Seti: Error]';
+      setiUserTime:='[Seti: Error]';
+      setiTotalUsers:='[Seti: Error]';
+      setiRank:='[Seti: Error]';
+      setiShareRank:='[Seti: Error]';
+      setiMoreWU:='[Seti: Error]';
+  end;
+end;
+
+
+// Runs in a thread
 procedure TData.checkHTTPUpdates;
 var
   teller,teller2:integer;
-  templine:array[1..20] of String;
   versionregel: String;
   titles, descs, whole: String;
+  filename: String;
 
 begin
   HTTPthreadisrunning:=true;
@@ -1981,6 +2017,8 @@ begin
 
       for teller:=1 to rssEntries do begin
         if (rss[teller].url <> '') then begin
+          if (HTTPThread.Terminated) then Exit;
+
           rss[teller].items := getRss(rss[teller].url, rss[teller].title,
                                     rss[teller].desc, maxRssItems, rss[teller].maxfreq);
           titles:=''; descs:=''; whole:='';
@@ -1988,6 +2026,8 @@ begin
             titles:=titles+rss[teller].title[teller2]+' | ';
             descs:=descs+rss[teller].desc[teller2]+' | ';
             whole:=whole+rss[teller].title[teller2]+': '+rss[teller].desc[teller2]+' | ';
+
+            if (HTTPThread.Terminated) then Exit;
           end;
           rss[teller].whole:=whole;
           rss[teller].title[0]:=titles;
@@ -1997,378 +2037,138 @@ begin
     end;
 
 
-{  if DoNewsUpdate[1] then begin
-    DoNewsUpdate[1]:=False;
-    try
-     //Application.ProcessMessages;
-     tnetregel:=form1.IDHTTP4.Get('http://aphrodite.tweakers.net/turbotracker.dsp');
-    except
-      if newsAttempts[1]<4 then begin
-        Inc(newsAttempts[1]);
-        DoNewsUpdate[1]:=True;
-      end else tnetregel:= 'Connection Time-Out'
-    end;
-
-    tnetregel:=StringReplace(tnetregel,'&amp','&',[rfReplaceAll]);
-    tnetregel:=StringReplace(tnetregel,chr(10),'',[rfReplaceAll]);
-    tnetregel:=StringReplace(tnetregel,chr(13),'',[rfReplaceAll]);
-
-    for teller:=1 to 12 do begin
-      tnetregel:=copy(tnetregel,pos('<titel>',tnetregel)+length('<titel>'),length(tnetregel));
-      templine[teller]:=copy(tnetregel,1,pos('</titel>',tnetregel)-1);
-    end;
-    tnetregel:=templine[1]+' | '+templine[2]+' | '+templine[3]+' | '+templine[4]+' | '+templine[5]+' | '+templine[6]+' | '+templine[7]+' | '+templine[8]+' | '+templine[9]+' | '+templine[10]+' | '+templine[11]+' | '+templine[12];
-    if copy(tnetregel,1,6)=' |  | ' then begin
-      if newsAttempts[1]<4 then begin
-        Inc(newsAttempts[1]);
-        DoNewsUpdate[1]:=True;
-      end else tnetregel:= 'Connection Time-Out'
-    end;
-  end;}
-
-  if DoNewsUpdate[2] then begin
-   try
-     //Application.ProcessMessages;
-     if DoNewsUpdate[2] then begin
-       DoNewsUpdate[2]:=False;
-       weerregel:=Form1.IDHTTP1.Get('http://www.knmi.nl/voorl/weer/weermain.html');
-       weerregel:=copy(weerregel,pos('<p>',weerregel)+3,(700)-(pos('<p>',weerregel)+3));
-       weerregel:=StringReplace(weerregel,'&amp','&',[rfReplaceAll]);
-       for teller2:=1 to 10 do begin
-        //Application.ProcessMessages;
-        templine[teller2]:=copy(weerregel,1,pos(chr(10),weerregel)-1)+' ';
-        weerregel:=copy(weerregel,pos(chr(10),weerregel)+1,length(weerregel)-pos(chr(10),weerregel)+1);
-       end;
-       weerregel:=templine[1]+templine[2]+templine[3]+templine[4]+templine[5]+templine[6]+templine[7]+templine[8]+templine[9]+templine[10];
-       weerregel:=copy(weerregel,pos('<p>',weerregel)+3,(pos('<P>',weerregel)-6)-(pos('<p>',weerregel)+3));
-     end;
-     if copy(weerregel,1,6)='      ' then begin
-       if newsAttempts[2]<4 then begin
-         newsAttempts[2]:=newsAttempts[2]+1;
-         DoNewsUpdate[2]:=true;
-       end else weerregel:= 'Connection Time-Out';
-     end;
-   except
-     if newsAttempts[2]<4 then begin
-       newsAttempts[2]:=newsAttempts[2]+1;
-       DoNewsUpdate[2]:=true;
-     end else weerregel:= 'Connection Time-Out';
-   end;
- end;
-
-  if DoNewsUpdate[3] then begin
-    DoNewsUpdate[3]:=False;
-      try
-       //Application.ProcessMessages;
-       techregel:=Form1.IDHTTP2.Get('http://www.tomshardware.com/technews/index.html');
-      except
-        if newsAttempts[3]<4 then begin
-          newsAttempts[3]:=newsAttempts[3]+1;
-          DoNewsUpdate[3]:=True;
-        end else techregel:= 'Connection Time-Out';
-      end;
-
-      techregel:=StringReplace(techregel,chr(10),'',[rfReplaceAll]);
-      techregel:=StringReplace(techregel,chr(13),'',[rfReplaceAll]);
-      techregel:=copy(techregel,pos('<FONT FACE="Verdana,Arial,Helvetica" SIZE="1" COLOR="#000000"><B>',techregel)+length('<FONT FACE="Verdana,Arial,Helvetica" SIZE="1" COLOR="#000000"><B>'),length(techregel));
-      for teller:= 1 to 10 do begin
-        techregel:=copy(techregel,pos('TARGET="_top">',techregel)+length('TARGET="_top">'),length(techregel));
-        templine[teller]:=copy(techregel,1,pos('<',techregel)-1)+' | ';
-      end;
-      techregel:=templine[1]+templine[2]+templine[3]+templine[4]+templine[5]+templine[6]+templine[7]+templine[8]+templine[9]+templine[10];
-      if copy(techregel,1,6)=' |  | ' then begin
-        if newsAttempts[3]<4 then begin
-          newsAttempts[3]:=newsAttempts[3]+1;
-          DoNewsUpdate[3]:=True;
-        end else techregel:= 'Connection Time-Out';
-      end;
-  end;
-
-  if DoNewsUpdate[4] then begin
-   DoNewsUpdate[4]:=False;
-    try
-     //Application.ProcessMessages;
-     aexregel:=Form1.IDHTTP3.Get('http://www.aex.nl/scripts/home2.asp?taal=nl');
-    except
-       if newsAttempts[4]<4 then begin
-         newsAttempts[4]:=newsAttempts[4]+1;
-         DoNewsUpdate[4]:=True;
-       end else aexregel:= 'Connection Time-Out';
-    end;
-
-      aexregel:=StringReplace(aexregel,'&nbsp;','',[rfReplaceAll]);
-      aexregel:=StringReplace(aexregel,'&amp','&',[rfReplaceAll]);
-      aexregel:=StringReplace(aexregel,'<!--*********************-->','',[rfReplaceAll]);
-      aexregel:=StringReplace(aexregel,chr(10),'',[rfReplaceAll]);
-      aexregel:=StringReplace(aexregel,chr(13),'',[rfReplaceAll]);
-
-     aexregel:=copy(aexregel,pos('<TD ROWSPAN=5 BACKGROUND="/i/beurs.gif"><IMG SRC="/i/pixel.gif" WIDTH=357 HEIGHT=1><BR><IMG NAME="graph" SRC="/i/pixel.gif" WIDTH=250 HEIGHT=105 HSPACE=0 VSPACE=0></TD>',aexregel)+length('<TD ROWSPAN=5 BACKGROUND="/i/beurs.gif"><IMG SRC="/i/pixel.gif" WIDTH=357 HEIGHT=1><BR><IMG NAME="graph" SRC="/i/pixel.gif" WIDTH=250 HEIGHT=105 HSPACE=0 VSPACE=0></TD>'),length(aexregel));
-     aexregel:=copy(aexregel,pos('<FONT FACE="Arial, Helvetica" SIZE=1><!-- VALUE #0 -->',aexregel)+length('<FONT FACE="Arial, Helvetica" SIZE=1><!-- VALUE #0 -->'),length(aexregel));
-
-     for teller:=1 to 8 do begin
-     aexregel:=copy(aexregel,pos(');return true">',aexregel)+length(');return true">'),length(aexregel));
-       templine[teller]:=copy(aexregel,1,pos('</A>',aexregel)-1);
-     end;
-     aexregel:=templine[2]+':'+templine[1]+' | '+templine[4]+':'+templine[3]+' | '+templine[6]+':'+templine[5]+' | '+templine[8]+':'+templine[7];
-     if copy(aexregel,1,6)=': | : ' then begin
-       if newsAttempts[4]<4 then begin
-         newsAttempts[4]:=newsAttempts[4]+1;
-         DoNewsUpdate[4]:=True;
-       end else aexregel:= 'Connection Time-Out';
-     end;
-  end;
-
-  if DoNewsUpdate[5] then begin
-    DoNewsUpdate[5]:=False;
-    try
-      //Application.ProcessMessages;
-      CNNregel:=Form1.IDHTTP5.Get('http://www.cnn.com/WORLD/');
-    except
-      if newsAttempts[5]<4 then begin
-        newsAttempts[5]:=newsAttempts[5]+1;
-        DoNewsUpdate[5]:=True;
-      end else CNNregel:= 'Connection Time-Out';
-    end;
-
-    CNNregel:=StringReplace(CNNregel,'&amp','&',[rfReplaceAll]);
-    CNNregel:=StringReplace(CNNregel,chr(10),'',[rfReplaceAll]);
-    CNNregel:=StringReplace(CNNregel,chr(13),'',[rfReplaceAll]);
-
-    CNNregel:=copy(CNNregel,pos('<!-- ================== content ================== -->',CNNregel)+length('<!-- ================== content ================== -->'),length(CNNregel));
-    CNNregel:=copy(CNNregel,pos('<td width="170" valign="top">',CNNregel)+length('<td width="170" valign="top">'),length(CNNregel));
-    CNNregel:=copy(CNNregel,pos('<span class="Text1">',CNNregel)+length('<span class="Text1">'),pos('<br clear="all">',CNNregel));
-
-     for teller:=1 to 12 do templine[teller]:='';
-     for teller:=1 to 10 do begin
-         CNNregel:=copy(CNNregel,pos('html">',CNNregel)+length('html">'),length(CNNregel));
-         templine[teller]:=copy(CNNregel,1,pos('</a>',CNNregel)-1)+' | ';
-         CNNregel:=copy(CNNregel,pos('</a>',CNNregel)+length('</a>'),length(CNNregel));
-         if templine[teller]=' | ' then templine[teller]:='';
-     end;
-     CNNregel:=templine[1]+templine[2]+templine[3]+templine[4]+templine[5]+templine[6]+templine[7]+templine[8]+templine[9]+templine[10];
-     CNNregel:=copy(CNNregel,1,length(CNNregel)-3);
-     if copy(CNNregel,1,6)='' then begin
-       if newsAttempts[5]<4 then begin
-         newsAttempts[5]:=newsAttempts[5]+1;
-         DoNewsUpdate[5]:=True;
-       end else CNNregel:= 'Connection Time-Out';
-     end;
-  end;
-
-  if (config.checkUpdates) and (DoNewsUpdate[6]) then begin
+  if (DoNewsUpdate[6]) then begin
     DoNewsUpdate[6]:=False;
-    try
-      //Application.ProcessMessages;
-      versionregel:=Form1.IDHTTP6.Get('http://lcdsmartie.sourceforge.net/version.txt');
-      //Application.ProcessMessages;
-    except
-      versionregel:='';
-    end;
-    versionregel:=StringReplace(versionregel,chr(10),'',[rfReplaceAll]);
-    versionregel:=StringReplace(versionregel,chr(13),'',[rfReplaceAll]);
-    if copy(versionregel,1,1) = '5' then
-      isconnected:=true;
-    if (length(versionregel) < 72) and (copy(versionregel,1,7) <> '5.3.0.0') and (versionregel <> '') then begin
-      Form1.timer1.enabled:=false;
-      Form1.timer2.enabled:=false;
-      Form1.timer3.enabled:=false;
-      Form1.timer4.enabled:=false;
-      Form1.timer5.enabled:=false;
-      Form1.timer6.enabled:=false;
-      Form1.timer7.enabled:=false;
-      Form1.timer8.enabled:=false;
-      Form1.timer9.enabled:=false;
-      if MessageDlg('A new version of LCD Smartie is detected. '+chr(13)+copy(versionregel,8,62)+chr(13)+'Go to download page?', mtConfirmation, [mbYes, mbNo], 0) = mrYes then begin
-        ShellExecute(0, Nil, pchar('http://lcdsmartie.sourceforge.net/'), Nil, Nil, SW_NORMAL);
-        Form1.close;
-      end else begin
-        Form1.timer1.enabled:=true;
-        Form1.timer2.enabled:=true;
-        Form1.timer3.enabled:=true;
-        Form1.timer6.enabled:=true;
-        Form1.timer7.enabled:=true;
-        Form1.timer8.enabled:=true;
-        Form1.timer9.enabled:=true;
+    if (config.checkUpdates) then begin
+      if (HTTPThread.Terminated) then Exit;
+      try
+        filename:=getUrl('http://lcdsmartie.sourceforge.net/version.txt', 96*60);
+        versionregel:=fileToString(filename);
+      except
+        versionregel:='';
+      end;
+      versionregel:=StringReplace(versionregel,chr(10),'',[rfReplaceAll]);
+      versionregel:=StringReplace(versionregel,chr(13),'',[rfReplaceAll]);
+      if copy(versionregel,1,1) = '5' then
+        isconnected:=true;
+      if (length(versionregel) < 72) and (copy(versionregel,1,7) <> '5.3.0.1') and (versionregel <> '') then begin
+        Form1.timer1.enabled:=false;
+        Form1.timer2.enabled:=false;
+        Form1.timer3.enabled:=false;
+        Form1.timer4.enabled:=false;
+        Form1.timer5.enabled:=false;
+        Form1.timer6.enabled:=false;
+        Form1.timer7.enabled:=false;
+        Form1.timer8.enabled:=false;
+        Form1.timer9.enabled:=false;
+        if MessageDlg('A new version of LCD Smartie is detected. '+chr(13)+copy(versionregel,8,62)+chr(13)+'Go to download page?', mtConfirmation, [mbYes, mbNo], 0) = mrYes then begin
+          ShellExecute(0, Nil, pchar('http://lcdsmartie.sourceforge.net/'), Nil, Nil, SW_NORMAL);
+          Form1.close;
+        end else begin
+          Form1.timer1.enabled:=true;
+          Form1.timer2.enabled:=true;
+          Form1.timer3.enabled:=true;
+          Form1.timer6.enabled:=true;
+          Form1.timer7.enabled:=true;
+          Form1.timer8.enabled:=true;
+          Form1.timer9.enabled:=true;
+        end;
       end;
     end;
   end;
 
   if DoNewsUpdate[7] then begin
-  DoNewsUpdate[7]:=False;
-    try
-      //Application.ProcessMessages;
-      Setireg1:=Form1.IDHTTP7.Get('http://setiathome.ssl.berkeley.edu/fcgi-bin/fcgi?email=' + config.setiEmail + '&cmd=user_stats_new');
-    except
-      if newsAttempts[7]<4 then begin
-        newsAttempts[7]:=newsAttempts[7]+1;
-        DoNewsUpdate[7]:=True;
-      end else begin
-        setireg1:='No connection';
-        setireg2:='No connection';
-        setireg3:='No connection';
-        setireg4:='No connection';
-        setireg5:='No connection';
-        setireg6:='No connection';
-        setireg7:='No connection';
-        setireg8:='No connection';
-        setireg9:='No connection';
-      end;
-    end;
-
-    setireg1:=StringReplace(setireg1,'&amp','&',[rfReplaceAll]);
-    setireg1:=StringReplace(setireg1,chr(10),'',[rfReplaceAll]);
-    setireg1:=StringReplace(setireg1,chr(13),'',[rfReplaceAll]);
-
-    setireg1:=copy(setireg1,pos('Results Received',setireg1)+25,length(setireg1));
-    setireg2:=copy(setireg1,pos('Results Received',setireg1)+25,length(setireg1));
-    setireg1:=copy(setireg1,1,pos('</td></tr>',setireg1)-1);
-
-    setireg2:=copy(setireg2,pos('Total CPU Time',setireg2)+17,length(setireg2));
-    setireg3:=copy(setireg2,pos('Total CPU Time',setireg2)+21,length(setireg2));
-    setireg2:=copy(setireg2,pos('<td>',setireg2)+4,pos('</td>',setireg2)-pos('<td>',setireg2)-4);
-
-    setireg2:=stripspaces(setireg2);
-
-    setireg3:=copy(setireg3,pos('Average CPU Time per work unit',setireg3)+39,length(setireg3));
-    setireg4:=copy(setireg3,pos('Average CPU Time per work unit',setireg3)+39,length(setireg3));
-    setireg3:=copy(setireg3,1,pos('</td>',setireg3)-1);
-
-    setireg4:=copy(setireg4,pos('Last result returned:',setireg3)+32,length(setireg4));
-    setireg5:=copy(setireg4,pos('Last result returned:',setireg3)+32,length(setireg4));
-    setireg4:=copy(setireg4,1,pos('</TD>',setireg4)-1);
-
-    setireg5:=copy(setireg5,pos('SETI@home user for:',setireg5)+28,length(setireg5));
-    setireg6:=copy(setireg5,pos('SETI@home user for:',setireg5)+28,length(setireg5));
-    setireg5:=copy(setireg5,1,pos('</TD>',setireg5)-1);
-
-    setireg6:=copy(setireg6,pos('Your rank out of',setireg6)+20,length(setireg6));
-    setireg7:=copy(setireg6,pos('Your rank out of',setireg6)+20,length(setireg6));
-    setireg6:=copy(setireg6,1,pos('</b>',setireg6)-1);
-
-    setireg7:=copy(setireg7,pos('total users is:',setireg7)+21,length(setireg7));
-    setireg8:=copy(setireg7,pos('total users is:',setireg7)+21,length(setireg7));
-    setireg7:=copy(setireg7,1,pos('<sup>',setireg7)-1);
-
-    setireg8:=copy(setireg8,pos('have this rank:',setireg8)+27,length(setireg8));
-    setireg9:=copy(setireg8,pos('have this rank:',setireg8)+27,length(setireg8));
-    setireg8:=copy(setireg8,1,pos('</b>',setireg8)-1);
-
-    setireg9:=copy(setireg9,pos('work units than',setireg9)+27,length(setireg9));
-    setireg9:=copy(setireg9,1,pos('%',setireg9)-1);
+    DoNewsUpdate[7]:=False;
+    if (HTTPThread.Terminated) then Exit;
+    doSeti();
   end;
 
   if DoNewsUpdate[9] then begin
     DoNewsUpdate[9]:=False;
+    if (HTTPThread.Terminated) then Exit;
+
     try
-      //Application.ProcessMessages;
-      foldreg7:=Form1.IDHTTP9.Get('http://folding.stanford.edu/cgi-bin/userpage.detailed?name='+config.foldUsername);
+      filename:=getUrl('http://vspx27.stanford.edu/cgi-bin/main.py?qtype=userpage&username='+config.foldUsername, config.newsRefresh);
+      foldWU:=fileToString(filename);
     except
       if newsAttempts[9]<4 then begin
         newsAttempts[9]:=newsAttempts[9]+1;
         DoNewsUpdate[9]:=True;
       end else begin
-        foldreg1:='Connection Time-Out';
-        foldreg2:='Connection Time-Out';
-        foldreg3:='Connection Time-Out';
-        foldreg4:='Connection Time-Out';
-        foldreg5:='Connection Time-Out';
-        foldreg6:='Connection Time-Out';
-        foldreg7:='Connection Time-Out';
+        foldMemSince:='Connection Time-Out';
+        foldLastWU:='Connection Time-Out';
+        foldActProcsWeek:='Connection Time-Out';
+        foldTeam:='Connection Time-Out';
+        foldScore:='Connection Time-Out';
+        foldRank:='Connection Time-Out';
+        foldWU:='Connection Time-Out';
       end;
     end;
 
-    foldreg7:=StringReplace(foldreg7,'&amp','&',[rfReplaceAll]);
-    foldreg7:=StringReplace(foldreg7,chr(10),'',[rfReplaceAll]);
-    foldreg7:=StringReplace(foldreg7,chr(13),'',[rfReplaceAll]);
+    foldWU:=StringReplace(foldWU,'&amp','&',[rfReplaceAll]);
+    foldWU:=StringReplace(foldWU,chr(10),'',[rfReplaceAll]);
+    foldWU:=StringReplace(foldWU,chr(13),'',[rfReplaceAll]);
 
-    foldreg1:=copy(foldreg7,pos('Member Since</B></TD><TD align=left><font size=4>', foldreg7), 100);
-    foldreg1:=copy(foldreg1,pos('size=4>',foldreg1)+7,pos(' </font>', foldreg1)-pos('size=4>',foldreg1)-7);
+    foldMemSince:='[FOLDmemsince: not supported]';
 
-    foldreg2:=copy(foldreg7,pos('Date of last work unit</b></TD><TD align=left><font size=4>', foldreg7), 100);
-    foldreg2:=copy(foldreg2,pos('size=4>',foldreg2)+7,pos(' </font>', foldreg2)-pos('size=4>',foldreg2)-7);
+    foldLastWU:=copy(foldWU,pos('Date of last work unit', foldWU)+22, 500);
+    foldLastWU:=copy(foldLastWU,1,pos('</TR>',foldLastWU)-1);
+    foldLastWU:=stripspaces(stripHtml(foldLastWU));
 
-    foldreg3:=copy(foldreg7,pos('Active processors (within a week)</b></TD><TD align=left><font size=4>', foldreg7), 100);
-    foldreg3:=stripspaces(copy(foldreg3,pos('size=4>',foldreg3)+7,pos('</font>', foldreg3)-pos('size=4>',foldreg3)-7));
+    foldScore:=copy(foldWU,pos('Total score', foldWU)+11, 100);
+    foldScore:=copy(foldScore,1,pos('</TR>',foldScore)-1);
+    foldScore:=stripspaces(stripHtml(foldScore));
 
-    foldreg4:=copy(foldreg7,pos('Team</TD><TD><b><a href=teampage?q=', foldreg7)+2, 100);
-    foldreg4:=copy(foldreg4,pos('teampage?q=',foldreg4)+11,100);
-    foldreg4:=copy(foldreg4,pos('>',foldreg4)+1, pos(' (id #', foldreg4)-pos('>',foldreg4)-1);
+    foldRank:=copy(foldWU,pos('Overall rank (if points are combined)', foldWU)+37, 100);
+    foldRank:=copy(foldRank,1,pos('of',foldRank)-1);
+    foldRank:=stripspaces(stripHtml(foldRank));
 
-    foldreg5:=copy(foldreg7,pos('Score</TD><TD><font size=3><b>', foldreg7), 100);
-    foldreg5:=copy(foldreg5,pos('<b>',foldreg5)+3,pos('</b>', foldreg5)-pos('<b>',foldreg5)-3);
+    foldActProcsWeek:=copy(foldWU,pos('Active processors (within 7 days)', foldWU)+33, 100);
+    foldActProcsWeek:=copy(foldActProcsWeek,1,pos('</TR>',foldActProcsWeek)-1);
+    foldActProcsWeek:=stripspaces(stripHtml(foldActProcsWeek));
 
-    foldreg6:=copy(foldreg7,pos('User Rank</TD><TD><font size=3><b>', foldreg7), 100);
-    foldreg6:=copy(foldreg6,pos('<b>',foldreg6)+3,pos('</b>', foldreg6)-pos('<b>',foldreg6)-3);
+    foldTeam:=copy(foldWU,pos('Team', foldWU)+4, 500);
+    foldTeam:=copy(foldTeam,1,pos('</TR>',foldTeam)-1);
+    foldTeam:=stripspaces(stripHtml(foldTeam));
 
-    foldreg7:=copy(foldreg7,pos('WU</TD><TD><font size=3><b>', foldreg7), 100);
-    foldreg7:=copy(foldreg7,pos('<b>',foldreg7)+3,pos('</b>', foldreg7)-pos('<b>',foldreg7)-3);
+    foldWU:=copy(foldWU,pos('WU', foldWU)+2, 500);
+    foldWU:=copy(foldWU,1,pos('</TR>',foldWU)-1);
+    if (pos('(', foldWU)<>0) then foldWU:=copy(foldWU,1,pos('(',foldWU)-1);
+    foldWU:=stripspaces(stripHtml(foldWU));
   end;
 
-  if DoNewsUpdate[8] then begin
-  DoNewsUpdate[8]:=False;
-    try
-      weather2:=Form1.IDHTTP8.Get('http://www.weather.com/weather/print/'+locationnumber);
-      //Application.ProcessMessages;
-
-      weather2:=StringReplace(weather2,chr(10),'',[rfReplaceAll]);
-      weather2:=StringReplace(weather2,chr(13),'',[rfReplaceAll]);
-      weather2:=StringReplace(weather2,chr(9),' ',[rfReplaceAll]);
-      weather2:=StringReplace(weather2,'&amp','&',[rfReplaceAll]);
-      weather2:=StringReplace(weather2,'&deg;','°',[rfReplaceAll]);
-      weather2:=StringReplace(weather2,'&nbsp;',' ',[rfReplaceAll]);
-      weather2:=StringReplace(weather2,' %<','%<',[rfReplaceAll]);
-
-      weather2:=copy(weather2,pos('<!-- if printable page, use code below -->',weather2),length(weather2));
-      //application.ProcessMessages;
-      weather2:=copy(weather2,pos('<!-- insert forecast -->',weather2)+24,length(weather2));
-      templine[1]:=copy(weather2,1,pos('</TD>',weather2)-1);
-      weather2:=copy(weather2,pos('<!-- insert high -->',weather2)+20,length(weather2));
-      templine[2]:=copy(weather2,1,pos('<!-- ',weather2)-1);
-      weather2:=copy(weather2,pos('<!-- insert low -->',weather2)+19,length(weather2));
-      templine[3]:=copy(weather2,1,pos('</B>',weather2)-1);
-      weather2:=copy(weather2,pos('<!-- insert precip. chance -->',weather2)+30,length(weather2));
-      templine[4]:=copy(weather2,1,pos('</DIV>',weather2)-1);
-      weather2:=stripspaces(templine[1]+' '+templine[2]+templine[3]+' '+templine[4]);
-    except
-      if newsAttempts[8]<4 then begin
-        newsAttempts[8]:=newsAttempts[8]+1;
-        DoNewsUpdate[8]:=True;
-      end else begin
-        weather2:='Connection Time-Out';
-      end;
-    end;
-  end;
 
   finally
-  CoUninitialize;
+    CoUninitialize;
+    HTTPthreadisrunning:=false;
   end;
-  HTTPthreadisrunning:=false;
+
 end;
+
 
 procedure TData.checkEmailUpdates;
 var
   mailz: array[0..9] of integer;
-  z, y: Integer;
+  z, y, x: Integer;
   screenline: String;
+  pop3: TIdPOP3;
+  msg: TIdMessage;
 
 begin
   pop3threadisrunning:=true;
+
+  try
+
   for y:= 0 to 9 do mailz[y]:=0;
 
   for z:= 1 to 20 do begin
     for y:= 1 to 4 do begin
       if (config.screen[z][y].enabled) then begin
         screenline:=config.screen[z][y].text;
-        if (pos('$Email1',screenline) <> 0) then mailz[1]:=1;
-        if (pos('$Email2',screenline) <> 0) then mailz[2]:=1;
-        if (pos('$Email3',screenline) <> 0) then mailz[3]:=1;
-        if (pos('$Email4',screenline) <> 0) then mailz[4]:=1;
-        if (pos('$Email5',screenline) <> 0) then mailz[5]:=1;
-        if (pos('$Email6',screenline) <> 0) then mailz[6]:=1;
-        if (pos('$Email7',screenline) <> 0) then mailz[7]:=1;
-        if (pos('$Email8',screenline) <> 0) then mailz[8]:=1;
-        if (pos('$Email9',screenline) <> 0) then mailz[9]:=1;
-        if (pos('$Email0',screenline) <> 0) then mailz[0]:=1;
+        for x:=0 to 9 do begin
+          if (pos('$Email'+IntToStr(x),screenline) <> 0) then mailz[x]:=1;
+          if (pos('$EmailSub'+IntToStr(x),screenline) <> 0) then mailz[x]:=1;
+        end;
       end;
     end;
   end;
@@ -2377,45 +2177,62 @@ begin
 
   for y:=0 to 9 do begin
     if mailz[y]=1 then begin
+      if (pop3Thread.Terminated) then Exit;
       try
-        form1.pop3[y].host:=config.pop[y].server;
-        form1.pop3[y].UserName:=config.pop[y].user;
-        form1.pop3[y].Password:=config.pop[y].pword;
-        form1.pop3[y].Connect;
-        mailregel[y]:=form1.pop3[y].CheckMessages;
-        if (mailregel[y]>0) then gotEmail:= true;
-        form1.pop3[y].Disconnect;
-        form1.POP3[y].DisconnectSocket;
+          pop3:=TIdPOP3.Create(nil);
+          msg:=TIdMessage.Create(nil);
+        try
+          pop3.MaxLineAction  := maSplit;
+          pop3.ReadTimeout := 10000; //10 seconds
+          pop3.host:=config.pop[y].server;
+          pop3.username:=config.pop[y].user;
+          pop3.Password:=config.pop[y].pword;
+
+          pop3.Connect(30000); // 30 seconds
+
+          mail[y].messages :=pop3.CheckMessages;
+
+          if (mail[y].messages>0) and (pop3.RetrieveHeader(mail[y].messages,msg)) then begin
+            mail[y].lastSubject:=msg.Subject;
+            mail[y].lastFrom:=msg.From.Name;
+          end else begin
+            mail[y].lastSubject:='[none]';
+            mail[y].lastFrom:='[none]';
+          end;
+
+        finally
+          pop3.Disconnect;
+          pop3.Free;
+          msg.Free;
+        end;
+
+        if (mail[y].messages>0) then gotEmail:= true;
       except
-        form1.POP3[y].DisconnectSocket;
-        mailregel[y]:=0;
+        mail[y].messages:=0;
+        mail[y].lastSubject :='[error]';
+        mail[y].lastFrom :='[error]';
       end;
     end;
   end;
 
-  pop3threadisrunning:=false;
+  finally
+    pop3threadisrunning:=false;
+  end;
 end;
 
 function stripspaces(Fstring:string): string;
 begin
+  FString:=StringReplace(FString,chr(10),'',[rfReplaceAll]);
+  FString:=StringReplace(FString,chr(13),'',[rfReplaceAll]);
+  FString:=StringReplace(FString,chr(9),' ',[rfReplaceAll]);
+
   while copy(fstring,1,1) = ' ' do begin
     fstring:=copy(fstring,2,length(fstring));
   end;
   while copy(fstring,length(fstring),1) = ' ' do begin
     fstring:=copy(fstring,1,length(fstring)-1);
   end;
-  while copy(fstring,1,1) = chr(10) do begin
-    fstring:=copy(fstring,2,length(fstring));
-  end;
-  while copy(fstring,length(fstring),1) = chr(10) do begin
-    fstring:=copy(fstring,1,length(fstring)-1);
-  end;
-  while copy(fstring,1,1) = chr(13) do begin
-    fstring:=copy(fstring,2,length(fstring));
-  end;
-  while copy(fstring,length(fstring),1) = chr(13) do begin
-    fstring:=copy(fstring,1,length(fstring)-1);
-  end;
+
   result:=fstring;
 end;
 

@@ -1,6 +1,8 @@
 program LCDSmartie;
 
 uses
+  madExcept,
+  madLinkDisAsm,
   Forms,
   parport in 'parport.pas' {parport},
   UMain in 'UMain.pas' {Form1},

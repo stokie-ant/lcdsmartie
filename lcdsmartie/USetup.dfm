@@ -1,6 +1,6 @@
 object Form2: TForm2
-  Left = 69
-  Top = 149
+  Left = 200
+  Top = 171
   Anchors = []
   BiDiMode = bdLeftToRight
   BorderIcons = []
@@ -29,7 +29,7 @@ object Form2: TForm2
     Top = 0
     Width = 233
     Height = 409
-    ActivePage = TabSheet7
+    ActivePage = TabSheet4
     Font.Charset = ANSI_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
@@ -568,19 +568,19 @@ object Form2: TForm2
         Height = 265
         ItemHeight = 13
         Items.Strings = (
-          'Member since'
+          'WU'
           'Date of last work unit'
           'Active processors (within a week)'
           'Team'
           'Score'
           'User Rank'
-          'WU')
+          '')
         TabOrder = 1
         OnClick = ListBox10Click
       end
     end
     object TabSheet4: TTabSheet
-      Caption = 'E-Mail'
+      Caption = 'Email'
       ImageIndex = 7
       object Label31: TLabel
         Left = 8
@@ -666,16 +666,36 @@ object Form2: TForm2
         Height = 177
         ItemHeight = 13
         Items.Strings = (
-          'E-Mail nr 1'
-          'E-Mail nr 2'
-          'E-Mail nr 3'
-          'E-Mail nr 4'
-          'E-Mail nr 5'
-          'E-Mail nr 6'
-          'E-Mail nr 7'
-          'E-Mail nr 8'
-          'E-Mail nr 9'
-          'E-Mail nr 10')
+          'Email 1: Message Count'
+          'Email 1: Last Subject'
+          'Email 1: Last From'
+          'Email 2: Message Count'
+          'Email 2: Last Subject'
+          'Email 2: Last From'
+          'Email 3: Message Count'
+          'Email 3: Last Subject'
+          'Email 3: Last From'
+          'Email 4: Message Count'
+          'Email 4: Last Subject'
+          'Email 4: Last From'
+          'Email 5: Message Count'
+          'Email 5: Last Subject'
+          'Email 5: Last From'
+          'Email 6: Message Count'
+          'Email 6: Last Subject'
+          'Email 6: Last From'
+          'Email 7: Message Count'
+          'Email 7: Last Subject'
+          'Email 7: Last From'
+          'Email 8: Message Count'
+          'Email 8: Last Subject'
+          'Email 8: Last From'
+          'Email 9: Message Count'
+          'Email 9: Last Subject'
+          'Email 9: Last From'
+          'Email 10: Message Count'
+          'Email 10: Last Subject'
+          'Email 10: Last From')
         TabOrder = 0
         OnClick = ListBox4Click
       end

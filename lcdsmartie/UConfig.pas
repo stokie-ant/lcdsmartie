@@ -19,7 +19,7 @@ unit UConfig;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UConfig.pas,v $
- *  $Revision: 1.2 $ $Date: 2004/11/11 22:48:33 $
+ *  $Revision: 1.3 $ $Date: 2004/11/14 22:35:25 $
  *****************************************************************************}
 
 interface
@@ -92,9 +92,9 @@ type
         property width: Integer read P_width;
         property height: Integer read P_height;
         constructor Create;
-        destructor Destory;
+        destructor Destroy;    override;
     end;
-    
+
 implementation
 
 uses
@@ -105,7 +105,7 @@ begin
   inherited;
 end;
 
-destructor TConfig.Destory;
+destructor TConfig.Destroy;
 begin
   inherited;
 end;
