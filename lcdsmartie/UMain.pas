@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.52 $ $Date: 2005/01/27 10:43:35 $
+ *  $Revision: 1.53 $ $Date: 2005/01/27 22:11:17 $
  *****************************************************************************}
 
 interface
@@ -243,6 +243,7 @@ var
   Form1: TForm1;
   config: TConfig;
   activeScreen : Integer;
+  bTerminating: Boolean;
 
 implementation
 
@@ -479,6 +480,7 @@ var
   configFile: String;
 
 begin
+  bTerminating := false;
   Randomize;
 
   Application.OnMinimize := OnMinimize;
@@ -1238,9 +1240,11 @@ begin
       ShellExecute(0, Nil, pchar('http://lcdsmartie.sourceforge.net/'), Nil,
         Nil, SW_NORMAL);
     end;
+
+    if (bTerminating) then Exit; 
   end;
 
-  Data.UpdateHTTP;
+  Data.UpdateHTTP();
   timer2.Interval := 0;
   timer2.Interval := config.newsRefresh*1000*60;
 end;
@@ -1452,6 +1456,8 @@ end;
 
 procedure TForm1.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
+  bTerminating := true;
+
   //application.minimize;
   //coolTrayIcon1.HideMainForm;
   //cooltrayicon1.HideTaskbarIcon;
