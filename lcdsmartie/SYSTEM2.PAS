@@ -18,7 +18,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/SYSTEM2.PAS,v $
- *  $Revision: 1.6 $ $Date: 2004/11/19 19:55:19 $
+ *  $Revision: 1.7 $ $Date: 2004/11/19 21:36:39 $
  *****************************************************************************}
 unit System2;
 
@@ -38,7 +38,9 @@ type
     function getUsername: String;
     function getComputername: String;
   public
-    constructor create(Aowner: TComponent);override; published
+    constructor create(Aowner: TComponent);
+    override;
+  published
     property bIsWin2kXP: Boolean read getIsWin2kXP;
     property totalPhysmemory: Int64 read gettotalphysmemory;
     property AvailPhysmemory: Int64 read getavailphysmemory;
