@@ -16,6 +16,29 @@ uses
 
 {$R *.res}
 
+// Smartie will call this when the plugin is 1st loaded
+// This function is optional
+Procedure SmartieInit; stdcall;
+begin
+end;
+
+// Smartie will call this just before the plugin is unloaded
+// This function is optional
+Procedure SmartieFini; stdcall;
+begin
+end;
+
+// Define the minimum interval that a screen should get fresh data from our
+// plugin.
+// The actual value used by Smartie will be the higher of this value and
+// of the 'dll check interval' setting
+// on the Misc tab.  [This function is optional, Smartie will assume
+// 300ms if it is not provided.]
+Function GetMinRefreshInterval: Integer; stdcall;
+begin
+	result := 300; // 300 ms
+end;
+
 Function function1(param1:pchar;param2:pchar):pchar; stdcall;
 // this one is a simple math funtion
 begin
@@ -129,7 +152,10 @@ exports
   function7,
   function8,
   function9,
-  function10;
+  function10,
+  SmartieInit,
+  SmartieFini,
+  GetMinRefreshInterval;
 begin
 end.
 
