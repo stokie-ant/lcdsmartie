@@ -9,7 +9,7 @@ unit USetup;
  *  as published by the Free Software Foundation; either version 2
  *  of the License, or (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful, 
+ *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
@@ -19,7 +19,7 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.12 $ $Date: 2004/11/24 14:50:54 $
+ *  $Revision: 1.13 $ $Date: 2004/11/28 18:35:32 $
  *****************************************************************************}
 
 interface
@@ -277,9 +277,23 @@ uses Windows, ShellApi, graphics, sysutils, parport, UMain, UMOSetup,
 
 // Cancel has been pressed.
 procedure TForm2.Button2Click(Sender: TObject);
+var
+  strobj: TStringObj;
+  i: Integer;
 begin
+
+  // delete usb items from COMport list and free them.
+  for i := combobox4.items.Count-1 downto 9 do
+  begin
+    strobj :=  ComboBox4.Items.Objects[i] as TStringObj;
+    ComboBox4.Items.Delete(i);
+    strobj.Free;
+  end;
+
+
   form1.timer1.enabled := true;
   form1.timer2.enabled := true;
+  form1.timer2.interval := 500;
   form1.timer3.enabled := true;
   form1.timer6.enabled := true;
   if frozen = false then
@@ -393,6 +407,7 @@ var
 
 begin
   usbSelection := 0;
+
   numUsbPalms := getUsbPalms(namesUsbPalms, deviceUsbPalms, 10);
   for i := 0 to numUsbPalms-1 do
   begin
@@ -402,6 +417,7 @@ begin
     if (deviceUsbPalms[i] = config.UsbPalmDevice) then usbSelection :=
       itemnum;
   end;
+
 
   form1.timer2.enabled := false;
   form1.timer4.enabled := false;
@@ -2167,9 +2183,21 @@ begin
     end;
   end;
 
-  if (config.parallelPort <> StrToInt('$' + form6.edit1.text)) then relood :=
-    true;
-  if (config.comPort <> (combobox4.itemindex + 1)) then relood := true;
+  if (config.parallelPort <> StrToInt('$' + form6.edit1.text))
+    then relood := true;
+
+  if (config.isUsbPalm) then
+  begin
+    if (combobox4.itemindex+1 <= 9) or ((config.UsbPalmDevice
+       <> (ComboBox4.Items.Objects[combobox4.ItemIndex] as TStringObj).str))
+       then relood := true;
+  end
+  else
+  begin
+    if config.comPort <> (combobox4.itemindex + 1) then
+      relood := true;
+  end;
+
   if (config.baudrate <> combobox5.itemindex) then relood := true;
   if (radiobutton1.checked) and (not config.isHD) then relood := true;
   if (radiobutton2.checked) and (not config.isMO) then relood := true;
@@ -2261,32 +2289,16 @@ begin
 
 end;
 
+// ok has been pressed.
 procedure TForm2.Button1Click(Sender: TObject);
 begin
+  // ok is the same as apply followed by cancel.
   button7.click();
 
-  form1.timer1.enabled := true;
-  form1.timer2.enabled := true;
-  form1.timer2.interval := 500;
-  form1.timer3.enabled := true;
-  form1.timer6.enabled := true;
-  if frozen = false then
-  begin
-    form1.timer7.enabled := true;
-    form1.timer7.interval := 500;
-  end;
-  form1.timer8.enabled := true;
-  form1.timer9.enabled := true;
-  form1.timer10.enabled := true;
-
-  form1.enabled := true;
-  form2.visible := false;
-  form1.BringToFront;
-  form1.SetFocus;
+  button2.Click()
 end;
 
 procedure TForm2.FormCreate(Sender: TObject);
-
 begin
   form2.StringGrid1.RowCount := 0;
   form2.StringGrid1.ColWidths[0] := 104;
