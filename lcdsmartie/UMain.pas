@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.15 $ $Date: 2004/11/23 19:22:05 $
+ *  $Revision: 1.16 $ $Date: 2004/11/23 20:44:00 $
  *****************************************************************************}
 
 interface
@@ -594,7 +594,7 @@ var
   maxTransCycles: Integer;
   gokje: Integer;
   x: Integer;
-  foo: Integer;
+  iContrast: Integer;
 
 begin
   // Changing screen - do any interactions required.
@@ -714,18 +714,26 @@ begin
             begin                                                    //contrast fade
     // The fade is a two step process, so we need at least two cycles.
 
+    // We only fade down to uiMinFadeContrast; because many LCDs displays will be
+    // blank long before we reach 0. (One user reported that their display was
+    // blank at a contrast of 40).
+
     // For the first half of the cycles - lower the contrast
+
               if (TransCycle < maxTransCycles/2) then
               begin
                 if (config.isMO)then x := config.contrast
                 else x := config.CF_contrast;
 
-                foo := round(x-(TransCycle*x/(MaxTransCycles/2)));
+                iContrast := round(x-(TransCycle*(x-config.uiMinFadeContrast)
+                  / (MaxTransCycles/2)));
 
-                if foo < 0 then foo := 0
+
+                if iContrast < config.uiMinFadeContrast then
+                  iContrast := config.uiMinFadeContrast
                 else
-                  if foo > x then foo := x;
-                Lcd.setContrast(foo);
+                  if iContrast > x then iContrast := x;
+                Lcd.setContrast(iContrast);
               end
               else
               begin
@@ -739,13 +747,15 @@ begin
                 if (config.isMO) then x := config.contrast
                 else x := config.CF_contrast;
 
-                foo :=
-                  round((TransCycle-(MaxTransCycles/2))*x/(MaxTransCycles/2));
+                iContrast := round((TransCycle-(MaxTransCycles/2))
+                  * (x-config.uiMinFadeContrast)/(MaxTransCycles/2))
+                  + config.uiMinFadeContrast;
 
-                if foo > x then foo := x
+                if iContrast > x then iContrast := x
                 else
-                  if foo < 0 then foo := 0;
-                Lcd.setContrast(foo);
+                  if iContrast < config.uiMinFadeContrast then
+                    iContrast := config.uiMinFadeContrast;
+                Lcd.setContrast(iContrast);
               end;
               ResetContrast := True;// Just to be sure the contrast is back to correct levels.
             end;
