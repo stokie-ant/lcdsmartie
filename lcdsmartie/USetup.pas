@@ -19,7 +19,7 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.7 $ $Date: 2004/11/19 19:55:19 $
+ *  $Revision: 1.8 $ $Date: 2004/11/19 23:03:23 $
  *****************************************************************************}
 
 interface
@@ -590,7 +590,7 @@ begin
   if (config.isMO) then
   begin
     tabsheet13.Enabled := true;
-    listbox12.Items.Add('FanSpeed(1, 1) (nr, devider)');
+    listbox12.Items.Add('FanSpeed(1,1) (nr,divider)');
 
     form1.VaComm1.WriteChar(chr($FE));   //probe 4 one-wire devices
     form1.VaComm1.WriteChar(chr($C8));
@@ -1004,25 +1004,25 @@ begin
     if listbox6.itemindex = 2 then Edit9.Text := '$CPUType';
     if listbox6.itemindex = 3 then Edit9.Text := '$CPUSpeed';
     if listbox6.itemindex = 4 then Edit9.Text := '$CPUUsage%';
-    if listbox6.itemindex = 5 then Edit9.Text := '$Bar($CPUUsage%, 100, 10)';
+    if listbox6.itemindex = 5 then Edit9.Text := '$Bar($CPUUsage%,100,10)';
     if listbox6.itemindex = 6 then Edit9.Text := '$MemFree';
     if listbox6.itemindex = 7 then Edit9.Text := '$MemUsed';
     if listbox6.itemindex = 8 then Edit9.Text := '$MemTotal';
     if listbox6.itemindex = 9 then Edit9.Text := '$MemF%';
     if listbox6.itemindex = 10 then Edit9.Text := '$MemU%';
     if listbox6.itemindex = 11 then Edit9.Text :=
-      '$Bar($MemFree, $PageTotal, 10)';
+      '$Bar($MemFree,$PageTotal,10)';
     if listbox6.itemindex = 12 then Edit9.Text :=
-      '$Bar($MemUsed, $PageTotal, 10)';
+      '$Bar($MemUsed,$PageTotal,10)';
     if listbox6.itemindex = 13 then Edit9.Text := '$PageFree';
     if listbox6.itemindex = 14 then Edit9.Text := '$PageUsed';
     if listbox6.itemindex = 15 then Edit9.Text := '$PageTotal';
     if listbox6.itemindex = 16 then Edit9.Text := '$PageF%';
     if listbox6.itemindex = 17 then Edit9.Text := '$PageU%';
     if listbox6.itemindex = 18 then Edit9.Text :=
-      '$Bar($PageFree, $PageTotal, 10)';
+      '$Bar($PageFree,$PageTotal,10)';
     if listbox6.itemindex = 19 then Edit9.Text :=
-      '$Bar($PageUsed, $PageTotal, 10)';
+      '$Bar($PageUsed,$PageTotal,10)';
     if listbox6.itemindex = 20 then Edit9.Text := '$HDFree(C)';
     if listbox6.itemindex = 21 then Edit9.Text := '$HDUsed(C)';
     if listbox6.itemindex = 22 then Edit9.Text := '$HDTotal(C)';
@@ -1032,9 +1032,9 @@ begin
     if listbox6.itemindex = 26 then Edit9.Text := '$HDF%(C)';
     if listbox6.itemindex = 27 then Edit9.Text := '$HDU%(C)';
     if listbox6.itemindex = 28 then Edit9.Text :=
-      '$Bar($HDFree(C), $HDTotal(C), 10)';
+      '$Bar($HDFree(C),$HDTotal(C),10)';
     if listbox6.itemindex = 29 then Edit9.Text :=
-      '$Bar($HDUsed(C), $HDTotal(C), 10)';
+      '$Bar($HDUsed(C),$HDTotal(C),10)';
     if listbox6.itemindex = 30 then Edit9.Text := '$ScreenReso';
     if UMain.setupbutton = 1 then
     begin
@@ -1182,27 +1182,27 @@ begin
   begin
     case listbox2.itemindex of
       0: Edit9.Text :=
-   '$Rss(http://news.bbc.co.uk/rss/newsonline_uk_edition/world/rss091.xml, b)'
+   '$Rss(http://news.bbc.co.uk/rss/newsonline_uk_edition/world/rss091.xml,b)'
         ;
       1: Edit9.Text :=
-      '$Rss(http://news.bbc.co.uk/rss/newsonline_uk_edition/uk/rss091.xml, b)'
+      '$Rss(http://news.bbc.co.uk/rss/newsonline_uk_edition/uk/rss091.xml,b)'
         ;
-      2: Edit9.Text := '$Rss(http://www.tweakers.net/feeds/mixed.xml, b)';
-      3: Edit9.Text := '$Rss(http://www.theregister.co.uk/headlines.rss, b)';
-      4: Edit9.Text := '$Rss(http://slashdot.org/index.rss, b)';
+      2: Edit9.Text := '$Rss(http://www.tweakers.net/feeds/mixed.xml,b)';
+      3: Edit9.Text := '$Rss(http://www.theregister.co.uk/headlines.rss,b)';
+      4: Edit9.Text := '$Rss(http://slashdot.org/index.rss,b)';
       5: Edit9.Text :=
-        '$Rss(http://www.wired.com/news_drop/netcenter/netcenter.rdf, b)';
+        '$Rss(http://www.wired.com/news_drop/netcenter/netcenter.rdf,b)';
       6: Edit9.Text :=
-        '$Rss(http://www.fool.com/xml/foolnews_rss091.xml, b, 1)';
-      7: Edit9.Text := '$Rss(http://www.fool.com/xml/foolnews_rss091.xml, b)';
+        '$Rss(http://www.fool.com/xml/foolnews_rss091.xml,b,1)';
+      7: Edit9.Text := '$Rss(http://www.fool.com/xml/foolnews_rss091.xml,b)';
       8: Edit9.Text :=
-'$Rss(http://sourceforge.net/export/rss2_projnews.php?group_id=122330&rss_fulltext=1, b, 1)'
+'$Rss(http://sourceforge.net/export/rss2_projnews.php?group_id=122330&rss_fulltext=1,b,1)'
         ;
       9: Edit9.Text :=
-'$Rss(http://sourceforge.net/export/rss2_projnews.php?group_id=2987&rss_fulltext=1, b, 1)'
+'$Rss(http://sourceforge.net/export/rss2_projnews.php?group_id=2987&rss_fulltext=1,b,1)'
         ;
       10: Edit9.Text :=
-'$Rss(http://www.weatherclicks.com/xml/fort + lauderdale, t, 2): $Rss(http://www.weatherclicks.com/xml/fort + lauderdale, d, 2) | '
+'$Rss(http://www.weatherclicks.com/xml/fort+lauderdale,t,2): $Rss(http://www.weatherclicks.com/xml/fort+lauderdale,d,2) | '
         ;
 
     end;
@@ -1294,21 +1294,21 @@ begin
     if listbox1.itemindex = 5 then Edit9.Text := '°';
     if listbox1.itemindex = 6 then Edit9.Text := 'ž';
     if listbox1.itemindex = 7 then Edit9.Text := '$Chr(20)';
-    if listbox1.itemindex = 8 then Edit9.Text := '$File(C:\file.txt, 1)';
-    if listbox1.itemindex = 9 then Edit9.Text := '$LogFile(C:\file.log, 0)';
+    if listbox1.itemindex = 8 then Edit9.Text := '$File(C:\file.txt,1)';
+    if listbox1.itemindex = 9 then Edit9.Text := '$LogFile(C:\file.log,0)';
     if listbox1.itemindex = 10 then Edit9.Text :=
-      '$dll(demo.dll, 5, param1, param2)';
+      '$dll(demo.dll,5,param1,param2)';
     if listbox1.itemindex = 11 then Edit9.Text := '$Count(101#$CPUSpeed#4)';
-    if listbox1.itemindex = 12 then Edit9.Text := '$Bar(30, 100, 20)';
+    if listbox1.itemindex = 12 then Edit9.Text := '$Bar(30,100,20)';
     if listbox1.itemindex = 13 then Edit9.Text :=
-      '$Right(ins variable(s) here, $3%)';
+      '$Right(ins variable(s) here,$3%)';
     if listbox1.itemindex = 14 then Edit9.Text := '$Fill(10)';
     if listbox1.itemindex = 15 then Edit9.Text :=
       '$Flash(insert text here$)$';
     if listbox1.itemindex = 16 then Edit9.Text :=
       '$CustomChar(1, 31, 31, 31, 31, 31, 31, 31, 31)';
     if listbox1.itemindex = 17 then Edit9.Text :=
-      '$Rss(URL, t|d|b, ITEM#, MAXFREQHRS)';
+      '$Rss(URL,t|d|b,ITEM#,MAXFREQHRS)';
     if UMain.setupbutton = 1 then
     begin
       tempint1 := edit5.SelStart;
@@ -1431,25 +1431,25 @@ begin
       if listbox6.itemindex = 3 then Edit9.Text := '$CPUSpeed';
       if listbox6.itemindex = 4 then Edit9.Text := '$CPUUsage%';
       if listbox6.itemindex = 5 then Edit9.Text :=
-        '$Bar($CPUUsage%, 100, 10)';
+        '$Bar($CPUUsage%,100,10)';
       if listbox6.itemindex = 6 then Edit9.Text := '$MemFree';
       if listbox6.itemindex = 7 then Edit9.Text := '$MemUsed';
       if listbox6.itemindex = 8 then Edit9.Text := '$MemTotal';
       if listbox6.itemindex = 9 then Edit9.Text := '$MemF%';
       if listbox6.itemindex = 10 then Edit9.Text := '$MemU%';
       if listbox6.itemindex = 11 then Edit9.Text :=
-        '$Bar($MemFree, $PageTotal, 10)';
+        '$Bar($MemFree,$PageTotal,10)';
       if listbox6.itemindex = 12 then Edit9.Text :=
-        '$Bar($MemUsed, $PageTotal, 10)';
+        '$Bar($MemUsed,$PageTotal,10)';
       if listbox6.itemindex = 13 then Edit9.Text := '$PageFree';
       if listbox6.itemindex = 14 then Edit9.Text := '$PageUsed';
       if listbox6.itemindex = 15 then Edit9.Text := '$PageTotal';
       if listbox6.itemindex = 16 then Edit9.Text := '$PageF%';
       if listbox6.itemindex = 17 then Edit9.Text := '$PageU%';
       if listbox6.itemindex = 18 then Edit9.Text :=
-        '$Bar($PageFree, $PageTotal, 10)';
+        '$Bar($PageFree,$PageTotal,10)';
       if listbox6.itemindex = 19 then Edit9.Text :=
-        '$Bar($PageUsed, $PageTotal, 10)';
+        '$Bar($PageUsed,$PageTotal,10)';
       if listbox6.itemindex = 20 then Edit9.Text := '$HDFree(C)';
       if listbox6.itemindex = 21 then Edit9.Text := '$HDUsed(C)';
       if listbox6.itemindex = 22 then Edit9.Text := '$HDTotal(C)';
@@ -1459,9 +1459,9 @@ begin
       if listbox6.itemindex = 26 then Edit9.Text := '$HDF%(C)';
       if listbox6.itemindex = 27 then Edit9.Text := '$HDU%(C)';
       if listbox6.itemindex = 28 then Edit9.Text :=
-        '$Bar($HDFree(C), $HDTotal(C), 10)';
+        '$Bar($HDFree(C),$HDTotal(C),10)';
       if listbox6.itemindex = 29 then Edit9.Text :=
-        '$Bar($HDUsed(C), $HDTotal(C), 10)';
+        '$Bar($HDUsed(C),$HDTotal(C),10)';
       if listbox6.itemindex = 30 then Edit9.Text := '$ScreenReso';
     end
     else edit9.text := 'Variable: ';
@@ -1539,7 +1539,7 @@ begin
     if listbox12.itemindex > -1 then
     begin
       if listbox12.itemindex = 0 then Edit9.Text := '$MObutton';
-      if listbox12.itemindex = 1 then Edit9.Text := '$FanSpeed(1, 1)';
+      if listbox12.itemindex = 1 then Edit9.Text := '$FanSpeed(1,1)';
       if listbox12.itemindex = 2 then Edit9.Text := '$Sensor1';
       if listbox12.itemindex = 3 then Edit9.Text := '$Sensor2';
       if listbox12.itemindex = 4 then Edit9.Text := '$Sensor3';
@@ -1581,15 +1581,15 @@ begin
       if listbox1.itemindex = 5 then Edit9.Text := '°';
       if listbox1.itemindex = 6 then Edit9.Text := 'ž';
       if listbox1.itemindex = 7 then Edit9.Text := '$Chr(20)';
-      if listbox1.itemindex = 8 then Edit9.Text := '$File("C:\file.txt", 1)';
+      if listbox1.itemindex = 8 then Edit9.Text := '$File("C:\file.txt",1)';
       if listbox1.itemindex = 9 then Edit9.Text :=
-        '$LogFile("C:\file.log", 0)';
+        '$LogFile("C:\file.log",0)';
       if listbox1.itemindex = 10 then Edit9.Text :=
-        '$dll(demo.dll, 5, param1, param2)';
+        '$dll(demo.dll,5,param1,param2)';
       if listbox1.itemindex = 11 then Edit9.Text := '$Count(101#$CPUSpeed#4)';
-      if listbox1.itemindex = 12 then Edit9.Text := '$Bar(30, 100, 20)';
+      if listbox1.itemindex = 12 then Edit9.Text := '$Bar(30,100,20)';
       if listbox1.itemindex = 13 then Edit9.Text :=
-        '$Right(ins variable(s) here, $3%)';
+        '$Right(ins variable(s) here,$3%)';
       if listbox1.itemindex = 14 then Edit9.Text := '$Fill(10)';
       if listbox1.itemindex = 15 then Edit9.Text :=
         '$Flash(insert text here$)$';
@@ -2350,10 +2350,10 @@ begin
   if listbox11.itemindex = 18 then Edit18.Text := 'WAShuffle';
   if listbox11.itemindex = 19 then Edit18.Text := 'WAVolDown';
   if listbox11.itemindex = 20 then Edit18.Text := 'WAVolUp';
-  if listbox11.itemindex = 21 then Edit18.Text := 'GPO(4, 1)';
+  if listbox11.itemindex = 21 then Edit18.Text := 'GPO(4,1)';
   if listbox11.itemindex = 22 then Edit18.Text := 'GPOToggle(4)';
-  if listbox11.itemindex = 23 then Edit18.Text := 'GPOFlash(4, 5)';
-  if listbox11.itemindex = 24 then Edit18.Text := 'Fan(1, 255)';
+  if listbox11.itemindex = 23 then Edit18.Text := 'GPOFlash(4,5)';
+  if listbox11.itemindex = 24 then Edit18.Text := 'Fan(1,255)';
 end;
 
 procedure TForm2.PageControl2Change(Sender: TObject);
@@ -2371,12 +2371,12 @@ begin
     end;
     if (radiobutton2.Checked) then
     begin
-      listbox11.Items.Add('GPO(4-8, 0/1) (0=off 1=on)');
+      listbox11.Items.Add('GPO(4-8,0/1) (0=off 1=on)');
       listbox11.Items.Add('GPOToggle(4-8)');
-      listbox11.Items.Add('GPOFlash(4-8, 2) (nr. of times)');
+      listbox11.Items.Add('GPOFlash(4-8,2) (nr. of times)');
       if (form3.CheckBox1.Checked) then
       begin
-        listbox11.Items.Add('Fan(1-3, 0-255) (0-255=speed)');
+        listbox11.Items.Add('Fan(1-3,0-255) (0-255=speed)');
       end;
     end;
   end;
