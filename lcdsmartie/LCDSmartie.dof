@@ -94,7 +94,7 @@ OutputDir=
 UnitOutputDir=
 PackageDLLOutputDir=
 PackageDCPOutputDir=
-SearchPath=components\CoolTrayIcon;components\TMSAsync32\d7;components\WinampCtrl
+SearchPath=components\CoolTrayIcon;components\WinampCtrl
 Packages=vcl
 Conditionals=madExcept
 DebugSourceDirs=
@@ -134,11 +134,16 @@ OriginalFilename=Smartie.exe
 ProductName=LCD Smartie
 ProductVersion=5
 [Excluded Packages]
+c:\program files\borland\delphi7\Projects\Bpl\vacomm7.bpl=TMS Async32
 C:\Program Files\Borland\Delphi7\Projects\Bpl\WinampCtrl7.bpl=Runtime package for WinampCtrl
+[HistoryLists\hlConditionals]
+Count=1
+Item0=madExcept
 [HistoryLists\hlUnitAliases]
 Count=1
 Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
 [HistoryLists\hlSearchPath]
-Count=2
-Item0=components\CoolTrayIcon;components\TMSAsync32\d7;components\WinampCtrl
-Item1=$(DELPHI)\Lib\Debug;components\CoolTrayIcon;components\TMSAsync32\d7;components\WinampCtrl
+Count=3
+Item0=components\CoolTrayIcon;components\WinampCtrl
+Item1=components\CoolTrayIcon;components\TMSAsync32\d7;components\WinampCtrl
+Item2=$(DELPHI)\Lib\Debug;components\CoolTrayIcon;components\TMSAsync32\d7;components\WinampCtrl

@@ -6,7 +6,7 @@ unit ULCD_MO;
 
 interface
 
-uses ULCD, Classes, SyncObjs, SysUtils, Windows, VaClasses, VaComm;
+uses ULCD, Classes, SyncObjs, SysUtils, Windows, USerial;
 
 const
   readBufferSize=100;
@@ -71,13 +71,13 @@ type
     procedure setGPO(gpo: Byte; on: Boolean); override;
     procedure setContrast(level: Integer); override;
     procedure setBrightness(level: Integer); override;
-    constructor CreateSerial(serial: PTVACOMM; uiPort: Cardinal; baudRate: TVaBaudrate);
+    constructor CreateSerial(uiPort: Byte; baudRate: Cardinal);
     constructor CreateUsb;
     constructor Create; override;
     destructor Destroy; override;
   private
+    serial: TSerial;
     bConnected: Boolean;
-    serial: PTVACOMM;
     bUsb: Boolean;                        // for Usb
     usbPalm: Cardinal;              // for Usb
     csRead: TCriticalSection;             // for Usb
@@ -115,13 +115,9 @@ begin
   method();
 end;
 
-constructor TLCD_MO.CreateSerial(serial: PTVACOMM; uiPort: Cardinal; baudRate: TVaBaudrate);
+constructor TLCD_MO.CreateSerial(uiPort: Byte; baudRate: Cardinal);
 begin
-  self.serial := serial;
-  serial.Baudrate := baudRate;
-  serial.PortNum := uiPort;
-  //VaComm1.Close;
-  serial.Open;
+  serial := TSerial.Create(uiPort, baudRate, [RTS_ENABLE, DTR_ENABLE]);
 
   Create();
 end;
@@ -428,16 +424,7 @@ begin
   end
   else
   begin
-    // Ensure all serial data has been writen out
-    // (close discards all remaining data)
-    g := 0;
-    While (serial.WriteBufUsed > 0) and (g<100) do
-    begin
-      Inc(g);
-      Application.ProcessMessages;
-      Sleep(10);
-    end;
-    serial.close;
+    serial.Destroy;
   end;
 
   inherited;
@@ -533,16 +520,23 @@ end;
 
 
 procedure TLCD_MO.write(str: String);
+var
+  i: Cardinal;
 begin
-  str := StringReplace(str, '\', '/', [rfReplaceAll]);
-  str := StringReplace(str, '°', chr(0), [rfReplaceAll]);
-  str := StringReplace(str, 'ž', chr(1), [rfReplaceAll]);
-  str := StringReplace(str, chr(131), chr(2), [rfReplaceAll]);
-  str := StringReplace(str, chr(132), chr(3), [rfReplaceAll]);
-  str := StringReplace(str, chr(133), chr(4), [rfReplaceAll]);
-  str := StringReplace(str, chr(134), chr(5), [rfReplaceAll]);
-  str := StringReplace(str, chr(135), chr(6), [rfReplaceAll]);
-  str := StringReplace(str, chr(136), chr(7), [rfReplaceAll]);
+  for i:= 1 to Length(str) do
+  begin
+    case Ord(str[i]) of
+       Ord('°'): str[i]:=Chr(0);
+       Ord('ž'): str[i]:=Chr(1);
+       131: str[i]:=Chr(2);
+       132: str[i]:=Chr(3);
+       133: str[i]:=Chr(4);
+       134: str[i]:=Chr(5);
+       135: str[i]:=Chr(6);
+       136: str[i]:=Chr(7);
+     end;
+  end;
+
   writeDevice(str);
 end;
 
@@ -582,7 +576,7 @@ begin
   if not bUsb then
   begin
 
-    serial.WriteText(buffer);
+    serial.Write(@buffer[1], len);
 
   end
   else
@@ -634,10 +628,7 @@ begin
   else
   begin
 
-    if serial.ReadBufUsed>0 then
-    begin
-      if (serial.ReadChar(chr)) then gotdata:=true;
-    end;
+    if (serial.Read(Byte(chr))) then gotdata:=true;
 
   end;
 

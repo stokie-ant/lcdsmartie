@@ -28,15 +28,22 @@ begin
 end;
 
 procedure TLCD_HD.write(str: String);
+var
+ i: Cardinal;
 begin
-  str := StringReplace(str, '°', chr(0), [rfReplaceAll]);
-  str := StringReplace(str, 'ž', chr(1), [rfReplaceAll]);
-  str := StringReplace(str, chr(131), chr(2), [rfReplaceAll]);
-  str := StringReplace(str, chr(132), chr(3), [rfReplaceAll]);
-  str := StringReplace(str, chr(133), chr(4), [rfReplaceAll]);
-  str := StringReplace(str, chr(134), chr(5), [rfReplaceAll]);
-  str := StringReplace(str, chr(135), chr(6), [rfReplaceAll]);
-  str := StringReplace(str, chr(136), chr(7), [rfReplaceAll]);
+  for i:= 1 to Length(str) do
+  begin
+    case Ord(str[i]) of
+      Ord('°'): str[i]:=Chr(0);
+      Ord('ž'): str[i]:=Chr(1);
+      131: str[i]:=Chr(2);
+      132: str[i]:=Chr(3);
+      133: str[i]:=Chr(4);
+      134: str[i]:=Chr(5);
+      135: str[i]:=Chr(6);
+      136: str[i]:=Chr(7);
+    end;
+  end;
 
   poort1.writeString(str);
   inherited;

@@ -485,20 +485,6 @@ object Form1: TForm1
     Left = 40
     Top = 152
   end
-  object VaCommNoFlowControl: TVaComm
-    FlowControl.OutCtsFlow = False
-    FlowControl.OutDsrFlow = False
-    FlowControl.ControlDtr = dtrDisabled
-    FlowControl.ControlRts = rtsDisabled
-    FlowControl.XonXoffOut = False
-    FlowControl.XonXoffIn = False
-    FlowControl.DsrSensitivity = False
-    FlowControl.TxContinueOnXoff = False
-    DeviceName = 'COM%d'
-    Buffers.WriteSize = 1024
-    Left = 136
-    Top = 152
-  end
   object Timer3: TTimer
     Enabled = False
     Interval = 250
@@ -511,20 +497,6 @@ object Form1: TForm1
     OnTimer = Timer9Timer
     Left = 136
     Top = 128
-  end
-  object VaCommFlowControl: TVaComm
-    FlowControl.OutCtsFlow = False
-    FlowControl.OutDsrFlow = False
-    FlowControl.ControlDtr = dtrHandshake
-    FlowControl.ControlRts = rtsHandshake
-    FlowControl.XonXoffOut = False
-    FlowControl.XonXoffIn = False
-    FlowControl.DsrSensitivity = False
-    FlowControl.TxContinueOnXoff = False
-    DeviceName = 'COM%d'
-    Buffers.WriteSize = 1024
-    Left = 160
-    Top = 152
   end
   object Timer10: TTimer
     Enabled = False

@@ -27,6 +27,7 @@ uses
   ULCD_HD in 'ULCD_HD.pas',
   ULCD_CF in 'ULCD_CF.pas',
   UData in 'UData.pas',
+  USerial in 'USerial.pas',
   UUtils in 'UUtils.pas';
 
 {$R *.RES}

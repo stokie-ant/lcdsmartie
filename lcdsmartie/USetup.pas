@@ -19,13 +19,13 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.18 $ $Date: 2004/12/09 14:22:50 $
+ *  $Revision: 1.19 $ $Date: 2004/12/12 10:19:59 $
  *****************************************************************************}
 
 interface
 
 uses Dialogs, Grids, StdCtrls, Controls, Spin, Buttons, ComCtrls, Classes,
-  Forms, VaClasses, VaComm;
+  Forms;
 
 const
   UPKEY = 38;
@@ -266,7 +266,7 @@ var
 implementation
 
 uses Windows, ShellApi, graphics, sysutils, parport, UMain, UMOSetup,
-  UCFSetup, UPara, UInteract, UConfig, Registry, ULCD_MO, StrUtils, VaTypes;
+  UCFSetup, UPara, UInteract, UConfig, Registry, ULCD_MO, StrUtils;
 
 {$R *.DFM}
 
@@ -315,7 +315,7 @@ begin
       uiTestPort := CreateFile (PChar('\\.\COM'+IntToStr(i)),
                       GENERIC_READ or GENERIC_WRITE,
                       FILE_SHARE_READ or FILE_SHARE_WRITE, nil,
-                      OPEN_EXISTING, FILE_FLAG_OVERLAPPED, 0);
+                      OPEN_EXISTING, 0, 0);
       if (uiTestPort <> INVALID_HANDLE_VALUE) then
       begin
         // Port successfully opened - add to list.
@@ -341,9 +341,10 @@ begin
   form1.timer9.enabled := false;
   form1.timer10.enabled := false;
   pagecontrol2.ActivePage := tabsheet11;
-  if pagecontrol1.activepage = tabsheet13 then pagecontrol1.ActivePage :=
-    tabsheet1;
-  tabsheet13.Enabled := false;
+  //if pagecontrol1.activepage = tabsheet13 then pagecontrol1.ActivePage :=
+   // tabsheet1;
+  //tabsheet13.Enabled := false;
+  tabsheet13.Enabled := true;
 
   GPOsaan := 0;
   UMain.setupbutton := 1;
@@ -515,7 +516,7 @@ begin
   for i := 1 to 24 do listbox12.Items.Delete(1);
   if (config.isMO) then
   begin
-    tabsheet13.Enabled := true;
+    //tabsheet13.Enabled := true;
     listbox12.Items.Add('FanSpeed(1,1) (nr,divider)');
 
     { The below is commented out as it is reading/writing directly to the device.
@@ -771,9 +772,9 @@ end;
 
 procedure TForm2.RadioButton1Click(Sender: TObject);
 begin
-  if pagecontrol1.ActivePage = Tabsheet13 then pagecontrol1.ActivePage :=
-    Tabsheet1;
-  tabsheet13.Enabled := false;
+  //if pagecontrol1.ActivePage = Tabsheet13 then pagecontrol1.ActivePage :=
+  //  Tabsheet1;
+  //tabsheet13.Enabled := false;
   button6.enabled := true;
   combobox4.enabled := false;
   combobox5.enabled := false;
@@ -792,7 +793,7 @@ end;
 
 procedure TForm2.RadioButton2Click(Sender: TObject);
 begin
-  tabsheet13.Enabled := true;
+  //tabsheet13.Enabled := true;
   button6.enabled := false;
   combobox4.enabled := true;
   combobox5.enabled := true;
@@ -802,9 +803,9 @@ end;
 
 procedure TForm2.RadioButton3Click(Sender: TObject);
 begin
-  if pagecontrol1.ActivePage = Tabsheet13 then pagecontrol1.ActivePage :=
-    Tabsheet1;
-  tabsheet13.Enabled := false;
+  //if pagecontrol1.ActivePage = Tabsheet13 then pagecontrol1.ActivePage :=
+  //  Tabsheet1;
+  //tabsheet13.Enabled := false;
   button6.enabled := false;
   combobox4.enabled := true;
   combobox5.enabled := true;
@@ -1472,7 +1473,7 @@ begin
   end;
   if Pagecontrol1.ActivePage = Tabsheet13 then
   begin
-    if radiobutton2.Checked = false then pagecontrol1.ActivePage := Tabsheet1;
+    //if radiobutton2.Checked = false then pagecontrol1.ActivePage := Tabsheet1;
     if listbox12.itemindex > -1 then
     begin
       if listbox12.itemindex = 0 then Edit9.Text := '$MObutton';

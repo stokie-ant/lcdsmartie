@@ -19,13 +19,13 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.25 $ $Date: 2004/12/09 00:06:11 $
+ *  $Revision: 1.26 $ $Date: 2004/12/12 10:19:59 $
  *****************************************************************************}
 
 interface
 
 uses Messages, IdHTTP, IdBaseComponent, IdComponent, IdTCPConnection,
-  IdTCPClient, IdMessageClient, IdPOP3, VaClasses, VaComm, CoolTrayIcon, Menus,
+  IdTCPClient, IdMessageClient, IdPOP3,  CoolTrayIcon, Menus,
   WinampCtrl, ExtCtrls, Controls, StdCtrls, Buttons, Classes, Forms, parport,
   UConfig, ULCD, UData, xmldom, XMLIntf, msxmldom, XMLDoc;
 
@@ -72,8 +72,6 @@ type
     SpeedButton1: TSpeedButton;
     Panel5: TPanel;
     Timertrans: TTimer;
-    VaCommNoFlowControl: TVaComm;
-    VaCommFlowControl: TVaComm;
     Timer1: TTimer;
     Timer2: TTimer;
     Timer3: TTimer;
@@ -362,10 +360,14 @@ end;
 {$R *.DFM}
 
 procedure TForm1.FormCreate(Sender: TObject);
+const
+  baudRates: array [0..14] of Cardinal =(CBR_110, CBR_300, CBR_600, CBR_1200, CBR_2400,
+    CBR_4800, CBR_9600, CBR_14400, CBR_19200, CBR_38400, CBR_56000, CBR_57600,
+    CBR_115200, CBR_128000, CBR_256000);
 var
   line: String;
   initfile: textfile;
-  baudRate: TVaBaudrate;
+
 begin
   Randomize;
 
@@ -506,30 +508,10 @@ begin
       else
       begin
 
-        case config.baudrate of
-          0: baudRate := br110;
-          1: baudRate := br300;
-          2: baudRate := br600;
-          3: baudRate := br1200;
-          4: baudRate := br2400;
-          5: baudRate := br4800;
-          6: baudRate := br9600;
-          7: baudRate := br14400;
-          8: baudRate := br19200;
-          9: baudRate := br38400;
-          10: baudRate := br56000;
-          11: baudRate := br57600;
-          12: baudRate := br115200;
-          13: baudRate := br128000;
-          14: baudRate := br256000;
-          else raise Exception.Create('unknown baudrate setting: '
-            + IntToStr(config.baudrate));
-        end;
-
         if (config.isCF) then
-          Lcd := TLCD_CF.CreateSerial(@VaCommFlowControl, config.comPort, baudRate)
+          Lcd := TLCD_CF.CreateSerial(config.comPort, baudRates[config.baudrate])
         else if (config.isMO) then
-          Lcd := TLCD_MO.CreateSerial(@VaCommNoFlowControl, config.comPort, baudRate);
+          Lcd := TLCD_MO.CreateSerial(config.comPort, baudRates[config.baudrate]);
       end;
     except
       on E: Exception do

@@ -855,7 +855,7 @@ object Form2: TForm2
       end
     end
     object TabSheet13: TTabSheet
-      Caption = 'Matrix Orbital features'
+      Caption = 'LCD Features'
       Enabled = False
       ImageIndex = 10
       object Label27: TLabel

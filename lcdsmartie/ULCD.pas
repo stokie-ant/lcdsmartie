@@ -19,17 +19,13 @@ unit ULCD;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/ULCD.pas,v $
- *  $Revision: 1.5 $ $Date: 2004/11/24 14:50:53 $
+ *  $Revision: 1.6 $ $Date: 2004/12/12 10:19:59 $
  *****************************************************************************}
 
 
 interface
 
-uses VaClasses, VaComm;
-
-
 type
-  PTVACOMM = ^TVaComm;
 
   TLCD = class(TObject)
   public
@@ -45,8 +41,6 @@ type
     procedure powerResume; virtual;
     constructor Create; virtual;
     destructor Destroy; override;
-  private
-    posX, posY: Integer;
   end;
 
 implementation
@@ -98,8 +92,7 @@ end;
 
 procedure TLCD.setPosition(x, y: Integer);
 begin
-  posX := x;
-  posY := y;
+  // dummy procedure - do nothing
 end;
 
 function TLCD.readKey(var key: Char) : Boolean;

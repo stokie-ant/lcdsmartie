@@ -24,6 +24,9 @@ stating your Palm make/model, PalmOS version and the usb.log file.
 Changes
 =======
 5.3Alpha6
+	- Experimental support for Crystalfontz 631 & 633 displays;
+	  includes keypad support.
+	- Rewritten serial code.
 	- Fixed bug: Actions weren't being saved.
 	- Fixed bug: Multiple presses of keys were being ignored.
 	- Fixed bug: hanged when variable use had syntax error.
