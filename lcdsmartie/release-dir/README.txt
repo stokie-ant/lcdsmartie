@@ -27,6 +27,8 @@ Changes
 5.3Beta1
 	- Fixed bug: Actions weren't being saved.
 	- Fixed bug: Multiple presses of keys were being ignored.
+	- Fixed bug: hanged when variable use had syntax error.
+	- Improved: parameter checking of variables.
 5.3Alpha5
 	- Removed delay when applying settings.
 	- List only usable serial ports.

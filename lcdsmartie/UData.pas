@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.22 $ $Date: 2004/12/09 00:06:10 $
+ *  $Revision: 1.23 $ $Date: 2004/12/09 01:08:51 $
  *****************************************************************************}
 
 
@@ -215,6 +215,7 @@ type
     function getUrl(Url: String; maxfreq: Cardinal = 0): String;
     function FileToString(sFilename: String): String;
     function CleanString(str: String): String;
+    procedure RequiredParameters(uiArgs: Cardinal; uiMinArgs: Cardinal; uiMaxArgs: Cardinal = 0);
   end;
 
 function stripspaces(FString: String): String;
@@ -228,6 +229,14 @@ uses cxCpu40, adCpuUsage, UMain, Windows, Forms, Registry, IpHlpApi,
   mmsystem, ExtActns, Messages, IdHTTP, IdBaseComponent, IdComponent,
   IdTCPConnection, IdTCPClient, IdMessageClient, IdPOP3, IdMessage, Menus,
   ExtCtrls, Controls, StdCtrls, StrUtils, ActiveX, IdUri, DateUtils, IdGlobal;
+
+procedure TData.RequiredParameters(uiArgs: Cardinal; uiMinArgs: Cardinal; uiMaxArgs: Cardinal = 0);
+begin
+  if (uiArgs < uiMinArgs) then
+    raise Exception.Create('Too few parameters');
+  if (uiArgs > uiMaxArgs) then
+    raise Exception.Create('Too many parameters');
+end;
 
 // Takes a string like: 'C:$Bar(20,30,10) jterlktjer(fsdfs)sfsdf(sdf)'
 // with funcName '$Bar'
@@ -414,8 +423,8 @@ begin
   while decodeArgs(line, '$WinampPosition', maxArgs, args, prefix, postfix,
     numargs) do
   begin
-    assert(numargs = 1);
     try
+      RequiredParameters(numargs, 1, 1);
       barlength := strtoint(args[1]);
 
       if (trackLength > 0) then barPosition := round(((trackPosition /
@@ -668,6 +677,7 @@ begin
     numargs) do
   begin
     try
+      RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
       line := prefix + netadaptername[adapterNum] + postfix;
     except
@@ -679,6 +689,7 @@ begin
     numargs) do
   begin
     try
+      RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
       line := prefix + FloatToStrF(Round(iNetTotalDown[adapterNum]/1024*10)/10,
         ffFixed, 18, 1) + postfix;
@@ -691,6 +702,7 @@ begin
     do
   begin
     try
+      RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
       line := prefix + FloatToStrF(Round(iNetTotalUp[adapterNum]/1024*10)/10,
         ffFixed, 18, 1) + postfix;
@@ -703,6 +715,7 @@ begin
     numargs) do
   begin
     try
+      RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
       line := prefix +
          FloatToStrF(Round((iNetTotalDown[adapterNum] div 1024)/1024*10)/10,
@@ -715,8 +728,8 @@ begin
   while decodeArgs(line, '$NetUpM', maxArgs, args, prefix, postfix, numargs)
     do
   begin
-    assert(numargs = 1);
     try
+      RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
       line := prefix +
         FloatToStrF(Round((iNetTotalUp[adapterNum] div 1024)/1024*10)/10,
@@ -729,8 +742,8 @@ begin
   while decodeArgs(line, '$NetDownG', maxArgs, args, prefix, postfix,
     numargs) do
   begin
-    assert(numargs = 1);
     try
+      RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
       line := prefix +
         FloatToStrF(Round((iNetTotalDown[adapterNum] div (1024*1024))/1024*10)/10,
@@ -744,8 +757,8 @@ begin
   while decodeArgs(line, '$NetUpG', maxArgs, args, prefix, postfix, numargs)
     do
   begin
-    assert(numargs = 1);
     try
+      RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
       line := prefix +
         FloatToStrF(Round((iNetTotalUp[adapterNum] div (1024*1024))/1024*10)/10,
@@ -758,8 +771,8 @@ begin
   while decodeArgs(line, '$NetErrDown', maxArgs, args, prefix, postfix,
     numargs) do
   begin
-    assert(numargs = 1);
     try
+      RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
       line := prefix + IntToStr(uiNetErrorsDown[adapterNum]) + postfix;
     except
@@ -770,8 +783,8 @@ begin
   while decodeArgs(line, '$NetErrUp', maxArgs, args, prefix, postfix,
     numargs) do
   begin
-    assert(numargs = 1);
     try
+      RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
       line := prefix + IntToStr(uiNetErrorsUp[adapterNum]) + postfix;
     except
@@ -782,8 +795,8 @@ begin
   while decodeArgs(line, '$NetErrTot', maxArgs, args, prefix, postfix,
     numargs) do
   begin
-    assert(numargs = 1);
     try
+      RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
       line := prefix + IntToStr(uiNetErrorsDown[adapterNum] +
         uiNetErrorsUp[adapterNum]) + postfix;
@@ -795,8 +808,8 @@ begin
   while decodeArgs(line, '$NetUniDown', maxArgs, args, prefix, postfix,
     numargs) do
   begin
-    assert(numargs = 1);
     try
+      RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
       line := prefix + IntToStr(uiNetUnicastDown[adapterNum]) + postfix;
     except
@@ -807,8 +820,8 @@ begin
   while decodeArgs(line, '$NetUniUp', maxArgs, args, prefix, postfix,
     numargs) do
   begin
-    assert(numargs = 1);
     try
+      RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
       line := prefix + IntToStr(uiNetUnicastUp[adapterNum]) + postfix;
     except
@@ -819,8 +832,8 @@ begin
   while decodeArgs(line, '$NetUniTot', maxArgs, args, prefix, postfix,
     numargs) do
   begin
-    assert(numargs = 1);
     try
+      RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
       line := prefix + IntToStr(uiNetUnicastUp[adapterNum]
         + uiNetUnicastDown[adapterNum]) + postfix;
@@ -832,8 +845,8 @@ begin
   while decodeArgs(line, '$NetNuniDown', maxArgs, args, prefix, postfix,
     numargs) do
   begin
-    assert(numargs = 1);
     try
+      RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
       line := prefix + IntToStr(uiNetNonUnicastDown[adapterNum]) + postfix;
     except
@@ -844,8 +857,8 @@ begin
   while decodeArgs(line, '$NetNuniUp', maxArgs, args, prefix, postfix,
     numargs) do
   begin
-    assert(numargs = 1);
     try
+      RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
       line := prefix + IntToStr(uiNetNonUnicastUp[adapterNum]) + postfix;
     except
@@ -856,8 +869,8 @@ begin
   while decodeArgs(line, '$NetNuniTot', maxArgs, args, prefix, postfix,
     numargs) do
   begin
-    assert(numargs = 1);
     try
+      RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
       line := prefix + IntToStr(uiNetNonUnicastUp[adapterNum]
         + uiNetNonUnicastDown[adapterNum]) + postfix;
@@ -869,8 +882,8 @@ begin
   while decodeArgs(line, '$NetPackTot', maxArgs, args, prefix, postfix,
     numargs) do
   begin
-    assert(numargs = 1);
     try
+      RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
       line := prefix + IntToStr(Int64(uiNetNonUnicastUp[adapterNum]) +
         uiNetNonUnicastDown[adapterNum] + uiNetUnicastDown[adapterNum] +
@@ -883,8 +896,8 @@ begin
   while decodeArgs(line, '$NetDiscDown', maxArgs, args, prefix, postfix,
     numargs) do
   begin
-    assert(numargs = 1);
     try
+      RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
       line := prefix + IntToStr(uiNetDiscardsDown[adapterNum]) + postfix;
     except
@@ -895,8 +908,8 @@ begin
   while decodeArgs(line, '$NetDiscUp', maxArgs, args, prefix, postfix,
     numargs) do
   begin
-    assert(numargs = 1);
     try
+      RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
       line := prefix + IntToStr(uiNetDiscardsUp[adapterNum]) + postfix;
     except
@@ -908,8 +921,8 @@ begin
   while decodeArgs(line, '$NetDiscTot', maxArgs, args, prefix, postfix,
     numargs) do
   begin
-    assert(numargs = 1);
     try
+      RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
       line := prefix + IntToStr(uiNetDiscardsUp[adapterNum] +
         uiNetDiscardsDown[adapterNum]) + postfix;
@@ -922,8 +935,8 @@ begin
   while decodeArgs(line, '$NetSpDownK', maxArgs, args, prefix, postfix,
     numargs) do
   begin
-    assert(numargs = 1);
     try
+      RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
       line := prefix + FloatToStrF(dNetSpeedDownK[adapterNum], ffFixed, 18, 1)
         + postfix;
@@ -936,8 +949,8 @@ begin
   while decodeArgs(line, '$NetSpUpK', maxArgs, args, prefix, postfix,
     numargs) do
   begin
-    assert(numargs = 1);
     try
+      RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
       line := prefix + FloatToStrF(dNetSpeedUpK[adapterNum], ffFixed, 18, 1)
         + postfix;
@@ -950,8 +963,8 @@ begin
   while decodeArgs(line, '$NetSpDownM', maxArgs, args, prefix, postfix,
     numargs) do
   begin
-    assert(numargs = 1);
     try
+      RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
       line := prefix + FloatToStrF(dNetSpeedDownM[adapterNum], ffFixed, 18, 1)
         + postfix;
@@ -964,8 +977,8 @@ begin
   while decodeArgs(line, '$NetSpUpM', maxArgs, args, prefix, postfix,
     numargs) do
   begin
-    assert(numargs = 1);
     try
+      RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
       line := prefix + FloatToStrF(dNetSpeedUpM[adapterNum], ffFixed, 18, 1)
         + postfix;
@@ -1011,14 +1024,14 @@ begin
     while decodeArgs(line, '$LogFile', maxArgs, args, prefix, postfix,
       numargs) do
     begin
-      assert(numargs = 2);
-      hdcounter := hdcounter + 1;
-      if hdcounter > 4 then line := StringReplace(line, '$LogFile("',
-        'error', []);
-
-      sFileloc := args[1];
-
       try
+        hdcounter := hdcounter + 1;
+        if hdcounter > 4 then line := StringReplace(line, '$LogFile("',
+          'error', []);
+
+        sFileloc := args[1];
+
+        RequiredParameters(numargs, 2, 2);
         iFileline := StrToInt(args[2]);
 
         if iFileline > 3 then iFileline := 3;
@@ -1051,10 +1064,10 @@ begin
 
     while decodeArgs(line, '$File', maxArgs, args, prefix, postfix, numargs) do
     begin
-      assert(numargs = 2);
       sFileloc := args[1];
 
       try
+        RequiredParameters(numargs, 2, 2);
         iFileline := StrToInt(args[2]);
 
         assignfile(fFile3, sFileloc);
@@ -1221,6 +1234,8 @@ begin
     begin
       try
         line2 := copy(line, pos('$Time(', line) + 6, length(line));
+        if (pos(')', line2) = 0) then
+          raise Exception.Create('No ending bracket');
         line2 := copy(line2, 1, pos(')', line2)-1);
         tempst := formatdatetime(line2, now);
         line := StringReplace(line, '$Time(' + line2 + ')', tempst, []);
@@ -1264,6 +1279,7 @@ begin
       numargs) do
     begin
       try
+        RequiredParameters(numargs, 1, 1);
         letter := ord(upcase(args[1][1]));
         line := prefix + IntToStr(round(STHDFree[letter]/1024)) + postfix;
       except
@@ -1276,6 +1292,7 @@ begin
       numargs) do
     begin
       try
+        RequiredParameters(numargs, 1, 1);
         letter := ord(upcase(args[1][1]));
         line := prefix + IntToStr(STHDFree[letter]) + postfix;
       except
@@ -1289,6 +1306,7 @@ begin
       numargs) do
     begin
       try
+        RequiredParameters(numargs, 1, 1);
         letter := ord(upcase(args[1][1]));
         line2 := IntToStr(round((STHDTotal[letter]-STHDFree[letter])/1024));
         line := prefix + line2 + postfix;
@@ -1302,6 +1320,7 @@ begin
       numargs) do
     begin
       try
+        RequiredParameters(numargs, 1, 1);
         letter := ord(upcase(args[1][1]));
         line2 := IntToStr(STHDTotal[letter]-STHDFree[letter]);
         line := prefix + line2 + postfix;
@@ -1314,6 +1333,7 @@ begin
     while decodeArgs(line, '$HDF%', maxArgs, args, prefix, postfix, numargs) do
     begin
       try
+        RequiredParameters(numargs, 1, 1);
         letter := ord(upcase(args[1][1]));
         line2 := intToStr(round(100/STHDTotal[letter]*STHDFree[letter]));
         line := prefix + line2 + postfix;
@@ -1326,6 +1346,7 @@ begin
     while decodeArgs(line, '$HDU%', maxArgs, args, prefix, postfix, numargs) do
     begin
       try
+        RequiredParameters(numargs, 1, 1);
         letter := ord(upcase(args[1][1]));
         line2 :=
           intToStr(round(100/STHDTotal[letter]*(STHDTotal[letter]-STHDFree[
@@ -1341,6 +1362,7 @@ begin
       numargs) do
     begin
       try
+        RequiredParameters(numargs, 1, 1);
         letter := ord(upcase(args[1][1]));
         line := prefix + IntToStr(round(STHDTotal[letter]/1024)) + postfix;
       except
@@ -1353,6 +1375,7 @@ begin
       numargs) do
     begin
       try
+        RequiredParameters(numargs, 1, 1);
         letter := ord(upcase(args[1][1]));
         line := prefix + IntToStr(STHDTotal[letter]) + postfix;
       except
@@ -1364,14 +1387,16 @@ begin
     if decodeArgs(line, '$MObutton', maxArgs, args, prefix, postfix, numargs)
       then
     begin
-      if cLastKeyPressed = args[1] then spacecount := 1
-      else spacecount := 0;
+      spacecount := 0;
+      if (numargs = 1) and (cLastKeyPressed = args[1]) then spacecount := 1;
+
       line := prefix + intToStr(spacecount) + postfix;
-    end;
+     end;
 
     if decodeArgs(line, '$Chr', maxArgs, args, prefix, postfix, numargs) then
     begin
       try
+        RequiredParameters(numargs, 1, 1);
         line := prefix + Chr(StrToInt(args[1])) + postfix;
       except
         on E: Exception do line := prefix + '[Chr: '
@@ -1386,6 +1411,7 @@ begin
       if dllcancheck = true then
       begin
         try
+          RequiredParameters(numargs, 4, 4);
           tempst := args[1];
           if templib <> tempst then hlib :=
             LoadLibrary(pchar(extractfilepath(application.exename) +
@@ -1473,6 +1499,7 @@ begin
     begin
       ccount := 0;
       try
+        RequiredParameters(numargs, 1, 1);
         tempst := args[1];
         while pos('#', tempst) <> 0 do
         begin
@@ -1492,6 +1519,8 @@ begin
     begin
       try
         line2 := copy(line, pos('$CustomChar(', line) + 12, length(line));
+         if (pos(')', line2) = 0) then
+          raise Exception.Create('No ending bracket');
         line2 := copy(line2, 1, pos(')', line2)-1);
         customchar(line2);
         line := StringReplace(line, '$CustomChar(' + line2 + ')', '', []);
@@ -1508,6 +1537,7 @@ begin
     while decodeArgs(line, '$Rss', maxArgs, args, prefix, postfix, numargs)
       do
     begin
+      RequiredParameters(numargs, 2, 4);
       if (numargs < 3) then
       begin
         args[3] := '0';
@@ -1579,8 +1609,8 @@ begin
     while decodeArgs(line, '$Bar', maxArgs, args, prefix, postfix, numargs)
       do
     begin
-      assert(numargs = 3);
       try
+        RequiredParameters(numargs, 3, 3);
         spacecount := strtoint(args[3])*3;
 
         if (StrToFloat(args[2]) <> 0) then x :=
@@ -1632,6 +1662,10 @@ begin
     begin
       try
         line2 := copy(line, pos('$Right(', line), length(line));
+        if (pos(',$', line2) = 0) then
+          raise Exception.Create('Missing ",$"');
+        if (pos(',$', line2) = 0) then
+          raise Exception.Create('Missing "%)"');
         spacecount := StrToInt(copy(line2, pos(',$', line2) + 2, pos('%)',
           line2)-pos(',$', line2)-2));
         line2 := copy(line2, pos('$Right(', line2) + 7, pos(',$',
@@ -1658,6 +1692,7 @@ begin
       do
     begin
       try
+        RequiredParameters(numargs, 1, 1);
         spacecount := StrToInt(args[1]);
         spaceline := '';
         if spacecount >= length(prefix) then
