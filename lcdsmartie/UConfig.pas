@@ -19,7 +19,7 @@ unit UConfig;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UConfig.pas,v $
- *  $Revision: 1.5 $ $Date: 2004/11/17 11:42:46 $
+ *  $Revision: 1.6 $ $Date: 2004/11/17 12:41:36 $
  *****************************************************************************}
 
 interface
@@ -52,7 +52,8 @@ type
       function loadINI: Boolean;
       function loadCFG: Boolean;
       procedure saveINI;
-      procedure saveCFG;
+      {Procedure saveCFG;}
+      procedure setSizeOption(con: Integer);
     public
         isUsbPalm: Boolean;
         UsbPalmDevice: String;
@@ -91,10 +92,6 @@ type
         contrast: Integer;
         function load: Boolean;
         procedure save;
-        function getSizeOption: Integer;
-        function getHeight: Integer;
-        function getWidth: Integer;
-        procedure setSizeOption(con: Integer);
         property sizeOption: Integer read P_sizeOption write setSizeOption;
         property width: Integer read P_width;
         property height: Integer read P_height;
@@ -117,20 +114,6 @@ begin
   inherited;
 end;
 
-function TConfig.getHeight: Integer;
-begin
-  result:=P_height;
-end;
-
-function TConfig.getWidth: Integer;
-begin
-  result:=P_width;
-end;
-
-function TConfig.getSizeOption: Integer;
-begin
-  result:=P_sizeOption;
-end;
 
 procedure TConfig.setSizeOption(con: Integer);
 begin
@@ -316,6 +299,7 @@ begin
   result:=true;
 end;
 
+{
 procedure TConfig.saveCFG;
 var
   bestand: textfile;
@@ -449,6 +433,7 @@ begin
     try closefile(bestand); except end;
   end;
 end;
+}
 
 function TConfig.load: Boolean;
 begin
@@ -465,7 +450,7 @@ end;
 procedure TConfig.save;
 begin
   saveINI;
-  saveCFG;
+  //saveCFG;
 end;
 
 
@@ -633,7 +618,7 @@ begin
       initFile.WriteBool(sScreenLine, 'No Scroll', screen[x][y].noscroll);
       initFile.WriteBool(sScreenLine, 'Continue Next Line', screen[x][y].contNextLine);
       initFile.WriteBool(sScreenLine, 'Center', screen[x][y].center);
-      initFile.WriteString(sScreenLine, 'Text', screen[x][y].text);
+      initFile.WriteString(sScreenLine, 'Text', '"'+screen[x][y].text+'"');
     end;
   end;
 
