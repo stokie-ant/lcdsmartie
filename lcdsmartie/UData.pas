@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.9 $ $Date: 2004/11/19 19:55:19 $
+ *  $Revision: 1.10 $ $Date: 2004/11/19 21:06:25 $
  *****************************************************************************}
 
 
@@ -1228,7 +1228,7 @@ begin
       if (STPageTotal > 0) then mem :=
         round(100/STPageTotal*(STPageTotal-STPagefree))
       else mem := 0;
-      line := StringReplace(line, '$PageU%', IntToStr(0), [rfReplaceAll]);
+      line := StringReplace(line, '$PageU%', IntToStr(mem), [rfReplaceAll]);
     end;
 
     while decodeArgs(line, '$HDFreg', maxArgs, args, prefix, postfix,
