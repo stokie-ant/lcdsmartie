@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.47 $ $Date: 2005/01/11 17:15:33 $
+ *  $Revision: 1.48 $ $Date: 2005/01/11 18:52:38 $
  *****************************************************************************}
 
 interface
@@ -618,15 +618,24 @@ end;
 procedure TForm1.SetupAutoStart;
 var
   sParameters: String;
+  sShortCutName: String;
   bDelete: Boolean;
 begin
   sParameters := '';
+  sShortCutName := 'LCD Smartie';
+
   if (config.bAutoStartHide) then
-    sParameters := '-hide';
+    sParameters := sParameters + '-hide ';
+
+  if (config.filename <> 'config.ini') then
+  begin
+    sParameters := sParameters + '-config '+config.filename;
+    sShortCutName := sShortCutName + config.filename;
+  end;
 
   bDelete := not (config.bAutoStart or config.bAutoStartHide);
 
-  CreateShortcut(application.exename, sParameters, bDelete);
+  CreateShortcut(sShortCutName, application.exename, sParameters, bDelete);
 end;
 
 

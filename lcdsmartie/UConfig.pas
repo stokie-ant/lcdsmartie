@@ -19,7 +19,7 @@ unit UConfig;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UConfig.pas,v $
- *  $Revision: 1.29 $ $Date: 2005/01/11 17:15:33 $
+ *  $Revision: 1.30 $ $Date: 2005/01/11 18:52:38 $
  *****************************************************************************}
 
 interface
@@ -120,6 +120,7 @@ type
     property sizeOption: Integer read P_sizeOption write setSizeOption;
     property width: Integer read P_width;
     property height: Integer read P_height;
+    property filename: String read sFileName;
     constructor Create(filename: String);
   end;
 

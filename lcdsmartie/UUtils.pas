@@ -21,7 +21,7 @@ type
 
   Function CenterText(sLine: String; iWidth: Integer): String;
   procedure AddPluginsToPath;
-  procedure CreateShortcut(FileName,Args: string; uninstall: Boolean = False);
+  procedure CreateShortcut(sName, FileName,Args: string; uninstall: Boolean = False);
   function errMsg(uError: Cardinal): String;
   function decodeArgs(str: String; funcName: String; maxargs: Cardinal; var
       args: Array of String; var prefix: String; var postfix: String; var
@@ -150,7 +150,7 @@ end;
 
 // ** This code was posted on http://www.experts-exchange.com by 'inthe'
 // ** which was based on code by 'madshi'.
-procedure CreateShortcut(FileName,Args: string; uninstall: Boolean = False);
+procedure CreateShortcut(sName, FileName,Args: string; uninstall: Boolean = False);
 var
   LPUnknown : IUnknown;
   pShlLnk : IShellLink;
@@ -172,7 +172,7 @@ begin
     Dir := R.ReadString('Shell Folders', 'Startup', '');
     if Dir <> '' then
     begin
-      FullPath := Dir + '\LCD Smartie.lnk';
+      FullPath := Dir + '\'+sName+'.lnk';
       if uninstall then
         DeleteFile(FullPath)
       else
