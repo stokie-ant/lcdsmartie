@@ -23,6 +23,8 @@ stating your Palm make/model, PalmOS version and the usb.log file.
 
 Changes
 =======
+5.3Beta1
+	- Fixed bug: action of GotoScreen(1) caused a crash.
 5.3Alpha6
 	- Crystalfontz: Experimental support for 631 & 633 displays; includes
 	  keypad support.
