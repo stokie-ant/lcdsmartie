@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.30 $ $Date: 2004/12/30 16:45:56 $
+ *  $Revision: 1.31 $ $Date: 2005/01/02 21:37:37 $
  *****************************************************************************}
 
 
@@ -133,10 +133,13 @@ type
     isconnected: Boolean;
     gotEmail: Boolean;
     cLastKeyPressed: Char;
+    bNewScreenEvent: Boolean;
     procedure ScreenStart;
     procedure ScreenEnd;
-    function change(line: String; qstattemp: Integer = 1): String;
-    procedure refres(Sender: TObject);
+    function change(line: String; qstattemp: Integer = 1;
+      bCacheResults: Boolean = false): String;
+    function CallPlugin(sDllName: String; iFunc: Integer;
+                    sParam1: String; sParam2:String) : String;
     procedure updateNetworkStats(Sender: TObject);
     procedure updateMBMStats(Sender: TObject);
     procedure UpdateHTTP;
@@ -147,10 +150,10 @@ type
   private
     dlls: Array of TDll;
     uiTotalDlls: Cardinal;
-    sDllResults: array of String; // cached results for current screen.
-    iTotalDllResults: Integer;
-    doHTTPUpdate, doGameUpdate, doEmailUpdate: Boolean; STUsername,
-      STComputername, STCPUType, STCPUSpeed: String;
+    sDllResults: array of string;
+    iDllResults: Integer;
+    doHTTPUpdate, doGameUpdate, doEmailUpdate, doCpuUpdate: Boolean;
+    STUsername, STComputername, STCPUType, STCPUSpeed: String;
     STPageFree, STPageTotal: Int64;
     STMemFree, STMemTotal: Int64;
     STHDFree, STHDTotal: Array[65..90] of Int64;
@@ -158,11 +161,10 @@ type
     CPUUsageCount: Cardinal;
     CPUUsagePos: Cardinal;
     STCPUUsage: Cardinal;
-    lastCpuUpdate,
-      lastSpdUpdate: LongWord;
+    lastSpdUpdate: LongWord;
     iUptime: Int64;
     iLastUptime: Cardinal;
-    dataThread: TMyThread;
+    dataThread, cpuThread: TMyThread;
     replline,
       screenResolution: String;
     netadaptername: Array[0..MAXNETSTATS-1] of String;
@@ -206,13 +208,12 @@ type
     procedure fetchHTTPUpdates;
     procedure httpUpdate;
     procedure gameUpdate;
+    procedure cpuUpdate;
     procedure doDataThread;
+    procedure doCpuThread;
     function ReadMBM5Data : Boolean;
     function getRss(Url: String;var titles, descs: Array of String; maxitems:
       Cardinal; maxfreq: Cardinal = 0): Cardinal;
-    function decodeArgs(str: String; funcName: String; maxargs: Cardinal; var
-      args: Array of String; var prefix: String; var postfix: String; var
-      numArgs: Cardinal): Boolean;
     function changeWinamp(line: String): String;
     function changeNet(line: String): String;
     procedure doSeti;
@@ -220,7 +221,8 @@ type
     function FileToString(sFilename: String): String;
     function CleanString(str: String): String;
     procedure RequiredParameters(uiArgs: Cardinal; uiMinArgs: Cardinal; uiMaxArgs: Cardinal = 0);
-    procedure ProcessPlugin(var line: String; var qstattemp: Integer);
+    procedure ProcessPlugin(var line: String; qstattemp: Integer;
+      bCacheResults: Boolean);
   end;
 
 function stripspaces(FString: String): String;
@@ -238,7 +240,7 @@ uses cxCpu40, adCpuUsage, UMain, Windows, Forms, Registry, IpHlpApi,
 
 procedure TData.ScreenStart;
 begin
-  iTotalDllResults := 0;
+  iDllResults := 0;
 end;
 
 procedure TData.ScreenEnd;
@@ -252,81 +254,6 @@ begin
     raise Exception.Create('Too few parameters');
   if (uiArgs > uiMaxArgs) then
     raise Exception.Create('Too many parameters');
-end;
-
-// Takes a string like: 'C:$Bar(20,30,10) jterlktjer(fsdfs)sfsdf(sdf)'
-// with funcName '$Bar'
-// and returns true(found) and numArgs=3 and an array with: '20', '30', '10'
-// postfix=' jterlktjer(fsdfs)sfsdf(sdf)'
-// prefix='C:'
-function TData.decodeArgs(str: String; funcName: String; maxargs: Cardinal;
-  var args: Array of String; var prefix: String; var postfix: String; var
-  numArgs: Cardinal): Boolean;
-var
-  posFuncStart, posArgsStart, posArgsEnd, posComma, posComma2: Integer;
-  posTemp: Integer;
-  tempStr: String;
-  uiLevel: Cardinal;
-begin
-  Result := true;
-  numArgs := 0;
-
-  posFuncStart := pos(funcName + '(', str);
-  if (posFuncStart <> 0) then
-  begin
-    posArgsStart := posFuncStart + length(funcName);
-
-    // find end of function and cope with nested brackets
-    posTemp := posArgsStart + 1;
-    uiLevel := 1;
-    repeat
-      case (str[posTemp]) of
-      '(': Inc(uiLevel);
-      ')': Dec(uiLevel);
-      end;
-      Inc(posTemp);
-    until (uiLevel = 0) or (posTemp > Length(str));
-    if (uiLevel = 0) then
-      posArgsEnd := posTemp-1
-    else
-      posArgsEnd := length(str);
-
-    prefix := copy(str, 1, posFuncStart-1);
-    postfix := copy(str, posArgsEnd + 1, length(str)-posArgsEnd + 1);
-
-    if (posArgsStart <> 0) and (posArgsEnd <> 0) then
-    begin
-      tempstr := copy(str, posArgsStart + 1, posArgsEnd-posArgsStart-1);
-      // tempstr is now something like: '20,30,10'
-      posComma2 := 0;
-      repeat
-        // Find next comma ignoring those in brackets.
-        uiLevel := 0;
-        posComma := posComma2;
-        repeat
-          Inc(posComma);
-          case (tempstr[posComma]) of
-          '(': Inc(uiLevel);
-          ')': Dec(uiLevel);
-          end;
-        until (posComma >= Length(tempstr)) or ((uiLevel = 0) and (tempstr[posComma] = ','));
-
-        if (posComma >= Length(tempstr)) then
-        begin
-          args[numArgs] := copy(tempstr, posComma2+1, length(tempstr)-PosComma2);
-          Inc(numArgs);
-        end
-        else
-        begin
-          args[numArgs] := copy(tempstr, posComma2+1, PosComma-(PosComma2+1));
-          Inc(numArgs);
-        end;
-        posComma2 := posComma;
-      until (poscomma >= Length(tempstr)) or (numArgs >= maxArgs);
-    end;
-  end
-  else Result := false;
-
 end;
 
 // Remove $'s from the string - this is used when an exception
@@ -387,10 +314,14 @@ begin
   doEmailUpdate := True;
   doHTTPUpdate := True;
   doGameUpdate := True;
+  doCpuUpdate := True;
 
   // Start data collection thread
   dataThread := TMyThread.Create(self.doDataThread);
   dataThread.Resume;
+
+  cpuThread := TMyThread.Create(self.doCpuThread);
+  cpuThread.Resume;
 end;
 
 destructor TData.Destroy;
@@ -402,6 +333,13 @@ begin
     if (not dataThread.Terminated) then dataThread.Terminate;
     dataThread.WaitFor;
     dataThread.Destroy;
+  end;
+
+  if (Assigned(cpuThread)) then
+  begin
+    if (not cpuThread.Terminated) then cpuThread.Terminate;
+    cpuThread.WaitFor;
+    cpuThread.Destroy;
   end;
 
   for uiDll:=1 to uiTotalDlls do
@@ -440,8 +378,13 @@ begin
   if pos('$WinampTitle', line) <> 0 then
   begin
     tempstr := form1.winampctrl1.GetCurrSongTitle;
-    line := StringReplace(line, '$WinampTitle', copy(tempstr, pos('. ',
-      tempstr) + 2, length(tempstr)-pos('. ', tempstr)-2), [rfReplaceAll]);
+    i:=1;
+    while (i<=length(tempstr)) and (tempstr[i]>='0')
+      and (tempstr[i]<='9') do Inc(i);
+
+    if (i<length(tempstr)) and (tempstr[i]='.') and (tempstr[i+1]=' ') then
+      tempstr := copy(tempstr, i+2, length(tempstr));
+    line := StringReplace(line, '$WinampTitle', Trim(tempstr), [rfReplaceAll]);
   end;
   if pos('$WinampChannels', line) <> 0 then
   begin
@@ -1044,96 +987,118 @@ begin
   Result := line;
 end;
 
-procedure TData.ProcessPlugin(var line: String; var qstattemp: Integer);
+function TData.CallPlugin(sDllName: String; iFunc: Integer;
+                    sParam1: String; sParam2:String) : String;
 var
-  nlib: Integer;
-  plib: String;
-  tlib: String;
   uiDll: Cardinal;
   i: Integer;
-  sDllName: String;
-  args: Array [0..maxArgs-1] of String;
-  prefix, postfix: String;
-  numArgs: Cardinal;
 begin
-    while decodeArgs(line, '$dll', maxArgs, args, prefix, postfix, numargs) do
+  // check if we have seen this dll before
+  if (Pos('.DLL', UpperCase(sDllName)) = 0) then
+    sDllName := sDllName + '.dll';
+  uiDll:=1;
+  while (uiDll<=uiTotalDlls) and (dlls[uiDll-1].sName <> sDllName) do
+    Inc(uiDll);
+
+  Dec(uiDll);
+
+  if (uiDll >= uiTotalDlls) then
+  begin // we havent seen this one before - load it
+    Inc(uiTotalDlls);
+    SetLength(dlls, uiTotalDlls);
+    dlls[uiDll].sName := sDllName;
+    dlls[uiDll].hDll := LoadLibrary(pchar(extractfilepath(application.exename) +
+      'plugins\' + sDllName));
+
+    //dlls[uiDll].hDll := LoadLibrary(pchar(
+    //    'c:\Documents and Settings\Administrator\My Documents\Visual Studio Projects\perf\Debug\perf.dll'));
+    //dlls[uiDll].hDll := LoadLibrary(pchar(
+    //    'c:\Documents and Settings\Administrator\My Documents\Visual Studio Projects\bignum\Debug\bignum.dll'));
+    //dlls[uiDll].hDll := LoadLibrary(pchar(
+    //    'c:\Documents and Settings\Administrator\My Documents\Visual Studio Projects\menu\Debug\menu.dll'));
+
+    if (dlls[uiDll].hDll <> 0) then
     begin
-      Inc(iTotalDllResults);
-      try
-        RequiredParameters(numargs, 4, 4);
-        // check if we have seen this dll before
-        sDllName := args[0];
-        if (Pos('.DLL', UpperCase(sDllName)) = 0) then
-          sDllName := sDllName + '.dll';
-        uiDll:=1;
-        while (uiDll<=uiTotalDlls) and (dlls[uiDll-1].sName <> sDllName) do
-          Inc(uiDll);
-
-        Dec(uiDll);
-
-        if (uiDll >= uiTotalDlls) then
-        begin // we havent seen this one before - load it
-          Inc(uiTotalDlls);
-          SetLength(dlls, uiTotalDlls);
-          dlls[uiDll].sName := sDllName;
-          dlls[uiDll].hDll := LoadLibrary(pchar(extractfilepath(application.exename) +
-              'plugins\' + sDllName));
-          //dlls[uiDll].hDll := LoadLibrary(pchar(
-          //    'c:\Documents and Settings\Administrator\My Documents\Visual Studio Projects\perf\Debug\perf.dll'));
-
-
-          if (dlls[uiDll].hDll <> 0) then
-          begin
-            for i:= 1 to 10 do
-            begin
-              @dlls[uiDll].functions[i] := getprocaddress(dlls[uiDll].hDll,
-                PChar('function' + IntToStr(i)));
-              if (@dlls[uiDll].functions[i] = nil) then
-                  @dlls[uiDll].functions[i] := getprocaddress(dlls[uiDll].hDll,
-                    PChar('_function' + IntToStr(i)+'@8'));
-            end;
-          end;
-        end;
-
-        nlib := StrToInt(args[1]);
-        plib := change(args[2], qstattemp); // parse 1st parameter
-        tlib := change(args[3], qstattemp); // parse 2nd parameter
-
-        if (iTotalDllResults >= Length(sDllResults)) then
-            SetLength(sDllResults, iTotalDllResults + 5);
-
-        if (dllcancheck = true) then
-        begin
-
-          if (dlls[uiDll].hDll <> 0) then
-          begin
-            if (nlib >= 0) and (nlib <= 9) then
-            begin
-              if (nlib = 0) then nlib := 10;
-
-              if @dlls[uiDll].functions[nlib] <> nil then
-                sDllResults[iTotalDllResults] :=
-                    dlls[uiDll].functions[nlib]( pchar(plib), pchar(tlib) )
-              else
-                sDllResults[iTotalDllResults] := '[Dll: Function not found]';
-            end
-            else
-                sDllResults[iTotalDllResults] := '[Dll: out of range]';
-          end
-          else
-            sDllResults[iTotalDllResults] := '[Dll: Cant load dll: '
-              + CleanString(ErrMsg(GetLastError)) + ']';
-        end;
-        line := prefix +  change(sDllResults[iTotalDllResults], qstattemp) + postfix;
-      except
-        on E: Exception do
-          line := prefix + '[Dll: ' + CleanString(E.Message) + ']' + postfix;
+      for i:= 1 to 10 do
+      begin
+        @dlls[uiDll].functions[i] := getprocaddress(dlls[uiDll].hDll,
+          PChar('function' + IntToStr(i)));
+        if (@dlls[uiDll].functions[i] = nil) then
+          @dlls[uiDll].functions[i] := getprocaddress(dlls[uiDll].hDll,
+            PChar('_function' + IntToStr(i)+'@8'));
       end;
     end;
+  end;
+
+  if (dlls[uiDll].hDll <> 0) then
+  begin
+    if (iFunc >= 0) and (iFunc <= 9) then
+    begin
+      if (iFunc = 0) then iFunc := 10;
+
+      if @dlls[uiDll].functions[iFunc] <> nil then
+        Result := dlls[uiDll].functions[iFunc]( pchar(sParam1), pchar(sParam2) )
+      else
+        Result := '[Dll: Function not found]';
+    end
+    else
+      Result := '[Dll: out of range]';
+  end
+  else
+    Result := '[Dll: Cant load dll: ' + CleanString(ErrMsg(GetLastError)) + ']';
 end;
 
 
-function TData.change(line: String; qstattemp: Integer = 1): String;
+procedure TData.ProcessPlugin(var line: String; qstattemp: Integer;
+  bCacheResults: Boolean);
+var
+  args: Array [0..maxArgs-1] of String;
+  prefix, postfix: String;
+  numArgs: Cardinal;
+  sParam1, sParam2: String;
+  sAnswer: String;
+begin
+  while decodeArgs(line, '$dll', maxArgs, args, prefix, postfix, numargs) do
+  begin
+    try
+      RequiredParameters(numargs, 4, 4);
+
+      if (bCacheResults) then
+      begin
+        Inc(iDllResults);
+        if (iDllResults >= Length(sDllResults)) then
+           SetLength(sDllResults, iDllResults + 5);
+
+        // Get a fresh result if allowed.
+        if (dllcancheck = true) then
+        begin
+          sParam1 := change(args[2], qstattemp);
+          sParam2 := change(args[3], qstattemp);
+          sDllResults[iDllResults] := CallPlugin(args[0], StrToInt(args[1]), sParam1, sParam2);
+        end;
+
+        sAnswer := sDllResults[iDllResults];
+      end
+      else
+      begin
+        sParam1 := change(args[2], qstattemp);
+        sParam2 := change(args[3], qstattemp);
+        sAnswer := CallPlugin(args[0], StrToInt(args[1]), sParam1, sParam2);
+      end;
+
+      sAnswer := change(sAnswer, qstattemp);
+
+      line := prefix +  sAnswer + postfix;
+    except
+      on E: Exception do
+        line := prefix + '[Dll: ' + CleanString(E.Message) + ']' + postfix;
+    end;
+  end;
+end;
+
+
+function TData.change(line: String; qstattemp: Integer = 1;
+   bCacheResults: Boolean = false): String;
 var
   FileStream: TFileStream;
   Lines: TStringList;
@@ -1156,6 +1121,8 @@ var
 
 begin
   try
+  
+    ProcessPlugin(line, qstattemp, bCacheResults);
 
     hdcounter := 0;
     while decodeArgs(line, '$LogFile', maxArgs, args, prefix, postfix,
@@ -1521,6 +1488,15 @@ begin
       end;
     end;
 
+    if pos('$ScreenChanged', line) <> 0 then
+    begin
+      spacecount := 0;
+      if (bNewScreenEvent) then
+        spacecount := 1;
+
+      line := StringReplace(line, '$ScreenChanged', IntToStr(spacecount), [rfReplaceAll]);
+    end;
+
     if decodeArgs(line, '$MObutton', maxArgs, args, prefix, postfix, numargs)
       then
     begin
@@ -1528,7 +1504,7 @@ begin
       if (numargs = 1) and (cLastKeyPressed = args[1]) then spacecount := 1;
 
       line := prefix + intToStr(spacecount) + postfix;
-     end;
+    end;
 
     while decodeArgs(line, '$Chr', maxArgs, args, prefix, postfix, numargs) do
     begin
@@ -1540,10 +1516,6 @@ begin
           + CleanString(E.Message) + ']' + postfix;
       end;
     end;
-
-    if (pos('$dll(', line) <> 0) then
-      ProcessPlugin(line, qstattemp);
-
 
     while decodeArgs(line, '$Count', maxArgs, args, prefix, postfix, numargs)
       do
@@ -1769,7 +1741,21 @@ begin
   result := line;
 end;
 
-procedure TData.refres(Sender: TObject);
+// Runs in data thread
+procedure TData.doCpuThread;
+begin
+  coinitialize(nil);
+
+  while (not cpuThread.Terminated) do
+  begin
+    cpuUpdate();
+    if (not cpuThread.Terminated) then sleep(250);
+  end;
+
+  CoUninitialize;
+end;
+
+procedure TData.cpuUpdate;
 var
   t: longword;
   y, mo, d, h, m, s : Cardinal;
@@ -1778,13 +1764,12 @@ var
   uiRemaining: Cardinal;
 
 begin
+  doCpuUpdate := False;
 //try
   //cpuusage!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   //Application.ProcessMessages;
-  t := GetTickCount;
-  if (t - lastCpuUpdate > (ticksperseconde div 4)) then
-  begin
-    lastCpuUpdate := t;
+
+
     try
       CollectCPUData;
       rawcpu := adCpuUsage.GetCPUUsage(0);
@@ -1808,9 +1793,10 @@ begin
     total := 0;
     for x := 1 to CPUUsageCount do total := total + CPUUsage[x];
     if (CPUUsageCount > 0) then STCPUUsage := total div CPUUsageCount;
-  end;
+
 
   //Update CPU Speed (might change on clock-throttling systems
+  t := GetTickCount;
   if (t - lastSpdUpdate > (ticksperseconde * 2)) then
   begin                                                     // Update every 2 s
     lastSpdUpdate := t;
@@ -1824,7 +1810,6 @@ begin
 
 
   //time/uptime!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  t := GetTickCount;
   if (t < iLastUptime) then iUptime := iUptime + t + (MAXDWORD-iLastUptime)
   else iUptime := iUptime + (t - iLastUptime);
   iLastUptime := t;

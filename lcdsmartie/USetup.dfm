@@ -1,6 +1,7 @@
 object Form2: TForm2
-  Left = 44
-  Top = 33
+  Left = 69
+  Top = 69
+  ActiveControl = SpinEdit2
   Anchors = []
   BiDiMode = bdLeftToRight
   BorderIcons = []
@@ -1020,8 +1021,8 @@ object Form2: TForm2
         ParentFont = False
         TabOrder = 0
         object Label5: TLabel
-          Left = 8
-          Top = 56
+          Left = 9
+          Top = 46
           Width = 67
           Height = 13
           Caption = 'Time to show:'
@@ -1046,11 +1047,11 @@ object Form2: TForm2
           ParentFont = False
         end
         object Label43: TLabel
-          Left = 128
-          Top = 56
-          Width = 40
+          Left = 18
+          Top = 57
+          Width = 48
           Height = 13
-          Caption = 'Seconds'
+          Caption = '(Seconds)'
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
           Font.Height = -11
@@ -1334,6 +1335,18 @@ object Form2: TForm2
           TabOrder = 15
           OnClick = Button10Click
         end
+        object Sticky: TCheckBox
+          Left = 128
+          Top = 56
+          Width = 49
+          Height = 17
+          Hint = 'Don'#39't automatically change from this screen.'
+          Caption = 'Sticky'
+          ParentShowHint = False
+          ShowHint = True
+          TabOrder = 16
+          OnClick = StickyClick
+        end
       end
       object GroupBox3: TGroupBox
         Left = 0
@@ -1481,6 +1494,7 @@ object Form2: TForm2
         Top = 24
         Width = 57
         Height = 22
+        Hint = 'How often screen text is sent to display (in mSec).'
         Font.Charset = ANSI_CHARSET
         Font.Color = clWindowText
         Font.Height = -11
@@ -1490,6 +1504,8 @@ object Form2: TForm2
         MaxValue = 1000
         MinValue = 5
         ParentFont = False
+        ParentShowHint = False
+        ShowHint = True
         TabOrder = 2
         Value = 200
       end
@@ -1738,7 +1754,7 @@ object Form2: TForm2
       end
       object CheckBox1: TCheckBox
         Left = 8
-        Top = 192
+        Top = 188
         Width = 65
         Height = 17
         Caption = 'Enabled'
@@ -1752,7 +1768,7 @@ object Form2: TForm2
       end
       object SpinEdit2: TSpinEdit
         Left = 80
-        Top = 216
+        Top = 215
         Width = 41
         Height = 22
         Font.Charset = ANSI_CHARSET
@@ -1769,7 +1785,7 @@ object Form2: TForm2
       end
       object Edit5: TEdit
         Left = 8
-        Top = 240
+        Top = 246
         Width = 417
         Height = 23
         TabStop = False
@@ -1787,7 +1803,7 @@ object Form2: TForm2
       end
       object Edit6: TEdit
         Left = 8
-        Top = 264
+        Top = 269
         Width = 417
         Height = 23
         TabStop = False
@@ -1805,7 +1821,7 @@ object Form2: TForm2
       end
       object Edit7: TEdit
         Left = 8
-        Top = 288
+        Top = 293
         Width = 417
         Height = 23
         TabStop = False
@@ -1822,7 +1838,7 @@ object Form2: TForm2
       end
       object Edit8: TEdit
         Left = 8
-        Top = 312
+        Top = 317
         Width = 417
         Height = 23
         TabStop = False
@@ -1861,6 +1877,9 @@ object Form2: TForm2
         Top = 24
         Width = 57
         Height = 22
+        Hint = 
+          'How fast to scroll (in mSec). Should be greater than refresh int' +
+          'erval.'
         Font.Charset = ANSI_CHARSET
         Font.Color = clWindowText
         Font.Height = -11
@@ -1870,6 +1889,8 @@ object Form2: TForm2
         MaxValue = 50000
         MinValue = 20
         ParentFont = False
+        ParentShowHint = False
+        ShowHint = True
         TabOrder = 13
         Value = 200
       end

@@ -19,7 +19,7 @@ unit UConfig;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UConfig.pas,v $
- *  $Revision: 1.23 $ $Date: 2004/12/23 21:46:02 $
+ *  $Revision: 1.24 $ $Date: 2005/01/02 21:37:36 $
  *****************************************************************************}
 
 interface
@@ -39,6 +39,7 @@ type
     interaction: Integer;
     interactionTime: Integer;
     showTime: Integer;
+    bSticky: Boolean;
     center: Boolean;
   end;
 
@@ -533,6 +534,7 @@ begin
     screen[x][1].enabled := initFile.ReadBool(sScreen, 'Enabled', false);
     screen[x][1].theme := initFile.ReadInteger(sScreen, 'Theme', 1)-1;
     screen[x][1].showTime := initFile.ReadInteger(sScreen, 'ShowTime', 10);
+    screen[x][1].bSticky := initFile.ReadBool(sScreen, 'Sticky', false);
     screen[x][1].skip := initFile.ReadInteger(sScreen, 'Skip', 1);
     screen[x][1].interactionTime := initFile.ReadInteger(sScreen,
       'InteractionTime', 7);
@@ -704,6 +706,7 @@ begin
     initfile.WriteBool(sScreen, 'Enabled', screen[x][1].enabled);
     initFile.WriteInteger(sScreen, 'Theme', screen[x][1].theme + 1);
     initFile.WriteInteger(sScreen, 'ShowTime', screen[x][1].showTime);
+    initfile.WriteBool(sScreen, 'Sticky', screen[x][1].bSticky);
     initFile.WriteInteger(sScreen, 'Skip', screen[x][1].skip);
     initFile.WriteInteger(sScreen, 'InteractionTime',
       screen[x][1].interactionTime);

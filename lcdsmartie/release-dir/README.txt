@@ -23,6 +23,16 @@ Changes
 	  meant to be optional.
 	- Fixed bug: Smartie would hang if a function didn't have an ending
 	  bracket.
+	- Do a full parse of plugin parameters and results. [Was failing
+	  when a plugin result was used as a parameter to another plugin].
+	- Fixed bug: Give correct error when dll can't be loaded, it was
+	  saying that function could not be loaded.
+	- Fixed bug: Redraw full display on resuming after suspending.
+	- Added support for plugin action, the returned string is also
+	  processed as an action. [added so plugins can receive keypresses].
+	- Added new variable $ScreenChanged for use in actions.
+	  [Added so plugins can detect screen changes]
+	- Added new two new actions 'DisableScreen(n)' and 'EnableScreen(n)'.
 5.3Beta1
 	- Fixed screen timings, esp. when using GotoScreen action.
 	- Fixed bug: only one $Chr was processed per a line.

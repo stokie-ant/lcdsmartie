@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.35 $ $Date: 2004/12/31 19:39:49 $
+ *  $Revision: 1.36 $ $Date: 2005/01/02 21:37:37 $
  *****************************************************************************}
 
 interface
@@ -220,6 +220,7 @@ type
     function EscapeAmp(const sStr: string):String;
     function UnescapeAmp(const sStr: string): String;
     procedure SendCustomChars;
+    procedure ProcessAction(bDoAction: Boolean; sAction: String);
   end;
 
 var
@@ -241,7 +242,7 @@ var
 implementation
 
 uses Registry, Windows, SysUtils, Graphics, Dialogs, ShellAPI, mmsystem,
-  USetup, UCredits, ULCD_MO, ULCD_CF, ULCD_HD, ExtActns;
+  USetup, UCredits, ULCD_MO, ULCD_CF, ULCD_HD, ExtActns, UUtils;
 
 function TForm1.EscapeAmp(const sStr: string): String;
 begin
@@ -289,7 +290,9 @@ begin
     timertrans.Interval := timertransIntervaltemp;
   end;
   timer7.Interval := 0; // reset timer
-  timer7.Interval := config.screen[scr][1].showTime*1000 + timertransIntervaltemp;
+
+  if (not config.screen[scr][1].bSticky) then
+    timer7.Interval := config.screen[scr][1].showTime*1000 + timertransIntervaltemp;
 
   if (activeScreen = scr) then
     Exit;
@@ -338,6 +341,7 @@ begin
   end;
 
   bNewScreen := True;
+  data.bNewScreenEvent := True;
 
 end;
 
@@ -897,8 +901,6 @@ begin
        customchar('4, 28, 28, 28, 28, 28, 28, 31, 28');
     end;
 
-    Data.refres(self);
-
     if kleuren <> config.colorOption then
     begin
       kleuren := config.colorOption;
@@ -1001,6 +1003,7 @@ begin
         image10.Visible := true;
       end;
     end;
+
     if (canflash) then
     begin
       canflash := false;
@@ -1017,7 +1020,7 @@ begin
     begin
       //Application.ProcessMessages;
       line := config.screen[activeScreen][counter].text;
-      line := Data.change(line, counter);
+      line := Data.change(line, counter, true);
 
       // Center the line if requested.
       if config.screen[activeScreen][counter].center then
@@ -1113,7 +1116,7 @@ begin
     end;
   end;
 
-  Application.ProcessMessages;
+  //Application.ProcessMessages;
 end;
 
 
@@ -1456,302 +1459,402 @@ begin
   button2.click();
 end;
 
+procedure TForm1.ProcessAction(bDoAction: Boolean; sAction: String);
+var
+  temp1, temp2: String;
+  iTemp: Integer;
+  args: Array [0..maxArgs-1] of String;
+  prefix, postfix: String;
+  numArgs: Cardinal;
+  sSecondAction: String;
+begin
+  // Handle actions have do something when they are activated and de-activated.
+  if (pos('Backlight(', sAction) <> 0) then
+  begin
+    temp1 := copy(sAction, pos('(', sAction) + 1, 1);
+
+    if (temp1 = '0') or (temp1 = '1') then
+    begin
+      iTemp := 1;
+      if temp1 = '0' then iTemp := 0;
+
+      if (not bDoAction) then
+        iTemp := 1 - iTemp;
+
+      backlit(iTemp);
+    end;
+  end;
+
+  if (pos('GPO(', sAction) <> 0) and (config.isMO) then
+  begin
+    temp1 := copy(sAction, pos('(', sAction) + 1,
+      pos(',', sAction)-pos('(', sAction)-1);
+    temp2 := copy(sAction, pos(',', sAction) + 1,
+      pos(')', sAction)-pos(',', sAction)-1);
+
+    if (temp2 = '1') or (temp2 = '0') then
+    begin
+      if (not bDoAction) then
+      begin
+        // invert setting
+        if temp2='1' then temp2 := '0'
+        else temp2 := '1';
+      end;
+
+      try
+        doGPO(StrToInt(temp1), StrToInt(temp2));
+      except
+        on EConvertError do begin {ignore} end;
+        else raise;
+      end;
+    end;
+  end;
+
+
+  if (pos('EnableScreen(', sAction) <> 0) then
+  begin
+    try
+      iTemp := StrToInt(copy(sAction, pos('EnableScreen(', sAction) + 13,
+        pos(')', sAction)-pos('EnableScreen(', sAction)-13));
+      if (iTemp >= 1) and (iTemp <= 20) then
+      begin
+        if (bDoAction) then
+          ChangeScreen(iTemp);
+        config.Screen[iTemp][1].Enabled := bDoAction;
+      end;
+    except
+      on EConvertError do begin {ignore} end;
+      else raise;
+    end;
+  end;
+
+  if (pos('DisableScreen(', sAction) <> 0) then
+  begin
+    try
+      iTemp := StrToInt(copy(sAction, pos('DisableScreen(', sAction) + 14,
+        pos(')', sAction)-pos('DisableScreen(', sAction)-14));
+      if (iTemp >= 1) and (iTemp <= 20) then
+      begin
+        config.Screen[iTemp][1].Enabled := not bDoAction;
+      end;
+    except
+      on EConvertError do begin {ignore} end;
+      else raise;
+    end;
+  end;
+
+
+  // Handle actions that only do something when activated.
+  if (bDoAction) then
+  begin
+
+    while decodeArgs(sAction, '$dll', maxArgs, args, prefix, postfix, numargs) do
+    begin
+      if (numargs = 4) then
+      begin
+        try
+          sSecondAction := data.CallPlugin(args[0], StrToInt(args[1]), args[2], args[3]);
+          ProcessAction(True, sSecondAction);
+        except
+          on EConvertError do begin {ignore} end;
+          else raise;
+        end;
+      end;
+      sAction := prefix + postfix;
+    end;
+
+    if (Pos('NextTheme', sAction) <> 0) then
+    begin
+      activetheme := activetheme + 1;
+      if activetheme = 10 then activetheme := 0;
+      frozen := true;
+      freeze();
+    end;
+
+    if (pos('LastTheme', sAction) <> 0) then
+    begin
+      activetheme := activetheme-1;
+      if activetheme=-1 then activetheme := 9;
+      frozen := true;
+      freeze();
+    end;
+
+    if (pos('NextScreen', sAction) <> 0) then
+    begin
+      aantalscreensheenweer := 1;
+      frozen := true;
+      freeze();
+    end;
+
+    if (pos('LastScreen', sAction) <> 0) then
+    begin
+      aantalscreensheenweer := -1;
+      frozen := true;
+      freeze();
+    end;
+
+    if (pos('GotoTheme(', sAction) <> 0) then
+    begin
+      try
+        iTemp := StrToInt(copy(sAction, pos('GotoTheme(', sAction) + 10,
+          pos(')', sAction)-pos('GotoTheme(', sAction)-10))-1;
+        if (iTemp >= 0) and (iTemp < 10) then
+          activetheme := iTemp;
+      except
+        on EConvertError do begin {ignore} end;
+        else raise;
+      end;
+    end;
+
+    if (pos('GotoScreen(', sAction) <> 0) then
+    begin
+      try
+        iTemp := StrToInt(copy(sAction, pos('GotoScreen(', sAction) + 11,
+          pos(')', sAction)-pos('GotoScreen(', sAction)-11));
+        if (iTemp >= 1) and (iTemp <= 20) then
+          ChangeScreen(iTemp);
+      except
+        on EConvertError do begin {ignore} end;
+        else raise;
+      end;
+    end;
+
+    if pos('FreezeScreen', sAction) <> 0 then
+    begin
+      freeze();
+    end;
+
+    if pos('RefreshAll', sAction) <> 0 then
+    begin
+      timer2.interval := 10;
+      timer6.interval := 10;
+      timer8.interval := 10;
+      timer9.interval := 10;
+      timer10.interval := 10;
+    end;
+
+    if pos('BacklightToggle', sAction) <> 0 then
+    begin
+      backlit();
+    end;
+
+    if pos('BLFlash(', sAction) <> 0 then
+    begin
+      temp1 := copy(sAction, pos('(', sAction) + 1, pos(')', sAction)
+            - pos('(', sAction)-1);
+      try
+        flash := StrToInt(temp1)*2;
+      except
+        on EConvertError do begin {ignore} end;
+        else raise;
+      end;
+    end;
+
+    if pos('Wave[', sAction) <> 0 then
+    begin
+      temp1 := copy(sAction, pos('Wave[', sAction) + 5, pos(']', sAction)
+         - pos('Wave[', sAction)-5);
+      playsound(Pchar(temp1), 0, SND_FILENAME);
+    end;
+
+    if pos('Exec[', sAction) <> 0 then
+    begin
+      temp1 := copy(sAction, pos('Exec[', sAction) + 5, pos(']', sAction)
+         - pos('Exec[', sAction)-5);
+      shellexecute(0, 'open', PChar(temp1), '', '', SW_SHOW);
+    end;
+
+    if pos('WANextTrack', sAction) <> 0 then
+      Winampctrl1.Next;
+
+    if pos('WALastTrack', sAction) <> 0 then
+      Winampctrl1.Previous;
+
+    if pos('WAPlay', sAction) <> 0 then
+      Winampctrl1.Play;
+
+    if pos('WAStop', sAction) <> 0 then
+      Winampctrl1.Stop;
+
+    if pos('WAPause', sAction) <> 0 then
+      Winampctrl1.Pause;
+
+    if pos('WAShuffle', sAction) <> 0 then
+      Winampctrl1.ToggleShufflE;
+
+    if pos('WAVolDown', sAction) <> 0 then
+    begin
+      WinampCtrl1.VolumeDown;
+      WinampCtrl1.VolumeDown;
+      WinampCtrl1.VolumeDown;
+      WinampCtrl1.VolumeDown;
+      WinampCtrl1.VolumeDown;
+    end;
+
+    if pos('WAVolUp', sAction) <> 0 then
+    begin
+      WinampCtrl1.VolumeUp;
+      WinampCtrl1.VolumeUp;
+      WinampCtrl1.VolumeUp;
+      WinampCtrl1.VolumeUp;
+      WinampCtrl1.VolumeUp;
+    end;
+
+    if (pos('GPOFlash(', sAction) <> 0) and (config.isMO) then
+    begin
+      try
+        whatgpo := StrToInt(copy(sAction, pos('(', sAction) + 1,
+          pos(',', sAction)-pos('(', sAction)-1));
+        temp2 := copy(sAction, pos(',', sAction) + 1,
+          pos(')', sAction)-pos(',', sAction)-1);
+        gpoflash := StrToInt(temp2)*2;
+      except
+        on EConvertError do begin {ignore} end;
+        else raise;
+      end;
+    end;
+
+    if pos('GPOToggle(', sAction) <> 0 then
+    begin
+      try
+        temp1 := copy(sAction, pos('(', sAction) + 1, pos(')', sAction)
+           - pos('(', sAction)-1);
+        dogpo(StrToInt(temp1), 2)
+      except
+        on EConvertError do begin {ignore} end;
+        else raise;
+      end;
+    end;
+
+    if pos('Fan(', sAction) <> 0 then
+    begin
+      try
+        temp1 := copy(sAction, pos('(', sAction) + 1, pos(',', sAction)
+            - pos('(', sAction)-1);
+        temp2 := copy(sAction, pos(',', sAction) + 1, pos(')', sAction)
+            - pos(',', sAction)-1);
+
+        Lcd.setFan(StrToInt(temp1), StrToInt(temp2));
+      except
+        on EConvertError do begin {ignore} end;
+        else raise;
+      end;
+    end;
+  end;
+
+end;
+
+
 procedure TForm1.Timer3Timer(Sender: TObject);
 //ACTIONS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 var
   counter: Integer;
-  temp1, temp2: String;
   iTemp: Integer;
   cKey: Char;
   iLeftValue, iRightValue: Integer;
   sLeftValue, sRightValue, sAction: String;
+  bNum: Boolean;
   bDoAction: Boolean;
+  doAction: Array[1..99] of Boolean;
 
 begin
 
-  if (Lcd.readKey(cKey)) then
+  if (form2 <> nil) and (Lcd.readKey(cKey)) then
   begin
     form2.Edit17.text := cKey;
     data.cLastKeyPressed := cKey;
   end;
 
-  if (form2 <> nil) and (form2.Visible = false) then
+
+  if (form2.Visible = true) then Exit;
+
+
+  //
+  // Work out the state of each action condition.
+  //
+  for counter := 1 to config.totalactions do
   begin
-    for counter := 1 to config.totalactions do
+    sLeftValue := Data.change(config.actionsArray[counter, 1]);
+    sRightValue := config.actionsArray[counter, 3];
+
+    bDoAction := false;
+
+    // Check if both left and right are numberic.
+    bNum := False;
+    iTemp := 1;
+    while (iTemp <= length(sLeftValue)) and (sLeftValue[iTemp]>='0')
+      and (sLeftValue[iTemp]<='9') do Inc(iTemp);
+    if (iTemp > length(sLeftValue)) then
     begin
-      sLeftValue := Data.change(config.actionsArray[counter, 1]);
-      sRightValue := config.actionsArray[counter, 3];
+      iTemp := 1;
+      while (iTemp <= length(sRightValue)) and (sRightValue[iTemp]>='0')
+        and (sRightValue[iTemp]<='9') do Inc(iTemp);
 
-      bDoAction := false;
-      try
-        iLeftValue := StrToInt(sLeftValue);
-        iRightValue := StrToInt(sRightValue);
-        sAction :=  config.actionsArray[counter, 4];
-
-
-        case StrToInt(config.actionsArray[counter, 2]) of
-          0: if (iLeftValue > iRightValue) then bDoAction := true;
-          1: if (iLeftValue < iRightValue) then bDoAction := true;
-          2: if (iLeftValue = iRightValue) then bDoAction := true;
-          3: if (iLeftValue <= iRightValue) then bDoAction := true;
-          4: if (iLeftValue >= iRightValue) then bDoAction := true;
-          5: if (iLeftValue <> iRightValue) then bDoAction := true;
-        end;
-      except
-        // not a numeric value - lets do a string comparsion
-        try
-          case StrToInt(config.actionsArray[counter, 2]) of
-            0: if (sLeftValue > sRightValue) then bDoAction := true;
-            1: if (sLeftValue < sRightValue) then bDoAction := true;
-            2: if (sLeftValue = sRightValue) then bDoAction := true;
-            3: if (sLeftValue <= sRightValue) then bDoAction := true;
-            4: if (sLeftValue >= sRightValue) then bDoAction := true;
-            5: if (sLeftValue <> sRightValue) then bDoAction := true;
-          end;
-        except
-        end;
-      end;
-
-      // Handle actions have do something when they are activated and de-activated.
-      if (bDoAction <> didAction[counter]) then
-      begin
-        if (pos('Backlight(', sAction) <> 0) then
-        begin
-          temp1 := copy(sAction, pos('(', sAction) + 1, 1);
-
-          if (temp1 = '0') or (temp1 = '1') then
-          begin
-            iTemp := 1;
-            if temp1 = '0' then iTemp := 0;
-
-            if (not bDoAction) then
-              iTemp := 1 - iTemp;
-
-            backlit(iTemp);
-          end;
-        end;
-
-        if (pos('GPO(', sAction) <> 0) and (config.isMO) then
-        begin
-          temp1 := copy(sAction, pos('(', sAction) + 1,
-            pos(',', sAction)-pos('(', sAction)-1);
-          temp2 := copy(sAction, pos(',', sAction) + 1,
-            pos(')', sAction)-pos(',', sAction)-1);
-
-          if (temp2 = '1') or (temp2 = '0') then
-          begin
-            if (not bDoAction) then
-            begin
-              // invert setting
-              if temp2='1' then temp2 := '0'
-              else temp2 := '1';
-            end;
-
-            try
-              doGPO(StrToInt(temp1), StrToInt(temp2));
-            except
-              on EConvertError do begin {ignore} end;
-              else raise;
-            end;
-          end;
-        end;
-      end;
-
-      // Handle actions that only do something when activated.
-      if (bDoAction <> didAction[counter]) and (bDoAction) then
-      begin
-        if (Pos('NextTheme', sAction) <> 0) then
-        begin
-          activetheme := activetheme + 1;
-          if activetheme = 10 then activetheme := 0;
-          frozen := true;
-          freeze();
-        end;
-
-        if (pos('LastTheme', sAction) <> 0) then
-        begin
-          activetheme := activetheme-1;
-          if activetheme=-1 then activetheme := 9;
-          frozen := true;
-          freeze();
-        end;
-
-        if (pos('NextScreen', sAction) <> 0) then
-        begin
-          aantalscreensheenweer := 1;
-          frozen := true;
-          freeze();
-        end;
-
-        if (pos('LastScreen', sAction) <> 0) then
-        begin
-          aantalscreensheenweer := -1;
-          frozen := true;
-          freeze();
-        end;
-
-        if (pos('GotoTheme(', sAction) <> 0) then
-        begin
-          try
-            iTemp := StrToInt(copy(sAction, pos('GotoTheme(', sAction) + 10,
-              pos(')', sAction)-pos('GotoTheme(', sAction)-10))-1;
-            if (iTemp >= 0) and (iTemp < 10) then
-              activetheme := iTemp;
-          except
-            on EConvertError do begin {ignore} end;
-            else raise;
-          end;
-        end;
-
-        if (pos('GotoScreen(', sAction) <> 0) then
-        begin
-          try
-            iTemp := StrToInt(copy(sAction, pos('GotoScreen(', sAction) + 11,
-              pos(')', sAction)-pos('GotoScreen(', sAction)-11));
-            if (iTemp >= 1) and (iTemp <= 20) then
-              ChangeScreen(iTemp);
-          except
-            on EConvertError do begin {ignore} end;
-            else raise;
-          end;
-        end;
-        if pos('FreezeScreen', sAction) <> 0 then
-        begin
-          freeze();
-        end;
-
-        if pos('RefreshAll', sAction) <> 0 then
-        begin
-          timer2.interval := 10;
-          timer6.interval := 10;
-          timer8.interval := 10;
-          timer9.interval := 10;
-          timer10.interval := 10;
-        end;
-
-        if pos('BacklightToggle', sAction) <> 0 then
-        begin
-          backlit();
-        end;
-
-        if pos('BLFlash(', sAction) <> 0 then
-        begin
-          temp1 := copy(sAction, pos('(', sAction) + 1, pos(')', sAction)
-            - pos('(', sAction)-1);
-          try
-            flash := StrToInt(temp1)*2;
-          except
-            on EConvertError do begin {ignore} end;
-            else raise;
-          end;
-        end;
-
-        if pos('Wave[', sAction) <> 0 then
-        begin
-          temp1 := copy(sAction, pos('Wave[', sAction) + 5, pos(']', sAction)
-            - pos('Wave[', sAction)-5);
-          playsound(Pchar(temp1), 0, SND_FILENAME);
-        end;
-
-        if pos('Exec[', sAction) <> 0 then
-        begin
-          temp1 := copy(sAction, pos('Exec[', sAction) + 5, pos(']', sAction)
-            - pos('Exec[', sAction)-5);
-          shellexecute(0, 'open', PChar(temp1), '', '', SW_SHOW);
-        end;
-
-        if pos('WANextTrack', sAction) <> 0 then
-          Winampctrl1.Next;
-
-        if pos('WALastTrack', sAction) <> 0 then
-          Winampctrl1.Previous;
-
-        if pos('WAPlay', sAction) <> 0 then
-          Winampctrl1.Play;
-
-        if pos('WAStop', sAction) <> 0 then
-          Winampctrl1.Stop;
-
-        if pos('WAPause', sAction) <> 0 then
-          Winampctrl1.Pause;
-
-        if pos('WAShuffle', sAction) <> 0 then
-          Winampctrl1.ToggleShufflE;
-
-        if pos('WAVolDown', sAction) <> 0 then
-        begin
-          WinampCtrl1.VolumeDown;
-          WinampCtrl1.VolumeDown;
-          WinampCtrl1.VolumeDown;
-          WinampCtrl1.VolumeDown;
-          WinampCtrl1.VolumeDown;
-        end;
-
-        if pos('WAVolUp', sAction) <> 0 then
-        begin
-          WinampCtrl1.VolumeUp;
-          WinampCtrl1.VolumeUp;
-          WinampCtrl1.VolumeUp;
-          WinampCtrl1.VolumeUp;
-          WinampCtrl1.VolumeUp;
-        end;
-
-        if (pos('GPOFlash(', sAction) <> 0) and (config.isMO) then
-        begin
-          try
-            whatgpo := StrToInt(copy(sAction, pos('(', sAction) + 1,
-              pos(',', sAction)-pos('(', sAction)-1));
-            temp2 := copy(sAction, pos(',', sAction) + 1,
-              pos(')', sAction)-pos(',', sAction)-1);
-            gpoflash := StrToInt(temp2)*2;
-          except
-            on EConvertError do begin {ignore} end;
-            else raise;
-          end;
-        end;
-
-        if pos('GPOToggle(', sAction) <> 0 then
-        begin
-          try
-            temp1 := copy(sAction, pos('(', sAction) + 1, pos(')', sAction)
-              - pos('(', sAction)-1);
-            dogpo(StrToInt(temp1), 2)
-          except
-            on EConvertError do begin {ignore} end;
-            else raise;
-          end;
-        end;
-
-        if pos('Fan(', sAction) <> 0 then
-        begin
-          try
-            temp1 := copy(sAction, pos('(', sAction) + 1, pos(',', sAction)
-              - pos('(', sAction)-1);
-            temp2 := copy(sAction, pos(',', sAction) + 1, pos(')', sAction)
-              - pos(',', sAction)-1);
-
-            Lcd.setFan(StrToInt(temp1), StrToInt(temp2));
-          except
-            on EConvertError do begin {ignore} end;
-            else raise;
-          end;
-        end;
-      end;
-      didAction[counter] := bDoAction;
-
-      // Ulgy special case - [the action code needs a rewrite]
-      // If action was caused by a key press then don't record that we have
-      // done it - this will reduce the delay required to reset actions.
-      // This delay impacts the user experience when using keys.
-      if (Pos('MObutton', config.actionsArray[counter, 1]) <> 0) then
-        didAction[counter] := false;
+      if (iTemp > length(sRightValue)) then bNum := True;
     end;
-  end;
 
+    if (bNum) then
+    try
+      iLeftValue := StrToInt(sLeftValue);
+      iRightValue := StrToInt(sRightValue);
+      case StrToInt(config.actionsArray[counter, 2]) of
+        0: if (iLeftValue > iRightValue) then bDoAction := true;
+        1: if (iLeftValue < iRightValue) then bDoAction := true;
+        2: if (iLeftValue = iRightValue) then bDoAction := true;
+        3: if (iLeftValue <= iRightValue) then bDoAction := true;
+        4: if (iLeftValue >= iRightValue) then bDoAction := true;
+        5: if (iLeftValue <> iRightValue) then bDoAction := true;
+      end;
+    except
+      on EConvertError do begin bNum:=False end;
+      else raise;
+    end;
+
+    if (not bNum) then
+    begin
+      // not a numeric value - lets do a string comparsion
+      case StrToInt(config.actionsArray[counter, 2]) of
+        0: if (sLeftValue > sRightValue) then bDoAction := true;
+        1: if (sLeftValue < sRightValue) then bDoAction := true;
+        2: if (sLeftValue = sRightValue) then bDoAction := true;
+        3: if (sLeftValue <= sRightValue) then bDoAction := true;
+        4: if (sLeftValue >= sRightValue) then bDoAction := true;
+        5: if (sLeftValue <> sRightValue) then bDoAction := true;
+      end;
+    end;
+
+    doAction[counter] := bDoAction;
+  end;
 
   // All actions have been processed using this key.
   // Delete it so a repeated press is processed.
   data.cLastKeyPressed := Chr(0);
+
+  // Reset new screen - the following actions may set this again.
+  data.bNewScreenEvent := False;
+
+  //
+  // Run any required actions.
+  //
+  for counter := 1 to config.totalactions do
+  begin
+    if (doAction[counter] <> didAction[counter]) then
+    begin
+      sAction :=  config.actionsArray[counter, 4];
+      ProcessAction(doAction[counter], sAction);
+
+      didAction[counter] := doAction[counter];
+    end;
+
+    // Ulgy special case - [the action code needs a rewrite]
+    // If action was caused by a key press then don't record that we have
+    // done it - this will reduce the delay required to reset actions.
+    // This delay impacts the user experience when using keys.
+    if (Pos('MObutton', config.actionsArray[counter, 1]) <> 0) then
+      didAction[counter] := false;
+
+  end;
+
 end;
 
 
@@ -1855,6 +1958,8 @@ end;
 
 procedure TForm1.Timer11Timer(Sender: TObject);
 begin
+  timer11.Enabled := false;
+
   Lcd := TLCD_HD.CreateParallel($ + config.parallelPort, config.width, config.height);
   Lcd.setbacklight(true);
 
@@ -1871,7 +1976,6 @@ begin
   timer8.enabled := true;
   timer9.enabled := true;
   timer10.enabled := true;
-  timer11.Enabled := false;
   timer12.enabled := true;
   timer13.enabled := true;
 end;

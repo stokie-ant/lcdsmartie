@@ -19,7 +19,7 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.23 $ $Date: 2004/12/23 21:46:03 $
+ *  $Revision: 1.24 $ $Date: 2005/01/02 21:37:37 $
  *****************************************************************************}
 
 interface
@@ -199,6 +199,7 @@ type
     Label59: TLabel;
     RadioButton4: TRadioButton;
     Label28: TLabel;
+    Sticky: TCheckBox;
     procedure Button2Click(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure ComboBox2Change(Sender: TObject);
@@ -254,6 +255,7 @@ type
       TShiftState);
     procedure Edit7KeyDown(Sender: TObject; var Key: Word; Shift:
       TShiftState);
+    procedure StickyClick(Sender: TObject);
   private
     setupbutton: Integer;
     Procedure FocusToInputField;
@@ -284,8 +286,10 @@ begin
   form1.timer6.enabled := true;
   if frozen = false then
   begin
+    form1.timer7.interval := 0;
+    if (not config.screen[activeScreen][1].bSticky) then
+      form1.timer7.interval := config.screen[activeScreen][1].showTime*1000;
     form1.timer7.enabled := true;
-    form1.timer7.interval := 500;
   end;
   form1.timer8.enabled := true;
   form1.timer9.enabled := true;
@@ -654,6 +658,7 @@ begin
     config.screen[scr][y].interaction := form7.Combobox10.itemindex;
     config.screen[scr][y].interactionTime := StrToInt(form7.spinedit1.text);
     config.screen[scr][y].showTime := spinedit2.value;
+    config.screen[scr][y].bSticky := Sticky.Checked;
 
     // ensure no ¿s occur in the text.
     config.screen[scr][y].text := StringReplace(config.screen[scr][y].text,
@@ -687,6 +692,8 @@ begin
   form7.Combobox10.itemindex := ascreen.interaction;
   form7.spinedit1.text := IntToStr(ascreen.interactionTime);
   spinedit2.value := ascreen.showTime;
+  Sticky.checked := ascreen.bSticky;
+  spinedit2.enabled := not ascreen.bSticky;
 
   if form7.combobox10.ItemIndex = 0 then form7.spinedit1.Enabled := False
   else form7.spinedit1.Enabled := True;
@@ -2163,6 +2170,11 @@ procedure TForm2.Edit8KeyDown(Sender: TObject; var Key: Word; Shift:
 begin
   if ord(key) = UPKEY then edit7.SetFocus;
   if ord(key) = DOWNKEY then edit5.SetFocus;
+end;
+
+procedure TForm2.StickyClick(Sender: TObject);
+begin
+  SpinEdit2.enabled := not Sticky.checked;
 end;
 
 end.
