@@ -19,7 +19,7 @@ unit UCredits;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UCredits.pas,v $
- *  $Revision: 1.2 $ $Date: 2004/11/19 19:55:19 $
+ *  $Revision: 1.3 $ $Date: 2005/01/04 11:35:58 $
  *****************************************************************************}
 
 interface
@@ -28,9 +28,11 @@ uses Forms, ExtCtrls, Classes, StdCtrls, Graphics, Controls;
 
 type
   TForm4 = class(TForm)
-    Label1: TLabel;
     Label2: TLabel;
     Image1: TImage;
+    Label1: TLabel;
+    Label3: TLabel;
+    Label4: TLabel;
     procedure FormClick(Sender: TObject);
     procedure Label1Click(Sender: TObject);
     procedure Image1Click(Sender: TObject);
