@@ -3,9 +3,9 @@ object Form1: TForm1
   Top = 126
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsToolWindow
-  Caption = 'LCD Smartie 5.3 pAlpha1'
+  Caption = 'LCD Smartie 5.3 pAlpha3'
   ClientHeight = 90
-  ClientWidth = 224
+  ClientWidth = 225
   Color = clBtnFace
   TransparentColorValue = clBtnFace
   Font.Charset = ANSI_CHARSET
@@ -268,23 +268,6 @@ object Form1: TForm1
     TabStop = False
     OnClick = Button1Click
   end
-  object Panel5: TPanel
-    Left = 90
-    Top = 72
-    Width = 23
-    Height = 17
-    Alignment = taLeftJustify
-    BevelOuter = bvNone
-    Caption = '1 | 1'
-    Color = clNavy
-    Font.Charset = ANSI_CHARSET
-    Font.Color = clWhite
-    Font.Height = -11
-    Font.Name = 'Tahoma'
-    Font.Style = []
-    ParentFont = False
-    TabOrder = 5
-  end
   object Panel1: TPanel
     Left = 32
     Top = 0
@@ -301,6 +284,22 @@ object Form1: TForm1
     Font.Style = []
     ParentFont = False
     TabOrder = 6
+  end
+  object Panel5: TPanel
+    Left = 88
+    Top = 72
+    Width = 33
+    Height = 17
+    BevelOuter = bvNone
+    Caption = '1 | 1'
+    Color = clNavy
+    Font.Charset = ANSI_CHARSET
+    Font.Color = clWhite
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = []
+    ParentFont = False
+    TabOrder = 5
   end
   object Timer1: TTimer
     Enabled = False
