@@ -31,6 +31,7 @@ Changes
 	- Fixed more crashes that happened whilst in setup. 
 	- Fixed crashes caused by some thread-unsafe code.
 	- Update Memory/page stats every second instead of 30 seconds.
+	- Update Disk/CPU/Net stats only if they are on display.
 5.3 rc1/Beta4
 	- Fixed bug in Rss code - didn't work with long urls.
 	- Plugins: Call SmartieFini just before unloading plugin (if

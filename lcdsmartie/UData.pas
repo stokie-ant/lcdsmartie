@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.50 $ $Date: 2005/01/27 10:43:35 $
+ *  $Revision: 1.51 $ $Date: 2005/01/27 21:20:11 $
  *****************************************************************************}
 
 
@@ -165,7 +165,7 @@ type
     STUsername, STComputername, STCPUType: String;
     STPageFree, STPageTotal: Int64;
     STMemFree, STMemTotal: Int64;          // cpu + main thread.
-    STHDFree, STHDTotal: Array[65..90] of Int64;
+    STHDFree, STHDTotal: Array[65..90] of Int64; // cpu + main thread.
     CPUUsage: Array [1..5] of Cardinal;   //cpu thread only
     CPUUsageCount: Cardinal;              //cpu thread only
     CPUUsagePos: Cardinal;                //cpu thread only
@@ -218,6 +218,13 @@ type
     httpCs: TCriticalSection;  // data + main thread
     httpCopy: PHttp;   // so we can cancel the request. Guarded by httpCs
     pop3Copy: PPop3;   // so we can cancel the request. Guarded by httpCs
+    bDoCpuUsage: Boolean; // cpu + main threads.
+    bDoCpuSpeed: Boolean; // cpu + main threads.
+    bDoScreenRes: Boolean;
+    bDoDisks: Boolean; // cpu + main threads;
+    bDoDisk: Array[65..90] of Boolean; // cpu + main threads
+    bDoNet: Boolean; // cpu + main threads;
+    procedure diskUpdate;
     procedure updateNetworkStats;
     procedure emailUpdate;
     procedure fetchHTTPUpdates;
@@ -256,7 +263,18 @@ procedure TData.NewScreen(bYes: Boolean);
 begin
   bNewScreenEvent := bYes;
   if (bYes) then
+  begin
+    form1.timer6.Interval := 0;
+    form1.timer6.Interval := 250; // force an update of Mbm, etc data in 0.25 seconds
     bForceRefresh := true;
+    bDoCpuUsage := false;
+    bDoCpuSpeed := false;
+    CPUUsagePos := 1;
+    CPUUsageCount := 0;
+    bDoScreenRes := false;
+    bDoDisks := false;
+    bDoNet := false;
+  end;
 end;
 
 procedure TData.ScreenStart;
@@ -750,9 +768,21 @@ var
   adapterNum: Cardinal;
 
 begin
+  if (pos('$NetIPaddress', line) <> 0) then
+  begin
+    bDoNet := true;
+    dataCs.Enter();
+    try
+      line := StringReplace(line, '$NetIPaddress', ipaddress, [rfReplaceAll]);
+    finally
+      dataCs.Leave();
+    end;
+  end;
+
   while decodeArgs(line, '$NetAdapter', maxArgs, args, prefix, postfix,
     numargs) do
   begin
+    bDoNet := true;
     try
       RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
@@ -767,9 +797,11 @@ begin
         + CleanString(E.Message) + ']' + postfix;
     end;
   end;
+
   while decodeArgs(line, '$NetDownK', maxArgs, args, prefix, postfix,
     numargs) do
   begin
+    bDoNet := true;
     try
       RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
@@ -780,9 +812,11 @@ begin
         + CleanString(E.Message) + ']' + postfix;
     end;
   end;
+
   while decodeArgs(line, '$NetUpK', maxArgs, args, prefix, postfix, numargs)
     do
   begin
+    bDoNet := true;
     try
       RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
@@ -793,9 +827,11 @@ begin
         + ']' + postfix;
     end;
   end;
+
   while decodeArgs(line, '$NetDownM', maxArgs, args, prefix, postfix,
     numargs) do
   begin
+    bDoNet := true;
     try
       RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
@@ -807,9 +843,11 @@ begin
         + CleanString(E.Message) + ']' + postfix;
     end;
   end;
+
   while decodeArgs(line, '$NetUpM', maxArgs, args, prefix, postfix, numargs)
     do
   begin
+    bDoNet := true;
     try
       RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
@@ -821,9 +859,11 @@ begin
         + CleanString(E.Message) + ']' + postfix;
     end;
   end;
+
   while decodeArgs(line, '$NetDownG', maxArgs, args, prefix, postfix,
     numargs) do
   begin
+    bDoNet := true;
     try
       RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
@@ -836,9 +876,11 @@ begin
         + CleanString(E.Message) + ']' + postfix;
     end;
   end;
+
   while decodeArgs(line, '$NetUpG', maxArgs, args, prefix, postfix, numargs)
     do
   begin
+    bDoNet := true;
     try
       RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
@@ -850,9 +892,11 @@ begin
         CleanString(E.Message) + ']' + postfix;
     end;
   end;
+
   while decodeArgs(line, '$NetErrDown', maxArgs, args, prefix, postfix,
     numargs) do
   begin
+    bDoNet := true;
     try
       RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
@@ -862,9 +906,11 @@ begin
         + CleanString(E.Message) + ']' + postfix;
     end;
   end;
+
   while decodeArgs(line, '$NetErrUp', maxArgs, args, prefix, postfix,
     numargs) do
   begin
+    bDoNet := true;
     try
       RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
@@ -874,9 +920,11 @@ begin
         + CleanString(E.Message) + ']' + postfix;
     end;
   end;
+
   while decodeArgs(line, '$NetErrTot', maxArgs, args, prefix, postfix,
     numargs) do
   begin
+    bDoNet := true;
     try
       RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
@@ -887,9 +935,11 @@ begin
         + CleanString(E.Message) + ']' + postfix;
     end;
   end;
+
   while decodeArgs(line, '$NetUniDown', maxArgs, args, prefix, postfix,
     numargs) do
   begin
+    bDoNet := true;
     try
       RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
@@ -899,9 +949,11 @@ begin
         + CleanString(E.Message) + ']' + postfix;
     end;
   end;
+
   while decodeArgs(line, '$NetUniUp', maxArgs, args, prefix, postfix,
     numargs) do
   begin
+    bDoNet := true;
     try
       RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
@@ -911,9 +963,11 @@ begin
         + CleanString(E.Message) + ']' + postfix;
     end;
   end;
+
   while decodeArgs(line, '$NetUniTot', maxArgs, args, prefix, postfix,
     numargs) do
   begin
+    bDoNet := true;
     try
       RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
@@ -924,9 +978,11 @@ begin
         + CleanString(E.Message) + ']' + postfix;
     end;
   end;
+
   while decodeArgs(line, '$NetNuniDown', maxArgs, args, prefix, postfix,
     numargs) do
   begin
+    bDoNet := true;
     try
       RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
@@ -936,9 +992,11 @@ begin
         + CleanString(E.Message) + ']' + postfix;
     end;
   end;
+
   while decodeArgs(line, '$NetNuniUp', maxArgs, args, prefix, postfix,
     numargs) do
   begin
+    bDoNet := true;
     try
       RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
@@ -948,9 +1006,11 @@ begin
         + CleanString(E.Message) + ']' + postfix;
     end;
   end;
+
   while decodeArgs(line, '$NetNuniTot', maxArgs, args, prefix, postfix,
     numargs) do
   begin
+    bDoNet := true;
     try
       RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
@@ -961,9 +1021,11 @@ begin
         postfix;
     end;
   end;
+
   while decodeArgs(line, '$NetPackTot', maxArgs, args, prefix, postfix,
     numargs) do
   begin
+    bDoNet := true;
     try
       RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
@@ -975,9 +1037,11 @@ begin
         + CleanString(E.Message) + ']' + postfix;
     end;
   end;
+
   while decodeArgs(line, '$NetDiscDown', maxArgs, args, prefix, postfix,
     numargs) do
   begin
+    bDoNet := true;
     try
       RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
@@ -987,9 +1051,11 @@ begin
         + CleanString(E.Message) + ']' + postfix;
     end;
   end;
+
   while decodeArgs(line, '$NetDiscUp', maxArgs, args, prefix, postfix,
     numargs) do
   begin
+    bDoNet := true;
     try
       RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
@@ -1003,6 +1069,7 @@ begin
   while decodeArgs(line, '$NetDiscTot', maxArgs, args, prefix, postfix,
     numargs) do
   begin
+    bDoNet := true;
     try
       RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
@@ -1017,6 +1084,7 @@ begin
   while decodeArgs(line, '$NetSpDownK', maxArgs, args, prefix, postfix,
     numargs) do
   begin
+    bDoNet := true;
     try
       RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
@@ -1031,6 +1099,7 @@ begin
   while decodeArgs(line, '$NetSpUpK', maxArgs, args, prefix, postfix,
     numargs) do
   begin
+    bDoNet := true;
     try
       RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
@@ -1045,6 +1114,7 @@ begin
   while decodeArgs(line, '$NetSpDownM', maxArgs, args, prefix, postfix,
     numargs) do
   begin
+    bDoNet := true;
     try
       RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
@@ -1059,6 +1129,7 @@ begin
   while decodeArgs(line, '$NetSpUpM', maxArgs, args, prefix, postfix,
     numargs) do
   begin
+    bDoNet := true;
     try
       RequiredParameters(numargs, 1, 1);
       adapterNum := StrToInt(args[1]);
@@ -1407,8 +1478,12 @@ begin
       IntToStr(STPageTotal-STPageFree), [rfReplaceAll]);
     line := StringReplace(line, '$PageTotal', IntToStr(STPageTotal),
       [rfReplaceAll]);
-    line := StringReplace(line, '$ScreenReso', screenResolution,
-      [rfReplaceAll]);
+    if (pos('$ScreenReso', line) <> 0) then
+    begin
+      bDoScreenRes := true;
+      line := StringReplace(line, '$ScreenReso', screenResolution,
+        [rfReplaceAll]);
+    end;
 
     if pos('$MemF%', line) <> 0 then
     begin
@@ -1437,112 +1512,137 @@ begin
       line := StringReplace(line, '$PageU%', IntToStr(mem), [rfReplaceAll]);
     end;
 
-    while decodeArgs(line, '$HDFreg', maxArgs, args, prefix, postfix,
-      numargs) do
+    if (pos('$HD', line) <> 0) then
     begin
-      try
-        RequiredParameters(numargs, 1, 1);
-        letter := ord(upcase(args[1][1]));
-        line := prefix + IntToStr(round(STHDFree[letter]/1024)) + postfix;
-      except
-        on E: Exception do line := prefix + '[HDFreg: '
-          + CleanString(E.Message) + ']' + postfix;
+      while decodeArgs(line, '$HDFreg', maxArgs, args, prefix, postfix,
+        numargs) do
+      begin
+        bDoDisks := true;
+        try
+          RequiredParameters(numargs, 1, 1);
+          letter := ord(upcase(args[1][1]));
+          bDoDisk[letter] := true;
+          line := prefix + IntToStr(round(STHDFree[letter]/1024)) + postfix;
+        except
+          on E: Exception do line := prefix + '[HDFreg: '
+            + CleanString(E.Message) + ']' + postfix;
+        end;
       end;
-    end;
 
-    while decodeArgs(line, '$HDFree', maxArgs, args, prefix, postfix,
-      numargs) do
-    begin
-      try
-        RequiredParameters(numargs, 1, 1);
-        letter := ord(upcase(args[1][1]));
-        line := prefix + IntToStr(STHDFree[letter]) + postfix;
-      except
-        on E: Exception do line := prefix + '[HDFree: '
-          + CleanString(E.Message) + ']' + postfix;
+      while decodeArgs(line, '$HDFree', maxArgs, args, prefix, postfix,
+        numargs) do
+      begin
+        bDoDisks := true;
+        try
+          RequiredParameters(numargs, 1, 1);
+          letter := ord(upcase(args[1][1]));
+          bDoDisk[letter] := true;
+          line := prefix + IntToStr(STHDFree[letter]) + postfix;
+        except
+          on E: Exception do line := prefix + '[HDFree: '
+            + CleanString(E.Message) + ']' + postfix;
+        end;
       end;
-    end;
 
 
-    while decodeArgs(line, '$HDUseg', maxArgs, args, prefix, postfix,
-      numargs) do
-    begin
-      try
-        RequiredParameters(numargs, 1, 1);
-        letter := ord(upcase(args[1][1]));
-        line2 := IntToStr(round((STHDTotal[letter]-STHDFree[letter])/1024));
-        line := prefix + line2 + postfix;
-      except
-        on E: Exception do line := prefix + '[HDUseg: '
-          + CleanString(E.Message) + ']' + postfix;
+      while decodeArgs(line, '$HDUseg', maxArgs, args, prefix, postfix,
+        numargs) do
+      begin
+        bDoDisks := true;
+        try
+          RequiredParameters(numargs, 1, 1);
+          letter := ord(upcase(args[1][1]));
+          bDoDisk[letter] := true;
+          line2 := IntToStr(round((STHDTotal[letter]-STHDFree[letter])/1024));
+          line := prefix + line2 + postfix;
+        except
+          on E: Exception do line := prefix + '[HDUseg: '
+            + CleanString(E.Message) + ']' + postfix;
+        end;
       end;
-    end;
 
-    while decodeArgs(line, '$HDUsed', maxArgs, args, prefix, postfix,
-      numargs) do
-    begin
-      try
-        RequiredParameters(numargs, 1, 1);
-        letter := ord(upcase(args[1][1]));
-        line2 := IntToStr(STHDTotal[letter]-STHDFree[letter]);
-        line := prefix + line2 + postfix;
-      except
-        on E: Exception do line := prefix + '[HDUsed: '
-          + CleanString(E.Message) + ']' + postfix;
+      while decodeArgs(line, '$HDUsed', maxArgs, args, prefix, postfix,
+        numargs) do
+      begin
+        bDoDisks := true;
+        try
+          RequiredParameters(numargs, 1, 1);
+          letter := ord(upcase(args[1][1]));
+          bDoDisk[letter] := true;
+          line2 := IntToStr(STHDTotal[letter]-STHDFree[letter]);
+          line := prefix + line2 + postfix;
+        except
+          on E: Exception do line := prefix + '[HDUsed: '
+            + CleanString(E.Message) + ']' + postfix;
+        end;
       end;
-    end;
 
-    while decodeArgs(line, '$HDF%', maxArgs, args, prefix, postfix, numargs) do
-    begin
-      try
-        RequiredParameters(numargs, 1, 1);
-        letter := ord(upcase(args[1][1]));
-        line2 := intToStr(round(100/STHDTotal[letter]*STHDFree[letter]));
-        line := prefix + line2 + postfix;
-      except
-        on E: Exception do line := prefix + '[HDF%: '
-          + CleanString(E.Message) + ']' + postfix;
+      while decodeArgs(line, '$HDF%', maxArgs, args, prefix, postfix, numargs) do
+      begin
+        bDoDisks := true;
+        try
+          RequiredParameters(numargs, 1, 1);
+          letter := ord(upcase(args[1][1]));
+          bDoDisk[letter] := true;
+          if (STHDTotal[letter]*STHDFree[letter] <> 0) then
+            line2 := intToStr(round(100/STHDTotal[letter]*STHDFree[letter]))
+          else
+            line2 := '0';
+          line := prefix + line2 + postfix;
+        except
+          on E: Exception do line := prefix + '[HDF%: '
+            + CleanString(E.Message) + ']' + postfix;
+        end;
       end;
-    end;
 
-    while decodeArgs(line, '$HDU%', maxArgs, args, prefix, postfix, numargs) do
-    begin
-      try
-        RequiredParameters(numargs, 1, 1);
-        letter := ord(upcase(args[1][1]));
-        line2 :=
-          intToStr(round(100/STHDTotal[letter]*(STHDTotal[letter]-STHDFree[
-          letter])));
-        line := prefix + line2 + postfix;
-      except
-        on E: Exception do line := prefix + '[HDU%: '
-          + CleanString(E.Message) + ']' + postfix;
+      while decodeArgs(line, '$HDU%', maxArgs, args, prefix, postfix, numargs) do
+      begin
+        bDoDisks := true;
+        try
+          RequiredParameters(numargs, 1, 1);
+          letter := ord(upcase(args[1][1]));
+          if (STHDTotal[letter]*(STHDTotal[letter]-STHDFree[letter]) <> 0) then
+            line2 :=
+              intToStr(round(100/STHDTotal[letter]*(STHDTotal[letter]-STHDFree[
+              letter])))
+          else
+            line2 := '0';
+
+          line := prefix + line2 + postfix;
+        except
+          on E: Exception do line := prefix + '[HDU%: '
+            + CleanString(E.Message) + ']' + postfix;
+        end;
       end;
-    end;
 
-    while decodeArgs(line, '$HDTotag', maxArgs, args, prefix, postfix,
-      numargs) do
-    begin
-      try
-        RequiredParameters(numargs, 1, 1);
-        letter := ord(upcase(args[1][1]));
-        line := prefix + IntToStr(round(STHDTotal[letter]/1024)) + postfix;
-      except
-        on E: Exception do line := prefix + '[HDTotag: '
-          + CleanString(E.Message) + ']' + postfix;
+      while decodeArgs(line, '$HDTotag', maxArgs, args, prefix, postfix,
+        numargs) do
+      begin
+        bDoDisks := true;
+        try
+          RequiredParameters(numargs, 1, 1);
+          letter := ord(upcase(args[1][1]));
+          bDoDisk[letter] := true;
+          line := prefix + IntToStr(round(STHDTotal[letter]/1024)) + postfix;
+        except
+          on E: Exception do line := prefix + '[HDTotag: '
+            + CleanString(E.Message) + ']' + postfix;
+        end;
       end;
-    end;
 
-    while decodeArgs(line, '$HDTotal', maxArgs, args, prefix, postfix,
-      numargs) do
-    begin
-      try
-        RequiredParameters(numargs, 1, 1);
-        letter := ord(upcase(args[1][1]));
-        line := prefix + IntToStr(STHDTotal[letter]) + postfix;
-      except
-        on E: Exception do line := prefix + '[HDTotal: '
-          + CleanString(E.Message) + ']' + postfix;
+      while decodeArgs(line, '$HDTotal', maxArgs, args, prefix, postfix,
+        numargs) do
+      begin
+        bDoDisks := true;
+        try
+          RequiredParameters(numargs, 1, 1);
+          letter := ord(upcase(args[1][1]));
+          bDoDisk[letter] := true;
+          line := prefix + IntToStr(STHDTotal[letter]) + postfix;
+        except
+          on E: Exception do line := prefix + '[HDTotal: '
+            + CleanString(E.Message) + ']' + postfix;
+        end;
       end;
     end;
 
@@ -1666,30 +1766,31 @@ begin
       end;
     end;
 
-    if (pos('$NetIPaddress', line) <> 0) then
-    begin
-      dataCs.Enter();
-      try
-        line := StringReplace(line, '$NetIPaddress', ipaddress, [rfReplaceAll]);
-      finally
-        dataCs.Leave();
-      end;
-    end;
-
     line := StringReplace(line, '$Username', STUsername, [rfReplaceAll]);
     line := StringReplace(line, '$Computername', STcomputername,
       [rfReplaceAll]);
     if (pos('$CPU', line) <> 0) then
     begin
       line := StringReplace(line, '$CPUType', STCPUType, [rfReplaceAll]);
-      dataCs.Enter();
-      try
-        line := StringReplace(line, '$CPUSpeed', STCPUSpeed, [rfReplaceAll]);
-      finally
-        dataCs.Leave();
+
+
+      if (pos('$CPUSpeed', line) <> 0) then
+      begin
+        bDoCpuSpeed := true;
+        dataCs.Enter();
+        try
+          line := StringReplace(line, '$CPUSpeed', STCPUSpeed, [rfReplaceAll]);
+        finally
+          dataCs.Leave();
+        end;
       end;
-      line := StringReplace(line, '$CPUUsage%', IntToStr(STCPUUsage),
-        [rfReplaceAll]);
+
+      if (pos('$CPUUsage%', line) <> 0) then
+      begin
+        bDoCpuUsage := true;
+        line := StringReplace(line, '$CPUUsage%', IntToStr(STCPUUsage),
+          [rfReplaceAll]);
+      end;
     end;
 
     if (pos('$Temp', line) <> 0) then
@@ -2105,29 +2206,58 @@ end;
 // Runs in data thread
 procedure TData.doCpuThread;
 var
-  count: Integer; // count used to update net stats every second.
+  count: Integer; // used to update net/memory/disk stats every second.
 begin
   count := 0;
   coinitialize(nil);
 
   while (not cpuThread.Terminated) do
   begin
-    Inc(count);
-
     cpuUpdate();
+
+    Inc(count);
     if (not cpuThread.Terminated) and (count > 4) then
     begin
       count := 0;
       updateNetworkStats();
-      STMemfree := system1.availPhysmemory div (1024 * 1024);
-      STMemTotal := system1.totalPhysmemory div (1024 * 1024);
-      STPageTotal := system1.totalPageFile div (1024 * 1024);
-      STPageFree := system1.AvailPageFile div (1024 * 1024);
+      if (not cpuThread.Terminated) then
+        diskUpdate();
+      if (not cpuThread.Terminated) then
+        STMemfree := system1.availPhysmemory div (1024 * 1024);
+      if (not cpuThread.Terminated) then
+        STMemTotal := system1.totalPhysmemory div (1024 * 1024);
+      if (not cpuThread.Terminated) then
+        STPageTotal := system1.totalPageFile div (1024 * 1024);
+      if (not cpuThread.Terminated) then
+        STPageFree := system1.AvailPageFile div (1024 * 1024);
     end;
+
     if (not cpuThread.Terminated) then sleep(250);
   end;
 
   CoUninitialize;
+end;
+
+procedure TData.diskUpdate;
+var
+  letter: Cardinal;
+begin
+// HD space!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  if bDoDisks then
+  begin
+    for letter := 65 to 90 do
+    begin
+      try
+        if (bDoDisk[letter]) then
+        begin
+          bDoDisk[letter] := false;
+          STHDFree[letter] := system1.diskfreespace(chr(letter)) div (1024*1024);
+          STHDTotal[letter] := system1.disktotalspace(chr(letter)) div (1024*1024);
+        end;
+      except
+      end;
+    end;
+  end;
 end;
 
 procedure TData.cpuUpdate;
@@ -2143,7 +2273,8 @@ begin
   //cpuusage!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   //Application.ProcessMessages;
 
-
+  if (bDoCpuUsage) then
+  begin
     try
       CollectCPUData;
       rawcpu := adCpuUsage.GetCPUUsage(0);
@@ -2167,24 +2298,30 @@ begin
     total := 0;
     for x := 1 to CPUUsageCount do total := total + CPUUsage[x];
     if (CPUUsageCount > 0) then STCPUUsage := total div CPUUsageCount;
+  end;
 
-
-  //Update CPU Speed (might change on clock-throttling systems
   t := GetTickCount;
-  if (t - lastSpdUpdate > (ticksperseconde * 2)) then
-  begin                                                     // Update every 2 s
-    lastSpdUpdate := t;
 
-    try
-      dataCs.Enter();
+  // The below code creates a very high priority thread which could cause
+  // cpu spikes.  Don't do it unless the user is using $CPUSpeed.
+  if (bDoCPUSpeed) then
+  begin
+    //Update CPU Speed (might change on clock-throttling systems
+    if (t - lastSpdUpdate > (ticksperseconde * 2)) then
+    begin                                                 // Update every 2 s
+      lastSpdUpdate := t;
+
       try
-        STCPUSpeed := IntToStr(cxCpu[0].Speed.RawSpeed.AsNumber);
-      finally
-        dataCs.Leave();
+        dataCs.Enter();
+        try
+          STCPUSpeed := IntToStr(cxCpu[0].Speed.RawSpeed.AsNumber);
+        finally
+          dataCs.Leave();
+        end;
+      except
+        // BUGBUG: This has been reported as failing when with Range check error,
+        // they reported that it only occured when they ran a slow 16 bit app.
       end;
-    except
-      // BUGBUG: This has been reported as failing when with Range check error,
-      // they reported that it only occured when they ran a slow 16 bit app.
     end;
   end;
 
@@ -2340,28 +2477,17 @@ end;
 procedure TData.updateNetworkStats;
 //NETWORKS STATS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 var
-  network: Integer;
   Size: ULONG;
   IntfTable: PMibIfTable;
   I: Integer;
-  z, y: Integer;
   MibRow: TMibIfRow;
   phoste: PHostEnt;
   Buffer: Array [0..100] of char;
   maxEntries: Cardinal;
 
 begin
-  network := 0;
 
-  for z := 1 to 20 do
-  begin
-    for y := 1 to 4 do
-    begin
-      if (pos('$Net', config.screen[z][y].text) <> 0) then network := 1;
-    end;
-  end;
-
-  if network = 1 then
+  if (bDoNet) then
   begin
 
     GetHostName(Buffer, Sizeof(Buffer));
@@ -2375,10 +2501,17 @@ begin
     end;
 
     Size := 0;
-    if GetIfTable(nil, Size, True) <> ERROR_INSUFFICIENT_BUFFER then Exit;
+    if GetIfTable(nil, Size, True) <> ERROR_INSUFFICIENT_BUFFER then  Exit;
+      //raise Exception.Create('getiftable failed with ' + errMsg(GetLastError));
+
+    if (Size < sizeof( TMibIftable)) then Exit;
+//          raise Exception.Create('size too small');
     IntfTable := AllocMem(Size);
+ //   if (IntfTable = nil) then
+   //     raise Exception.Create('no memory?');
+
     try
-      if GetIfTable(IntfTable, Size, True) = NO_ERROR then
+      if (IntfTable <> nil) and (GetIfTable(IntfTable, Size, True) = NO_ERROR) then
       begin
         maxEntries := IntfTable^.dwNumEntries;
         if (maxEntries > MAXNETSTATS) then maxEntries := MAXNETSTATS;
@@ -2446,7 +2579,7 @@ begin
         end;
       end;
     finally
-      FreeMem(IntfTable);
+      if (IntfTable <> nil) then FreeMem(IntfTable);
     end;
   end;
 end;
@@ -2456,11 +2589,10 @@ end;
 procedure TData.updateMBMStats(Sender: TObject);
 //HARDDISK MOTHERBOARD MONITOR AND DISTRIBUTED STATS!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 var
-  letter: Integer;
-  letter2: Array [65..90] of Integer;
   x: Integer;
   fFile: textfile;
-  replz, hd, mbm, counter: Integer;
+  counter: Integer;
+  bMbm, bReplz: Boolean;
   line: String;
   z, y: Integer;
   screenline: String;
@@ -2469,66 +2601,24 @@ var
 
 begin
 
-  hd := 0;
-  mbm := 0;
-  replz := 0;
+  bMbm := false;
+  bReplz := false;
 
   for z := 1 to 20 do
   begin
-    for y := 1 to 4 do
+    for y := 1 to config.height do
     begin
       screenline := config.screen[z][y].text;
-      if (pos('$Fan', screenline) <> 0) then mbm := 1;
-      if (pos('$Volt', screenline) <> 0) then mbm := 1;
-      if (pos('$Temp', screenline) <> 0) then mbm := 1;
-      if (pos('$CPUUsage', screenline) <> 0) then mbm := 1; // used as backup.
-      if (pos('$HD', screenline) <> 0) then hd := 1;
-      if (pos('$Dnet', screenline) <> 0) then replz := 1;
+      if (not bMbm) and (pos('$Fan', screenline) <> 0) then bMbm := true;
+      if (not bMbm) and (pos('$Volt', screenline) <> 0) then bMbm := true;
+      if (not bMbm) and (pos('$Temp', screenline) <> 0) then bMbm := true;
+      if (not bMbm) and (pos('$CPUUsage%', screenline) <> 0) then bMbm := true; // used as backup.
+      if (not bReplz) and (pos('$Dnet', screenline) <> 0) then bReplz := true;
     end;
   end;
 
   STComputername := system1.Computername;
   STUsername := system1.Username;
-
-// HD space!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  if hd = 1 then
-  begin
-    for letter := 65 to 90 do letter2[letter] := 0;
-    for z := 1 to 20 do
-    begin
-      for y := 1 to 4 do
-      begin
-        screenline := config.screen[z][y].text;
-        while pos('$HD', screenline) <> 0 do
-        begin
-          try
-            screenline := copy(screenline, pos('$HD', screenline),
-              length(screenline));
-            letter2[ord(upcase(copy(screenline, pos('(', screenline) + 1,
-              1)[1]))] := 1;
-            screenline := Stringreplace(screenline, '$HD', '', []);
-          except
-            screenline := Stringreplace(screenline, '$HD', '', []);
-          end;
-        end;
-      end;
-    end;
-    for letter := 65 to 90 do
-    begin
-      try
-        if letter2[letter] = 1 then
-        begin
-//        if (system1.diskindrive(chr(letter), true)) then begin
-          STHDFree[letter] := system1.diskfreespace(chr(letter)) div
-            (1024*1024);
-          STHDTotal[letter] := system1.disktotalspace(chr(letter)) div
-            (1024*1024);
-//        end;
-        end;
-      except
-      end;
-    end;
-  end;
 
 //cputype!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   try
@@ -2538,19 +2628,19 @@ begin
   end;
 
 //SCREENRESO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  screenResolution := IntToStr(Screen.DesktopWidth) + 'x' +
-    IntToStr(Screen.DesktopHeight);
+  if (bDoScreenRes) then
+  begin
+    screenResolution := IntToStr(Screen.DesktopWidth) + 'x' +
+      IntToStr(Screen.DesktopHeight);
+  end;
 
 //MBM5!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-  if mbm = 1 then
-  begin
-    if (ReadMBM5Data) then mbmactive := true
-    else mbmactive := false;
-  end;
+  if bMbm then
+    mbmactive := ReadMBM5Data();
 
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  if replz = 1 then
+  if bReplz then
   begin
     x := 0;
     replline := 'File not found';
@@ -2974,7 +3064,7 @@ begin
 
   for z := 1 to 20 do
   begin
-    for y := 1 to 4 do
+    for y := 1 to config.height do
     begin
       try
         screenline := config.screen[z][y].text;
@@ -3121,7 +3211,7 @@ begin
 
   for z := 1 to 20 do
   begin
-    for y := 1 to 4 do
+    for y := 1 to config.height do
     begin
         screenline := config.screen[z][y].text;
         while decodeArgs(screenline, '$Rss', maxArgs, args, prefix, postfix,
@@ -3307,7 +3397,7 @@ begin
 
         if (iPos1 <> 0) then
         begin
-          if (MidStr(versionline, 2, iPos1-2) <> '5.3.0.14') then
+          if (MidStr(versionline, 2, iPos1-2) <> '5.3.0.15') then
           begin
             if (lcdSmartieUpdateText <> MidStr(versionline, iPos1+1, 62)) then
             begin
@@ -3440,7 +3530,7 @@ begin
 
   for z := 1 to 20 do
   begin
-    for y := 1 to 4 do
+    for y := 1 to config.height do
     begin
         screenline := config.screen[z][y].text;
         for x := 0 to 9 do
