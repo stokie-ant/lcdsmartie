@@ -115,7 +115,7 @@ AutoIncBuild=0
 MajorVer=5
 MinorVer=3
 Release=0
-Build=11
+Build=6
 Debug=1
 PreRelease=1
 Special=0
@@ -126,7 +126,7 @@ CodePage=1252
 [Version Info Keys]
 CompanyName=SourceForge.net
 FileDescription=
-FileVersion=5.3.0.11
+FileVersion=5.3.0.6
 InternalName=LCD Smartie
 LegalCopyright=GPL
 LegalTrademarks=
@@ -134,8 +134,8 @@ OriginalFilename=Smartie.exe
 ProductName=LCD Smartie
 ProductVersion=5
 [Excluded Packages]
-c:\program files\borland\delphi7\Projects\Bpl\vacomm7.bpl=TMS Async32
 C:\Program Files\Borland\Delphi7\Projects\Bpl\WinampCtrl7.bpl=Runtime package for WinampCtrl
+c:\program files\borland\delphi7\Projects\Bpl\vacomm7.bpl=TMS Async32
 [HistoryLists\hlConditionals]
 Count=1
 Item0=madExcept
