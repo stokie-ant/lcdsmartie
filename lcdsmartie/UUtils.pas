@@ -188,8 +188,23 @@ begin
 
         if (posComma >= posArgsEnd) then
         begin
-          args[numArgs] := AnsiMidStr(str, posComma2+1, posArgsEnd-PosComma2);
-          Inc(numArgs);
+          if (str[posComma] = ',') then
+          //cope with last parameter being empty
+          begin
+            args[numArgs] := AnsiMidStr(str, posComma2+1, posComma-(PosComma2+1));
+            Inc(numArgs);
+
+            if (numArgs < maxArgs) then
+            begin
+              args[numArgs] := '';
+              Inc(numArgs);
+            end;
+          end
+          else
+          begin
+            args[numArgs] := AnsiMidStr(str, posComma2+1, posComma-PosComma2);
+            Inc(numArgs);
+          end;
         end
         else
         begin

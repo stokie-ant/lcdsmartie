@@ -15,6 +15,7 @@ Changes
 	- Double clicking a command title, inserts the command.
 	- Add some more default RSS feeds.
 	- Fixed Div by Zero bug that could happen on screen 'interactions'.
+	- Correcly parse when last parameter of command is empty.
 5.3 rc2
 	- Fixed bug when used with high refresh rates (scrolling and
 	  other things just stopped working!)
