@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.14 $ $Date: 2004/11/20 23:51:01 $
+ *  $Revision: 1.15 $ $Date: 2004/11/21 21:24:03 $
  *****************************************************************************}
 
 
@@ -155,6 +155,7 @@ type
       netErrorsDown, netErrorsUp, netSpeedDownK, netSpeedUpK, netSpeedDownM,
       netSpeedUpM, nettotaldownold, nettotalupold: Array[0..9] of double;
       ipaddress: String;
+    // Begin MBM Stats
     Temperature: Array [1..11] of double;
     Voltage: Array [1..11] of double;
     Fan: Array [1..11] of double;
@@ -162,7 +163,9 @@ type
     TempName: Array[1..11] of String;
     VoltName: Array[1..11] of String;
     FanName: Array[1..11] of String;
+    dMbmCpuUsage: double;
     SharedData: PSharedData;
+    // End MBM Stats
     replline2, replline1, uptimereg, uptimeregs: String;
     qstatreg1: Array[1..20, 1..4] of String;
     qstatreg2: Array[1..20, 1..4] of String;
@@ -1681,20 +1684,25 @@ begin
   if (t - lastCpuUpdate > (ticksperseconde div 4)) then
   begin
     lastCpuUpdate := t;
-    //try
-      {  CPUUsage[CPUUsagePos] := cxCpu[0].Usage.Value.AsNumber;}
-    CollectCPUData;
-    rawcpu := adCpuUsage.GetCPUUsage(0);
+    try
+      CollectCPUData;
+      rawcpu := adCpuUsage.GetCPUUsage(0);
+      rawcpu := abs(rawcpu) * 100;
+    except
 
-    if (rawcpu <= 1.1) and (rawcpu >= -0.1) then
-    begin
-      CPUUsage[CPUUsagePos] := Trunc(abs(rawcpu) * 100);
-      Inc(CPUUsagePos);
-      if (CPUUsagePos > 5) then CPUUsagePos := 1;
-      if (CPUUsageCount < 5) then Inc(CPUUsageCount);
+      // The above (CollectCPUData/GetCPUUsage) can fail if the processor
+      // Usage performance counter doesn't exist.
+      // Use the MBM Usage counter instead... It will most likely to 0.
+      rawcpu := dMbmCpuUsage;
     end;
-    //except
-    //end;
+
+    if (rawcpu > 100) then rawcpu := 100;
+    if (rawcpu < 0) then rawcpu := 0;
+
+    CPUUsage[CPUUsagePos] := Trunc(rawcpu);
+    Inc(CPUUsagePos);
+    if (CPUUsagePos > 5) then CPUUsagePos := 1;
+    if (CPUUsageCount < 5) then Inc(CPUUsageCount);
 
     total := 0;
     for y := 1 to CPUUsageCount do total := total + CPUUsage[y];
@@ -1793,6 +1801,10 @@ begin
             tempmhz := tempmhz + 1;
             if tempmhz > 5 then tempmhz := 5;
             CPU[tempmhz] := ssCurrent;
+          end;
+          if ssType = stPercentage then
+          begin
+            dMbmCpuUsage := ssCurrent;
           end;
         end;
       end;
@@ -1925,6 +1937,7 @@ begin
         if (pos('$Fan', screenline) <> 0) then mbm := 1;
         if (pos('$Volt', screenline) <> 0) then mbm := 1;
         if (pos('$Temp', screenline) <> 0) then mbm := 1;
+        if (pos('$CPUUsage', screenline) <> 0) then mbm := 1; // used as backup.
         if (pos('$HD', screenline) <> 0) then hd := 1;
         if (pos('$Dnet', screenline) <> 0) then replz := 1;
       end;
