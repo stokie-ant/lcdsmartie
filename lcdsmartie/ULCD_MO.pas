@@ -96,6 +96,11 @@ begin
     raise exception.Create('Failed to open USB Palm for writing: '
         + errMsg(GetLastError));
 
+  // Do the standard setup now before creating the read thead.
+  // The standard setup writes to the device, and so will detect any problems
+  // communicating with it.
+  Create;
+
   // CriticalSection to protect read buffer
   csRead := TCriticalSection.Create;
   // event to wait up read Thread so we can exit it.
@@ -104,15 +109,12 @@ begin
   // read thread
   readThread:= TMyThread.Create(self.doReadThread);
   readThread.Resume;
-
-  Create;
 end;
 
 constructor TLCD_MO.Create;
 var
   g: Integer;
 begin
-  bConnected := True;
 
   for g := 1 to 8 do
   begin
@@ -142,6 +144,7 @@ begin
 
   setbacklight(true);
 
+  bConnected := True;
   inherited Create;
 end;
 
