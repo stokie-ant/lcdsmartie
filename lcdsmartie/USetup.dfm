@@ -29,7 +29,7 @@ object Form2: TForm2
     Top = 0
     Width = 233
     Height = 409
-    ActivePage = TabSheet4
+    ActivePage = TabSheet7
     Font.Charset = ANSI_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
@@ -809,8 +809,8 @@ object Form2: TForm2
           'Degree symbol ('#176')'
           'Block ('#382')'
           '$Chr(20)'
-          '$File("C:\file.txt",2)  (2=2nd line)'
-          '$LogFile("C:\file.txt",0-3) (last-2 line)'
+          '$File(C:\file.txt,2)  (2=2nd line)'
+          '$LogFile(C:\file.txt,0-3) (last-2 line)'
           '$dll(demo.dll,5,param1,param2)'
           '$Count(101#$CPUSpeed#4)'
           '$Bar(current,total,length)'

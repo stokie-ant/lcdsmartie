@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.5 $ $Date: 2004/11/17 20:37:41 $
+ *  $Revision: 1.6 $ $Date: 2004/11/17 23:54:13 $
  *****************************************************************************}
 
 
@@ -36,6 +36,7 @@ const
   ticksperseconde = 1000;
   maxRss = 10;
   maxRssItems = 20;
+  MAXNETSTATS = 10;
 
 type
   TBusType     = (btISA, btSMBus,btVIA686ABus, btDirectIO);
@@ -144,7 +145,7 @@ type
       lastCpuUpdate: LongWord;
       dataThread: TMyThread;
       koeregel,screenResolution:string;
-      netadaptername: array[0..9] of String;
+      netadaptername: array[0..MAXNETSTATS-1] of String;
       nettotaldown,nettotalup,netunicastdown,netunicastup,
       netnunicastDown,netnunicastUp,netDiscardsDown,netDiscardsUp,
       netErrorsDown,netErrorsUp,netSpeedDownK,netSpeedUpK, netSpeedDownM,
@@ -1465,6 +1466,8 @@ var
   phoste: PHostEnt;
   Buffer: array [0..100] of char;
   WSAData: TWSADATA;
+  maxEntries: Cardinal;
+  status: Integer;
 
 begin
   netwerk:=0;
@@ -1476,7 +1479,18 @@ begin
   end;
 
 if netwerk=1 then begin
-  if WSAStartup($0101, WSAData) <> 0 then exit;
+  status:=WSAStartup($0101, WSAData);
+  if status <> 0 then begin
+    ipaddress:='[WSAStartup Failed: ';
+    case status of
+      WSASYSNOTREADY:     ipaddress:=ipaddress+' WSASYSNOTREADY]';
+      WSAVERNOTSUPPORTED: ipaddress:=ipaddress+' WSAVERNOTSUPPORTED]';
+      WSAEPROCLIM:        ipaddress:=ipaddress+' WSAPROCLIM]';
+      WSAEFAULT:          ipaddress:=ipaddress+' WSAEFAULT]';
+      else                ipaddress:=ipaddress+' Unknown]';
+    end;
+    exit;
+  end;
   GetHostName(Buffer,Sizeof(Buffer));
   phoste:=GetHostByName(buffer);
   if phoste = nil then ipaddress:='127.0.0.1'
@@ -1489,11 +1503,13 @@ if netwerk=1 then begin
   try
     if GetIfTable(IntfTable, Size, True) = NO_ERROR then
     begin
-      for I := 0 to IntfTable^.dwNumEntries - 1 do
+      maxEntries:= IntfTable^.dwNumEntries;
+      if (maxEntries > MAXNETSTATS) then maxEntries := MAXNETSTATS;
+      for I := 0 to maxEntries - 1 do
       begin
         {$R-}MibRow := IntfTable.Table[I];{$R+}
         // Ignore everything except ethernet cards
-        if MibRow.dwType <> MIB_IF_TYPE_ETHERNET then Continue;
+        //if MibRow.dwType <> MIB_IF_TYPE_ETHERNET then Continue;
 
         netadaptername[I]:=stripspaces(PChar(@MibRow.bDescr[0]));
         nettotaldown[I]:=MibRow.dwInOctets;

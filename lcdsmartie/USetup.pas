@@ -19,7 +19,7 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.5 $ $Date: 2004/11/17 14:33:59 $
+ *  $Revision: 1.6 $ $Date: 2004/11/17 23:54:13 $
  *****************************************************************************}
 
 interface
@@ -1192,8 +1192,8 @@ begin
     if listbox1.itemindex = 5 then Edit9.Text:='°';
     if listbox1.itemindex = 6 then Edit9.Text:='ž';
     if listbox1.itemindex = 7 then Edit9.Text:='$Chr(20)';
-    if listbox1.itemindex = 8 then Edit9.Text:='$File("C:\file.txt",1)';
-    if listbox1.itemindex = 9 then Edit9.Text:='$LogFile("C:\file.log",0)';
+    if listbox1.itemindex = 8 then Edit9.Text:='$File(C:\file.txt,1)';
+    if listbox1.itemindex = 9 then Edit9.Text:='$LogFile(C:\file.log,0)';
     if listbox1.itemindex = 10 then Edit9.Text:='$dll(demo.dll,5,param1,param2)';
     if listbox1.itemindex = 11 then Edit9.Text:='$Count(101#$CPUSpeed#4)';
     if listbox1.itemindex = 12 then Edit9.Text:='$Bar(30,100,20)';
