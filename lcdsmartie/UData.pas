@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.15 $ $Date: 2004/11/21 21:24:03 $
+ *  $Revision: 1.16 $ $Date: 2004/11/24 14:54:03 $
  *****************************************************************************}
 
 
@@ -150,11 +150,12 @@ type
     replline,
       screenResolution: String;
     netadaptername: Array[0..MAXNETSTATS-1] of String;
-    nettotaldown, nettotalup, netunicastdown, netunicastup,
-      netnunicastDown, netnunicastUp, netDiscardsDown, netDiscardsUp,
-      netErrorsDown, netErrorsUp, netSpeedDownK, netSpeedUpK, netSpeedDownM,
-      netSpeedUpM, nettotaldownold, nettotalupold: Array[0..9] of double;
-      ipaddress: String;
+    iNetTotalDown, iNetTotalDownOld, iPrevSysNetTotalDown: Array[0..9] of Int64;
+    iNetTotalUp, iNetTotalUpOld, iPrevSysNetTotalUp: Array[0..9] of Int64;
+    netunicastdown, netunicastup, netnunicastDown, netnunicastUp,
+     netDiscardsDown, netDiscardsUp, netErrorsDown, netErrorsUp,
+     netSpeedDownK, netSpeedUpK, netSpeedDownM, netSpeedUpM: Array[0..9] of double;
+    ipaddress: String;
     // Begin MBM Stats
     Temperature: Array [1..11] of double;
     Voltage: Array [1..11] of double;
@@ -669,7 +670,7 @@ begin
   begin
     try
       adapterNum := StrToInt(args[1]);
-      line := prefix + floatToStr(Round(nettotaldown[adapterNum]/1024*10)/10)
+      line := prefix + floatToStr(Round(iNetTotalDown[adapterNum]/1024*10)/10)
         + postfix;
     except
       on E: Exception do line := prefix + '[NetDownK: '
@@ -681,7 +682,7 @@ begin
   begin
     try
       adapterNum := StrToInt(args[1]);
-      line := prefix + floatToStr(Round(nettotalup[adapterNum]/1024*10)/10) +
+      line := prefix + floatToStr(Round(iNetTotalUp[adapterNum]/1024*10)/10) +
         postfix;
     except
       on E: Exception do line := prefix + '[NetUpK: ' + CleanString(E.Message)
@@ -694,7 +695,7 @@ begin
     try
       adapterNum := StrToInt(args[1]);
       line := prefix +
-        floatToStr(Round(nettotaldown[adapterNum]/1024/1024*10)/10) + postfix;
+        floatToStr(Round((iNetTotalDown[adapterNum] div 1024)/1024*10)/10) + postfix;
     except
       on E: Exception do line := prefix + '[NetDownM: '
         + CleanString(E.Message) + ']' + postfix;
@@ -707,7 +708,7 @@ begin
     try
       adapterNum := StrToInt(args[1]);
       line := prefix +
-        floatToStr(Round(nettotalup[adapterNum]/1024/1024*10)/10) + postfix;
+        floatToStr(Round((iNetTotalUp[adapterNum] div 1024)/1024*10)/10) + postfix;
     except
       on E: Exception do line := prefix + '[NetUpM: '
         + CleanString(E.Message) + ']' + postfix;
@@ -720,7 +721,7 @@ begin
     try
       adapterNum := StrToInt(args[1]);
       line := prefix +
-        floatToStr(Round(nettotaldown[adapterNum]/1024/1024/1024*10)/10) +
+        floatToStr(Round((iNetTotalDown[adapterNum] div (1024*1024))/1024*10)/10) +
         postfix;
     except
       on E: Exception do line := prefix + '[NetDownG: '
@@ -734,7 +735,7 @@ begin
     try
       adapterNum := StrToInt(args[1]);
       line := prefix +
-        floatToStr(Round(nettotalup[adapterNum]/1024/1024/1024*10)/10) +
+        floatToStr(Round((iNetTotalUp[adapterNum] div (1024*1024))/1024*10)/10) +
         postfix;
     except
       on E: Exception do line := prefix + '[NetUpG: ' +
@@ -1879,8 +1880,37 @@ begin
         //if MibRow.dwType <> MIB_IF_TYPE_ETHERNET then Continue;
 
           netadaptername[I] := stripspaces(PChar(@MibRow.bDescr[0]));
-          nettotaldown[I] := MibRow.dwInOctets;
-          nettotalup[I] := MibRow.dwOutOctets;
+
+          // System values have a limit of 4Gb, so keep our own values,
+          // and track overflows.
+          if (MibRow.dwInOctets < iPrevSysNetTotalDown[I]) then
+          begin
+            // System values have wrapped (at 4Gb)
+            iNetTotalDown[I] := iNetTotalDown[I] + MibRow.dwInOctets
+              + (MAXDWORD - iPrevSysNetTotalDown[I])
+          end
+          else
+          begin
+            iNetTotalDown[I] := iNetTotalDown[I]
+              + (MibRow.dwInOctets - iPrevSysNetTotalDown[I]);
+          end;
+          iPrevSysNetTotalDown[I] := MibRow.dwInOctets;
+
+          // System values have a limit of 4Gb, so keep our own values,
+          // and track overflows.
+          if (MibRow.dwOutOctets < iPrevSysNetTotalUp[I]) then
+          begin
+            // System values have wrapped (at 4Gb)
+            iNetTotalUp[I] := iNetTotalUp[I] + MibRow.dwOutOctets
+              + (MAXDWORD - iPrevSysNetTotalUp[I])
+          end
+          else
+          begin
+            iNetTotalUp[I] := iNetTotalUp[I]
+              + (MibRow.dwOutOctets - iPrevSysNetTotalUp[I]);
+          end;
+          iPrevSysNetTotalUp[I] := MibRow.dwOutOctets;
+
           netunicastdown[I] := MibRow.dwInUcastPkts;
           netunicastup[I] := MibRow.dwOutUcastPkts;
           netnunicastDown[I] := MibRow.dwInNUcastPkts;
@@ -1890,15 +1920,15 @@ begin
           netErrorsDown[I] := MibRow.dwInErrors;
           netErrorsUp[I] := MibRow.dwOutErrors;
           netSpeedDownK[I] :=
-            round((nettotaldown[I]-nettotaldownold[I])/1024*10)/10;
+            round((iNetTotalDown[I]-iNetTotalDownOld[I])/1024*10)/10;
           netSpeedUpK[I] :=
-            round((nettotalup[I]-nettotalupold[I])/1024*10)/10;
+            round((iNetTotalUp[I]-iNetTotalupOld[I])/1024*10)/10;
           netSpeedDownM[I] :=
-            round((nettotaldown[I]-nettotaldownold[I])/1024/1024*10)/10;
+            round(((iNetTotalDown[I]-iNetTotalDownOld[I]) div 1024)/1024*10)/10;
           netSpeedUpM[I] :=
-            round((nettotalup[I]-nettotalupold[I])/1024/1024*10)/10;
-          nettotaldownold[I] := nettotaldown[I];
-          nettotalupold[I] := nettotalup[I];
+            round(((iNetTotalUp[I]-iNetTotalUpOld[I]) div 1024)/1024*10)/10;
+          iNetTotalDownOld[I] := iNetTotalDown[I];
+          iNetTotalUpOld[I] := iNetTotalUp[I];
         end;
       end;
     finally

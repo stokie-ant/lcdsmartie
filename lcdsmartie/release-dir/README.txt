@@ -21,6 +21,8 @@ Changes
 =======
 5.3Alpha3
 	- Actions moved from action.cfg to config.ini.
+	- Fixed bug where some Crystalfontz display weren't working.
+	- Fixed bug [1069517] Total downloaded limit at 4gb.
 	- Fixed bug [1071793] Exception: Cannot focus a disabled or
 	  invisible window.
 	- Fixed bug [1070868] Minimise whilst in setup is broken.
