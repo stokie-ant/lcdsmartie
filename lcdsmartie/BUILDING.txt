@@ -1,17 +1,46 @@
 
+Delphi Version
+==============
+This project is built using Delphi Version 7.
 
-This project can not be built by trial versions of Delphi Studio; trail versions do
-not allow binary only components to be installed and will fail stating that they
-can't find the xxxx.pas file.
+NB: This project can not be built by trial versions of Delphi Studio;
+trail versions do not allow binary only components to be installed and
+will fail stating that they can't find the xxxx.pas file.
+[This restriction could be removed if we were to use different code for
+handling the serial port.]
 
-
-This project requires the following components to be installed and in the projects path:
+Required Components
+===================
+This project requires the following components to be installed and in
+the projects path:
  - CoolTrayIcon from: http://subsimple.com/delphi.asp
  - Async32 from: http://www.tmssoftware.com/
  - WinampCtrl.
 
-
 All of these components can be found in the components sub-directory.
 
-
 Install all components before loading the LCD Smartie project.
+
+Optional Software
+=================
+We also use madExcept (Optional), this is used for reporting errors
+back to us from the user (also provides a great stack trace).
+[This can also be found in the components sub-directory - or downloaded
+from http://www.madexcept.com/]
+
+Setting up the environment
+==========================
+Copy all the files (but not the subdirectories) from release-dir to the top
+level directory - these are required for running the build.
+
+
+---------------------------------------------------------------
+Creating a release
+==================
+[This should be handled by a script or something - but is manual for the
+moment]
+- Copy the files (but not the subdirectories) from the images directory, into
+  an images directory.
+- Copy the whole of the plugins directory into the release directory.
+[To be continued]
+
