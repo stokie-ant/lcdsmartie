@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.16 $ $Date: 2004/11/24 14:54:03 $
+ *  $Revision: 1.17 $ $Date: 2004/11/24 16:00:00 $
  *****************************************************************************}
 
 
@@ -152,9 +152,10 @@ type
     netadaptername: Array[0..MAXNETSTATS-1] of String;
     iNetTotalDown, iNetTotalDownOld, iPrevSysNetTotalDown: Array[0..9] of Int64;
     iNetTotalUp, iNetTotalUpOld, iPrevSysNetTotalUp: Array[0..9] of Int64;
-    netunicastdown, netunicastup, netnunicastDown, netnunicastUp,
-     netDiscardsDown, netDiscardsUp, netErrorsDown, netErrorsUp,
-     netSpeedDownK, netSpeedUpK, netSpeedDownM, netSpeedUpM: Array[0..9] of double;
+    uiNetUnicastDown, uiNetUnicastUp, uiNetNonUnicastDown,
+      uiNetNonUnicastUp,  uiNetDiscardsDown, uiNetDiscardsUp,
+      uiNetErrorsDown, uiNetErrorsUp: Array[0..9] of Cardinal;
+    dNetSpeedDownK, dNetSpeedUpK, dNetSpeedDownM, dNetSpeedUpM: Array[0..9] of double;
     ipaddress: String;
     // Begin MBM Stats
     Temperature: Array [1..11] of double;
@@ -670,8 +671,8 @@ begin
   begin
     try
       adapterNum := StrToInt(args[1]);
-      line := prefix + floatToStr(Round(iNetTotalDown[adapterNum]/1024*10)/10)
-        + postfix;
+      line := prefix + FloatToStrF(Round(iNetTotalDown[adapterNum]/1024*10)/10,
+        ffFixed, 18, 1) + postfix;
     except
       on E: Exception do line := prefix + '[NetDownK: '
         + CleanString(E.Message) + ']' + postfix;
@@ -682,8 +683,8 @@ begin
   begin
     try
       adapterNum := StrToInt(args[1]);
-      line := prefix + floatToStr(Round(iNetTotalUp[adapterNum]/1024*10)/10) +
-        postfix;
+      line := prefix + FloatToStrF(Round(iNetTotalUp[adapterNum]/1024*10)/10,
+        ffFixed, 18, 1) + postfix;
     except
       on E: Exception do line := prefix + '[NetUpK: ' + CleanString(E.Message)
         + ']' + postfix;
@@ -695,7 +696,8 @@ begin
     try
       adapterNum := StrToInt(args[1]);
       line := prefix +
-        floatToStr(Round((iNetTotalDown[adapterNum] div 1024)/1024*10)/10) + postfix;
+         FloatToStrF(Round((iNetTotalDown[adapterNum] div 1024)/1024*10)/10,
+         ffFixed, 18, 1) + postfix;
     except
       on E: Exception do line := prefix + '[NetDownM: '
         + CleanString(E.Message) + ']' + postfix;
@@ -708,7 +710,8 @@ begin
     try
       adapterNum := StrToInt(args[1]);
       line := prefix +
-        floatToStr(Round((iNetTotalUp[adapterNum] div 1024)/1024*10)/10) + postfix;
+        FloatToStrF(Round((iNetTotalUp[adapterNum] div 1024)/1024*10)/10,
+        ffFixed, 18, 1) + postfix;
     except
       on E: Exception do line := prefix + '[NetUpM: '
         + CleanString(E.Message) + ']' + postfix;
@@ -721,7 +724,8 @@ begin
     try
       adapterNum := StrToInt(args[1]);
       line := prefix +
-        floatToStr(Round((iNetTotalDown[adapterNum] div (1024*1024))/1024*10)/10) +
+        FloatToStrF(Round((iNetTotalDown[adapterNum] div (1024*1024))/1024*10)/10,
+        ffFixed, 18, 1) +
         postfix;
     except
       on E: Exception do line := prefix + '[NetDownG: '
@@ -735,8 +739,8 @@ begin
     try
       adapterNum := StrToInt(args[1]);
       line := prefix +
-        floatToStr(Round((iNetTotalUp[adapterNum] div (1024*1024))/1024*10)/10) +
-        postfix;
+        FloatToStrF(Round((iNetTotalUp[adapterNum] div (1024*1024))/1024*10)/10,
+        ffFixed, 18, 1) + postfix;
     except
       on E: Exception do line := prefix + '[NetUpG: ' +
         CleanString(E.Message) + ']' + postfix;
@@ -748,7 +752,7 @@ begin
     assert(numargs = 1);
     try
       adapterNum := StrToInt(args[1]);
-      line := prefix + FloatToStr(netErrorsDown[adapterNum]) + postfix;
+      line := prefix + IntToStr(uiNetErrorsDown[adapterNum]) + postfix;
     except
       on E: Exception do line := prefix + '[NetErrDown: '
         + CleanString(E.Message) + ']' + postfix;
@@ -760,7 +764,7 @@ begin
     assert(numargs = 1);
     try
       adapterNum := StrToInt(args[1]);
-      line := prefix + FloatToStr(netErrorsUp[adapterNum]) + postfix;
+      line := prefix + IntToStr(uiNetErrorsUp[adapterNum]) + postfix;
     except
       on E: Exception do line := prefix + '[NetErrUp: '
         + CleanString(E.Message) + ']' + postfix;
@@ -772,8 +776,8 @@ begin
     assert(numargs = 1);
     try
       adapterNum := StrToInt(args[1]);
-      line := prefix + FloatToStr(netErrorsDown[adapterNum] +
-        netErrorsUp[adapterNum]) + postfix;
+      line := prefix + IntToStr(uiNetErrorsDown[adapterNum] +
+        uiNetErrorsUp[adapterNum]) + postfix;
     except
       on E: Exception do line := prefix + '[NetErrTot: '
         + CleanString(E.Message) + ']' + postfix;
@@ -785,7 +789,7 @@ begin
     assert(numargs = 1);
     try
       adapterNum := StrToInt(args[1]);
-      line := prefix + FloatToStr(netunicastdown[adapterNum]) + postfix;
+      line := prefix + IntToStr(uiNetUnicastDown[adapterNum]) + postfix;
     except
       on E: Exception do line := prefix + '[NetUniDown: '
         + CleanString(E.Message) + ']' + postfix;
@@ -797,7 +801,7 @@ begin
     assert(numargs = 1);
     try
       adapterNum := StrToInt(args[1]);
-      line := prefix + FloatToStr(netunicastup[adapterNum]) + postfix;
+      line := prefix + IntToStr(uiNetUnicastUp[adapterNum]) + postfix;
     except
       on E: Exception do line := prefix + '[NetUniUp: '
         + CleanString(E.Message) + ']' + postfix;
@@ -809,8 +813,8 @@ begin
     assert(numargs = 1);
     try
       adapterNum := StrToInt(args[1]);
-      line := prefix + FloatToStr(netunicastup[adapterNum] +
-        netunicastdown[adapterNum]) + postfix;
+      line := prefix + IntToStr(uiNetUnicastUp[adapterNum]
+        + uiNetUnicastDown[adapterNum]) + postfix;
     except
       on E: Exception do line := prefix + '[NetUniTot: '
         + CleanString(E.Message) + ']' + postfix;
@@ -822,7 +826,7 @@ begin
     assert(numargs = 1);
     try
       adapterNum := StrToInt(args[1]);
-      line := prefix + FloatToStr(netnunicastdown[adapterNum]) + postfix;
+      line := prefix + IntToStr(uiNetNonUnicastDown[adapterNum]) + postfix;
     except
       on E: Exception do line := prefix + '[NetNuniDown: '
         + CleanString(E.Message) + ']' + postfix;
@@ -834,7 +838,7 @@ begin
     assert(numargs = 1);
     try
       adapterNum := StrToInt(args[1]);
-      line := prefix + FloatToStr(netnunicastup[adapterNum]) + postfix;
+      line := prefix + IntToStr(uiNetNonUnicastUp[adapterNum]) + postfix;
     except
       on E: Exception do line := prefix + '[NetNuniUp: '
         + CleanString(E.Message) + ']' + postfix;
@@ -846,8 +850,8 @@ begin
     assert(numargs = 1);
     try
       adapterNum := StrToInt(args[1]);
-      line := prefix + FloatToStr(netnunicastup[adapterNum] +
-        netnunicastdown[adapterNum]) + postfix;
+      line := prefix + IntToStr(uiNetNonUnicastUp[adapterNum]
+        + uiNetNonUnicastDown[adapterNum]) + postfix;
     except
       on E: Exception do line := prefix + '[NetNuniTot: ' + E.Message + ']' +
         postfix;
@@ -859,9 +863,9 @@ begin
     assert(numargs = 1);
     try
       adapterNum := StrToInt(args[1]);
-      line := prefix + FloatToStr(netnunicastup[adapterNum] +
-        netnunicastdown[adapterNum] + netunicastdown[adapterNum] +
-        netunicastup[adapterNum]) + postfix;
+      line := prefix + IntToStr(Int64(uiNetNonUnicastUp[adapterNum]) +
+        uiNetNonUnicastDown[adapterNum] + uiNetUnicastDown[adapterNum] +
+        uiNetUnicastUp[adapterNum]) + postfix;
     except
       on E: Exception do line := prefix + '[NetPackTot: '
         + CleanString(E.Message) + ']' + postfix;
@@ -873,7 +877,7 @@ begin
     assert(numargs = 1);
     try
       adapterNum := StrToInt(args[1]);
-      line := prefix + FloatToStr(netDiscardsdown[adapterNum]) + postfix;
+      line := prefix + IntToStr(uiNetDiscardsDown[adapterNum]) + postfix;
     except
       on E: Exception do line := prefix + '[NetDiscDown: '
         + CleanString(E.Message) + ']' + postfix;
@@ -885,7 +889,7 @@ begin
     assert(numargs = 1);
     try
       adapterNum := StrToInt(args[1]);
-      line := prefix + FloatToStr(netDiscardsup[adapterNum]) + postfix;
+      line := prefix + IntToStr(uiNetDiscardsUp[adapterNum]) + postfix;
     except
       on E: Exception do line := prefix + '[NetDiscUp: '
         + CleanString(E.Message) + ']' + postfix;
@@ -898,8 +902,8 @@ begin
     assert(numargs = 1);
     try
       adapterNum := StrToInt(args[1]);
-      line := prefix + FloatToStr(netDiscardsup[adapterNum] +
-        netDiscardsdown[adapterNum]) + postfix;
+      line := prefix + IntToStr(uiNetDiscardsUp[adapterNum] +
+        uiNetDiscardsDown[adapterNum]) + postfix;
     except
       on E: Exception do line := prefix + '[NetDiscTot: '
         + CleanString(E.Message) + ']' + postfix;
@@ -912,7 +916,8 @@ begin
     assert(numargs = 1);
     try
       adapterNum := StrToInt(args[1]);
-      line := prefix + FloatToStr(netSpeeddownK[adapterNum]) + postfix;
+      line := prefix + FloatToStrF(dNetSpeedDownK[adapterNum], ffFixed, 18, 1)
+        + postfix;
     except
       on E: Exception do line := prefix + '[NetSpDownK: '
         + CleanString(E.Message) + ']' + postfix;
@@ -925,7 +930,8 @@ begin
     assert(numargs = 1);
     try
       adapterNum := StrToInt(args[1]);
-      line := prefix + FloatToStr(netSpeedupK[adapterNum]) + postfix;
+      line := prefix + FloatToStrF(dNetSpeedUpK[adapterNum], ffFixed, 18, 1)
+        + postfix;
     except
       on E: Exception do line := prefix + '[NetSpUpK: '
         + CleanString(E.Message) + ']' + postfix;
@@ -938,7 +944,8 @@ begin
     assert(numargs = 1);
     try
       adapterNum := StrToInt(args[1]);
-      line := prefix + FloatToStr(netSpeeddownM[adapterNum]) + postfix;
+      line := prefix + FloatToStrF(dNetSpeedDownM[adapterNum], ffFixed, 18, 1)
+        + postfix;
     except
       on E: Exception do line := prefix + '[NetSpDownM: '
         + CleanString(E.Message) + ']' + postfix;
@@ -951,7 +958,8 @@ begin
     assert(numargs = 1);
     try
       adapterNum := StrToInt(args[1]);
-      line := prefix + FloatToStr(netSpeedupM[adapterNum]) + postfix;
+      line := prefix + FloatToStrF(dNetSpeedUpM[adapterNum], ffFixed, 18, 1)
+        + postfix;
     except
       on E: Exception do line := prefix + '[NetSpUpM: '
         + CleanString(E.Message) + ']' + postfix;
@@ -1911,21 +1919,21 @@ begin
           end;
           iPrevSysNetTotalUp[I] := MibRow.dwOutOctets;
 
-          netunicastdown[I] := MibRow.dwInUcastPkts;
-          netunicastup[I] := MibRow.dwOutUcastPkts;
-          netnunicastDown[I] := MibRow.dwInNUcastPkts;
-          netnunicastUp[I] := MibRow.dwOutNUcastPkts;
-          netDiscardsDown[I] := MibRow.dwInDiscards;
-          netDiscardsUp[I] := MibRow.dwOutDiscards;
-          netErrorsDown[I] := MibRow.dwInErrors;
-          netErrorsUp[I] := MibRow.dwOutErrors;
-          netSpeedDownK[I] :=
+          uiNetUnicastDown[I] := MibRow.dwInUcastPkts;
+          uiNetUnicastUp[I] := MibRow.dwOutUcastPkts;
+          uiNetNonUnicastDown[I] := MibRow.dwInNUcastPkts;
+          uiNetNonUnicastUp[I] := MibRow.dwOutNUcastPkts;
+          uiNetDiscardsDown[I] := MibRow.dwInDiscards;
+          uiNetDiscardsUp[I] := MibRow.dwOutDiscards;
+          uiNetErrorsDown[I] := MibRow.dwInErrors;
+          uiNetErrorsUp[I] := MibRow.dwOutErrors;
+          dNetSpeedDownK[I] :=
             round((iNetTotalDown[I]-iNetTotalDownOld[I])/1024*10)/10;
-          netSpeedUpK[I] :=
+          dNetSpeedUpK[I] :=
             round((iNetTotalUp[I]-iNetTotalupOld[I])/1024*10)/10;
-          netSpeedDownM[I] :=
+          dNetSpeedDownM[I] :=
             round(((iNetTotalDown[I]-iNetTotalDownOld[I]) div 1024)/1024*10)/10;
-          netSpeedUpM[I] :=
+          dNetSpeedUpM[I] :=
             round(((iNetTotalUp[I]-iNetTotalUpOld[I]) div 1024)/1024*10)/10;
           iNetTotalDownOld[I] := iNetTotalDown[I];
           iNetTotalUpOld[I] := iNetTotalUp[I];
