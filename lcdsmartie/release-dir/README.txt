@@ -1,5 +1,4 @@
 
-
 Please see our website for instructions and the latest information:
 		http://lcdsmartie.sourceforge.net/
 
@@ -19,15 +18,6 @@ Please see our website for instructions and the latest information:
 * experimental.]
 *
 *************************************************************************
-* Help the project! Design screens for use in the default config(s), I'm
-* looking for screens that make use of plugins and  those that don't.
-* I'm also interested in screens for different screen sizes.
-*************************************************************************
-
-Beta builds
-===========
-These builds are believed to be stable but the developer(s) do not have access
-to all supported LCD types and/or use all the features of LCD Smartie.
 
 BUGS KNOWN
 ==========
