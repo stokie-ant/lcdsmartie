@@ -1,4 +1,0 @@
-; dlltool --base-file C:\DOCUME~1\Chris\LOCALS~1\Temp/cca00744.base --output-exp DemoC++Plugin.exp --dllname DemoC++Plugin.dll --output-def libDemoC++Plugin.def --no-export-all-symbols --exclude-symbol=DllMainCRTStartup@12 --def C:\DOCUME~1\Chris\LOCALS~1\Temp/cca00744.def --output-lib libDemoC++Plugin.a
-EXPORTS
-	function2 @ 1 ; 
-	function1 @ 2 ; 
