@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.36 $ $Date: 2005/01/02 21:37:37 $
+ *  $Revision: 1.37 $ $Date: 2005/01/02 23:10:07 $
  *****************************************************************************}
 
 interface
@@ -466,6 +466,7 @@ const
 var
   line: String;
   initfile: textfile;
+  i: Integer;
 
 begin
   Randomize;
@@ -479,6 +480,10 @@ begin
   screenLcd[2] := @Panel2;
   screenLcd[3] := @Panel3;
   screenLcd[4] := @Panel4;
+
+  // Sync the display to our initial view of the custom chars.
+  for i:= 1 to 8 do
+    customCharsChanged[i] := true;
 
 
 //SetWindowLong(Application.Handle, GWL_EXSTYLE, GetWindowLong(Application.Handle, GWL_EXSTYLE) or WS_EX_TOOLWINDOW and not W
@@ -2338,7 +2343,7 @@ end;
 procedure TForm1.Timer13Timer(Sender: TObject);
 begin
   timer13.Interval := 0;
-  timer13.Interval := config.scrollPeriod;
+  timer13.Interval := config.dllPeriod;
   Data.dllcancheck := true;
 end;
 
