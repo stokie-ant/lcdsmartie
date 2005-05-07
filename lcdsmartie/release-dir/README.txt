@@ -13,6 +13,7 @@ Changes
 	- Fixed an overflow exception in the HD44870 code.
 	- Matrix Orbital: Fixed a crash when open failed.
 	- Fixed crash that occured in settings dialog.
+	- Un-randomized the tab order.
 5.3 final
 	- Fixed possible problem in error reporting.
 	- Added missing actions/commands to UI.

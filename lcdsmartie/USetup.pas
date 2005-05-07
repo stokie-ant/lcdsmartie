@@ -19,7 +19,7 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.32 $ $Date: 2005/01/28 20:35:24 $
+ *  $Revision: 1.33 $ $Date: 2005/05/07 15:54:47 $
  *****************************************************************************}
 
 interface
@@ -157,7 +157,6 @@ type
     Edit6: TEdit;
     Edit7: TEdit;
     Edit8: TEdit;
-    ComboBox7: TComboBox;
     StringGrid1: TStringGrid;
     ListBox11: TListBox;
     Edit16: TEdit;
@@ -199,6 +198,7 @@ type
     Label2: TLabel;
     ComboBox1: TComboBox;
     ComboBox2: TComboBox;
+    ComboBox7: TComboBox;
     procedure Button2Click(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure ComboBox2Change(Sender: TObject);
@@ -256,6 +256,11 @@ type
       TShiftState);
     procedure StickyClick(Sender: TObject);
     procedure StringGrid1Click(Sender: TObject);
+    procedure ComboBox7Change(Sender: TObject);
+    procedure ComboBox9Change(Sender: TObject);
+    procedure ComboBox4Change(Sender: TObject);
+    procedure ComboBox5Change(Sender: TObject);
+    procedure ComboBox1Change(Sender: TObject);
   private
     setupbutton: Integer;
     combobox8temp: Integer;
@@ -558,6 +563,8 @@ end;
 
 procedure TForm2.ComboBox2Change(Sender: TObject);
 begin
+  if combobox2.itemindex < 0 then combobox2.itemindex := 0;
+
   if combobox2.itemindex < 5 then
   begin
     checkbox7.checked := false;
@@ -751,6 +758,7 @@ procedure TForm2.ComboBox3Change(Sender: TObject);
 begin
   SaveScreen(tempscreen + 1);
 
+  if combobox3.itemIndex < 0 then combobox3.itemIndex := 0;
   tempscreen := combobox3.itemindex;
 
   LoadScreen(tempscreen + 1);
@@ -1495,8 +1503,11 @@ end;
 
 procedure TForm2.Edit10Exit(Sender: TObject);
 begin
-  if (setupbutton >= 0) and (setupbutton <= 4) then
+  if (combobox3.itemIndex >= 0 ) and
+     (setupbutton >= 0) and (setupbutton <= 4) then
+  begin
     config.gameServer[combobox3.itemindex + 1, setupbutton] := edit10.text;
+  end;
 end;
 
 procedure TForm2.Button4Click(Sender: TObject);
@@ -1581,6 +1592,8 @@ begin
   config.pop[(combobox8temp + 1) mod 10].server := edit11.text;
   config.pop[(combobox8temp + 1) mod 10].user := edit12.text;
   config.pop[(combobox8temp + 1) mod 10].pword := edit13.text;
+
+  if combobox8.itemIndex < 0 then combobox8.itemindex := 0;
 
   combobox8temp := combobox8.itemindex;
   edit11.text := config.pop[(combobox8temp + 1) mod 10].server;
@@ -2222,6 +2235,31 @@ begin
 
   edit19.text := form2.StringGrid1.Cells[2, selected];
   edit18.text := form2.StringGrid1.Cells[4, selected];
+end;
+
+procedure TForm2.ComboBox7Change(Sender: TObject);
+begin
+  if (combobox7.ItemIndex < 0) then combobox7.ItemIndex := 0;
+end;
+
+procedure TForm2.ComboBox9Change(Sender: TObject);
+begin
+  if combobox9.ItemIndex < 0 then combobox9.itemIndex := 0;
+end;
+
+procedure TForm2.ComboBox4Change(Sender: TObject);
+begin
+  if (combobox4.ItemIndex < 0) then combobox4.ItemIndex := 0;
+end;
+
+procedure TForm2.ComboBox5Change(Sender: TObject);
+begin
+  if combobox5.itemindex < 0 then combobox5.ItemIndex := 0;
+end;
+
+procedure TForm2.ComboBox1Change(Sender: TObject);
+begin
+  if combobox1.ItemIndex < 0 then combobox1.ItemIndex := 0;
 end;
 
 end.

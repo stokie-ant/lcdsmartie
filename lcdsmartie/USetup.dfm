@@ -1,6 +1,6 @@
 object Form2: TForm2
-  Left = 21
-  Top = 181
+  Left = 17
+  Top = 44
   Anchors = []
   BiDiMode = bdLeftToRight
   BorderIcons = []
@@ -38,8 +38,9 @@ object Form2: TForm2
     ParentFont = False
     ParentShowHint = False
     ShowHint = False
-    TabOrder = 0
+    TabOrder = 1
     TabPosition = tpRight
+    TabStop = False
     OnChange = PageControl1Change
     object TabSheet1: TTabSheet
       Caption = 'Winamp'
@@ -347,7 +348,7 @@ object Form2: TForm2
         Hint = 'servername:portnumber portnumber is optional.'
         ParentShowHint = False
         ShowHint = True
-        TabOrder = 2
+        TabOrder = 3
         Text = 'Edit10'
         OnExit = Edit10Exit
       end
@@ -358,7 +359,7 @@ object Form2: TForm2
         Height = 21
         Style = csDropDownList
         ItemHeight = 13
-        TabOrder = 1
+        TabOrder = 2
         OnChange = ComboBox6Change
         Items.Strings = (
           'Half-life'
@@ -380,7 +381,7 @@ object Form2: TForm2
         MaxValue = 10080
         MinValue = 1
         ParentFont = False
-        TabOrder = 0
+        TabOrder = 1
         Value = 3
       end
       object ListBox8: TListBox
@@ -394,7 +395,7 @@ object Form2: TForm2
           'current map'
           'number of players on server'
           'number of frags for each player')
-        TabOrder = 3
+        TabOrder = 0
         OnClick = ListBox8Click
         OnDblClick = Button3Click
       end
@@ -522,7 +523,7 @@ object Form2: TForm2
         Top = 328
         Width = 169
         Height = 21
-        TabOrder = 0
+        TabOrder = 1
         Text = 'BobC'
       end
       object ListBox10: TListBox
@@ -539,7 +540,7 @@ object Form2: TForm2
           'Score'
           'User Rank'
           '')
-        TabOrder = 1
+        TabOrder = 0
         OnClick = ListBox10Click
         OnDblClick = Button3Click
       end
@@ -817,7 +818,7 @@ object Form2: TForm2
         Top = 328
         Width = 153
         Height = 21
-        TabOrder = 1
+        TabOrder = 2
       end
       object SpinEdit8: TSpinEdit
         Left = 128
@@ -833,7 +834,7 @@ object Form2: TForm2
         MaxValue = 1000
         MinValue = 5
         ParentFont = False
-        TabOrder = 2
+        TabOrder = 1
         Value = 200
       end
     end
@@ -912,7 +913,7 @@ object Form2: TForm2
     Font.Name = 'Tahoma'
     Font.Style = []
     ParentFont = False
-    TabOrder = 3
+    TabOrder = 5
     OnClick = Button1Click
   end
   object Button2: TButton
@@ -927,7 +928,7 @@ object Form2: TForm2
     Font.Name = 'Tahoma'
     Font.Style = []
     ParentFont = False
-    TabOrder = 4
+    TabOrder = 6
     OnClick = Button2Click
   end
   object Edit9: TEdit
@@ -945,7 +946,7 @@ object Form2: TForm2
     Font.Name = 'MS Sans Serif'
     Font.Style = []
     ParentFont = False
-    TabOrder = 1
+    TabOrder = 8
     Text = '[Variable]'
   end
   object Button3: TButton
@@ -968,7 +969,7 @@ object Form2: TForm2
     Width = 75
     Height = 25
     Caption = '&Apply'
-    TabOrder = 5
+    TabOrder = 7
     OnClick = Button7Click
   end
   object PageControl2: TPageControl
@@ -977,7 +978,8 @@ object Form2: TForm2
     Width = 577
     Height = 377
     ActivePage = TabSheet11
-    TabOrder = 6
+    TabOrder = 0
+    TabStop = False
     OnChange = PageControl2Change
     object TabSheet11: TTabSheet
       Caption = 'Screens'
@@ -1179,51 +1181,56 @@ object Form2: TForm2
           ParentFont = False
         end
         object CheckBox3: TCheckBox
-          Left = 432
+          Left = 436
           Top = 80
-          Width = 25
+          Width = 17
           Height = 17
           Hint = 'Don'#39't scroll this line.'
+          Caption = ' '
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 0
+          TabOrder = 7
         end
         object CheckBox4: TCheckBox
-          Left = 432
+          Left = 436
           Top = 104
-          Width = 25
+          Width = 17
           Height = 17
           Hint = 'Don'#39't scroll this line.'
+          Caption = ' '
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 1
+          TabOrder = 11
         end
         object CheckBox5: TCheckBox
-          Left = 432
+          Left = 436
           Top = 128
-          Width = 25
+          Width = 17
           Height = 17
           Hint = 'Don'#39't scroll this line.'
+          Caption = ' '
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 2
+          TabOrder = 15
         end
         object CheckBox6: TCheckBox
-          Left = 432
+          Left = 436
           Top = 152
-          Width = 25
+          Width = 17
           Height = 17
           Hint = 'Don'#39't scroll this line.'
+          Caption = ' '
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 3
+          TabOrder = 19
         end
         object GroupBox4: TGroupBox
           Left = 464
           Top = 8
           Width = 2
           Height = 161
-          TabOrder = 7
+          Enabled = False
+          TabOrder = 22
         end
         object CheckBox7: TCheckBox
           Left = 480
@@ -1231,9 +1238,10 @@ object Form2: TForm2
           Width = 17
           Height = 17
           Hint = 'Continue text that doesn'#39't fit on line 1 onto line 2.'
+          Caption = ' '
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 4
+          TabOrder = 8
           OnClick = CheckBox7Click
         end
         object CheckBox8: TCheckBox
@@ -1242,9 +1250,10 @@ object Form2: TForm2
           Width = 17
           Height = 17
           Hint = 'Continue text that doesn'#39't fit on line 2 onto line 3.'
+          Caption = ' '
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 5
+          TabOrder = 12
           OnClick = CheckBox8Click
         end
         object CheckBox9: TCheckBox
@@ -1253,9 +1262,10 @@ object Form2: TForm2
           Width = 17
           Height = 17
           Hint = 'Continue text that doesn'#39't fit on line 3 onto line 4.'
+          Caption = ' '
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 6
+          TabOrder = 16
           OnClick = CheckBox9Click
         end
         object GroupBox5: TGroupBox
@@ -1263,7 +1273,8 @@ object Form2: TForm2
           Top = 8
           Width = 2
           Height = 161
-          TabOrder = 8
+          Enabled = False
+          TabOrder = 23
         end
         object CheckBox10: TCheckBox
           Left = 528
@@ -1271,6 +1282,7 @@ object Form2: TForm2
           Width = 17
           Height = 17
           Hint = 'Center the text in this line (if it'#39's shorter than a full line).'
+          Caption = ' '
           ParentShowHint = False
           ShowHint = True
           TabOrder = 9
@@ -1281,9 +1293,10 @@ object Form2: TForm2
           Width = 17
           Height = 17
           Hint = 'Center the text in this line (if it'#39's shorter than a full line).'
+          Caption = ' '
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 10
+          TabOrder = 13
         end
         object CheckBox12: TCheckBox
           Left = 528
@@ -1291,9 +1304,10 @@ object Form2: TForm2
           Width = 17
           Height = 17
           Hint = 'Center the text in this line (if it'#39's shorter than a full line).'
+          Caption = ' '
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 11
+          TabOrder = 17
         end
         object CheckBox13: TCheckBox
           Left = 528
@@ -1301,16 +1315,18 @@ object Form2: TForm2
           Width = 17
           Height = 17
           Hint = 'Center the text in this line (if it'#39's shorter than a full line).'
+          Caption = ' '
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 12
+          TabOrder = 20
         end
         object GroupBox6: TGroupBox
           Left = 424
           Top = 8
           Width = 2
           Height = 57
-          TabOrder = 13
+          Enabled = False
+          TabOrder = 24
         end
         object SpinEdit7: TSpinEdit
           Left = 256
@@ -1326,7 +1342,7 @@ object Form2: TForm2
           MaxValue = 10
           MinValue = 1
           ParentFont = False
-          TabOrder = 14
+          TabOrder = 1
           Value = 1
         end
         object Button10: TButton
@@ -1344,12 +1360,12 @@ object Form2: TForm2
           ParentFont = False
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 15
+          TabOrder = 2
           OnClick = Button10Click
         end
         object Sticky: TCheckBox
           Left = 128
-          Top = 54
+          Top = 53
           Width = 49
           Height = 17
           Hint = 'Don'#39't automatically change from this screen.'
@@ -1362,8 +1378,187 @@ object Form2: TForm2
           ParentFont = False
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 16
+          TabOrder = 4
           OnClick = StickyClick
+        end
+        object ComboBox7: TComboBox
+          Left = 292
+          Top = 49
+          Width = 129
+          Height = 21
+          Hint = 
+            'Skip this screen for automatic selection if the condition is tru' +
+            'e.'
+          Style = csDropDownList
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          ItemHeight = 13
+          ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
+          TabOrder = 5
+          OnChange = ComboBox7Change
+          Items.Strings = (
+            'Don'#39't skip'
+            'Winamp is inactive'
+            'Winamp is active'
+            'MBM is inactive'
+            'MBM is active'
+            'There is no new E-Mail'
+            'There is new E-Mail'
+            'Not connected'
+            'Connected')
+        end
+        object ComboBox3: TComboBox
+          Left = 77
+          Top = 16
+          Width = 81
+          Height = 21
+          Hint = 'Selects the current screen for editing'
+          Style = csDropDownList
+          DropDownCount = 10
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          ItemHeight = 13
+          ItemIndex = 0
+          ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
+          TabOrder = 0
+          Text = 'Screen 1'
+          OnChange = ComboBox3Change
+          Items.Strings = (
+            'Screen 1'
+            'Screen 2'
+            'Screen 3'
+            'Screen 4'
+            'Screen 5'
+            'Screen 6'
+            'Screen 7'
+            'Screen 8'
+            'Screen 9'
+            'Screen 10'
+            'Screen 11'
+            'Screen 12'
+            'Screen 13'
+            'Screen 14'
+            'Screen 15'
+            'Screen 16'
+            'Screen 17'
+            'Screen 18'
+            'Screen 19'
+            'Screen 20')
+        end
+        object CheckBox1: TCheckBox
+          Left = 8
+          Top = 16
+          Width = 65
+          Height = 25
+          Hint = 'Show this screen automatically'
+          Caption = 'Enabled'
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
+          TabOrder = 21
+        end
+        object SpinEdit2: TSpinEdit
+          Left = 77
+          Top = 48
+          Width = 41
+          Height = 22
+          Hint = 
+            'How long the screen should be shown for before moving to the nex' +
+            't.'
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          MaxLength = 2
+          MaxValue = 99
+          MinValue = 1
+          ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
+          TabOrder = 3
+          Value = 3
+        end
+        object Edit5: TEdit
+          Left = 4
+          Top = 74
+          Width = 417
+          Height = 23
+          BevelEdges = []
+          Color = 10606500
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clBlack
+          Font.Height = -12
+          Font.Name = 'Fixedsys'
+          Font.Style = []
+          ParentFont = False
+          TabOrder = 6
+          OnEnter = Edit5Enter
+          OnKeyDown = Edit5KeyDown
+        end
+        object Edit6: TEdit
+          Left = 4
+          Top = 98
+          Width = 417
+          Height = 23
+          BevelEdges = []
+          Color = clWhite
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clBlack
+          Font.Height = -12
+          Font.Name = 'Fixedsys'
+          Font.Style = []
+          ParentFont = False
+          TabOrder = 10
+          OnEnter = Edit6Enter
+          OnKeyDown = Edit6KeyDown
+        end
+        object Edit7: TEdit
+          Left = 4
+          Top = 122
+          Width = 417
+          Height = 23
+          BevelEdges = []
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clBlack
+          Font.Height = -12
+          Font.Name = 'Fixedsys'
+          Font.Style = []
+          ParentFont = False
+          TabOrder = 14
+          OnEnter = Edit7Enter
+          OnKeyDown = Edit7KeyDown
+        end
+        object Edit8: TEdit
+          Left = 4
+          Top = 146
+          Width = 417
+          Height = 23
+          BevelEdges = []
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clBlack
+          Font.Height = -12
+          Font.Name = 'Fixedsys'
+          Font.Style = []
+          ParentFont = False
+          TabOrder = 18
+          OnEnter = Edit8Enter
+          OnKeyDown = Edit8KeyDown
         end
       end
       object GroupBox3: TGroupBox
@@ -1447,7 +1642,7 @@ object Form2: TForm2
         object Edit3: TEdit
           Left = 120
           Top = 112
-          Width = 129
+          Width = 137
           Height = 21
           Hint = 'Web proxy for web access (such as for Rss feeds).'
           Font.Charset = ANSI_CHARSET
@@ -1458,12 +1653,12 @@ object Form2: TForm2
           ParentFont = False
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 0
+          TabOrder = 3
         end
         object Edit4: TEdit
           Left = 168
           Top = 136
-          Width = 81
+          Width = 89
           Height = 21
           Hint = 'Web proxy port for web access (such as for Rss feeds).'
           Font.Charset = ANSI_CHARSET
@@ -1475,13 +1670,13 @@ object Form2: TForm2
           ParentFont = False
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 1
+          TabOrder = 4
           Text = '0'
         end
         object ComboBox1: TComboBox
           Left = 136
           Top = 83
-          Width = 113
+          Width = 121
           Height = 21
           Hint = 'The colors used in the virtual display.'
           Style = csDropDownList
@@ -1495,6 +1690,7 @@ object Form2: TForm2
           ParentShowHint = False
           ShowHint = True
           TabOrder = 2
+          OnChange = ComboBox1Change
           Items.Strings = (
             'Green'
             'Blue'
@@ -1502,26 +1698,48 @@ object Form2: TForm2
             'White'
             'Custom for this skin')
         end
-      end
-      object SpinEdit1: TSpinEdit
-        Left = 196
-        Top = 16
-        Width = 57
-        Height = 22
-        Hint = 'How often screen text is sent to display (in mSec).'
-        Font.Charset = ANSI_CHARSET
-        Font.Color = clWindowText
-        Font.Height = -11
-        Font.Name = 'Tahoma'
-        Font.Style = []
-        MaxLength = 4
-        MaxValue = 1000
-        MinValue = 5
-        ParentFont = False
-        ParentShowHint = False
-        ShowHint = True
-        TabOrder = 2
-        Value = 200
+        object SpinEdit1: TSpinEdit
+          Left = 200
+          Top = 17
+          Width = 57
+          Height = 22
+          Hint = 'How often screen text is sent to display (in mSec).'
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          MaxLength = 4
+          MaxValue = 1000
+          MinValue = 5
+          ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
+          TabOrder = 0
+          Value = 200
+        end
+        object SpinEdit9: TSpinEdit
+          Left = 200
+          Top = 42
+          Width = 57
+          Height = 22
+          Hint = 
+            'How fast to scroll (in mSec). Should be greater than refresh int' +
+            'erval.'
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          MaxLength = 4
+          MaxValue = 50000
+          MinValue = 20
+          ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
+          TabOrder = 1
+          Value = 200
+        end
       end
       object GroupBox2: TGroupBox
         Left = 280
@@ -1535,7 +1753,7 @@ object Form2: TForm2
         Font.Name = 'Tahoma'
         Font.Style = [fsBold]
         ParentFont = False
-        TabOrder = 3
+        TabOrder = 2
         object Label9: TLabel
           Left = 32
           Top = 120
@@ -1592,7 +1810,7 @@ object Form2: TForm2
           ParentFont = False
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 0
+          TabOrder = 1
           OnClick = RadioButton1Click
         end
         object RadioButton2: TRadioButton
@@ -1610,7 +1828,7 @@ object Form2: TForm2
           ParentFont = False
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 1
+          TabOrder = 2
           OnClick = RadioButton2Click
         end
         object ComboBox4: TComboBox
@@ -1631,7 +1849,8 @@ object Form2: TForm2
           ParentFont = False
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 5
+          TabOrder = 7
+          OnChange = ComboBox4Change
         end
         object ComboBox5: TComboBox
           Left = 149
@@ -1651,7 +1870,8 @@ object Form2: TForm2
           ParentFont = False
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 6
+          TabOrder = 8
+          OnChange = ComboBox5Change
           Items.Strings = (
             '110 bps'
             '300 bps'
@@ -1684,7 +1904,7 @@ object Form2: TForm2
           ParentFont = False
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 2
+          TabOrder = 5
           OnClick = Button4Click
         end
         object RadioButton3: TRadioButton
@@ -1720,7 +1940,7 @@ object Form2: TForm2
           ParentFont = False
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 4
+          TabOrder = 6
           OnClick = Button5Click
         end
         object Button6: TButton
@@ -1738,7 +1958,7 @@ object Form2: TForm2
           ParentFont = False
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 7
+          TabOrder = 4
           OnClick = Button6Click
         end
         object ComboBox2: TComboBox
@@ -1757,7 +1977,7 @@ object Form2: TForm2
           ParentFont = False
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 8
+          TabOrder = 0
           OnChange = ComboBox2Change
           Items.Strings = (
             '1 x 10'
@@ -1773,204 +1993,23 @@ object Form2: TForm2
             '4 x 20'
             '4 x 40')
         end
-      end
-      object ComboBox3: TComboBox
-        Left = 80
-        Top = 184
-        Width = 81
-        Height = 21
-        Hint = 'Selects the current screen for editing'
-        Style = csDropDownList
-        DropDownCount = 10
-        Font.Charset = ANSI_CHARSET
-        Font.Color = clWindowText
-        Font.Height = -11
-        Font.Name = 'Tahoma'
-        Font.Style = []
-        ItemHeight = 13
-        ItemIndex = 0
-        ParentFont = False
-        ParentShowHint = False
-        ShowHint = True
-        TabOrder = 4
-        Text = 'Screen 1'
-        OnChange = ComboBox3Change
-        Items.Strings = (
-          'Screen 1'
-          'Screen 2'
-          'Screen 3'
-          'Screen 4'
-          'Screen 5'
-          'Screen 6'
-          'Screen 7'
-          'Screen 8'
-          'Screen 9'
-          'Screen 10'
-          'Screen 11'
-          'Screen 12'
-          'Screen 13'
-          'Screen 14'
-          'Screen 15'
-          'Screen 16'
-          'Screen 17'
-          'Screen 18'
-          'Screen 19'
-          'Screen 20')
-      end
-      object CheckBox1: TCheckBox
-        Left = 8
-        Top = 188
-        Width = 65
-        Height = 17
-        Hint = 'Show this screen automatically'
-        Caption = 'Enabled'
-        Font.Charset = ANSI_CHARSET
-        Font.Color = clWindowText
-        Font.Height = -11
-        Font.Name = 'Tahoma'
-        Font.Style = []
-        ParentFont = False
-        ParentShowHint = False
-        ShowHint = True
-        TabOrder = 5
-      end
-      object SpinEdit2: TSpinEdit
-        Left = 80
-        Top = 215
-        Width = 41
-        Height = 22
-        Hint = 
-          'How long the screen should be shown for before moving to the nex' +
-          't.'
-        Font.Charset = ANSI_CHARSET
-        Font.Color = clWindowText
-        Font.Height = -11
-        Font.Name = 'Tahoma'
-        Font.Style = []
-        MaxLength = 2
-        MaxValue = 99
-        MinValue = 1
-        ParentFont = False
-        ParentShowHint = False
-        ShowHint = True
-        TabOrder = 6
-        Value = 3
-      end
-      object Edit5: TEdit
-        Left = 8
-        Top = 245
-        Width = 417
-        Height = 23
-        TabStop = False
-        BevelEdges = []
-        Color = 10606500
-        Font.Charset = ANSI_CHARSET
-        Font.Color = clBlack
-        Font.Height = -12
-        Font.Name = 'Fixedsys'
-        Font.Style = []
-        ParentFont = False
-        TabOrder = 7
-        OnEnter = Edit5Enter
-        OnKeyDown = Edit5KeyDown
-      end
-      object Edit6: TEdit
-        Left = 8
-        Top = 269
-        Width = 417
-        Height = 23
-        TabStop = False
-        BevelEdges = []
-        Color = clWhite
-        Font.Charset = ANSI_CHARSET
-        Font.Color = clBlack
-        Font.Height = -12
-        Font.Name = 'Fixedsys'
-        Font.Style = []
-        ParentFont = False
-        TabOrder = 8
-        OnEnter = Edit6Enter
-        OnKeyDown = Edit6KeyDown
-      end
-      object Edit7: TEdit
-        Left = 8
-        Top = 293
-        Width = 417
-        Height = 23
-        TabStop = False
-        BevelEdges = []
-        Font.Charset = ANSI_CHARSET
-        Font.Color = clBlack
-        Font.Height = -12
-        Font.Name = 'Fixedsys'
-        Font.Style = []
-        ParentFont = False
-        TabOrder = 9
-        OnEnter = Edit7Enter
-        OnKeyDown = Edit7KeyDown
-      end
-      object Edit8: TEdit
-        Left = 8
-        Top = 317
-        Width = 417
-        Height = 23
-        TabStop = False
-        BevelEdges = []
-        Font.Charset = ANSI_CHARSET
-        Font.Color = clBlack
-        Font.Height = -12
-        Font.Name = 'Fixedsys'
-        Font.Style = []
-        ParentFont = False
-        TabOrder = 10
-        OnEnter = Edit8Enter
-        OnKeyDown = Edit8KeyDown
-      end
-      object ComboBox7: TComboBox
-        Left = 288
-        Top = 216
-        Width = 129
-        Height = 21
-        Hint = 
-          'Skip this screen for automatic selection if the condition is tru' +
-          'e.'
-        Style = csDropDownList
-        ItemHeight = 13
-        ParentShowHint = False
-        ShowHint = True
-        TabOrder = 11
-        Items.Strings = (
-          'Don'#39't skip'
-          'Winamp is inactive'
-          'Winamp is active'
-          'MBM is inactive'
-          'MBM is active'
-          'There is no new E-Mail'
-          'There is new E-Mail'
-          'Not connected'
-          'Connected')
-      end
-      object SpinEdit9: TSpinEdit
-        Left = 196
-        Top = 42
-        Width = 57
-        Height = 22
-        Hint = 
-          'How fast to scroll (in mSec). Should be greater than refresh int' +
-          'erval.'
-        Font.Charset = ANSI_CHARSET
-        Font.Color = clWindowText
-        Font.Height = -11
-        Font.Name = 'Tahoma'
-        Font.Style = []
-        MaxLength = 4
-        MaxValue = 50000
-        MinValue = 20
-        ParentFont = False
-        ParentShowHint = False
-        ShowHint = True
-        TabOrder = 12
-        Value = 200
+        object RadioButton4: TRadioButton
+          Left = 267
+          Top = 21
+          Width = 113
+          Height = 17
+          Caption = 'Parallel (HD66712)'
+          Enabled = False
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          ParentFont = False
+          TabOrder = 9
+          Visible = False
+          OnClick = RadioButton4Click
+        end
       end
     end
     object TabSheet12: TTabSheet
@@ -2020,7 +2059,7 @@ object Form2: TForm2
         RowCount = 1
         FixedRows = 0
         Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goRowSelect]
-        TabOrder = 0
+        TabOrder = 7
         OnClick = StringGrid1Click
       end
       object ListBox11: TListBox
@@ -2058,7 +2097,7 @@ object Form2: TForm2
           'GPOToggle(1-8)'
           'GPOFlash(1-8,2)  (nr. of times)'
           'Fan(1-3,0-255) (0-255=speed)')
-        TabOrder = 1
+        TabOrder = 6
         OnClick = ListBox11Click
       end
       object Edit16: TEdit
@@ -2066,7 +2105,7 @@ object Form2: TForm2
         Top = 288
         Width = 105
         Height = 21
-        TabOrder = 2
+        TabOrder = 0
       end
       object ComboBox9: TComboBox
         Left = 124
@@ -2075,8 +2114,8 @@ object Form2: TForm2
         Height = 21
         Style = csDropDownList
         ItemHeight = 13
-        TabOrder = 3
-        TabStop = False
+        TabOrder = 1
+        OnChange = ComboBox9Change
         Items.Strings = (
           '>'
           '<'
@@ -2090,7 +2129,7 @@ object Form2: TForm2
         Top = 288
         Width = 113
         Height = 21
-        TabOrder = 4
+        TabOrder = 3
         Text = 'Backlight(1)'
       end
       object Button8: TButton
@@ -2108,7 +2147,7 @@ object Form2: TForm2
         Width = 75
         Height = 25
         Caption = '&Delete'
-        TabOrder = 6
+        TabOrder = 4
         OnClick = Button9Click
       end
       object Edit19: TEdit
@@ -2116,7 +2155,7 @@ object Form2: TForm2
         Top = 288
         Width = 73
         Height = 21
-        TabOrder = 7
+        TabOrder = 2
         Text = 'Edit19'
       end
     end
@@ -2234,7 +2273,7 @@ object Form2: TForm2
     ParentFont = False
     ParentShowHint = False
     ShowHint = True
-    TabOrder = 7
+    TabOrder = 4
   end
   object CheckBox2: TCheckBox
     Left = 240
@@ -2248,23 +2287,7 @@ object Form2: TForm2
     Font.Name = 'Tahoma'
     Font.Style = []
     ParentFont = False
-    TabOrder = 8
-  end
-  object RadioButton4: TRadioButton
-    Left = 488
-    Top = 448
-    Width = 113
-    Height = 17
-    Caption = 'Parallel (HD66712)'
-    Enabled = False
-    Font.Charset = ANSI_CHARSET
-    Font.Color = clWindowText
-    Font.Height = -11
-    Font.Name = 'Tahoma'
-    Font.Style = []
-    ParentFont = False
-    TabOrder = 9
-    OnClick = RadioButton4Click
+    TabOrder = 3
   end
   object OpenDialog2: TOpenDialog
     DefaultExt = '*.*'
