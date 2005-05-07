@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.58 $ $Date: 2005/01/29 10:54:13 $
+ *  $Revision: 1.59 $ $Date: 2005/05/07 13:50:40 $
  *****************************************************************************}
 
 interface
@@ -762,11 +762,17 @@ var
   gokje: Integer;
   x: Integer;
   iContrast: Integer;
+  now: Cardinal;
 
 begin
   // Changing screen - do any interactions required.
   //TransCycle := TransCycle + 1;
-  TransCycle := (GetTickCount()-TransStart) div timerRefresh.Interval;
+  now := GetTickCount();
+  if (now < TransStart) then
+    TransCycle := (now + (MAXDWORD-TransStart)) div timerRefresh.Interval
+  else
+    TransCycle := (now-TransStart) div timerRefresh.Interval;
+
   maxTransCycles := timertrans.Interval div timerRefresh.Interval;
 
   if (maxTransCycles = 0) then Exit;

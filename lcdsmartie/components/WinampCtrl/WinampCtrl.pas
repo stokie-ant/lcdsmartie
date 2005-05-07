@@ -182,7 +182,7 @@ var
   now: Cardinal;
 begin
   now := GetTickCount();
-  if (abs(now - lastFoundHwnd) > 250) then
+  if (now < lastFoundHwnd) or ((now - lastFoundHwnd) > 250) then
   begin
     lastFoundHwnd := now;
     hwndWinamp := FindWindow(WinampClassName,nil);
@@ -406,7 +406,7 @@ var
 begin
   now := GetTickCount();
 
-  if (abs(now - lasttime_GetState) > 250) then
+  if (now < lasttime_GetState) or ((now - lasttime_GetState) > 250) then
   begin
     lasttime_GetState := now;
 
@@ -425,7 +425,7 @@ var
   now: Cardinal;
 begin
   now := GetTickCount();
-  if (abs(now - lasttime_GetListCount) > 250) then
+  if (now < lasttime_GetListCount) or ((now - lasttime_GetListCount) > 250) then
   begin
     lasttime_GetListCount := now;
 
@@ -441,7 +441,7 @@ var
 begin
   now := GetTickCount();
 
-  if (abs(now - lasttime_GetListPos) > 250) then
+  if (now < lasttime_GetListPos) or ((now - lasttime_GetListPos) > 250) then
   begin
     lasttime_GetListPos := now;
     lastresult_GetListPos := MySendMessage(WM_USER,0,125);
@@ -513,7 +513,8 @@ begin
 
   now := GetTickCount();
 
-  if (abs(now - lasttime_GetSongInfo[InfoMode]) > 250) then
+  if (now < lasttime_GetSongInfo[InfoMode])
+    or ((now - lasttime_GetSongInfo[InfoMode]) > 250) then
   begin
     lasttime_GetSongInfo[InfoMode] := now;
 
@@ -547,7 +548,8 @@ var
   now: Cardinal;
 begin
      now := GetTickCount();
-     if (abs(now - lasttime_TrackLength) > 250) then
+     if (now < lasttime_TrackLength)
+      or ((now - lasttime_TrackLength) > 250) then
      begin
        lasttime_TrackLength := now;
        lastresult_TrackLength := GetOutputTime(1);
@@ -561,7 +563,8 @@ var
   now: Cardinal;
 begin
      now := GetTickCount();
-     if (abs(now - lasttime_TrackPosition) > 250) then
+     if (now < lasttime_TrackPosition)
+        or ((now - lasttime_TrackPosition) > 250) then
      begin
        lasttime_TrackPosition := now;
        lastresult_TrackPosition := GetOutputTime(0);
@@ -748,7 +751,8 @@ var WATitle: PChar;
 begin
      now := GetTickCount();
 
-     if (abs(now - lasttime_GetCurrSongTitle) > 250) then
+     if (now < lasttime_GetCurrSongTitle)
+        or ((now - lasttime_GetCurrSongTitle) > 250) then
      begin
        lasttime_GetCurrSongTitle := now;
 

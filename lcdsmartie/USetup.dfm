@@ -1788,10 +1788,12 @@ object Form2: TForm2
         Font.Name = 'Tahoma'
         Font.Style = []
         ItemHeight = 13
+        ItemIndex = 0
         ParentFont = False
         ParentShowHint = False
         ShowHint = True
         TabOrder = 4
+        Text = 'Screen 1'
         OnChange = ComboBox3Change
         Items.Strings = (
           'Screen 1'

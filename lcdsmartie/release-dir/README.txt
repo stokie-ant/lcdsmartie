@@ -8,7 +8,12 @@ See: http://sourceforge.net/tracker/?func=browse&group_id=122330&atid=693136
 
 Changes
 =======
-5.3 rc3
+5.3.2
+	- Fixed overflows exceptions that occured after 48 days.
+	- Fixed an overflow exception in the HD44870 code.
+	- Matrix Orbital: Fixed a crash when open failed.
+	- Fixed crash that occured in settings dialog.
+5.3 final
 	- Fixed possible problem in error reporting.
 	- Added missing actions/commands to UI.
 	- Allow easier editing of actions.

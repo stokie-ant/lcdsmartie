@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.52 $ $Date: 2005/01/28 21:39:01 $
+ *  $Revision: 1.53 $ $Date: 2005/05/07 13:50:39 $
  *****************************************************************************}
 
 
@@ -1367,9 +1367,8 @@ begin
         else
           uiMinRefresh := dlls[uiPlugin].uiMinRefreshInterval;
 
-        if (Cardinal(abs(uiScreenStartTime - dlls[uiPlugin].uiLastRefreshed))
-            > uiMinRefresh)
-          or (uiScreenStartTime = dlls[uiPlugin].uiLastRefreshed) then
+        if (uiScreenStartTime <= dlls[uiPlugin].uiLastRefreshed)
+          or (uiScreenStartTime - dlls[uiPlugin].uiLastRefreshed > uiMinRefresh) then
         begin
           dlls[uiPlugin].uiLastRefreshed := uiScreenStartTime;
 
@@ -2307,7 +2306,7 @@ begin
   if (bDoCPUSpeed) then
   begin
     //Update CPU Speed (might change on clock-throttling systems
-    if (t - lastSpdUpdate > (ticksperseconde * 2)) then
+    if (t < lastSpdUpdate) or (t - lastSpdUpdate > (ticksperseconde * 2)) then
     begin                                                 // Update every 2 s
       lastSpdUpdate := t;
 

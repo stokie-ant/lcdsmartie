@@ -173,15 +173,3 @@ __stdcall  function1(const char *param1, const char *param2)
 
 	return const_cast<char *>(outbuf.c_str());
 }
-
-extern "C" ATITOOL_API  char * 
-__stdcall  function2(const char *param1, const char *param2)
-{
-	static string outbuf;
-	char temp[1000];
-
-	sprintf(temp, "%d", sizeof(CARDINFO));
-	outbuf = temp;
-
-	return const_cast<char *>(outbuf.c_str());
-}

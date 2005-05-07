@@ -410,7 +410,8 @@ begin
   end
   else
   begin
-    serial.Destroy;
+    if (Assigned(serial)) then
+      serial.Free();
   end;
 
   inherited;

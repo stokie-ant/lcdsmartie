@@ -19,7 +19,7 @@ unit ULCD_HD;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/Attic/ULCD_HD.pas,v $
- *  $Revision: 1.12 $ $Date: 2005/01/27 10:43:35 $
+ *  $Revision: 1.13 $ $Date: 2005/05/07 13:50:40 $
  *
  *  Based on code from the following (open-source) projects:
  *     WinAmp LCD Plugin
@@ -44,6 +44,7 @@ interface
 uses ULCD;
 
 const
+  USE_DL_PORT_IO = true;
   // control pins
   RS = 4; // pin 16
   RW = 2; // pin 14
@@ -79,7 +80,6 @@ type
       procedure setPosition(x, y: Integer); override;
       procedure write(str: String); override;
       procedure setbacklight(on: Boolean); override;
-      procedure powerResume; override;
       constructor CreateParallel(const poortadres: Word; const width, heigth: Byte);
       destructor Destroy; override;
     private
@@ -93,6 +93,8 @@ type
       iHighResTimerFreq: Int64;
       DlPortWritePortUchar: TDlPortWritePortUchar;
       DlPortReadPortUchar: TDlPortReadPortUchar;
+      bDlPortIO: Boolean;
+      bHasIO: Boolean;
       procedure writectrl(const controllers: TControllers; const x: Byte);
       procedure writedata(const controllers: TControllers; const x: Byte);
       procedure writestring(const controllers: TControllers; s: String);
@@ -102,8 +104,12 @@ type
       procedure CtrlOut(const AValue: Byte);
       procedure DataOut(const AValue: Byte);
       procedure initClass;
+      procedure LoadIO;
+      procedure UnloadIO;
       procedure LoadDlPortIO;
       procedure UnloadDlPortIO;
+      procedure LoadCanIO;
+      procedure UnloadCanIO;
   end;
 
 implementation
@@ -114,14 +120,17 @@ constructor TLCD_HD.CreateParallel(const poortadres: Word; const width, heigth: 
 {var
   x, y: integer; }
 begin
+  bHasIO := False;
   bHighResTimers := QueryPerformanceFrequency(iHighResTimerFreq);
-
-  LoadDlPortIO();
 
   FBaseAddr := poortadres;
   FCtrlAddr := FBaseAddr + 2;
   self.width := width;
   self.height := heigth;
+
+  bDlPortIO := USE_DL_PORT_IO;
+  LoadIO();
+  bHasIO := True;
 
   initClass;
 
@@ -141,10 +150,50 @@ begin
   writectrl(All, OnOffCtrl or OODisplayOff);
   UsecDelay(uiDelayShort);
 
-  UnloadDlPortIO();
+  UnloadIO();
 
 
   inherited;
+end;
+
+procedure TLCD_HD.LoadIO;
+begin
+  if (bDlPortIO) then LoadDlPortIO()
+  else LoadCanIO();
+end;
+
+procedure TLCD_HD.UnloadIO;
+begin
+  if (bDlPortIO) then UnloadDlPortIO()
+  else UnloadCanIO();
+end;
+
+procedure TLCD_HD.LoadCanIO;
+type
+  TCanIOAddMultiPort = Function (addr: longword; len: integer): Boolean; stdcall;
+var
+  CanIOAddMultiPort: TCanIOAddMultiPort;
+  res: Boolean;
+begin
+  dlportio := LoadLibrary(PChar('canio.dll'));
+  if (dlportio = 0) then
+    raise Exception.Create(
+      'Unable to load canio.dll: Please ensure you have installed canio.');
+
+  CanIOAddMultiPort := TCanIOAddMultiPort(GetProcAddress(dlportio,'AddMultiPort'));
+  if (@CanIOAddMultiPort = nil) then
+      raise Exception.Create(
+      'Unable to find AddMultiPort in canio.dll.');
+
+  res := CanIOAddMultiPort(FCtrlAddr, 1);
+  if (not res) then
+    raise Exception.Create(
+      'Failed to add ctrl port.');
+
+  res := CanIOAddMultiPort(FBaseAddr, 1);
+  if (not res) then
+    raise Exception.Create(
+      'Failed to add base port.');
 end;
 
 procedure TLCD_HD.LoadDlPortIO;
@@ -160,7 +209,16 @@ begin
     'DlPortReadPortUchar'));
   if (not Assigned(DlPortWritePortUchar)) or (not Assigned(DlPortReadPortUchar)) then
     raise Exception.Create('Unable to get required apis from dlportio');
+end;
 
+procedure TLCD_HD.UnloadCanIO;
+begin
+  if (dlportio <> 0) then
+  begin
+    FreeLibrary(dlportio);
+  end;
+
+  dlportio := 0;
 end;
 
 procedure TLCD_HD.UnloadDlPortIO;
@@ -170,14 +228,6 @@ begin
   DlPortWritePortUchar := nil;
   DlPortReadPortUchar := nil;
 end;
-
-procedure TLCD_HD.powerResume;
-begin
-  UnloadDlPortIO();
-  LoadDlPortIO();
-  initClass;
-end;
-
 
 procedure TLCD_HD.initClass;
 begin
@@ -337,7 +387,8 @@ begin
 	  repeat
       QueryPerformanceCounter(iCurr);
 
-		  uiElapsed := (((iCurr - iBegin) * 1000 * 1000) div iHighResTimerFreq);
+      if (iCurr < iBegin) then iBegin := 0;
+		  uiElapsed := ((iCurr - iBegin) * 1000 * 1000) div iHighResTimerFreq;
 
 	  until (uiElapsed > uiUsecs);
   end
@@ -498,18 +549,36 @@ begin
   writectrl(controller, SetPos or DDaddr);
 end;
 
-
+procedure PortOut(IOport:word; Value:byte); assembler;
+asm
+  xchg ax,dx
+  out dx,al
+end;
 
 procedure TLCD_HD.CtrlOut(const AValue: Byte);
 begin
-  if (@DlPortWritePortUchar <> nil) then
-    DlPortWritePortUchar(FCtrlAddr, AValue xor CtrlMask);
+  if (not bHasIO) then exit;
+  if (bDlPortIO) then
+  begin
+    if (@DlPortWritePortUchar <> nil) then
+      DlPortWritePortUchar(FCtrlAddr, AValue xor CtrlMask);
+  end
+  else
+    PortOut(FCtrlAddr, AValue xor CtrlMask);
 end;
+
+
 
 procedure TLCD_HD.DataOut(const AValue: Byte);
 begin
-  if (@DlPortWritePortUchar <> nil) then
-    DlPortWritePortUchar(FBaseAddr, AValue);
+  if (not bHasIO) then exit;
+  if (bDlPortIO) then
+  begin
+    if (@DlPortWritePortUchar <> nil) then
+      DlPortWritePortUchar(FBaseAddr, AValue);
+  end
+  else
+    PortOut(FBaseAddr, AValue);
 end;
 
 {
