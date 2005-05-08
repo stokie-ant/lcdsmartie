@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.53 $ $Date: 2005/05/07 13:50:39 $
+ *  $Revision: 1.54 $ $Date: 2005/05/08 17:44:29 $
  *****************************************************************************}
 
 
@@ -152,6 +152,7 @@ type
     function CanExit: Boolean;
   private
     localeFormat : TFormatSettings;
+    usFormat : TFormatSettings; //this is initialized with US/English
     cacheresult_lastFindPlugin: Cardinal;
     cache_lastFindPlugin: String;
     uiScreenStartTime: Cardinal; // time that new start refresh started (used by plugin cache code)
@@ -309,6 +310,10 @@ function stripHtml(str: String): String;
 var
   posTag, posTagEnd: Cardinal;
 begin
+  //LMB: this is not the best place to add this, but I have to make it work quickly:
+  str := StringReplace(str,'&deg;',#176{'°'},[rfIgnoreCase,rfReplaceAll]);
+  //LMB: <br> may be used as a separator, so instead of discarding, replace with space
+  str := StringReplace(str,'<br>',#32{space},[rfReplaceAll]);
 
   repeat
     posTag := pos('<', str);
@@ -317,6 +322,7 @@ begin
       posTagEnd := posEx('>', str, posTag + 1);
       if (posTagEnd <> 0) then Delete(str, posTag, posTagEnd-posTag + 1);
     end;
+
   until (posTag = 0);
 
   result := str;
@@ -330,6 +336,7 @@ begin
   inherited;
 
   GetLocaleFormatSettings(LOCALE_SYSTEM_DEFAULT, localeFormat);
+  GetLocaleFormatSettings($0409,                usFormat);  //English/USA
 
   status := WSAStartup(MAKEWORD(2,0), WSAData);
   if status <> 0 then
@@ -2826,7 +2833,7 @@ begin
 end;
 
 
-function TData.getRss(Url: String;var titles, descs: Array of String;
+function TData.getRss(Url: String; var titles, descs: Array of String;
   maxitems: Cardinal; maxfreq: Cardinal = 0): Cardinal;
 var
   StartItemNode : IXMLNode;
@@ -2956,8 +2963,9 @@ begin
         setiTotalUsers := ANode.ChildNodes['ranktotalusers'].Text;
         setiRank := ANode.ChildNodes['rank'].Text;
         setiShareRank := ANode.ChildNodes['num_samerank'].Text;
+        // SETI provides floats not dependent on user's locale, but always in US format
         setiMoreWU := FloatToStr(
-          100-StrToFloat(ANode.ChildNodes['top_rankpct'].Text, localeFormat),
+          100-StrToFloat(ANode.ChildNodes['top_rankpct'].Text, usFormat),
           localeFormat);
       finally
         dataCs.Leave();
@@ -3467,7 +3475,8 @@ begin
         + config.foldUsername, config.newsRefresh);
       tempstr := FileToString(sFilename);
 
-      tempstr := StringReplace(tempstr, '&amp', '&', [rfReplaceAll]);
+      tempstr := StringReplace(tempstr,'&deg;',#176{'°'},[rfIgnoreCase,rfReplaceAll]);//LMB
+      tempstr := StringReplace(tempstr, '&amp;', '&', [rfReplaceAll]);
       tempstr := StringReplace(tempstr, chr(10), '', [rfReplaceAll]);
       tempstr := StringReplace(tempstr, chr(13), '', [rfReplaceAll]);
 
