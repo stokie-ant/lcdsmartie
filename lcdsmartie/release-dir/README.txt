@@ -8,7 +8,9 @@ See: http://sourceforge.net/tracker/?func=browse&group_id=122330&atid=693136
 
 Changes
 =======
-5.3.2
+5.3.2b2
+	- Fixed seti for non-english users.
+5.3.2b1
 	- Fixed overflows exceptions that occured after 48 days.
 	- Fixed an overflow exception in the HD44870 code.
 	- Matrix Orbital: Fixed a crash when open failed.
