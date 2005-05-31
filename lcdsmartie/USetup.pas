@@ -19,7 +19,7 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.33 $ $Date: 2005/05/07 15:54:47 $
+ *  $Revision: 1.34 $ $Date: 2005/05/31 17:58:16 $
  *****************************************************************************}
 
 interface
@@ -970,9 +970,9 @@ begin
     if listbox6.itemindex = 9 then Edit9.Text := '$MemF%';
     if listbox6.itemindex = 10 then Edit9.Text := '$MemU%';
     if listbox6.itemindex = 11 then Edit9.Text :=
-      '$Bar($MemFree,$PageTotal,10)';
+      '$Bar($MemFree,$MemTotal,10)';
     if listbox6.itemindex = 12 then Edit9.Text :=
-      '$Bar($MemUsed,$PageTotal,10)';
+      '$Bar($MemUsed,$MemTotal,10)';
     if listbox6.itemindex = 13 then Edit9.Text := '$PageFree';
     if listbox6.itemindex = 14 then Edit9.Text := '$PageUsed';
     if listbox6.itemindex = 15 then Edit9.Text := '$PageTotal';
@@ -1256,9 +1256,9 @@ begin
       if listbox6.itemindex = 9 then Edit9.Text := '$MemF%';
       if listbox6.itemindex = 10 then Edit9.Text := '$MemU%';
       if listbox6.itemindex = 11 then Edit9.Text :=
-        '$Bar($MemFree,$PageTotal,10)';
+        '$Bar($MemFree,$MemTotal,10)';
       if listbox6.itemindex = 12 then Edit9.Text :=
-        '$Bar($MemUsed,$PageTotal,10)';
+        '$Bar($MemUsed,$MemTotal,10)';
       if listbox6.itemindex = 13 then Edit9.Text := '$PageFree';
       if listbox6.itemindex = 14 then Edit9.Text := '$PageUsed';
       if listbox6.itemindex = 15 then Edit9.Text := '$PageTotal';
