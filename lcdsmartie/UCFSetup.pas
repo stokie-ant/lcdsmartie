@@ -9,7 +9,7 @@ unit UCFSetup;
  *  as published by the Free Software Foundation; either version 2
  *  of the License, or (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful, 
+ *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
@@ -19,7 +19,7 @@ unit UCFSetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UCFSetup.pas,v $
- *  $Revision: 1.6 $ $Date: 2005/01/27 10:43:35 $
+ *  $Revision: 1.7 $ $Date: 2006/02/27 18:35:47 $
  *****************************************************************************}
 
 interface
@@ -27,27 +27,25 @@ interface
 uses Forms, StdCtrls, ComCtrls, Classes, Controls;
 
 type
-  TForm5 = class(TForm)
+  TCrystalFontzSetupForm = class(TForm)
     GroupBox3: TGroupBox;
     GroupBox4: TGroupBox;
-    TrackBar2: TTrackBar;
-    TrackBar1: TTrackBar;
-    Button1: TButton;
-    v2cgrom: TCheckBox;
-    procedure FormClose(Sender: TObject; var Action: TCloseAction);
+    OKButton: TButton;
+    V2CGROMCheckbox: TCheckBox;
+    ContrastTrackBar: TTrackBar;
+    BacklightTrackBar: TTrackBar;
+    CancelButton: TButton;
     procedure FormShow(Sender: TObject);
-    procedure TrackBar1Change(Sender: TObject);
-    procedure TrackBar2Change(Sender: TObject);
-    procedure Button1Click(Sender: TObject);
-    procedure v2cgromClick(Sender: TObject);
+    procedure ContrastTrackBarChange(Sender: TObject);
+    procedure BacklightTrackBarChange(Sender: TObject);
+    procedure V2CGROMCheckboxClick(Sender: TObject);
   private
     { Private declarations }
   public
     { Public declarations }
   end;
 
-var
-  Form5: TForm5;
+function DoCrystalFontzSetupForm : boolean;
 
 implementation
 
@@ -55,51 +53,52 @@ uses UMain, USetup;
 
 {$R *.DFM}
 
-procedure TForm5.FormClose(Sender: TObject; var Action: TCloseAction);
+function DoCrystalFontzSetupForm : boolean;
+var
+  CrystalFontzSetupForm : TCrystalFontzSetupForm;
 begin
-  button1.click;
+  CrystalFontzSetupForm := TCrystalFontzSetupForm.Create(nil);
+  with CrystalFontzSetupForm do begin
+    // put settings on screen
+    ContrastTrackBar.position := config.CF_contrast;
+    BacklightTrackBar.position := config.CF_brightness;
+    V2CGROMCheckbox.checked := (config.iCF_cgrom = 2);
+    ShowModal;
+    Result := (ModalResult = mrOK);
+    if Result then begin
+      config.CF_contrast := ContrastTrackBar.position;
+      config.CF_brightness := BacklightTrackBar.position;
+    end;
+    Free;
+  end;
 end;
 
-
-procedure TForm5.FormShow(Sender: TObject);
+procedure TCrystalFontzSetupForm.FormShow(Sender: TObject);
 begin
-  trackbar1.position := config.CF_contrast;
-  trackbar2.position := config.CF_brightness;
-  v2cgrom.checked := (config.iCF_cgrom = 2);
 end;
 
 // CF options - contrast bar.
-procedure TForm5.TrackBar1Change(Sender: TObject);
+procedure TCrystalFontzSetupForm.ContrastTrackBarChange(Sender: TObject);
 begin
   if (config.isCF) then
-    form1.lcd.setContrast(trackbar1.Position);
-  config.CF_contrast := trackbar1.Position;
+    LCDSmartieDisplayForm.lcd.setContrast(ContrastTrackBar.Position);
 end;
 
 // CF options - brightness bar.
-procedure TForm5.TrackBar2Change(Sender: TObject);
+procedure TCrystalFontzSetupForm.BacklightTrackBarChange(Sender: TObject);
 begin
   if (config.isCF) then
-    form1.lcd.setBrightness(trackbar2.Position);
-  config.CF_brightness := trackbar2.Position;
+    LCDSmartieDisplayForm.lcd.setBrightness(BacklightTrackBar.Position);
 end;
 
-procedure TForm5.Button1Click(Sender: TObject);
+procedure TCrystalFontzSetupForm.V2CGROMCheckboxClick(Sender: TObject);
 begin
-
-  form5.visible := false;
-  form2.enabled := true;
-  form2.BringToFront;
-end;
-
-procedure TForm5.v2cgromClick(Sender: TObject);
-begin
-  if (v2cgrom.checked) then
+  if (V2CGROMCheckbox.checked) then
     config.iCF_cgrom := 2
   else
     config.iCF_cgrom := 1;
 
-  form1.DoFullDisplayDraw();
+  LCDSmartieDisplayForm.DoFullDisplayDraw();
 end;
 
 end.

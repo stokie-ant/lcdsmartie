@@ -1,6 +1,6 @@
-object Form6: TForm6
-  Left = 530
-  Top = 13
+object HD44780SetupForm: THD44780SetupForm
+  Left = 449
+  Top = 86
   BorderIcons = []
   BorderStyle = bsToolWindow
   Caption = 'HD44780 Settings'
@@ -13,38 +13,42 @@ object Form6: TForm6
   Font.Name = 'MS Sans Serif'
   Font.Style = []
   OldCreateOrder = False
+  Position = poScreenCenter
   PixelsPerInch = 96
   TextHeight = 13
   object Label1: TLabel
     Left = 8
-    Top = 24
+    Top = 20
     Width = 22
     Height = 13
-    Caption = 'Port:'
+    Caption = '&Port:'
+    FocusControl = PortEdit
   end
   object Label2: TLabel
     Left = 8
-    Top = 61
+    Top = 57
     Width = 97
     Height = 13
-    Caption = 'Driver boot delay: (s)'
+    Caption = '&Driver boot delay: (s)'
+    FocusControl = BootDelaySpinEdit
   end
   object Label3: TLabel
     Left = 8
-    Top = 97
+    Top = 93
     Width = 77
     Height = 13
-    Caption = 'Timing multiplier:'
+    Caption = '&Timing multiplier:'
+    FocusControl = TimingMultiplierSpinEdit
   end
-  object Edit1: TEdit
+  object PortEdit: TEdit
     Left = 120
     Top = 16
     Width = 49
     Height = 21
     TabOrder = 0
-    Text = 'Edit1'
+    Text = 'PortEdit'
   end
-  object SpinEdit1: TSpinEdit
+  object BootDelaySpinEdit: TSpinEdit
     Left = 120
     Top = 52
     Width = 49
@@ -56,28 +60,28 @@ object Form6: TForm6
     TabOrder = 1
     Value = 0
   end
-  object Button1: TButton
-    Left = 96
+  object OKButton: TButton
+    Left = 8
     Top = 168
     Width = 75
     Height = 25
-    Caption = '&Ok'
+    Caption = '&OK'
     Default = True
-    TabOrder = 2
-    OnClick = Button1Click
+    ModalResult = 1
+    TabOrder = 4
   end
-  object AltAddressing: TCheckBox
+  object AltAddressingCheckbox: TCheckBox
     Left = 8
     Top = 136
     Width = 153
     Height = 25
     Hint = 'Some displays (esp the 1x16s) are addressed differently.'
-    Caption = 'Use alternative addressing'
+    Caption = 'Use &alternative addressing'
     ParentShowHint = False
     ShowHint = True
     TabOrder = 3
   end
-  object SpinEdit2: TSpinEdit
+  object TimingMultiplierSpinEdit: TSpinEdit
     Left = 120
     Top = 88
     Width = 49
@@ -91,7 +95,17 @@ object Form6: TForm6
     MinValue = 0
     ParentShowHint = False
     ShowHint = True
-    TabOrder = 4
+    TabOrder = 2
     Value = 1
+  end
+  object CancelButton: TButton
+    Left = 92
+    Top = 168
+    Width = 75
+    Height = 25
+    Cancel = True
+    Caption = 'Cancel'
+    ModalResult = 2
+    TabOrder = 5
   end
 end

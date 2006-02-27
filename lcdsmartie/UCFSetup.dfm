@@ -1,11 +1,11 @@
-object Form5: TForm5
+object CrystalFontzSetupForm: TCrystalFontzSetupForm
   Left = 515
   Top = 32
   BorderIcons = []
   BorderStyle = bsToolWindow
   Caption = 'Crystalfontz settings'
   ClientHeight = 179
-  ClientWidth = 190
+  ClientWidth = 179
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -13,15 +13,19 @@ object Form5: TForm5
   Font.Name = 'MS Sans Serif'
   Font.Style = []
   OldCreateOrder = False
-  OnClose = FormClose
+  Position = poScreenCenter
   OnShow = FormShow
+  DesignSize = (
+    179
+    179)
   PixelsPerInch = 96
   TextHeight = 13
   object GroupBox3: TGroupBox
     Left = 8
     Top = 6
-    Width = 177
+    Width = 166
     Height = 49
+    Anchors = [akLeft, akTop, akRight]
     Caption = 'Contrast'
     Font.Charset = ANSI_CHARSET
     Font.Color = clWindowText
@@ -30,12 +34,29 @@ object Form5: TForm5
     Font.Style = [fsBold]
     ParentFont = False
     TabOrder = 0
+    DesignSize = (
+      166
+      49)
+    object ContrastTrackBar: TTrackBar
+      Left = 4
+      Top = 18
+      Width = 157
+      Height = 25
+      Anchors = [akLeft, akTop, akRight]
+      LineSize = 2
+      Max = 100
+      Frequency = 4
+      TabOrder = 0
+      ThumbLength = 15
+      OnChange = ContrastTrackBarChange
+    end
   end
   object GroupBox4: TGroupBox
     Left = 8
     Top = 62
-    Width = 177
+    Width = 166
     Height = 49
+    Anchors = [akLeft, akTop, akRight]
     Caption = 'Backlight'
     Font.Charset = ANSI_CHARSET
     Font.Color = clWindowText
@@ -44,42 +65,34 @@ object Form5: TForm5
     Font.Style = [fsBold]
     ParentFont = False
     TabOrder = 1
+    DesignSize = (
+      166
+      49)
+    object BacklightTrackBar: TTrackBar
+      Left = 4
+      Top = 20
+      Width = 157
+      Height = 25
+      Anchors = [akLeft, akTop, akRight]
+      LineSize = 2
+      Max = 100
+      Frequency = 4
+      TabOrder = 0
+      ThumbLength = 15
+      OnChange = BacklightTrackBarChange
+    end
   end
-  object TrackBar2: TTrackBar
-    Left = 9
-    Top = 78
-    Width = 173
-    Height = 25
-    LineSize = 2
-    Max = 100
-    Frequency = 4
-    TabOrder = 2
-    ThumbLength = 15
-    OnChange = TrackBar2Change
-  end
-  object TrackBar1: TTrackBar
-    Left = 10
-    Top = 22
-    Width = 173
-    Height = 25
-    LineSize = 2
-    Max = 100
-    Frequency = 4
-    TabOrder = 3
-    ThumbLength = 15
-    OnChange = TrackBar1Change
-  end
-  object Button1: TButton
-    Left = 112
+  object OKButton: TButton
+    Left = 12
     Top = 152
     Width = 75
     Height = 25
-    Caption = 'Ok'
+    Caption = '&OK'
     Default = True
-    TabOrder = 4
-    OnClick = Button1Click
+    ModalResult = 1
+    TabOrder = 3
   end
-  object v2cgrom: TCheckBox
+  object V2CGROMCheckbox: TCheckBox
     Left = 8
     Top = 120
     Width = 105
@@ -90,7 +103,17 @@ object Form5: TForm5
     Caption = 'v2 character set'
     ParentShowHint = False
     ShowHint = True
-    TabOrder = 5
-    OnClick = v2cgromClick
+    TabOrder = 2
+    OnClick = V2CGROMCheckboxClick
+  end
+  object CancelButton: TButton
+    Left = 96
+    Top = 152
+    Width = 75
+    Height = 25
+    Cancel = True
+    Caption = 'Cancel'
+    ModalResult = 2
+    TabOrder = 4
   end
 end

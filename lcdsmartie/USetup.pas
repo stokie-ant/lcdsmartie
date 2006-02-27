@@ -19,7 +19,7 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.35 $ $Date: 2006/02/27 14:14:20 $
+ *  $Revision: 1.36 $ $Date: 2006/02/27 18:35:47 $
  *****************************************************************************}
 
 interface
@@ -34,9 +34,9 @@ const
 
 
 type
-  TForm2 = class(TForm)
+  TSetupForm = class(TForm)
     Button1: TButton;
-    Button2: TButton;
+    CancelButton: TButton;
     PageControl1: TPageControl;
     TabSheet1: TTabSheet;
     TabSheet2: TTabSheet;
@@ -201,10 +201,9 @@ type
     ComboBox7: TComboBox;
     IRTransRadioButton: TRadioButton;
     IRTransConfigButton: TButton;
-    procedure Button2Click(Sender: TObject);
+    procedure CancelButtonClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure ComboBox2Change(Sender: TObject);
-    procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure ComboBox3Change(Sender: TObject);
     procedure RadioButton1Click(Sender: TObject);
     procedure RadioButton2Click(Sender: TObject);
@@ -217,7 +216,6 @@ type
     procedure Label16Click(Sender: TObject);
     procedure ListBox1Click(Sender: TObject);
     procedure PageControl1Change(Sender: TObject);
-    procedure FormKeyPress(Sender: TObject; var Key: Char);
     procedure Edit10Exit(Sender: TObject);
     procedure Button4Click(Sender: TObject);
     procedure RadioButton3Click(Sender: TObject);
@@ -274,8 +272,9 @@ type
     procedure LoadScreen(scr: Integer);
   end;
 
-var
-  Form2: TForm2;
+function DoSetupForm : boolean;
+procedure UpdateSetupForm(cKey : char);
+function PerformingSetup : boolean;
 
 implementation
 
@@ -284,27 +283,36 @@ uses Windows, ShellApi, graphics, sysutils, UMain, UMOSetup,
 
 {$R *.DFM}
 
-// Cancel has been pressed.
-procedure TForm2.Button2Click(Sender: TObject);
+var
+  SetupForm : TSetupForm = nil;
+
+function DoSetupForm : boolean;
 begin
-  form1.timer2.interval := 500;
+  SetupForm := TSetupForm.Create(nil);
+  with SetupForm do begin
+    ShowModal;
+    Result := (ModalResult = mrOK);
+    Free;
+  end;
+  SetupForm := nil;
+end;
 
-  form1.timer7.interval := 0;
+// Cancel has been pressed.
+procedure TSetupForm.CancelButtonClick(Sender: TObject);
+begin
+  LCDSmartieDisplayForm.timer2.interval := 500;
+
+  LCDSmartieDisplayForm.timer7.interval := 0;
   if (not config.screen[activeScreen][1].bSticky) then
-    form1.timer7.interval := config.screen[activeScreen][1].showTime*1000;
+    LCDSmartieDisplayForm.timer7.interval := config.screen[activeScreen][1].showTime*1000;
 
-  form2.visible := false;
-  form1.enabled := true;
-  form1.BringToFront;
-  form1.SetFocus;
 
-  form1.UpdateTimersState();
 end;
 
 
 
 
-procedure TForm2.FormShow(Sender: TObject);
+procedure TSetupForm.FormShow(Sender: TObject);
 var
   i, blaat: Integer;
   iSelection: Integer;
@@ -350,14 +358,14 @@ begin
 
   edit10.text := config.gameServer[1, 1];
 
-  form2.StringGrid1.rowcount := 0;
+  StringGrid1.rowcount := 0;
   for blaat := 0 to 999 do
   begin
-    form2.StringGrid1.Cells[0, blaat] := '';
-    form2.StringGrid1.Cells[1, blaat] := '';
-    form2.StringGrid1.Cells[2, blaat] := '';
-    form2.StringGrid1.Cells[3, blaat] := '';
-    form2.StringGrid1.Cells[4, blaat] := '';
+    StringGrid1.Cells[0, blaat] := '';
+    StringGrid1.Cells[1, blaat] := '';
+    StringGrid1.Cells[2, blaat] := '';
+    StringGrid1.Cells[3, blaat] := '';
+    StringGrid1.Cells[4, blaat] := '';
   end;
 
   for i := 1 to config.totalactions do
@@ -374,10 +382,10 @@ begin
   combobox3.itemindex := 0;
   tempscreen := 0;
   LoadScreen( 1 );   // setup screen in setup form
-  Form1.ChangeScreen(1);   // setup screen in main form
+  LCDSmartieDisplayForm.ChangeScreen(1);   // setup screen in main form
 
-  form2.spinEdit1.text := IntToStr(config.refreshRate);
-  form2.edit15.text := config.winampLocation;
+  spinEdit1.text := IntToStr(config.refreshRate);
+  edit15.text := config.winampLocation;
   combobox1.itemindex := config.colorOption;
 
 
@@ -389,13 +397,7 @@ begin
   spinedit8.text := IntToStr(config.dllPeriod);
   spinedit9.text := IntToStr(config.scrollPeriod);
 
-  form6.edit1.text := intToHex(config.parallelPort, 3);
-  form6.AltAddressing.checked := config.bHDAltAddressing;
-  form6.spinEdit1.text := IntToStr(config.bootDriverDelay);
-  form6.spinEdit2.value := config.iHDTimingMultiplier;
-
   checkbox2.checked := config.alwaysOnTop;
-  form3.checkbox1.checked := config.mx3Usb;
   HideOnStartup.Checked := config.bHideOnStartup;
   NoAutoStart.Checked := True;
   AutoStart.Checked := config.bAutoStart;
@@ -539,18 +541,18 @@ begin
 
 	label nextpacket;
 
-    form1.VaComm1.WriteChar(chr($FE));   //probe 4 one-wire devices
-    form1.VaComm1.WriteChar(chr($C8));
-    form1.VaComm1.WriteChar(chr($02));
+    LCDSmartieDisplayForm.VaComm1.WriteChar(chr($FE));   //probe 4 one-wire devices
+    LCDSmartieDisplayForm.VaComm1.WriteChar(chr($C8));
+    LCDSmartieDisplayForm.VaComm1.WriteChar(chr($02));
 
 
     laatstepacket := false;
   nextpacket:
     line := '';
     line2 := '';
-    while form1.VaComm1.ReadBufUsed >= 1 do
+    while LCDSmartieDisplayForm.VaComm1.ReadBufUsed >= 1 do
     begin
-      form1.VaComm1.ReadChar(Ch);
+      LCDSmartieDisplayForm.VaComm1.ReadChar(Ch);
       line := line + ch;
     end;
     if length(line)>13 then
@@ -572,7 +574,7 @@ begin
   end;
 end;
 
-procedure TForm2.ComboBox2Change(Sender: TObject);
+procedure TSetupForm.ComboBox2Change(Sender: TObject);
 begin
   if combobox2.itemindex < 0 then combobox2.itemindex := 0;
 
@@ -625,18 +627,7 @@ begin
   end;
 end;
 
-procedure TForm2.FormClose(Sender: TObject; var Action: TCloseAction);
-begin
-  form2.visible := false;
-  form1.enabled := true;
- // form1.refres(self);
-  form1.BringToFront;
-
-  form1.UpdateTimersState();
-end;
-
-
-procedure TForm2.SaveScreen(scr: Integer);
+procedure TSetupForm.SaveScreen(scr: Integer);
 var
   y: Integer;
 
@@ -652,8 +643,8 @@ begin
     config.screen[scr][y].enabled := checkbox1.checked;
     config.screen[scr][y].skip := combobox7.itemindex;
     config.screen[scr][y].theme := spinedit7.value-1;
-    config.screen[scr][y].interaction := form7.Combobox10.itemindex;
-    config.screen[scr][y].interactionTime := StrToInt(form7.spinedit1.text);
+    config.screen[scr][y].interaction := GlobalInteractionStyle;
+    config.screen[scr][y].interactionTime := GlobalInteractionTime;
     config.screen[scr][y].showTime := spinedit2.value;
     config.screen[scr][y].bSticky := Sticky.Checked;
 
@@ -671,7 +662,7 @@ begin
   config.screen[scr][2].noscroll := checkbox4.checked;
   config.screen[scr][3].noscroll := checkbox5.checked;
   config.screen[scr][4].noscroll := checkbox6.checked;
-  form1.ResetScrollPositions();
+  LCDSmartieDisplayForm.ResetScrollPositions();
 
   config.screen[scr][1].contNextLine := checkbox7.checked;
   config.screen[scr][2].contNextLine := checkbox8.checked;
@@ -679,7 +670,7 @@ begin
   config.screen[scr][4].contNextLine := False;
 end;
 
-procedure TForm2.LoadScreen(scr: Integer);
+procedure TSetupForm.LoadScreen(scr: Integer);
 var
   ascreen: TScreenLine;
 begin
@@ -687,14 +678,11 @@ begin
   checkbox1.checked := ascreen.enabled;
   combobox7.itemindex := ascreen.skip;
   spinedit7.value := ascreen.theme + 1;
-  form7.Combobox10.itemindex := ascreen.interaction;
-  form7.spinedit1.text := IntToStr(ascreen.interactionTime);
+  GlobalInteractionStyle := ascreen.interaction;
+  GlobalInteractionTime := ascreen.interactionTime;
   spinedit2.value := ascreen.showTime;
   Sticky.checked := ascreen.bSticky;
   spinedit2.enabled := not ascreen.bSticky;
-
-  if form7.combobox10.ItemIndex = 0 then form7.spinedit1.Enabled := False
-  else form7.spinedit1.Enabled := True;
 
   checkbox3.checked := false;
   checkbox4.checked := false;
@@ -765,7 +753,7 @@ begin
   checkbox13.Checked := ascreen.center;
 end;
 
-procedure TForm2.ComboBox3Change(Sender: TObject);
+procedure TSetupForm.ComboBox3Change(Sender: TObject);
 begin
   SaveScreen(tempscreen + 1);
 
@@ -774,10 +762,10 @@ begin
 
   LoadScreen(tempscreen + 1);
 
-  Form1.ChangeScreen(tempscreen + 1);
+  LCDSmartieDisplayForm.ChangeScreen(tempscreen + 1);
 end;
 
-procedure TForm2.RadioButton1Click(Sender: TObject);
+procedure TSetupForm.RadioButton1Click(Sender: TObject);
 begin
   //if pagecontrol1.ActivePage = Tabsheet13 then pagecontrol1.ActivePage :=
   //  Tabsheet1;
@@ -790,7 +778,7 @@ begin
   IRTransConfigButton.Enabled := false;
 end;
 
-procedure TForm2.RadioButton4Click(Sender: TObject);
+procedure TSetupForm.RadioButton4Click(Sender: TObject);
 begin
   button6.enabled := true;
   combobox4.enabled := false;
@@ -800,7 +788,7 @@ begin
   IRTransConfigButton.Enabled := false;
 end;
 
-procedure TForm2.RadioButton2Click(Sender: TObject);
+procedure TSetupForm.RadioButton2Click(Sender: TObject);
 begin
   //tabsheet13.Enabled := true;
   button6.enabled := false;
@@ -811,7 +799,7 @@ begin
   IRTransConfigButton.Enabled := false;
 end;
 
-procedure TForm2.RadioButton3Click(Sender: TObject);
+procedure TSetupForm.RadioButton3Click(Sender: TObject);
 begin
   //if pagecontrol1.ActivePage = Tabsheet13 then pagecontrol1.ActivePage :=
   //  Tabsheet1;
@@ -824,7 +812,7 @@ begin
   IRTransConfigButton.Enabled := false;
 end;
 
-procedure TForm2.IRTransRadioButtonClick(Sender: TObject);
+procedure TSetupForm.IRTransRadioButtonClick(Sender: TObject);
 begin
   combobox4.enabled := false;
   combobox5.enabled := false;
@@ -834,7 +822,7 @@ begin
   IRTransConfigButton.Enabled := true;
 end;
 
-procedure TForm2.ListBox7Click(Sender: TObject);
+procedure TSetupForm.ListBox7Click(Sender: TObject);
 begin
   if listbox7.itemindex > -1 then
   begin
@@ -863,7 +851,7 @@ end;
 
 // Select currently active text field that will receive variable if 'insert'
 // is pressed.
-Procedure TForm2.FocusToInputField;
+Procedure TSetupForm.FocusToInputField;
 var
   tempint1, tempint2: Integer;
 begin
@@ -918,7 +906,7 @@ begin
   end;
 end;
 
-procedure TForm2.Button3Click(Sender: TObject);
+procedure TSetupForm.Button3Click(Sender: TObject);
 var
   tempint: Integer;
 
@@ -979,7 +967,7 @@ begin
   end;
 end;
 
-procedure TForm2.ListBox6Click(Sender: TObject);
+procedure TSetupForm.ListBox6Click(Sender: TObject);
 begin
   if listbox6.itemindex > -1 then
   begin
@@ -1026,7 +1014,7 @@ begin
   end;
 end;
 
-procedure TForm2.ListBox5Click(Sender: TObject);
+procedure TSetupForm.ListBox5Click(Sender: TObject);
 begin
   if listbox5.itemindex > -1 then
   begin
@@ -1096,7 +1084,7 @@ begin
   end;
 end;
 
-procedure TForm2.ListBox2Click(Sender: TObject);
+procedure TSetupForm.ListBox2Click(Sender: TObject);
 begin
   if listbox2.itemindex > -1 then
   begin
@@ -1161,7 +1149,7 @@ Weather.com(locationcode)
   end;
 end;
 
-procedure TForm2.ComboBox6Change(Sender: TObject);
+procedure TSetupForm.ComboBox6Change(Sender: TObject);
 begin
   if listbox8.Itemindex = 1 then
   begin
@@ -1180,12 +1168,12 @@ begin
   end;
 end;
 
-procedure TForm2.Label16Click(Sender: TObject);
+procedure TSetupForm.Label16Click(Sender: TObject);
 begin
   ShellExecute(0, Nil, pchar('www.qstat.org'), Nil, Nil, SW_NORMAL);
 end;
 
-procedure TForm2.ListBox1Click(Sender: TObject);
+procedure TSetupForm.ListBox1Click(Sender: TObject);
 begin
   if listbox1.itemindex > -1 then
   begin
@@ -1220,7 +1208,7 @@ begin
   end;
 end;
 
-procedure TForm2.ListBox3Click(Sender: TObject);
+procedure TSetupForm.ListBox3Click(Sender: TObject);
 begin
   if listbox3.itemindex > -1 then
   begin
@@ -1238,7 +1226,7 @@ begin
   end;
 end;
 
-procedure TForm2.PageControl1Change(Sender: TObject);
+procedure TSetupForm.PageControl1Change(Sender: TObject);
 begin
   if Pagecontrol1.ActivePage = Tabsheet1 then
   begin
@@ -1521,12 +1509,7 @@ begin
 end;
 
 
-procedure TForm2.FormKeyPress(Sender: TObject; var Key: Char);
-begin
-  if key = chr(27) then button2.click();
-end;
-
-procedure TForm2.Edit10Exit(Sender: TObject);
+procedure TSetupForm.Edit10Exit(Sender: TObject);
 begin
   if (combobox3.itemIndex >= 0 ) and
      (setupbutton >= 0) and (setupbutton <= 4) then
@@ -1535,7 +1518,7 @@ begin
   end;
 end;
 
-procedure TForm2.Button4Click(Sender: TObject);
+procedure TSetupForm.Button4Click(Sender: TObject);
 begin
   if (not config.isMO) then
   begin
@@ -1547,11 +1530,10 @@ begin
       button7.click();
     end;
   end;
-  form3.visible := true;
-  form2.enabled := false;
+  DoMatrixOrbitalSetupForm;
 end;
 
-procedure TForm2.SpeedButton1Click(Sender: TObject);
+procedure TSetupForm.SpeedButton1Click(Sender: TObject);
 var
   line, line2: String;
 
@@ -1569,7 +1551,7 @@ begin
   if opendialog2.FileName <> '' then edit14.text := opendialog2.FileName;
 end;
 
-procedure TForm2.ListBox4Click(Sender: TObject);
+procedure TSetupForm.ListBox4Click(Sender: TObject);
 begin
   if listbox4.itemindex > -1 then
   begin
@@ -1611,7 +1593,7 @@ begin
   end;
 end;
 
-procedure TForm2.ComboBox8Change(Sender: TObject);
+procedure TSetupForm.ComboBox8Change(Sender: TObject);
 
 begin
   config.pop[(combobox8temp + 1) mod 10].server := edit11.text;
@@ -1626,7 +1608,7 @@ begin
   edit13.text := config.pop[(combobox8temp + 1) mod 10].pword;
 end;
 
-procedure TForm2.CheckBox7Click(Sender: TObject);
+procedure TSetupForm.CheckBox7Click(Sender: TObject);
 var
   tempint1: Integer;
 
@@ -1653,7 +1635,7 @@ begin
   end;
 end;
 
-procedure TForm2.CheckBox8Click(Sender: TObject);
+procedure TSetupForm.CheckBox8Click(Sender: TObject);
 var
   tempint1: Integer;
 
@@ -1680,7 +1662,7 @@ begin
   end;
 end;
 
-procedure TForm2.CheckBox9Click(Sender: TObject);
+procedure TSetupForm.CheckBox9Click(Sender: TObject);
 var
   tempint1: Integer;
 
@@ -1707,13 +1689,13 @@ begin
   end;
 end;
 
-procedure TForm2.SpeedButton3Click(Sender: TObject);
+procedure TSetupForm.SpeedButton3Click(Sender: TObject);
 begin
   opendialog1.Execute;
   if opendialog1.FileName <> '' then edit15.text := opendialog1.FileName;
 end;
 
-procedure TForm2.Button5Click(Sender: TObject);
+procedure TSetupForm.Button5Click(Sender: TObject);
 begin
  if (not config.isCF) then
   begin
@@ -1725,11 +1707,10 @@ begin
       button7.click();
     end;
   end;
-  form5.visible := true;
-  form2.enabled := false;
+  DoCrystalFontzSetupForm;
 end;
 
-procedure TForm2.IRTransConfigButtonClick(Sender: TObject);
+procedure TSetupForm.IRTransConfigButtonClick(Sender: TObject);
 begin
   if (not config.isIR) then
   begin
@@ -1747,7 +1728,7 @@ begin
   end;
 end;
 
-procedure TForm2.ListBox8Click(Sender: TObject);
+procedure TSetupForm.ListBox8Click(Sender: TObject);
 begin
   if listbox8.Itemindex = 0 then
   begin
@@ -1783,7 +1764,7 @@ begin
 end;
 
 
-procedure TForm2.Edit5Enter(Sender: TObject);
+procedure TSetupForm.Edit5Enter(Sender: TObject);
 begin
   edit10.text := config.gameServer[combobox3.itemindex + 1, 1];
   setupbutton := 1;
@@ -1796,7 +1777,7 @@ begin
   else edit8.color := $00BBBBFF;
 end;
 
-procedure TForm2.Edit6Enter(Sender: TObject);
+procedure TSetupForm.Edit6Enter(Sender: TObject);
 begin
   edit10.text := config.gameServer[combobox3.itemindex + 1, 2];
   setupbutton := 2;
@@ -1809,7 +1790,7 @@ begin
   else edit8.color := $00BBBBFF;
 end;
 
-procedure TForm2.Edit7Enter(Sender: TObject);
+procedure TSetupForm.Edit7Enter(Sender: TObject);
 begin
   edit10.text := config.gameServer[combobox3.itemindex + 1, 3];
   setupbutton := 3;
@@ -1822,7 +1803,7 @@ begin
   else edit8.color := $00BBBBFF;
 end;
 
-procedure TForm2.Edit8Enter(Sender: TObject);
+procedure TSetupForm.Edit8Enter(Sender: TObject);
 begin
   edit10.text := config.gameServer[combobox3.itemindex + 1, 4];
   setupbutton := 4;
@@ -1835,7 +1816,7 @@ begin
   else edit5.color := $00BBBBFF;
 end;
 
-procedure TForm2.ListBox9Click(Sender: TObject);
+procedure TSetupForm.ListBox9Click(Sender: TObject);
 begin
   if listbox9.itemindex > -1 then
   begin
@@ -1869,7 +1850,7 @@ begin
   end;
 end;
 
-procedure TForm2.Button6Click(Sender: TObject);
+procedure TSetupForm.Button6Click(Sender: TObject);
 begin
  if (not config.isHD) then
   begin
@@ -1881,11 +1862,11 @@ begin
       button7.click();
     end;
   end;
-  form6.visible := true;
-  form2.enabled := false;
+  if DoHD44780SetupForm then
+    config.isHD := false;  // force reload
 end;
 
-procedure TForm2.ListBox10Click(Sender: TObject);
+procedure TSetupForm.ListBox10Click(Sender: TObject);
 begin
   if listbox10.itemindex > -1 then
   begin
@@ -1903,7 +1884,7 @@ end;
 
 
 // Apply pressed.
-procedure TForm2.Button7Click(Sender: TObject);
+procedure TSetupForm.Button7Click(Sender: TObject);
 var
   relood: Boolean;
   x: Integer;
@@ -1921,36 +1902,32 @@ begin
   end;
 
   iMaxUsedRow := -1;
-  for x := 0 to form2.StringGrid1.RowCount-1 do
+  for x := 0 to StringGrid1.RowCount-1 do
   begin
-    if (form2.Stringgrid1.cells[0, x] <> '') and (form2.Stringgrid1.cells[4,
+    if (Stringgrid1.cells[0, x] <> '') and (Stringgrid1.cells[4,
       x] <> '') then
     begin
         iMaxUsedRow := x;
-        config.actionsArray[x + 1, 1] := form2.StringGrid1.Cells[0, x];
+        config.actionsArray[x + 1, 1] := StringGrid1.Cells[0, x];
 
-        if form2.StringGrid1.Cells[1, x]='>' then
+        if StringGrid1.Cells[1, x]='>' then
            config.actionsArray[x + 1, 2] := '0';
-        if form2.StringGrid1.Cells[1, x]='<' then
+        if StringGrid1.Cells[1, x]='<' then
            config.actionsArray[x + 1, 2] := '1';
-        if form2.StringGrid1.Cells[1, x]='=' then
+        if StringGrid1.Cells[1, x]='=' then
            config.actionsArray[x + 1, 2] := '2';
-        if form2.StringGrid1.Cells[1, x]='<=' then
+        if StringGrid1.Cells[1, x]='<=' then
            config.actionsArray[x + 1, 2] := '3';
-        if form2.StringGrid1.Cells[1, x]='>=' then
+        if StringGrid1.Cells[1, x]='>=' then
            config.actionsArray[x + 1, 2] := '4';
-        if form2.StringGrid1.Cells[1, x]='<>' then
+        if StringGrid1.Cells[1, x]='<>' then
            config.actionsArray[x + 1, 2] := '5';
 
-        config.actionsArray[x + 1, 3] := form2.StringGrid1.Cells[2, x];
-        config.actionsArray[x + 1, 4] := form2.StringGrid1.Cells[4, x];
+        config.actionsArray[x + 1, 3] := StringGrid1.Cells[2, x];
+        config.actionsArray[x + 1, 4] := StringGrid1.Cells[4, x];
     end;
   end;
   config.totalactions := iMaxUsedRow + 1;
-
-
-  if (config.parallelPort <> StrToInt('$' + form6.edit1.text))
-    then relood := true;
 
   // Check if Com settings have changed.
   sComPort := comboBox4.items[comboBox4.itemIndex];
@@ -1972,15 +1949,11 @@ begin
   if (IRTransRadioButton.checked) and (not config.isIR) then relood := true;
 
 
-  form1.WinampCtrl1.WinampLocation := edit15.text;
+  LCDSmartieDisplayForm.WinampCtrl1.WinampLocation := edit15.text;
   config.winampLocation := edit15.text;
   config.refreshRate := StrToInt(spinEdit1.text);
   config.setiEmail := edit1.text;
-  config.bootDriverDelay := StrToInt(form6.spinedit1.text);
 
-  if (config.iHDTimingMultiplier <> form6.spinedit2.value) then relood := true;
-  config.iHDTimingMultiplier := form6.spinedit2.value;
-  config.bHDAltAddressing := form6.AltAddressing.checked;
   config.sizeOption := combobox2.itemindex + 1;
   config.randomScreens := checkbox14.checked;
   config.newsRefresh := StrToInt(spinedit3.text);
@@ -1993,14 +1966,12 @@ begin
   config.dllPeriod := SpinEdit8.value;
   config.emailPeriod := StrToInt(SpinEdit4.text);
   config.scrollPeriod := SpinEdit9.value;
-  config.parallelPort := StrToInt('$' + form6.edit1.text);
-  config.mx3Usb := form3.checkbox1.checked;
   config.alwaysOnTop := checkbox2.checked;
   config.bHideOnStartup := HideOnStartup.Checked;
   config.bAutoStart := AutoStart.checked;
   config.bAutoStartHide := AutoStartHide.checked;
 
-  form1.SetupAutoStart();
+  LCDSmartieDisplayForm.SetupAutoStart();
 
   // Check if Com settings have changed.
   sComPort := comboBox4.items[comboBox4.itemIndex];
@@ -2026,23 +1997,23 @@ begin
   config.httpProxyPort := StrToInt(edit4.text);
 
   SaveScreen(combobox3.itemindex + 1);
-  form1.timer2.interval := 1000;
-  form1.timer8.interval := 1000;
-  form1.timer6.interval := 1000;
-  form1.timer12.interval := config.scrollPeriod;
-  form1.timer9.interval := 800;
+  LCDSmartieDisplayForm.timer2.interval := 1000;
+  LCDSmartieDisplayForm.timer8.interval := 1000;
+  LCDSmartieDisplayForm.timer6.interval := 1000;
+  LCDSmartieDisplayForm.timer12.interval := config.scrollPeriod;
+  LCDSmartieDisplayForm.timer9.interval := 800;
 
   config.save();
 
   if relood = true then
   begin
-    Form1.ReInitLCD();
+    LCDSmartieDisplayForm.ReInitLCD();
   end;
 
 end;
 
 // ok has been pressed.
-procedure TForm2.Button1Click(Sender: TObject);
+procedure TSetupForm.Button1Click(Sender: TObject);
 begin
   if (comboBox4.items[combobox4.itemIndex] = USBPALM)
     and (radiobutton3.checked) then
@@ -2054,20 +2025,20 @@ begin
   // ok is the same as apply followed by cancel.
   button7.click();
 
-  button2.Click()
+  CancelButton.Click()
 end;
 
-procedure TForm2.FormCreate(Sender: TObject);
+procedure TSetupForm.FormCreate(Sender: TObject);
 begin
-  form2.StringGrid1.RowCount := 0;
-  form2.StringGrid1.ColWidths[0] := 116;
-  form2.StringGrid1.ColWidths[1] := 20;
-  form2.StringGrid1.ColWidths[2] := 56;
-  form2.StringGrid1.ColWidths[3] := 36;
-  form2.StringGrid1.ColWidths[4] := 156;
+  StringGrid1.RowCount := 0;
+  StringGrid1.ColWidths[0] := 116;
+  StringGrid1.ColWidths[1] := 20;
+  StringGrid1.ColWidths[2] := 56;
+  StringGrid1.ColWidths[3] := 36;
+  StringGrid1.ColWidths[4] := 156;
 end;
 
-procedure TForm2.ListBox11Click(Sender: TObject);
+procedure TSetupForm.ListBox11Click(Sender: TObject);
 begin
   if listbox11.itemindex = 0 then Edit18.Text := 'NextTheme';
   if listbox11.itemindex = 1 then Edit18.Text := 'LastTheme';
@@ -2101,7 +2072,7 @@ begin
 
 end;
 
-procedure TForm2.PageControl2Change(Sender: TObject);
+procedure TSetupForm.PageControl2Change(Sender: TObject);
 begin
   if Pagecontrol2.ActivePage = Tabsheet12 then
   begin
@@ -2116,7 +2087,7 @@ begin
       listbox11.Items.Add('GPO(4-8,0/1) (0=off 1=on)');
       listbox11.Items.Add('GPOToggle(4-8)');
       listbox11.Items.Add('GPOFlash(4-8,2) (nr. of times)');
-      if (form3.CheckBox1.Checked) then
+      if (config.mx3Usb) then
       begin
         listbox11.Items.Add('Fan(1-3,0-255) (0-255=speed)');
       end;
@@ -2141,51 +2112,51 @@ begin
   end;
 end;
 
-procedure TForm2.Button8Click(Sender: TObject);
+procedure TSetupForm.Button8Click(Sender: TObject);
 begin
   if (edit16.text <> '') and (combobox9.itemindex <> -1) then
   begin
-    form2.StringGrid1.Cells[0, form2.StringGrid1.RowCount-1] := edit16.text;
-    form2.StringGrid1.Cells[1, form2.StringGrid1.RowCount-1] :=
-      form2.combobox9.Items.Strings[form2.combobox9.itemindex];
-    form2.StringGrid1.Cells[2, form2.StringGrid1.RowCount-1] := edit19.text;
-    form2.StringGrid1.Cells[3, form2.StringGrid1.RowCount-1] := 'then';
-    form2.StringGrid1.Cells[4, form2.StringGrid1.RowCount-1] := edit18.text;
-    form2.StringGrid1.RowCount := form2.StringGrid1.RowCount + 1;
+    StringGrid1.Cells[0, StringGrid1.RowCount-1] := edit16.text;
+    StringGrid1.Cells[1, StringGrid1.RowCount-1] :=
+      combobox9.Items.Strings[combobox9.itemindex];
+    StringGrid1.Cells[2, StringGrid1.RowCount-1] := edit19.text;
+    StringGrid1.Cells[3, StringGrid1.RowCount-1] := 'then';
+    StringGrid1.Cells[4, StringGrid1.RowCount-1] := edit18.text;
+    StringGrid1.RowCount := StringGrid1.RowCount + 1;
   end;
 end;
 
-procedure TForm2.Button9Click(Sender: TObject);
+procedure TSetupForm.Button9Click(Sender: TObject);
 var
   counter, counter2, counter3: Integer;
 
 begin
   counter2 :=
-    form2.Stringgrid1.Selection.Bottom-form2.Stringgrid1.Selection.Top + 1;
-  for counter := form2.Stringgrid1.Selection.Top to
-    form2.Stringgrid1.Selection.Bottom do
-    form2.StringGrid1.Rows[counter].clear;
+    Stringgrid1.Selection.Bottom-Stringgrid1.Selection.Top + 1;
+  for counter := Stringgrid1.Selection.Top to
+    Stringgrid1.Selection.Bottom do
+    StringGrid1.Rows[counter].clear;
   for counter3 := 1 to counter2 do
   begin
-    for counter := form2.Stringgrid1.Selection.Top to
-      form2.Stringgrid1.RowCount do
+    for counter := Stringgrid1.Selection.Top to
+      Stringgrid1.RowCount do
     begin
-      form2.StringGrid1.Cells[0, counter] := form2.StringGrid1.Cells[0, counter
+      StringGrid1.Cells[0, counter] := StringGrid1.Cells[0, counter
         + 1];
-      form2.StringGrid1.Cells[1, counter] := form2.StringGrid1.Cells[1, counter
+      StringGrid1.Cells[1, counter] := StringGrid1.Cells[1, counter
         + 1];
-      form2.StringGrid1.Cells[2, counter] := form2.StringGrid1.Cells[2, counter
+      StringGrid1.Cells[2, counter] := StringGrid1.Cells[2, counter
         + 1];
-      form2.StringGrid1.Cells[3, counter] := form2.StringGrid1.Cells[3, counter
+      StringGrid1.Cells[3, counter] := StringGrid1.Cells[3, counter
         + 1];
-      form2.StringGrid1.Cells[4, counter] := form2.StringGrid1.Cells[4, counter
+      StringGrid1.Cells[4, counter] := StringGrid1.Cells[4, counter
         + 1];
     end;
   end;
-  form2.StringGrid1.rowcount := form2.StringGrid1.rowcount-counter2;
+  StringGrid1.rowcount := StringGrid1.rowcount-counter2;
 end;
 
-procedure TForm2.ListBox12Click(Sender: TObject);
+procedure TSetupForm.ListBox12Click(Sender: TObject);
 begin
   if listbox12.itemindex > -1 then
   begin
@@ -2196,14 +2167,13 @@ begin
   end;
 end;
 
-procedure TForm2.Button10Click(Sender: TObject);
+procedure TSetupForm.Button10Click(Sender: TObject);
 begin
-  form7.visible := true;
-  form2.enabled := false;
+  DoInteractionConfigForm;
 end;
 
 
-procedure TForm2.Edit5KeyDown(Sender: TObject; var Key: Word; Shift:
+procedure TSetupForm.Edit5KeyDown(Sender: TObject; var Key: Word; Shift:
   TShiftState);
 begin
   if ord(key) = UPKEY then
@@ -2220,7 +2190,7 @@ begin
   end;
 end;
 
-procedure TForm2.Edit6KeyDown(Sender: TObject; var Key: Word; Shift:
+procedure TSetupForm.Edit6KeyDown(Sender: TObject; var Key: Word; Shift:
   TShiftState);
 begin
   if ord(key) = UPKEY then edit5.SetFocus
@@ -2232,7 +2202,7 @@ begin
   end;
 end;
 
-procedure TForm2.Edit7KeyDown(Sender: TObject; var Key: Word; Shift:
+procedure TSetupForm.Edit7KeyDown(Sender: TObject; var Key: Word; Shift:
   TShiftState);
 begin
   if ord(key) = UPKEY then edit6.SetFocus
@@ -2244,67 +2214,78 @@ begin
   end;
 end;
 
-procedure TForm2.Edit8KeyDown(Sender: TObject; var Key: Word; Shift:
+procedure TSetupForm.Edit8KeyDown(Sender: TObject; var Key: Word; Shift:
   TShiftState);
 begin
   if ord(key) = UPKEY then edit7.SetFocus;
   if ord(key) = DOWNKEY then edit5.SetFocus;
 end;
 
-procedure TForm2.StickyClick(Sender: TObject);
+procedure TSetupForm.StickyClick(Sender: TObject);
 begin
   SpinEdit2.enabled := not Sticky.checked;
 end;
 
-procedure TForm2.StringGrid1Click(Sender: TObject);
+procedure TSetupForm.StringGrid1Click(Sender: TObject);
 var
   selected: Integer;
 begin
 
   selected := StringGrid1.Selection.Top;
 
-  edit16.text := form2.StringGrid1.Cells[0, selected];
+  edit16.text := StringGrid1.Cells[0, selected];
 
-  if form2.StringGrid1.Cells[1, selected]='>' then
-    form2.combobox9.itemindex := 0
-  else if form2.StringGrid1.Cells[1, selected]='<' then
-    form2.combobox9.itemindex := 1
-  else if form2.StringGrid1.Cells[1, selected]='=' then
-    form2.combobox9.itemindex := 2
-  else if form2.StringGrid1.Cells[1, selected]='<=' then
-    form2.combobox9.itemindex := 3
-  else if form2.StringGrid1.Cells[1, selected]='>=' then
-    form2.combobox9.itemindex := 4
-  else if form2.StringGrid1.Cells[1, selected]='<>' then
-    form2.combobox9.itemindex := 5;
+  if StringGrid1.Cells[1, selected]='>' then
+    combobox9.itemindex := 0
+  else if StringGrid1.Cells[1, selected]='<' then
+    combobox9.itemindex := 1
+  else if StringGrid1.Cells[1, selected]='=' then
+    combobox9.itemindex := 2
+  else if StringGrid1.Cells[1, selected]='<=' then
+    combobox9.itemindex := 3
+  else if StringGrid1.Cells[1, selected]='>=' then
+    combobox9.itemindex := 4
+  else if StringGrid1.Cells[1, selected]='<>' then
+    combobox9.itemindex := 5;
 
-  edit19.text := form2.StringGrid1.Cells[2, selected];
-  edit18.text := form2.StringGrid1.Cells[4, selected];
+  edit19.text := StringGrid1.Cells[2, selected];
+  edit18.text := StringGrid1.Cells[4, selected];
 end;
 
-procedure TForm2.ComboBox7Change(Sender: TObject);
+procedure TSetupForm.ComboBox7Change(Sender: TObject);
 begin
   if (combobox7.ItemIndex < 0) then combobox7.ItemIndex := 0;
 end;
 
-procedure TForm2.ComboBox9Change(Sender: TObject);
+procedure TSetupForm.ComboBox9Change(Sender: TObject);
 begin
   if combobox9.ItemIndex < 0 then combobox9.itemIndex := 0;
 end;
 
-procedure TForm2.ComboBox4Change(Sender: TObject);
+procedure TSetupForm.ComboBox4Change(Sender: TObject);
 begin
   if (combobox4.ItemIndex < 0) then combobox4.ItemIndex := 0;
 end;
 
-procedure TForm2.ComboBox5Change(Sender: TObject);
+procedure TSetupForm.ComboBox5Change(Sender: TObject);
 begin
   if combobox5.itemindex < 0 then combobox5.ItemIndex := 0;
 end;
 
-procedure TForm2.ComboBox1Change(Sender: TObject);
+procedure TSetupForm.ComboBox1Change(Sender: TObject);
 begin
   if combobox1.ItemIndex < 0 then combobox1.ItemIndex := 0;
+end;
+
+procedure UpdateSetupForm(cKey : char);
+begin
+  if assigned(SetupForm) then
+    SetupForm.Edit17.text := cKey;
+end;
+
+function PerformingSetup : boolean;
+begin
+  Result := assigned(SetupForm);
 end;
 
 end.

@@ -15,7 +15,7 @@ K=0
 L=1
 M=0
 N=1
-O=1
+O=0
 P=1
 Q=0
 R=1
@@ -91,7 +91,7 @@ ImageBase=4194304
 ExeDescription=LCD Smartie: displays info on LCDs
 [Directories]
 OutputDir=
-UnitOutputDir=
+UnitOutputDir=dcu
 PackageDLLOutputDir=
 PackageDCPOutputDir=
 SearchPath=components\CoolTrayIcon;components\WinampCtrl
@@ -133,8 +133,6 @@ LegalTrademarks=
 OriginalFilename=Smartie.exe
 ProductName=LCD Smartie
 ProductVersion=5.3
-[Excluded Packages]
-C:\Program Files\Borland\Delphi7\Projects\Bpl\WinampCtrl7.bpl=Runtime package for WinampCtrl
 [HistoryLists\hlConditionals]
 Count=1
 Item0=madExcept
@@ -147,3 +145,9 @@ Item0=components\CoolTrayIcon;components\WinampCtrl
 Item1=$(DELPHI)\Lib\Debug;components\CoolTrayIcon;components\WinampCtrl
 Item2=components\CoolTrayIcon;components\TMSAsync32\d7;components\WinampCtrl
 Item3=$(DELPHI)\Lib\Debug;components\CoolTrayIcon;components\TMSAsync32\d7;components\WinampCtrl
+[HistoryLists\hlUnitOutputDirectory]
+Count=1
+Item0=dcu
+[HistoryLists\hlOutputDirectorry]
+Count=1
+Item0=exe

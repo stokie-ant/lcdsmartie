@@ -19,7 +19,7 @@ unit UIRSetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/Attic/UIRSetup.pas,v $
- *  $Revision: 1.2 $ $Date: 2006/02/27 14:15:29 $
+ *  $Revision: 1.3 $ $Date: 2006/02/27 18:35:47 $
  *****************************************************************************}
 
 
@@ -64,7 +64,7 @@ begin
     if (ModalResult = mrOK) then begin
       Result := true;
       if (config.isIR) then begin
-        Form1.lcd.setBrightness(IRBrightnessTrackBar.Position);
+        LCDSmartieDisplayForm.lcd.setBrightness(IRBrightnessTrackBar.Position);
       end;
       config.remotehost := HostEdit.Text;
     end;
@@ -76,7 +76,7 @@ end;
 procedure TIRTransForm.IRBrightnessTrackBarChange(Sender: TObject);
 begin
   if (config.isIR) then begin
-    Form1.lcd.setBrightness(IRBrightnessTrackBar.Position);
+    LCDSmartieDisplayForm.lcd.setBrightness(IRBrightnessTrackBar.Position);
   end;
   config.IR_brightness := IRBrightnessTrackBar.Position;
 end;

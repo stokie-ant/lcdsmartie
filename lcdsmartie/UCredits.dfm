@@ -1,8 +1,8 @@
-object Form4: TForm4
+object CreditsForm: TCreditsForm
   Left = 414
   Top = 174
   BorderIcons = []
-  BorderStyle = bsNone
+  BorderStyle = bsSingle
   Caption = 'LCD Smartie Info'
   ClientHeight = 274
   ClientWidth = 285
@@ -14,8 +14,7 @@ object Form4: TForm4
   Font.Style = []
   OldCreateOrder = False
   Position = poScreenCenter
-  OnClick = FormClick
-  OnClose = FormClose
+  OnClick = CloseClick
   PixelsPerInch = 96
   TextHeight = 13
   object Label2: TLabel
@@ -3329,7 +3328,7 @@ object Form4: TForm4
       FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
       FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
       FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000}
-    OnClick = Image1Click
+    OnClick = CloseClick
   end
   object Label1: TLabel
     Left = 40
@@ -3343,6 +3342,7 @@ object Form4: TForm4
     Font.Name = 'MS Sans Serif'
     Font.Style = [fsBold]
     ParentFont = False
+    OnClick = CloseClick
   end
   object Label3: TLabel
     Left = 40
@@ -3356,6 +3356,7 @@ object Form4: TForm4
     Font.Name = 'MS Sans Serif'
     Font.Style = [fsBold]
     ParentFont = False
+    OnClick = CloseClick
   end
   object Label4: TLabel
     Left = 16
@@ -3369,5 +3370,6 @@ object Form4: TForm4
     Font.Name = 'MS Sans Serif'
     Font.Style = [fsBold]
     ParentFont = False
+    OnClick = CloseClick
   end
 end

@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.54 $ $Date: 2005/05/08 17:44:29 $
+ *  $Revision: 1.55 $ $Date: 2006/02/27 18:35:47 $
  *****************************************************************************}
 
 
@@ -265,8 +265,8 @@ begin
   bNewScreenEvent := bYes;
   if (bYes) then
   begin
-    form1.timer6.Interval := 0;
-    form1.timer6.Interval := 250; // force an update of Mbm, etc data in 0.25 seconds
+    LCDSmartieDisplayForm.timer6.Interval := 0;
+    LCDSmartieDisplayForm.timer6.Interval := 250; // force an update of Mbm, etc data in 0.25 seconds
     bForceRefresh := true;
     bDoCpuUsage := false;
     bDoCpuSpeed := false;
@@ -476,14 +476,14 @@ var
   numArgs: Cardinal;
 
 begin
-  trackLength := form1.winampctrl1.TrackLength;
-  trackPosition := form1.winampctrl1.TrackPosition;
+  trackLength := LCDSmartieDisplayForm.winampctrl1.TrackLength;
+  trackPosition := LCDSmartieDisplayForm.winampctrl1.TrackPosition;
   if (trackLength < 0) then trackLength := 0;
   if (trackPosition < 0) then trackPosition := 0;
 
   if pos('$WinampTitle', line) <> 0 then
   begin
-    tempstr := form1.winampctrl1.GetCurrSongTitle;
+    tempstr := LCDSmartieDisplayForm.winampctrl1.GetCurrSongTitle;
     i:=1;
     while (i<=length(tempstr)) and (tempstr[i]>='0')
       and (tempstr[i]<='9') do Inc(i);
@@ -494,23 +494,23 @@ begin
   end;
   if pos('$WinampChannels', line) <> 0 then
   begin
-    if form1.winampctrl1.GetSongInfo(2)>1 then tempstr := 'stereo'
+    if LCDSmartieDisplayForm.winampctrl1.GetSongInfo(2)>1 then tempstr := 'stereo'
     else tempstr := 'mono';
     line := StringReplace(line, '$WinampChannels', tempstr, [rfReplaceAll]);
   end;
   if pos('$WinampKBPS', line) <> 0 then
   begin
     line := StringReplace(line, '$WinampKBPS',
-      IntToStr(form1.winampctrl1.GetSongInfo(1)), [rfReplaceAll]);
+      IntToStr(LCDSmartieDisplayForm.winampctrl1.GetSongInfo(1)), [rfReplaceAll]);
   end;
   if pos('$WinampFreq', line) <> 0 then
   begin
     line := StringReplace(line, '$WinampFreq',
-      IntToStr(form1.winampctrl1.GetSongInfo(0)), [rfReplaceAll]);
+      IntToStr(LCDSmartieDisplayForm.winampctrl1.GetSongInfo(0)), [rfReplaceAll]);
   end;
   if pos('$WinampStat', line) <> 0 then
   begin
-    case form1.WinampCtrl1.GetState of
+    case LCDSmartieDisplayForm.WinampCtrl1.GetState of
       0: line := StringReplace(line, '$WinampStat', 'stopped',
         [rfReplaceAll]);
       1: line := StringReplace(line, '$WinampStat', 'playing',
@@ -753,12 +753,12 @@ begin
   if pos('$WinampTracknr', line) <> 0 then
   begin
     line := StringReplace(line, '$WinampTracknr',
-      IntToStr(form1.winampctrl1.GetListPos + 1), [rfReplaceAll]);
+      IntToStr(LCDSmartieDisplayForm.winampctrl1.GetListPos + 1), [rfReplaceAll]);
   end;
   if pos('$WinampTotalTracks', line) <> 0 then
   begin
     line := StringReplace(line, '$WinampTotalTracks',
-      IntToStr(form1.winampctrl1.GetListCount), [rfReplaceAll]);
+      IntToStr(LCDSmartieDisplayForm.winampctrl1.GetListCount), [rfReplaceAll]);
   end;
 
   Result := line;
@@ -1677,7 +1677,7 @@ begin
         iPos2 := PosEx(')', line, iPos1+12);
         if (iPos2 = 0) then
           raise Exception.Create('No ending bracket');
-        Form1.customchar(AnsiMidStr(line, iPos1+12, iPos2-(iPos1+12)));
+        LCDSmartieDisplayForm.customchar(AnsiMidStr(line, iPos1+12, iPos2-(iPos1+12)));
         Delete(line, iPos1, iPos2-iPos1+1);
       except
         on E: Exception do line := StringReplace(line, '$CustomChar(',
@@ -2121,7 +2121,7 @@ begin
       try
         line2 := copy(line, pos('$Flash(', line) + 7, (pos('$)$',
           line))-(pos('$Flash(', line) + 7));
-        if (form1.doesflash) then
+        if (LCDSmartieDisplayForm.doesflash) then
         begin
           spaceline := '';
           for h := 1 to length(line2) do

@@ -19,7 +19,7 @@ unit UPara;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/Attic/UPara.pas,v $
- *  $Revision: 1.5 $ $Date: 2005/01/04 20:13:04 $
+ *  $Revision: 1.6 $ $Date: 2006/02/27 18:35:47 $
  *****************************************************************************}
 
 interface
@@ -27,36 +27,55 @@ interface
 uses Forms, StdCtrls, Spin, Controls, Classes;
 
 type
-  TForm6 = class(TForm)
+  THD44780SetupForm = class(TForm)
     Label1: TLabel;
-    Edit1: TEdit;
-    SpinEdit1: TSpinEdit;
+    PortEdit: TEdit;
+    BootDelaySpinEdit: TSpinEdit;
     Label2: TLabel;
-    Button1: TButton;
-    AltAddressing: TCheckBox;
-    SpinEdit2: TSpinEdit;
+    OKButton: TButton;
+    AltAddressingCheckbox: TCheckBox;
+    TimingMultiplierSpinEdit: TSpinEdit;
     Label3: TLabel;
-    procedure Button1Click(Sender: TObject);
+    CancelButton: TButton;
   private
     { Private declarations }
   public
     { Public declarations }
   end;
 
-var
-  Form6: TForm6;
+function DoHD44780SetupForm : boolean;
 
 implementation
 
-uses USetup;
+uses UMain, USetup, SysUtils;
 
 {$R *.DFM}
 
-procedure TForm6.Button1Click(Sender: TObject);
+function DoHD44780SetupForm : boolean;
+var
+  HD44780SetupForm : THD44780SetupForm;
 begin
-  form6.visible := false;
-  form2.enabled := true;
-  form2.BringToFront;
+  HD44780SetupForm := THD44780SetupForm.Create(nil);
+  with HD44780SetupForm do begin
+    // put settings on screen
+    PortEdit.text := IntToHex(config.parallelPort, 3);
+    BootDelaySpinEdit.Value := config.bootDriverDelay;
+    TimingMultiplierSpinEdit.value := config.iHDTimingMultiplier;
+    AltAddressingCheckbox.checked := config.bHDAltAddressing;
+    ShowModal;
+    Result := (ModalResult = mrOK);
+    if Result then begin
+      try
+        config.parallelPort := StrToInt('$' + PortEdit.text);
+      except
+        config.parallelPort := $378;
+      end;
+      config.bootDriverDelay := BootDelaySpinEdit.Value;
+      config.iHDTimingMultiplier := TimingMultiplierSpinEdit.value;
+      config.bHDAltAddressing := AltAddressingCheckbox.checked;
+    end;
+    Free;
+  end;
 end;
 
 end.

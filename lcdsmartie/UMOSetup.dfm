@@ -1,4 +1,4 @@
-object Form3: TForm3
+object MatrixOrbitalSetupForm: TMatrixOrbitalSetupForm
   Left = 536
   Top = 38
   BorderIcons = []
@@ -13,9 +13,7 @@ object Form3: TForm3
   Font.Name = 'MS Sans Serif'
   Font.Style = []
   OldCreateOrder = False
-  OnClose = FormClose
-  OnKeyPress = FormKeyPress
-  OnShow = FormShow
+  Position = poScreenCenter
   PixelsPerInch = 96
   TextHeight = 13
   object GroupBox3: TGroupBox
@@ -30,37 +28,38 @@ object Form3: TForm3
     Font.Name = 'Tahoma'
     Font.Style = [fsBold]
     ParentFont = False
-    TabOrder = 3
+    TabOrder = 0
+    object ContrastTrackBar: TTrackBar
+      Left = 1
+      Top = 15
+      Width = 149
+      Height = 25
+      Max = 255
+      Frequency = 10
+      TabOrder = 0
+      ThumbLength = 15
+      OnChange = ContrastTrackBarChange
+    end
   end
-  object Button1: TButton
+  object OKButton: TButton
     Left = 8
     Top = 144
     Width = 75
     Height = 25
-    Caption = '&Ok'
+    Caption = '&OK'
     Default = True
-    TabOrder = 0
-    OnClick = Button1Click
+    ModalResult = 1
+    TabOrder = 3
   end
-  object Button2: TButton
+  object CancelButton: TButton
     Left = 88
     Top = 144
     Width = 75
     Height = 25
+    Cancel = True
     Caption = '&Cancel'
-    TabOrder = 1
-    OnClick = Button2Click
-  end
-  object TrackBar1: TTrackBar
-    Left = 10
-    Top = 23
-    Width = 149
-    Height = 25
-    Max = 255
-    Frequency = 10
-    TabOrder = 2
-    ThumbLength = 15
-    OnChange = TrackBar1Change
+    ModalResult = 2
+    TabOrder = 4
   end
   object GroupBox1: TGroupBox
     Left = 8
@@ -74,26 +73,26 @@ object Form3: TForm3
     Font.Name = 'Tahoma'
     Font.Style = [fsBold]
     ParentFont = False
-    TabOrder = 4
+    TabOrder = 1
+    object BrightnessTrackBar: TTrackBar
+      Left = 1
+      Top = 16
+      Width = 149
+      Height = 25
+      Max = 255
+      Frequency = 10
+      TabOrder = 0
+      ThumbLength = 15
+      OnChange = BrightnessTrackBarChange
+    end
   end
-  object TrackBar2: TTrackBar
-    Left = 10
-    Top = 80
-    Width = 149
-    Height = 25
-    Max = 255
-    Frequency = 10
-    TabOrder = 5
-    ThumbLength = 15
-    OnChange = TrackBar2Change
-  end
-  object CheckBox1: TCheckBox
+  object MOUSBCheckbox: TCheckBox
     Left = 8
     Top = 120
     Width = 153
     Height = 17
-    Caption = '202-USB MX3 connected'
-    TabOrder = 6
+    Caption = '202-&USB MX3 connected'
+    TabOrder = 2
     Visible = False
   end
 end

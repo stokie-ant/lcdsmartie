@@ -19,7 +19,7 @@ unit UMOSetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/Attic/UMOSetup.pas,v $
- *  $Revision: 1.5 $ $Date: 2005/01/27 10:43:35 $
+ *  $Revision: 1.6 $ $Date: 2006/02/27 18:35:47 $
  *****************************************************************************}
 
 
@@ -28,29 +28,23 @@ interface
 uses StdCtrls, ComCtrls, Classes, Controls, Forms;
 
 type
-  TForm3 = class(TForm)
-    Button1: TButton;
-    Button2: TButton;
-    TrackBar1: TTrackBar;
+  TMatrixOrbitalSetupForm = class(TForm)
+    OKButton: TButton;
+    CancelButton: TButton;
     GroupBox3: TGroupBox;
     GroupBox1: TGroupBox;
-    TrackBar2: TTrackBar;
-    CheckBox1: TCheckBox;
-    procedure FormKeyPress(Sender: TObject; var Key: Char);
-    procedure Button2Click(Sender: TObject);
-    procedure Button1Click(Sender: TObject);
-    procedure FormShow(Sender: TObject);
-    procedure TrackBar1Change(Sender: TObject);
-    procedure FormClose(Sender: TObject; var Action: TCloseAction);
-    procedure TrackBar2Change(Sender: TObject);
+    MOUSBCheckbox: TCheckBox;
+    ContrastTrackBar: TTrackBar;
+    BrightnessTrackBar: TTrackBar;
+    procedure ContrastTrackBarChange(Sender: TObject);
+    procedure BrightnessTrackBarChange(Sender: TObject);
   private
     { Private declarations }
   public
     { Public declarations }
   end;
 
-var
-  Form3: TForm3;
+function DoMatrixOrbitalSetupForm : boolean;
 
 implementation
 
@@ -58,57 +52,45 @@ uses USetup, UMain;
 
 {$R *.DFM}
 
-procedure TForm3.FormKeyPress(Sender: TObject; var Key: Char);
+function DoMatrixOrbitalSetupForm : boolean;
+var
+  MatrixOrbitalSetupForm : TMatrixOrbitalSetupForm;
 begin
-  if key = chr(27) then button2.click();
-end;
-
-procedure TForm3.Button2Click(Sender: TObject);
-begin
-  form3.visible := false;
-  form2.enabled := true;
-  form2.BringToFront;
-end;
-
-procedure TForm3.Button1Click(Sender: TObject);
-
-begin
-  if (config.isMO) then
-  begin
-    form1.lcd.setContrast(trackbar1.position);
-    form1.lcd.setBrightness(trackbar2.position);
+  MatrixOrbitalSetupForm := TMatrixOrbitalSetupForm.Create(nil);
+  with MatrixOrbitalSetupForm do begin
+    // put settings on screen
+    ContrastTrackBar.position := config.contrast;
+    BrightnessTrackBar.position := config.brightness;
+    MOUSBCheckbox.Checked := config.mx3Usb;
+    ShowModal;
+    Result := (ModalResult = mrOK);
+    if Result then begin
+      config.contrast := ContrastTrackBar.position;
+      config.brightness := BrightnessTrackBar.position;
+      config.mx3Usb := MOUSBCheckbox.Checked;
+    end else begin
+      if (config.isMO) then
+      begin
+        LCDSmartieDisplayForm.lcd.setContrast(config.contrast);
+        LCDSmartieDisplayForm.lcd.setBrightness(config.brightness);
+      end;
+    end;
+    Free;
   end;
-
-  form3.visible := false;
-  form2.enabled := true;
-  form2.BringToFront;
-end;
-
-procedure TForm3.FormShow(Sender: TObject);
-begin
-  trackbar1.position := config.contrast;
-  trackbar2.position := config.brightness;
 end;
 
 // MO options - contrast bar.
-procedure TForm3.TrackBar1Change(Sender: TObject);
+procedure TMatrixOrbitalSetupForm.ContrastTrackBarChange(Sender: TObject);
 begin
   if (config.isMO) then
-    form1.lcd.setContrast(trackbar1.position);
-  config.contrast := trackbar1.position;
-end;
-
-procedure TForm3.FormClose(Sender: TObject; var Action: TCloseAction);
-begin
-  button2.click;
+    LCDSmartieDisplayForm.lcd.setContrast(ContrastTrackBar.position);
 end;
 
 // MO options - brightness bar.
-procedure TForm3.TrackBar2Change(Sender: TObject);
+procedure TMatrixOrbitalSetupForm.BrightnessTrackBarChange(Sender: TObject);
 begin
   if (config.isMO) then
-    form1.lcd.setBrightness(trackbar2.position);
-  config.brightness := trackbar2.position;
+    LCDSmartieDisplayForm.lcd.setBrightness(BrightnessTrackBar.position);
 end;
 
 end.

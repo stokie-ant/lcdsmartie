@@ -1,11 +1,11 @@
-object Form1: TForm1
-  Left = 157
-  Top = 176
+object LCDSmartieDisplayForm: TLCDSmartieDisplayForm
+  Left = 162
+  Top = 146
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsToolWindow
   Caption = 'LCD Smartie 5.3'
-  ClientHeight = 90
-  ClientWidth = 225
+  ClientHeight = 92
+  ClientWidth = 227
   Color = clBtnFace
   TransparentColorValue = clBtnFace
   Font.Charset = ANSI_CHARSET
@@ -15,6 +15,7 @@ object Form1: TForm1
   Font.Style = []
   KeyPreview = True
   OldCreateOrder = False
+  Position = poScreenCenter
   OnClose = FormClose
   OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate

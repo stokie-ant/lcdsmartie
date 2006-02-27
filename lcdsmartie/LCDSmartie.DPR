@@ -4,30 +4,7 @@ uses
   madExcept,
   madLinkDisAsm,
   Forms,
-  UMain in 'UMain.pas' {Form1},
-  USetup in 'USetup.pas' {Form2},
-  UMOSetup in 'UMOSetup.pas' {Form3},
-  UCredits in 'UCredits.pas' {Form4},
-  UCFSetup in 'UCFSetup.pas' {Form5},
-  UPara in 'UPara.pas' {Form6},
-  UInteract in 'UInteract.pas' {Form7},
-  UConfig in 'UConfig.pas',
-  System2 in 'system2.pas',
-  adCpuUsage in 'adCpuUsage.pas',
-  cxCpu40 in 'cxCpu40.pas',
-  IpExport in 'IpExport.pas',
-  IpHlpApi in 'IpHlpApi.pas',
-  IpIfConst in 'IpIfConst.pas',
-  IpRtrMib in 'IpRtrMib.pas',
-  IpTypes in 'IpTypes.pas',
-  ULCD in 'ULCD.pas',
-  ULCD_MO in 'ULCD_MO.pas',
-  ULCD_HD in 'ULCD_HD.pas',
-  ULCD_CF in 'ULCD_CF.pas',
-  UData in 'UData.pas',
-  USerial in 'USerial.pas',
-  UUtils in 'UUtils.pas',
-  ULCD_Test in 'ULCD_Test.pas';
+  UMain in 'UMain.pas' {LCDSmartieDisplayForm};
 
 {$R *.RES}
 
@@ -35,12 +12,6 @@ begin
   Application.Initialize;
   Application.Title := 'LCD Smartie';
   Application.HelpFile := 'README.txt';
-  Application.CreateForm(TForm1, Form1);
-  Application.CreateForm(TForm2, Form2);
-  Application.CreateForm(TForm4, Form4);
-  Application.CreateForm(TForm3, Form3);
-  Application.CreateForm(TForm5, Form5);
-  Application.CreateForm(TForm6, Form6);
-  Application.CreateForm(TForm7, Form7);
+  Application.CreateForm(TLCDSmartieDisplayForm, LCDSmartieDisplayForm);
   Application.Run;
 end.

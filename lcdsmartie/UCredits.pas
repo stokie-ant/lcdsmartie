@@ -19,7 +19,7 @@ unit UCredits;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UCredits.pas,v $
- *  $Revision: 1.3 $ $Date: 2005/01/04 11:35:58 $
+ *  $Revision: 1.4 $ $Date: 2006/02/27 18:35:47 $
  *****************************************************************************}
 
 interface
@@ -27,16 +27,13 @@ interface
 uses Forms, ExtCtrls, Classes, StdCtrls, Graphics, Controls;
 
 type
-  TForm4 = class(TForm)
+  TCreditsForm = class(TForm)
     Label2: TLabel;
     Image1: TImage;
     Label1: TLabel;
     Label3: TLabel;
     Label4: TLabel;
-    procedure FormClick(Sender: TObject);
-    procedure Label1Click(Sender: TObject);
-    procedure Image1Click(Sender: TObject);
-    procedure FormClose(Sender: TObject; var Action: TCloseAction);
+    procedure CloseClick(Sender: TObject);
     procedure Label2Click(Sender: TObject);
   private
     { Private declarations }
@@ -44,44 +41,31 @@ type
     { Public declarations }
   end;
 
-var
-  Form4: TForm4;
+procedure DoCreditsForm;
 
 implementation
 
-uses Windows, ShellApi, UMain;
+uses Windows, ShellApi;
 
 {$R *.DFM}
 
-procedure TForm4.FormClick(Sender: TObject);
+procedure DoCreditsForm;
+var
+  CreditsForm: TCreditsForm;
 begin
-  form1.enabled := true;
-  form4.visible := false;
-  form1.BringToFront;
+  CreditsForm := TCreditsForm.Create(nil);
+  with CreditsForm do begin
+    ShowModal;
+    Free;
+  end;
 end;
 
-procedure TForm4.Label1Click(Sender: TObject);
+procedure TCreditsForm.CloseClick(Sender: TObject);
 begin
-  form1.enabled := true;
-  form4.visible := false;
-  form1.BringToFront;
+  Close;
 end;
 
-procedure TForm4.Image1Click(Sender: TObject);
-begin
-  form1.enabled := true;
-  form4.visible := false;
-  form1.BringToFront;
-end;
-
-procedure TForm4.FormClose(Sender: TObject; var Action: TCloseAction);
-begin
-  form1.enabled := true;
-  form4.visible := false;
-  form1.BringToFront;
-end;
-
-procedure TForm4.Label2Click(Sender: TObject);
+procedure TCreditsForm.Label2Click(Sender: TObject);
 
 begin
   ShellExecute(0, Nil, pchar('http://lcdsmartie.sourceforge.net/'), Nil, Nil,

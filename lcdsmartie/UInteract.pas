@@ -19,33 +19,36 @@ unit UInteract;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UInteract.pas,v $
- *  $Revision: 1.4 $ $Date: 2005/05/07 15:54:47 $
+ *  $Revision: 1.5 $ $Date: 2006/02/27 18:35:47 $
  *****************************************************************************}
 
 interface
 
 uses Forms, StdCtrls, Spin, Controls, Classes;
 
+// these should be passed in as variables instead of globals
+var
+  GlobalInteractionStyle : byte = 0;
+  GlobalInteractionTime : byte = 1;
+
 type
-  TForm7 = class(TForm)
+  TInteractionConfigForm = class(TForm)
     Label1: TLabel;
     Label2: TLabel;
     Label3: TLabel;
     Label4: TLabel;
-    ComboBox10: TComboBox;
-    SpinEdit1: TSpinEdit;
-    Button1: TButton;
-    procedure Button1Click(Sender: TObject);
-    procedure ComboBox10Change(Sender: TObject);
-    procedure FormShow(Sender: TObject);
+    InteractionStyleComboBox: TComboBox;
+    InteractionTimeSpinEdit: TSpinEdit;
+    OKButton: TButton;
+    CancelButton: TButton;
+    procedure InteractionStyleComboBoxChange(Sender: TObject);
   private
     { Private declarations }
   public
     { Public declarations }
   end;
 
-var
-  Form7: TForm7;
+function DoInteractionConfigForm : boolean;
 
 implementation
 
@@ -53,33 +56,29 @@ uses SysUtils, USetup;
 
 {$R *.dfm}
 
-procedure TForm7.Button1Click(Sender: TObject);
+function DoInteractionConfigForm : boolean;
+var
+  InteractionConfigForm : TInteractionConfigForm;
 begin
-  try
-    // Using StrInt to ensure the text is a number - otherwise an exception will occur.
-    if StrToInt(spinedit1.text) = 0 then SpinEdit1.Text := '1';
-  except
-    SpinEdit1.text := '1';
+  InteractionConfigForm := TInteractionConfigForm.Create(nil);
+  with InteractionConfigForm do begin
+    // put settings on screen
+    InteractionStyleComboBox.ItemIndex := GlobalInteractionStyle;
+    InteractionTimeSpinEdit.Value := GlobalInteractionTime;
+    InteractionTimeSpinEdit.Enabled := not (InteractionStyleComboBox.ItemIndex = 0);
+    ShowModal;
+    Result := (ModalResult = mrOK);
+    if Result then begin
+      GlobalInteractionStyle := InteractionStyleComboBox.ItemIndex;
+      GlobalInteractionTime := InteractionTimeSpinEdit.Value;
+    end;
+    Free;
   end;
-
-  if copy(SpinEdit1.Text, 1, 1) = '0' then Form7.SpinEdit1.Text :=
-    copy(SpinEdit1.Text, 2, 1);
-  form7.visible := false;
-  form2.enabled := true;
-  form2.BringToFront;
 end;
 
-procedure TForm7.ComboBox10Change(Sender: TObject);
+procedure TInteractionConfigForm.InteractionStyleComboBoxChange(Sender: TObject);
 begin
-  if combobox10.ItemIndex < 0 then combobox10.itemIndex := 0;
-  if combobox10.ItemIndex = 0 then spinedit1.Enabled := False
-  else spinedit1.Enabled := True;
-end;
-
-procedure TForm7.FormShow(Sender: TObject);
-begin
-  if copy(form7.SpinEdit1.Text, 1, 1) = '0' then Form7.SpinEdit1.Text :=
-    copy(form7.SpinEdit1.Text, 2, 1);
+  InteractionTimeSpinEdit.Enabled := not (InteractionStyleComboBox.ItemIndex = 0);
 end;
 
 end.

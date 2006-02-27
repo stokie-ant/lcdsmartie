@@ -1,6 +1,6 @@
-object Form2: TForm2
-  Left = 81
-  Top = 52
+object SetupForm: TSetupForm
+  Left = 293
+  Top = 117
   Anchors = []
   BiDiMode = bdLeftToRight
   BorderIcons = []
@@ -17,9 +17,8 @@ object Form2: TForm2
   KeyPreview = True
   OldCreateOrder = False
   ParentBiDiMode = False
-  OnClose = FormClose
+  Position = poScreenCenter
   OnCreate = FormCreate
-  OnKeyPress = FormKeyPress
   OnShow = FormShow
   PixelsPerInch = 96
   TextHeight = 13
@@ -905,7 +904,7 @@ object Form2: TForm2
     Top = 384
     Width = 75
     Height = 25
-    Caption = '&Ok'
+    Caption = '&OK'
     Default = True
     Font.Charset = ANSI_CHARSET
     Font.Color = clInfoText
@@ -916,20 +915,22 @@ object Form2: TForm2
     TabOrder = 5
     OnClick = Button1Click
   end
-  object Button2: TButton
+  object CancelButton: TButton
     Left = 656
     Top = 384
     Width = 75
     Height = 25
+    Cancel = True
     Caption = '&Cancel'
     Font.Charset = ANSI_CHARSET
     Font.Color = clInfoText
     Font.Height = -11
     Font.Name = 'Tahoma'
     Font.Style = []
+    ModalResult = 2
     ParentFont = False
     TabOrder = 6
-    OnClick = Button2Click
+    OnClick = CancelButtonClick
   end
   object Edit9: TEdit
     Left = 8

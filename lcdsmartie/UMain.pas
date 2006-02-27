@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.60 $ $Date: 2006/02/27 14:12:31 $
+ *  $Revision: 1.61 $ $Date: 2006/02/27 18:35:47 $
  *****************************************************************************}
 
 interface
@@ -38,7 +38,7 @@ const
 type
   TChangeShow = (NoChange, ShowMainForm, HideMainForm, TotalHideMainForm);
 
-  TForm1 = class(TForm)
+  TLCDSmartieDisplayForm = class(TForm)
     // These are used in other units:
     Timer2: TTimer;
     Timer7: TTimer;
@@ -183,7 +183,7 @@ type
     doesflash: Boolean;
     lcd: TLCD;
     procedure DoFullDisplayDraw;
-    procedure UpdateTimersState;
+    procedure UpdateTimersState(InSetupState : boolean);
     procedure ChangeScreen(scr: Integer);
     procedure ResetScrollPositions;
     procedure SetupAutoStart;
@@ -245,7 +245,7 @@ type
   end;
 
 var
-  Form1: TForm1;
+  LCDSmartieDisplayForm: TLCDSmartieDisplayForm;
   config: TConfig;
   activeScreen : Integer;
   bTerminating: Boolean;
@@ -255,17 +255,17 @@ implementation
 uses Windows, SysUtils, Graphics, Dialogs, ShellAPI, mmsystem, StrUtils,
   USetup, UCredits, ULCD_MO, ULCD_CF, ULCD_HD, ULCD_Test, ULCD_IR, ExtActns, UUtils;
 
-function TForm1.EscapeAmp(const sStr: string): String;
+function TLCDSmartieDisplayForm.EscapeAmp(const sStr: string): String;
 begin
   Result := StringReplace(sStr, '&', '&&', [rfReplaceAll])
 end;
 
-function TForm1.UnescapeAmp(const sStr: string): String;
+function TLCDSmartieDisplayForm.UnescapeAmp(const sStr: string): String;
 begin
   Result := StringReplace(sStr, '&&', '&', [rfReplaceAll])
 end;
 
-procedure TForm1.WMPowerBroadcast (var M: TMessage);
+procedure TLCDSmartieDisplayForm.WMPowerBroadcast (var M: TMessage);
 const
   PBT_APMSUSPEND = 4;
   PBT_APMSTANDBY = 5;
@@ -287,7 +287,7 @@ begin
   end;
 end;
 
-procedure TForm1.ResetScrollPositions;
+procedure TLCDSmartieDisplayForm.ResetScrollPositions;
 var
   y: Integer;
 begin
@@ -298,7 +298,7 @@ begin
 end;
 
 
-procedure TForm1.ChangeScreen(scr: Integer);
+procedure TLCDSmartieDisplayForm.ChangeScreen(scr: Integer);
 var
   y: Integer;
   ascreen: TScreenLine;
@@ -359,7 +359,7 @@ begin
 
 end;
 
-function TForm1.doguess(line: Integer): Integer;
+function TLCDSmartieDisplayForm.doguess(line: Integer): Integer;
 var
   goedgokje: Boolean;
   x: Integer;
@@ -401,7 +401,7 @@ end;
 
 
 
-procedure TForm1.customchar(fline: String);
+procedure TLCDSmartieDisplayForm.customchar(fline: String);
 var
   character: Integer;
   waarde: Array[0..7] of Byte;
@@ -431,7 +431,7 @@ begin
   end;
 end;
 
-procedure TForm1.SendCustomChars;
+procedure TLCDSmartieDisplayForm.SendCustomChars;
 var
   i: Integer;
 begin
@@ -447,7 +447,7 @@ end;
 
 
 
-function TForm1.scroll(const scrollvar: String;const line, speed: Integer):
+function TLCDSmartieDisplayForm.scroll(const scrollvar: String;const line, speed: Integer):
   String;
 var
   scrolltext: String;
@@ -477,7 +477,7 @@ end;
 
 {$R *.DFM}
 
-procedure TForm1.FormCreate(Sender: TObject);
+procedure TLCDSmartieDisplayForm.FormCreate(Sender: TObject);
 var
   line: String;
   initfile: textfile;
@@ -532,7 +532,7 @@ begin
       application.terminate;
     end;
   end;
-  form1.color := $00BFBFBF;
+  LCDSmartieDisplayForm.color := $00BFBFBF;
 
 
   aantalscreensheenweer := 1;
@@ -601,19 +601,19 @@ begin
 
   Data := TData.Create();
 
-  form1.WinampCtrl1.WinampLocation := config.winampLocation;
+  LCDSmartieDisplayForm.WinampCtrl1.WinampLocation := config.winampLocation;
   file1 := config.distLog;
 
   backlight := 1;
   kleur();
 
   // ensure start up position is sensible
-  if form1.left < 0 then form1.left := 0;
-  if form1.top < 0 then form1.top := 0;
-  if form1.left + form1.Width > screen.desktopwidth then form1.left :=
-    screen.desktopwidth-form1.width;
-  if form1.top + form1.height > screen.desktopheight then form1.top :=
-    screen.desktopheight-form1.height;
+  if LCDSmartieDisplayForm.left < 0 then LCDSmartieDisplayForm.left := 0;
+  if LCDSmartieDisplayForm.top < 0 then LCDSmartieDisplayForm.top := 0;
+  if LCDSmartieDisplayForm.left + LCDSmartieDisplayForm.Width > screen.desktopwidth then LCDSmartieDisplayForm.left :=
+    screen.desktopwidth-LCDSmartieDisplayForm.width;
+  if LCDSmartieDisplayForm.top + LCDSmartieDisplayForm.height > screen.desktopheight then LCDSmartieDisplayForm.top :=
+    screen.desktopheight-LCDSmartieDisplayForm.height;
 
   InitLCD();
 
@@ -621,7 +621,7 @@ begin
 
 end;
 
-procedure TForm1.SetupAutoStart;
+procedure TLCDSmartieDisplayForm.SetupAutoStart;
 var
   sParameters: String;
   sShortCutName: String;
@@ -645,7 +645,7 @@ begin
 end;
 
 
-procedure TForm1.FiniLCD();
+procedure TLCDSmartieDisplayForm.FiniLCD();
 begin
   timer11.enabled := false; // stop any startup of the HD44780 driver
   timerRefresh.enabled := false;  // stop updates to lcd
@@ -656,13 +656,13 @@ begin
   Lcd := nil;
 end;
 
-procedure TForm1.ReInitLCD();
+procedure TLCDSmartieDisplayForm.ReInitLCD();
 begin
   FiniLCD();
   InitLCD();
 end;
 
-procedure TForm1.InitLCD();
+procedure TLCDSmartieDisplayForm.InitLCD();
 const
   baudRates: array [0..14] of Cardinal =(CBR_110, CBR_300, CBR_600, CBR_1200, CBR_2400,
     CBR_4800, CBR_9600, CBR_14400, CBR_19200, CBR_38400, CBR_56000, CBR_57600,
@@ -757,10 +757,10 @@ begin
 
   DoFullDisplayDraw();
 
-  UpdateTimersState();
+  UpdateTimersState(PerformingSetup);
 end;
 
-procedure TForm1.DoFullDisplayDraw;
+procedure TLCDSmartieDisplayForm.DoFullDisplayDraw;
 var
   x: Integer;
 begin
@@ -771,7 +771,7 @@ begin
   end;
 end;
 
-procedure TForm1.doInteractions;
+procedure TLCDSmartieDisplayForm.doInteractions;
 var
   gokreg: Array[1..4] of String;
   tempstr: String;
@@ -951,7 +951,7 @@ begin
             end;
 end;
 
-procedure TForm1.ResizeHeight;
+procedure TLCDSmartieDisplayForm.ResizeHeight;
 var
   iDelta: Integer;
 begin
@@ -993,7 +993,7 @@ begin
   image14.Top := 64 - iDelta;
   image17.Top := 69 - iDelta;
   image1.Top := 64 - iDelta;
-  form1.ClientHeight := 90 - iDelta;
+  LCDSmartieDisplayForm.ClientHeight := 90 - iDelta;
 
   image11.Height := 64 - iDelta;
   image12.Height := 64 - iDelta;
@@ -1001,7 +1001,7 @@ begin
   image12.Stretch := (config.height <> 4);
 end;
 
-procedure TForm1.ResizeWidth;
+procedure TLCDSmartieDisplayForm.ResizeWidth;
 var
   h: Integer;
   iDelta: Integer;
@@ -1020,7 +1020,7 @@ begin
   else
     iDelta := 158;}
 
-  form1.Width := 389 - iDelta;
+  LCDSmartieDisplayForm.Width := 389 - iDelta;
   image1.left := 356 - iDelta;
   image11.left := 368 - iDelta;
   image7.left := 352 - iDelta;
@@ -1051,7 +1051,7 @@ begin
   end;
 end;
 
-procedure TForm1.TimerRefreshTimer(Sender: TObject);
+procedure TLCDSmartieDisplayForm.TimerRefreshTimer(Sender: TObject);
 var
   counter, h: Integer;
   line: String;
@@ -1106,14 +1106,14 @@ begin
       kleur();
     end;
 
-    if (config.alwaysOnTop) and (not form2.Visible) and (not form4.Visible)
+    if (config.alwaysOnTop) {and (not form2.Visible) and (not form4.Visible)}
       then
     begin
-      form1.formStyle := fsStayOnTop;
+      LCDSmartieDisplayForm.formStyle := fsStayOnTop;
     end
     else
     begin
-      form1.formStyle := fsNormal;
+      LCDSmartieDisplayForm.formStyle := fsNormal;
     end;
 
     if (config.width <> iSavedWidth) then
@@ -1237,7 +1237,7 @@ end;
 
 
 // sets backlight - toggles if no parameter given
-procedure TForm1.backlit(iOn: Integer = -1);
+procedure TLCDSmartieDisplayForm.backlit(iOn: Integer = -1);
 begin
   if (iOn = -1) then
     backlight := 1-backlight
@@ -1247,13 +1247,13 @@ begin
   Lcd.setbacklight(backlight >= 1);
 
   if backlight = 0 then
-    Form1.popupmenu1.Items[0].Items[0].Caption := '&Backlight On'
+    LCDSmartieDisplayForm.popupmenu1.Items[0].Items[0].Caption := '&Backlight On'
   else
-    Form1.popupmenu1.Items[0].Items[0].Caption := '&Backlight Off';
-  Form1.kleur();
+    LCDSmartieDisplayForm.popupmenu1.Items[0].Items[0].Caption := '&Backlight Off';
+  LCDSmartieDisplayForm.kleur();
 end;
 
-procedure TForm1.FormShow(Sender: TObject);
+procedure TLCDSmartieDisplayForm.FormShow(Sender: TObject);
 begin
   timerRefresh.Interval := 0; // reset timer
   timerRefresh.Interval := 1; // make it short in case minimized has been selected.
@@ -1261,7 +1261,7 @@ begin
   cooltrayicon1.IconVisible := False;
 end;
 
-procedure TForm1.Timer2Timer(Sender: TObject);
+procedure TLCDSmartieDisplayForm.Timer2Timer(Sender: TObject);
 begin
   if (data.lcdSmartieUpdate) then
   begin
@@ -1283,7 +1283,7 @@ begin
   timer2.Interval := config.newsRefresh*1000*60;
 end;
 
-procedure TForm1.kleur;
+procedure TLCDSmartieDisplayForm.kleur;
 begin
   if backlight = 1 then
   begin
@@ -1293,7 +1293,7 @@ begin
       screenLcd[2].color := $0001FFA8;
       screenLcd[3].color := $0001FFA8;
       screenLcd[4].color := $0001FFA8;
-      form1.Color := $0001FFA8;
+      LCDSmartieDisplayForm.Color := $0001FFA8;
       screenLcd[1].Font.Color := clBlack;
       screenLcd[2].Font.Color := clBlack;
       screenLcd[3].Font.Color := clBlack;
@@ -1305,7 +1305,7 @@ begin
       screenLcd[2].color := $00FDF103;
       screenLcd[3].color := $00FDF103;
       screenLcd[4].color := $00FDF103;
-      form1.Color := $00FDF103;
+      LCDSmartieDisplayForm.Color := $00FDF103;
       screenLcd[1].Font.Color := clBlack;
       screenLcd[2].Font.Color := clBlack;
       screenLcd[3].Font.Color := clBlack;
@@ -1317,7 +1317,7 @@ begin
       screenLcd[2].color := clyellow;
       screenLcd[3].color := clyellow;
       screenLcd[4].color := clyellow;
-      form1.Color := clyellow;
+      LCDSmartieDisplayForm.Color := clyellow;
       screenLcd[1].Font.Color := clBlack;
       screenLcd[2].Font.Color := clBlack;
       screenLcd[3].Font.Color := clBlack;
@@ -1329,7 +1329,7 @@ begin
       screenLcd[2].color := clwhite;
       screenLcd[3].color := clwhite;
       screenLcd[4].color := clwhite;
-      form1.Color := clwhite;
+      LCDSmartieDisplayForm.Color := clwhite;
       screenLcd[1].Font.Color := clBlack;
       screenLcd[2].Font.Color := clBlack;
       screenLcd[3].Font.Color := clBlack;
@@ -1341,7 +1341,7 @@ begin
       screenLcd[2].color := backgroundcoloron;
       screenLcd[3].color := backgroundcoloron;
       screenLcd[4].color := backgroundcoloron;
-      form1.Color := backgroundcoloron;
+      LCDSmartieDisplayForm.Color := backgroundcoloron;
       screenLcd[1].Font.Color := forgroundcoloron;
       screenLcd[2].Font.Color := forgroundcoloron;
       screenLcd[3].Font.Color := forgroundcoloron;
@@ -1356,7 +1356,7 @@ begin
       screenLcd[2].color := clgreen;
       screenLcd[3].color := clgreen;
       screenLcd[4].color := clgreen;
-      form1.Color := clgreen;
+      LCDSmartieDisplayForm.Color := clgreen;
       screenLcd[1].Font.Color := clBlack;
       screenLcd[2].Font.Color := clBlack;
       screenLcd[3].Font.Color := clBlack;
@@ -1368,7 +1368,7 @@ begin
       screenLcd[2].color := $00C00000;
       screenLcd[3].color := $00C00000;
       screenLcd[4].color := $00C00000;
-      form1.Color := $00C00000;
+      LCDSmartieDisplayForm.Color := $00C00000;
       screenLcd[1].Font.Color := clWhite;
       screenLcd[2].Font.Color := clWhite;
       screenLcd[3].Font.Color := clWhite;
@@ -1380,7 +1380,7 @@ begin
       screenLcd[2].color := clOlive;
       screenLcd[3].color := clOlive;
       screenLcd[4].color := clOlive;
-      form1.Color := clOlive;
+      LCDSmartieDisplayForm.Color := clOlive;
       screenLcd[1].Font.Color := clBlack;
       screenLcd[2].Font.Color := clBlack;
       screenLcd[3].Font.Color := clBlack;
@@ -1392,7 +1392,7 @@ begin
       screenLcd[2].color := clsilver;
       screenLcd[3].color := clsilver;
       screenLcd[4].color := clsilver;
-      form1.Color := clsilver;
+      LCDSmartieDisplayForm.Color := clsilver;
       screenLcd[1].Font.Color := clBlack;
       screenLcd[2].Font.Color := clBlack;
       screenLcd[3].Font.Color := clBlack;
@@ -1404,7 +1404,7 @@ begin
       screenLcd[2].color := backgroundcoloroff;
       screenLcd[3].color := backgroundcoloroff;
       screenLcd[4].color := backgroundcoloroff;
-      form1.Color := backgroundcoloroff;
+      LCDSmartieDisplayForm.Color := backgroundcoloroff;
       screenLcd[1].Font.Color := forgroundcoloroff;
       screenLcd[2].Font.Color := forgroundcoloroff;
       screenLcd[3].Font.Color := forgroundcoloroff;
@@ -1414,7 +1414,7 @@ begin
 end;
 
 // ShowMenu/Minimize has been selected from the tray/popup menu
-procedure TForm1.Showwindow1Click(Sender: TObject);
+procedure TLCDSmartieDisplayForm.Showwindow1Click(Sender: TObject);
 begin
   if popupmenu1.Items[3].caption='&Minimize' then
     button1.Click
@@ -1422,21 +1422,21 @@ begin
     coolTrayIcon1.ShowMainForm;
 end;
 
-procedure TForm1.Close1Click(Sender: TObject);
+procedure TLCDSmartieDisplayForm.Close1Click(Sender: TObject);
 begin
-  form1.close();
+  LCDSmartieDisplayForm.close();
 end;
 
 // The LCD Smartie logo has been clicked - raise popup menu
-procedure TForm1.Image1Click(Sender: TObject);
+procedure TLCDSmartieDisplayForm.Image1Click(Sender: TObject);
 begin
   popupmenu1.Items[3].caption := 'Minimize';
-  popupmenu1.Popup(form1.left + image1.left + round(image1.width/2), form1.top
+  popupmenu1.Popup(LCDSmartieDisplayForm.left + image1.left + round(image1.width/2), LCDSmartieDisplayForm.top
     + image1.top + round(image1.height));
 end;
 
 // Only used when line scroll button is pressed.
-procedure TForm1.scrollLine(line: Byte; direction: Integer);
+procedure TLCDSmartieDisplayForm.scrollLine(line: Byte; direction: Integer);
 begin
   tmpline[line] := copy (scroll(parsedLine[line], line, direction)
     + '                                        ', 1, config.width);
@@ -1446,28 +1446,25 @@ begin
 end;
 
 // For scrolling right when a line scroll button is pressed.
-procedure TForm1.Timer4Timer(Sender: TObject);
+procedure TLCDSmartieDisplayForm.Timer4Timer(Sender: TObject);
 begin
   scrollLine(line2scroll, 1);
 end;
 
 // For scrolling left when a line scroll button is pressed.
-procedure TForm1.Timer5Timer(Sender: TObject);
+procedure TLCDSmartieDisplayForm.Timer5Timer(Sender: TObject);
 begin
   scrollLine(line2scroll, -1);
 end;
 
-procedure TForm1.Button2Click(Sender: TObject);
+procedure TLCDSmartieDisplayForm.Button2Click(Sender: TObject);
 begin
-  form1.formStyle := fsNormal;
-  form1.enabled := false;
-  form2.visible := true;
-  form2.SetFocus;
-
-  UpdateTimersState(); // turns off required timers as form2 is visible.
+  UpdateTimersState(true); // turns off required timers as form2 is visible.
+  DoSetupForm;
+  UpdateTimersState(false);
 end;
 
-procedure TForm1.Timer6Timer(Sender: TObject);
+procedure TLCDSmartieDisplayForm.Timer6Timer(Sender: TObject);
 begin
   Data.updateMBMStats(Sender);
   timer6.Interval := 0;
@@ -1475,20 +1472,20 @@ begin
 end;
 
 
-procedure TForm1.SpeedButton10Click(Sender: TObject);
+procedure TLCDSmartieDisplayForm.SpeedButton10Click(Sender: TObject);
 begin
   aantalscreensheenweer := 1;
   frozen := true;
   freeze();
 end;
 
-procedure TForm1.Button1Click(Sender: TObject);
+procedure TLCDSmartieDisplayForm.Button1Click(Sender: TObject);
 begin
   Application.Minimize;
-  if (not form2.Visible) then CoolTrayIcon1.HideMainForm
+  CoolTrayIcon1.HideMainForm
 end;
 
-procedure TForm1.FormClose(Sender: TObject; var Action: TCloseAction);
+procedure TLCDSmartieDisplayForm.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
   bTerminating := true;
 
@@ -1529,20 +1526,20 @@ begin
   end;
 end;
 
-procedure TForm1.Timer8Timer(Sender: TObject);
+procedure TLCDSmartieDisplayForm.Timer8Timer(Sender: TObject);
 begin
   Data.updateGameStats;
   timer8.Interval := 0;
   timer8.Interval := config.gameRefresh*60000;
 end;
 
-procedure TForm1.Configure1Click(Sender: TObject);
+procedure TLCDSmartieDisplayForm.Configure1Click(Sender: TObject);
 begin
   Showwindow1.click();
   button2.click();
 end;
 
-procedure TForm1.ProcessAction(bDoAction: Boolean; sAction: String);
+procedure TLCDSmartieDisplayForm.ProcessAction(bDoAction: Boolean; sAction: String);
 var
   temp1, temp2: String;
   iTemp: Integer;
@@ -1832,7 +1829,7 @@ begin
 end;
 
 
-procedure TForm1.Timer3Timer(Sender: TObject);
+procedure TLCDSmartieDisplayForm.Timer3Timer(Sender: TObject);
 //ACTIONS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 var
   counter: Integer;
@@ -1848,14 +1845,14 @@ var
 
 begin
 
-  if (form2 <> nil) and (Lcd <> nil) and (Lcd.readKey(cKey)) then
+  if (Lcd <> nil) and (Lcd.readKey(cKey)) then
   begin
-    form2.Edit17.text := cKey;
+    UpdateSetupForm(cKey);
     data.cLastKeyPressed := cKey;
   end;
 
 
-  if (form2.Visible = true) then Exit;
+  if PerformingSetup then Exit;
 
 
   //
@@ -1950,7 +1947,7 @@ begin
 end;
 
 
-procedure TForm1.Timer9Timer(Sender: TObject);
+procedure TLCDSmartieDisplayForm.Timer9Timer(Sender: TObject);
 //MAILS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 begin
   timer9.Interval := 0;
@@ -1958,13 +1955,13 @@ begin
   Data.UpdateEmail;
 end;
 
-procedure TForm1.BacklightOn1Click(Sender: TObject);
+procedure TLCDSmartieDisplayForm.BacklightOn1Click(Sender: TObject);
 begin
   backlit();
 end;
 
 
-procedure TForm1.Timer7Timer(Sender: TObject);
+procedure TLCDSmartieDisplayForm.Timer7Timer(Sender: TObject);
 //NEXT SCREEN!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 Label opnieuwscreen;
 var
@@ -2041,7 +2038,7 @@ opnieuwscreen:
   end;
 end;
 
-procedure TForm1.Timer11Timer(Sender: TObject);
+procedure TLCDSmartieDisplayForm.Timer11Timer(Sender: TObject);
 begin
   timer11.Enabled := false;
 
@@ -2067,12 +2064,12 @@ begin
     customchar('4, 28, 28, 28, 28, 28, 28, 31, 28');
   end;
 
-  UpdateTimersState();
+  UpdateTimersState(PerformingSetup);
 end;
 
-procedure TForm1.UpdateTimersState;
+procedure TLCDSmartieDisplayForm.UpdateTimersState(InSetupState : boolean);
 begin
-  if (not Assigned(Form2)) or (not Form2.Visible) then
+  if not InSetupState then
   begin    // We're not in setup
     // don't change timer states if we're waiting for a HD44780 to start.
     if (not timer11.enabled) then
@@ -2103,20 +2100,17 @@ begin
     timerRefresh.enabled := true;  // update lcd and data
 end;
 
-procedure TForm1.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
+procedure TLCDSmartieDisplayForm.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
 begin
   canclose := true;
 end;
 
-procedure TForm1.Credits1Click(Sender: TObject);
+procedure TLCDSmartieDisplayForm.Credits1Click(Sender: TObject);
 begin
-  form1.formStyle := fsNormal;
-  form1.enabled := false;
-  form4.visible := true;
-  form4.BringToFront;
+  DoCreditsForm;
 end;
 
-procedure TForm1.NextTheme1Click(Sender: TObject);
+procedure TLCDSmartieDisplayForm.NextTheme1Click(Sender: TObject);
 begin
   activetheme := activetheme + 1;
   if activetheme = 10 then activetheme := 0;
@@ -2124,7 +2118,7 @@ begin
   freeze();
 end;
 
-procedure TForm1.LastTheme1Click(Sender: TObject);
+procedure TLCDSmartieDisplayForm.LastTheme1Click(Sender: TObject);
 begin
   activetheme := activetheme-1;
   if activetheme=-1 then activetheme := 9;
@@ -2132,20 +2126,17 @@ begin
   freeze();
 end;
 
-procedure TForm1.Image1DblClick(Sender: TObject);
+procedure TLCDSmartieDisplayForm.Image1DblClick(Sender: TObject);
 begin
-  form1.formStyle := fsNormal;
-  form1.enabled := false;
-  form4.visible := true;
-  form4.BringToFront;
+  DoCreditsForm;
 end;
 
-procedure TForm1.Freeze1Click(Sender: TObject);
+procedure TLCDSmartieDisplayForm.Freeze1Click(Sender: TObject);
 begin
   freeze();
 end;
 
-procedure TForm1.FormKeyPress(Sender: TObject; var Key: Char);
+procedure TLCDSmartieDisplayForm.FormKeyPress(Sender: TObject; var Key: Char);
 begin
   if upcase(key)='Z' then winampctrl1.Previous;
   if upcase(key)='X' then winampctrl1.Play;
@@ -2172,21 +2163,21 @@ begin
   if upcase(key)='.' then speedbutton10.click();
   if (upcase(key)='?') or (upcase(key)='/') then
   begin
-    form1.timer2.interval := 10;
-    form1.timer8.interval := 10;
-    form1.timer9.interval := 10;
-    form1.timer6.interval := 10;
+    LCDSmartieDisplayForm.timer2.interval := 10;
+    LCDSmartieDisplayForm.timer8.interval := 10;
+    LCDSmartieDisplayForm.timer9.interval := 10;
+    LCDSmartieDisplayForm.timer6.interval := 10;
   end;
 end;
 
-procedure TForm1.freeze();
+procedure TLCDSmartieDisplayForm.freeze();
 begin
   if frozen = false then
   begin
     frozen := true;
     timer7.enabled := false;
     popupmenu1.Items[0].Items[1].Caption := 'Unfreeze';
-    form1.caption := form1.caption + ' - frozen'
+    LCDSmartieDisplayForm.caption := LCDSmartieDisplayForm.caption + ' - frozen'
   end
   else
   begin
@@ -2195,54 +2186,54 @@ begin
     timer7.interval := 0;
     timer7.interval := 5;
     popupmenu1.Items[0].Items[1].Caption := 'Freeze';
-    if pos('frozen', form1.caption) <> 0 then form1.caption :=
-      copy(form1.caption, 1, length(form1.caption)-length(' - frozen'));
+    if pos('frozen', LCDSmartieDisplayForm.caption) <> 0 then LCDSmartieDisplayForm.caption :=
+      copy(LCDSmartieDisplayForm.caption, 1, length(LCDSmartieDisplayForm.caption)-length(' - frozen'));
   end;
 end;
 
-procedure TForm1.Image12MouseUp(Sender: TObject; Button: TMouseButton; Shift:
+procedure TLCDSmartieDisplayForm.Image12MouseUp(Sender: TObject; Button: TMouseButton; Shift:
   TShiftState; X, Y: Integer);
 begin
   image12.picture.LoadFromFile(extractfilepath(application.exename) +
     'images\big_arrow_left_up.bmp');
 end;
 
-procedure TForm1.Image12MouseDown(Sender: TObject; Button: TMouseButton;
+procedure TLCDSmartieDisplayForm.Image12MouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
 begin
   image12.picture.LoadFromFile(extractfilepath(application.exename) +
     'images\big_arrow_left_down.bmp');
 end;
 
-procedure TForm1.Image16MouseDown(Sender: TObject; Button: TMouseButton;
+procedure TLCDSmartieDisplayForm.Image16MouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
 begin
   image16.picture.LoadFromFile(extractfilepath(application.exename) +
     'images\setup_down.bmp');
 end;
 
-procedure TForm1.Image16MouseUp(Sender: TObject; Button: TMouseButton; Shift:
+procedure TLCDSmartieDisplayForm.Image16MouseUp(Sender: TObject; Button: TMouseButton; Shift:
   TShiftState; X, Y: Integer);
 begin
   image16.picture.LoadFromFile(extractfilepath(application.exename) +
     'images\setup_up.bmp');
 end;
 
-procedure TForm1.Image17MouseDown(Sender: TObject; Button: TMouseButton;
+procedure TLCDSmartieDisplayForm.Image17MouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
 begin
   image17.picture.LoadFromFile(extractfilepath(application.exename) +
     'images\hide_down.bmp');
 end;
 
-procedure TForm1.Image17MouseUp(Sender: TObject; Button: TMouseButton; Shift:
+procedure TLCDSmartieDisplayForm.Image17MouseUp(Sender: TObject; Button: TMouseButton; Shift:
   TShiftState; X, Y: Integer);
 begin
   image17.picture.LoadFromFile(extractfilepath(application.exename) +
     'images\hide_up.bmp');
 end;
 
-procedure TForm1.Image3MouseDown(Sender: TObject; Button: TMouseButton; Shift:
+procedure TLCDSmartieDisplayForm.Image3MouseDown(Sender: TObject; Button: TMouseButton; Shift:
   TShiftState; X, Y: Integer);
 begin
   image3.picture.LoadFromFile(extractfilepath(application.exename) +
@@ -2252,7 +2243,7 @@ begin
   timerRefresh.enabled := false;
 end;
 
-procedure TForm1.Image3MouseUp(Sender: TObject; Button: TMouseButton; Shift:
+procedure TLCDSmartieDisplayForm.Image3MouseUp(Sender: TObject; Button: TMouseButton; Shift:
   TShiftState; X, Y: Integer);
 begin
   image3.picture.LoadFromFile(extractfilepath(application.exename) +
@@ -2261,7 +2252,7 @@ begin
   timerRefresh.enabled := true;
 end;
 
-procedure TForm1.Image4MouseDown(Sender: TObject; Button: TMouseButton; Shift:
+procedure TLCDSmartieDisplayForm.Image4MouseDown(Sender: TObject; Button: TMouseButton; Shift:
   TShiftState; X, Y: Integer);
 begin
   image4.picture.LoadFromFile(extractfilepath(application.exename) +
@@ -2271,7 +2262,7 @@ begin
   timerRefresh.enabled := false;
 end;
 
-procedure TForm1.Image5MouseDown(Sender: TObject; Button: TMouseButton; Shift:
+procedure TLCDSmartieDisplayForm.Image5MouseDown(Sender: TObject; Button: TMouseButton; Shift:
   TShiftState; X, Y: Integer);
 begin
   image5.picture.LoadFromFile(extractfilepath(application.exename) +
@@ -2281,7 +2272,7 @@ begin
   timerRefresh.enabled := false;
 end;
 
-procedure TForm1.Image6MouseDown(Sender: TObject; Button: TMouseButton; Shift:
+procedure TLCDSmartieDisplayForm.Image6MouseDown(Sender: TObject; Button: TMouseButton; Shift:
   TShiftState; X, Y: Integer);
 begin
   image6.picture.LoadFromFile(extractfilepath(application.exename) +
@@ -2291,7 +2282,7 @@ begin
   timerRefresh.enabled := false;
 end;
 
-procedure TForm1.Image7MouseDown(Sender: TObject; Button: TMouseButton; Shift:
+procedure TLCDSmartieDisplayForm.Image7MouseDown(Sender: TObject; Button: TMouseButton; Shift:
   TShiftState; X, Y: Integer);
 begin
   image7.picture.LoadFromFile(extractfilepath(application.exename) +
@@ -2301,7 +2292,7 @@ begin
   timerRefresh.enabled := false;
 end;
 
-procedure TForm1.Image8MouseDown(Sender: TObject; Button: TMouseButton; Shift:
+procedure TLCDSmartieDisplayForm.Image8MouseDown(Sender: TObject; Button: TMouseButton; Shift:
   TShiftState; X, Y: Integer);
 begin
   image8.picture.LoadFromFile(extractfilepath(application.exename) +
@@ -2311,7 +2302,7 @@ begin
   timerRefresh.enabled := false;
 end;
 
-procedure TForm1.Image9MouseDown(Sender: TObject; Button: TMouseButton; Shift:
+procedure TLCDSmartieDisplayForm.Image9MouseDown(Sender: TObject; Button: TMouseButton; Shift:
   TShiftState; X, Y: Integer);
 begin
   image9.picture.LoadFromFile(extractfilepath(application.exename) +
@@ -2321,7 +2312,7 @@ begin
   timerRefresh.enabled := false;
 end;
 
-procedure TForm1.Image10MouseDown(Sender: TObject; Button: TMouseButton;
+procedure TLCDSmartieDisplayForm.Image10MouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
 begin
   image10.picture.LoadFromFile(extractfilepath(application.exename) +
@@ -2331,7 +2322,7 @@ begin
   timerRefresh.enabled := false;
 end;
 
-procedure TForm1.Image4MouseUp(Sender: TObject; Button: TMouseButton; Shift:
+procedure TLCDSmartieDisplayForm.Image4MouseUp(Sender: TObject; Button: TMouseButton; Shift:
   TShiftState; X, Y: Integer);
 begin
   image4.picture.LoadFromFile(extractfilepath(application.exename) +
@@ -2340,7 +2331,7 @@ begin
   timerRefresh.enabled := true;
 end;
 
-procedure TForm1.Image5MouseUp(Sender: TObject; Button: TMouseButton; Shift:
+procedure TLCDSmartieDisplayForm.Image5MouseUp(Sender: TObject; Button: TMouseButton; Shift:
   TShiftState; X, Y: Integer);
 begin
   image5.picture.LoadFromFile(extractfilepath(application.exename) +
@@ -2349,7 +2340,7 @@ begin
   timerRefresh.enabled := true;
 end;
 
-procedure TForm1.Image6MouseUp(Sender: TObject; Button: TMouseButton; Shift:
+procedure TLCDSmartieDisplayForm.Image6MouseUp(Sender: TObject; Button: TMouseButton; Shift:
   TShiftState; X, Y: Integer);
 begin
   image6.picture.LoadFromFile(extractfilepath(application.exename) +
@@ -2358,7 +2349,7 @@ begin
   timerRefresh.enabled := true;
 end;
 
-procedure TForm1.Image7MouseUp(Sender: TObject; Button: TMouseButton; Shift:
+procedure TLCDSmartieDisplayForm.Image7MouseUp(Sender: TObject; Button: TMouseButton; Shift:
   TShiftState; X, Y: Integer);
 begin
   image7.picture.LoadFromFile(extractfilepath(application.exename) +
@@ -2367,7 +2358,7 @@ begin
   timerRefresh.enabled := true;
 end;
 
-procedure TForm1.Image8MouseUp(Sender: TObject; Button: TMouseButton; Shift:
+procedure TLCDSmartieDisplayForm.Image8MouseUp(Sender: TObject; Button: TMouseButton; Shift:
   TShiftState; X, Y: Integer);
 begin
   image8.picture.LoadFromFile(extractfilepath(application.exename) +
@@ -2376,7 +2367,7 @@ begin
   timerRefresh.enabled := true;
 end;
 
-procedure TForm1.Image9MouseUp(Sender: TObject; Button: TMouseButton; Shift:
+procedure TLCDSmartieDisplayForm.Image9MouseUp(Sender: TObject; Button: TMouseButton; Shift:
   TShiftState; X, Y: Integer);
 begin
   image9.picture.LoadFromFile(extractfilepath(application.exename) +
@@ -2385,7 +2376,7 @@ begin
   timerRefresh.enabled := true;
 end;
 
-procedure TForm1.Image10MouseUp(Sender: TObject; Button: TMouseButton; Shift:
+procedure TLCDSmartieDisplayForm.Image10MouseUp(Sender: TObject; Button: TMouseButton; Shift:
   TShiftState; X, Y: Integer);
 begin
   image10.picture.LoadFromFile(extractfilepath(application.exename) +
@@ -2394,49 +2385,49 @@ begin
   timerRefresh.enabled := true;
 end;
 
-procedure TForm1.Image11MouseDown(Sender: TObject; Button: TMouseButton;
+procedure TLCDSmartieDisplayForm.Image11MouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
 begin
   image11.picture.LoadFromFile(extractfilepath(application.exename) +
     'images\big_arrow_right_down.bmp');
 end;
 
-procedure TForm1.Image11MouseUp(Sender: TObject; Button: TMouseButton; Shift:
+procedure TLCDSmartieDisplayForm.Image11MouseUp(Sender: TObject; Button: TMouseButton; Shift:
   TShiftState; X, Y: Integer);
 begin
   image11.picture.LoadFromFile(extractfilepath(application.exename) +
     'images\big_arrow_right_up.bmp');
 end;
 
-procedure TForm1.Image12Click(Sender: TObject);
+procedure TLCDSmartieDisplayForm.Image12Click(Sender: TObject);
 begin
   speedbutton1.click;
 end;
 
-procedure TForm1.Image11Click(Sender: TObject);
+procedure TLCDSmartieDisplayForm.Image11Click(Sender: TObject);
 begin
   speedbutton10.click;
 end;
 
 // Hide has been pressed.
-procedure TForm1.Image17Click(Sender: TObject);
+procedure TLCDSmartieDisplayForm.Image17Click(Sender: TObject);
 begin
   button1.click;
 end;
 
-procedure TForm1.Image16Click(Sender: TObject);
+procedure TLCDSmartieDisplayForm.Image16Click(Sender: TObject);
 begin
   if timer11.enabled = false then button2.click;
 end;
 
-procedure TForm1.SpeedButton1Click(Sender: TObject);
+procedure TLCDSmartieDisplayForm.SpeedButton1Click(Sender: TObject);
 begin
   aantalscreensheenweer := -1;
   frozen := true;
   freeze();
 end;
 
-procedure tform1.dogpo(const ftemp1, ftemp2: Integer);
+procedure tLCDSmartieDisplayForm.dogpo(const ftemp1, ftemp2: Integer);
 begin
   if ftemp1 < 9 then
   begin
@@ -2466,18 +2457,18 @@ begin
   end;
 end;
 
-procedure TForm1.WMQueryEndSession (var M: TWMQueryEndSession);
+procedure TLCDSmartieDisplayForm.WMQueryEndSession (var M: TWMQueryEndSession);
 begin
   inherited;
-  form1.Close;
+  LCDSmartieDisplayForm.Close;
 end;
 
-procedure TForm1.TimertransTimer(Sender: TObject);
+procedure TLCDSmartieDisplayForm.TimertransTimer(Sender: TObject);
 begin
   timertrans.Enabled := false;
 end;
 
-procedure TForm1.Timer12Timer(Sender: TObject);
+procedure TLCDSmartieDisplayForm.Timer12Timer(Sender: TObject);
 begin
   timer12.Interval := 0;
   timer12.Interval := config.scrollPeriod;
@@ -2491,10 +2482,10 @@ begin
   end;
 end;
 
-procedure TForm1.OnMinimize(Sender: TObject);
+procedure TLCDSmartieDisplayForm.OnMinimize(Sender: TObject);
 begin
   // Only minimize to tray when setup isn't displayed
-  if (Assigned(form2)) and (not form2.Visible) then
+  if not PerformingSetup then
   begin
     cooltrayicon1.HideMainForm;
     popupmenu1.Items[3].caption := 'Show Main';
@@ -2504,8 +2495,7 @@ begin
     coolTrayIcon1.IconVisible := False;
 end;
 
-
-procedure TForm1.CoolTrayIcon1Startup(Sender: TObject;
+procedure TLCDSmartieDisplayForm.CoolTrayIcon1Startup(Sender: TObject;
   var ShowMainForm: Boolean);
 begin
   ShowMainForm := False;

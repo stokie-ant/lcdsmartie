@@ -1,4 +1,4 @@
-object Form7: TForm7
+object InteractionConfigForm: TInteractionConfigForm
   Left = 449
   Top = 102
   BorderIcons = []
@@ -13,7 +13,7 @@ object Form7: TForm7
   Font.Name = 'MS Sans Serif'
   Font.Style = []
   OldCreateOrder = False
-  OnShow = FormShow
+  Position = poScreenCenter
   PixelsPerInch = 96
   TextHeight = 13
   object Label1: TLabel
@@ -32,20 +32,22 @@ object Form7: TForm7
   end
   object Label3: TLabel
     Left = 8
-    Top = 64
+    Top = 60
     Width = 77
     Height = 13
-    Caption = 'Interaction style:'
+    Caption = 'Interaction &style:'
+    FocusControl = InteractionStyleComboBox
   end
   object Label4: TLabel
     Left = 8
-    Top = 96
+    Top = 92
     Width = 138
     Height = 13
-    Caption = 'Interaction time:(1/10th secs)'
+    Caption = 'Interaction &time:(1/10th secs)'
+    FocusControl = InteractionTimeSpinEdit
   end
-  object ComboBox10: TComboBox
-    Left = 96
+  object InteractionStyleComboBox: TComboBox
+    Left = 92
     Top = 56
     Width = 123
     Height = 21
@@ -58,7 +60,7 @@ object Form7: TForm7
     ItemHeight = 13
     ParentFont = False
     TabOrder = 0
-    OnChange = ComboBox10Change
+    OnChange = InteractionStyleComboBoxChange
     Items.Strings = (
       'None'
       'Left->Right'
@@ -68,8 +70,8 @@ object Form7: TForm7
       'Random chars'
       'Contrast fade light')
   end
-  object SpinEdit1: TSpinEdit
-    Left = 160
+  object InteractionTimeSpinEdit: TSpinEdit
+    Left = 156
     Top = 88
     Width = 57
     Height = 22
@@ -79,14 +81,24 @@ object Form7: TForm7
     TabOrder = 1
     Value = 1
   end
-  object Button1: TButton
-    Left = 144
+  object OKButton: TButton
+    Left = 56
     Top = 120
     Width = 75
     Height = 25
-    Caption = '&Ok'
+    Caption = '&OK'
     Default = True
+    ModalResult = 1
     TabOrder = 2
-    OnClick = Button1Click
+  end
+  object CancelButton: TButton
+    Left = 140
+    Top = 120
+    Width = 75
+    Height = 25
+    Cancel = True
+    Caption = '&Cancel'
+    ModalResult = 2
+    TabOrder = 3
   end
 end
