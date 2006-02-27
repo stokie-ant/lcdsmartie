@@ -19,7 +19,7 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.34 $ $Date: 2005/05/31 17:58:16 $
+ *  $Revision: 1.35 $ $Date: 2006/02/27 14:14:20 $
  *****************************************************************************}
 
 interface
@@ -199,6 +199,8 @@ type
     ComboBox1: TComboBox;
     ComboBox2: TComboBox;
     ComboBox7: TComboBox;
+    IRTransRadioButton: TRadioButton;
+    IRTransConfigButton: TButton;
     procedure Button2Click(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure ComboBox2Change(Sender: TObject);
@@ -261,6 +263,8 @@ type
     procedure ComboBox4Change(Sender: TObject);
     procedure ComboBox5Change(Sender: TObject);
     procedure ComboBox1Change(Sender: TObject);
+    procedure IRTransRadioButtonClick(Sender: TObject);
+    procedure IRTransConfigButtonClick(Sender: TObject);
   private
     setupbutton: Integer;
     combobox8temp: Integer;
@@ -276,7 +280,7 @@ var
 implementation
 
 uses Windows, ShellApi, graphics, sysutils, UMain, UMOSetup,
-  UCFSetup, UPara, UInteract, UConfig, ULCD_MO, StrUtils;
+  UCFSetup, UPara, UIRSetup, UInteract, UConfig, ULCD_MO, StrUtils;
 
 {$R *.DFM}
 
@@ -407,6 +411,7 @@ begin
   button4.enabled := false;
   button5.enabled := false;
   button6.enabled := false;
+  IRTransConfigButton.Enabled := false;
   combobox5.enabled := false;
   combobox4.enabled := false;
 
@@ -430,6 +435,12 @@ begin
 
     combobox4.enabled := true;
     combobox5.enabled := true;
+  end;
+
+  if config.isIR then
+  begin
+    IRTransRadioButton.Checked := true;
+    IRTransConfigButton.Enabled := true;
   end;
 
   // Set up the com port selection
@@ -776,6 +787,7 @@ begin
   combobox5.enabled := false;
   button4.enabled := false;
   button5.enabled := false;
+  IRTransConfigButton.Enabled := false;
 end;
 
 procedure TForm2.RadioButton4Click(Sender: TObject);
@@ -785,6 +797,7 @@ begin
   combobox5.enabled := false;
   button4.enabled := false;
   button5.enabled := false;
+  IRTransConfigButton.Enabled := false;
 end;
 
 procedure TForm2.RadioButton2Click(Sender: TObject);
@@ -795,6 +808,7 @@ begin
   combobox5.enabled := true;
   button4.enabled := true;
   button5.enabled := false;
+  IRTransConfigButton.Enabled := false;
 end;
 
 procedure TForm2.RadioButton3Click(Sender: TObject);
@@ -807,6 +821,17 @@ begin
   combobox5.enabled := true;
   button4.enabled := false;
   button5.enabled := true;
+  IRTransConfigButton.Enabled := false;
+end;
+
+procedure TForm2.IRTransRadioButtonClick(Sender: TObject);
+begin
+  combobox4.enabled := false;
+  combobox5.enabled := false;
+  button4.enabled := false;
+  button5.enabled := false;
+  button6.enabled := false;
+  IRTransConfigButton.Enabled := true;
 end;
 
 procedure TForm2.ListBox7Click(Sender: TObject);
@@ -1704,6 +1729,24 @@ begin
   form2.enabled := false;
 end;
 
+procedure TForm2.IRTransConfigButtonClick(Sender: TObject);
+begin
+  if (not config.isIR) then
+  begin
+    if MessageDlg('The IRTrans driver is not currently loaded.' + chr(13) +
+      'Should I apply your settings and load the driver?',
+      mtConfirmation, [mbYes, mbNo], 0) = mrYes then
+    begin
+      // press apply for them
+      button7.click();
+    end;
+  end;
+  if DoIRTransForm then begin
+    config.isIR := false;  // force a reload with a potential new hostname
+    button7.click();
+  end;
+end;
+
 procedure TForm2.ListBox8Click(Sender: TObject);
 begin
   if listbox8.Itemindex = 0 then
@@ -1926,6 +1969,7 @@ begin
   if (radiobutton2.checked) and (not config.isMO) then relood := true;
   if (radiobutton3.checked) and (not config.isCF) then relood := true;
   if (radiobutton4.checked) and (not config.isHD2) then relood := true;
+  if (IRTransRadioButton.checked) and (not config.isIR) then relood := true;
 
 
   form1.WinampCtrl1.WinampLocation := edit15.text;
@@ -1975,6 +2019,7 @@ begin
   config.isMO := radiobutton2.checked;
   config.isCF := radiobutton3.checked;
   config.isHD2 := radiobutton4.checked;
+  config.isIR := IRTransRadioButton.checked;
 
   if edit4.text='' then edit4.text := '0';
   config.httpProxy := edit3.text;

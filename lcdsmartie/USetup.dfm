@@ -1,6 +1,6 @@
 object Form2: TForm2
-  Left = 17
-  Top = 44
+  Left = 81
+  Top = 52
   Anchors = []
   BiDiMode = bdLeftToRight
   BorderIcons = []
@@ -1795,7 +1795,7 @@ object Form2: TForm2
         end
         object RadioButton1: TRadioButton
           Left = 16
-          Top = 48
+          Top = 36
           Width = 113
           Height = 17
           Hint = 
@@ -1815,7 +1815,7 @@ object Form2: TForm2
         end
         object RadioButton2: TRadioButton
           Left = 16
-          Top = 72
+          Top = 56
           Width = 145
           Height = 17
           Hint = 'Select if your display is a serial/Usb Matrix Orbital display.'
@@ -1891,7 +1891,7 @@ object Form2: TForm2
         end
         object Button4: TButton
           Left = 152
-          Top = 72
+          Top = 56
           Width = 113
           Height = 17
           Hint = 'Set Matrix Orbital display specific settings.'
@@ -1909,7 +1909,7 @@ object Form2: TForm2
         end
         object RadioButton3: TRadioButton
           Left = 16
-          Top = 96
+          Top = 76
           Width = 121
           Height = 17
           Hint = 'Select if your display is a serial/usb Crystalfontz display.'
@@ -1927,7 +1927,7 @@ object Form2: TForm2
         end
         object Button5: TButton
           Left = 152
-          Top = 96
+          Top = 76
           Width = 113
           Height = 17
           Hint = 'Set Crystalfontz display specific settings.'
@@ -1945,7 +1945,7 @@ object Form2: TForm2
         end
         object Button6: TButton
           Left = 152
-          Top = 48
+          Top = 36
           Width = 113
           Height = 17
           Hint = 'Set HD44780 compatible display specific settings.'
@@ -1994,8 +1994,8 @@ object Form2: TForm2
             '4 x 40')
         end
         object RadioButton4: TRadioButton
-          Left = 267
-          Top = 21
+          Left = 275
+          Top = 9
           Width = 113
           Height = 17
           Caption = 'Parallel (HD66712)'
@@ -2009,6 +2009,42 @@ object Form2: TForm2
           TabOrder = 9
           Visible = False
           OnClick = RadioButton4Click
+        end
+        object IRTransRadioButton: TRadioButton
+          Left = 16
+          Top = 96
+          Width = 121
+          Height = 17
+          Hint = 'Select if your display is controlled by IRTrans'
+          Caption = 'IRTrans (TCP/IP)'
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
+          TabOrder = 10
+          OnClick = IRTransRadioButtonClick
+        end
+        object IRTransConfigButton: TButton
+          Left = 152
+          Top = 96
+          Width = 113
+          Height = 17
+          Hint = 'Set IRTrans display specific settings.'
+          Caption = '&IRTrans settings'
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
+          TabOrder = 11
+          OnClick = IRTransConfigButtonClick
         end
       end
     end
