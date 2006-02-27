@@ -1,6 +1,6 @@
 object SetupForm: TSetupForm
-  Left = 293
-  Top = 117
+  Left = 233
+  Top = 237
   Anchors = []
   BiDiMode = bdLeftToRight
   BorderIcons = []
@@ -22,12 +22,12 @@ object SetupForm: TSetupForm
   OnShow = FormShow
   PixelsPerInch = 96
   TextHeight = 13
-  object PageControl1: TPageControl
+  object LeftPageControl: TPageControl
     Left = 0
     Top = 0
     Width = 233
     Height = 409
-    ActivePage = TabSheet6
+    ActivePage = LCDFeaturesTabSheet
     Font.Charset = ANSI_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
@@ -40,10 +40,10 @@ object SetupForm: TSetupForm
     TabOrder = 1
     TabPosition = tpRight
     TabStop = False
-    OnChange = PageControl1Change
-    object TabSheet1: TTabSheet
+    OnChange = LeftPageControlChange
+    object WinampTabSheet: TTabSheet
       Caption = 'Winamp'
-      object SpeedButton3: TSpeedButton
+      object WinampLocationBrowseButton: TSpeedButton
         Left = 160
         Top = 328
         Width = 23
@@ -57,16 +57,16 @@ object SetupForm: TSetupForm
           08880FB03333333330880BFB0333333333080FBFB000000000000BFBFBFBFB08
           88880FBFBFBFBF0888880BFB0000000888888000888888880008888888888888
           8008888888880888080888888888800088888888888888888888}
-        OnClick = SpeedButton3Click
+        OnClick = WinampLocationBrowseButtonClick
       end
-      object Label55: TLabel
+      object WinampLocationLabel: TLabel
         Left = 8
         Top = 312
         Width = 104
         Height = 13
         Caption = 'Winamp.exe location:'
       end
-      object ListBox7: TListBox
+      object WinampListBox: TListBox
         Left = 0
         Top = 0
         Width = 180
@@ -91,19 +91,19 @@ object SetupForm: TSetupForm
           'total tracks in playlist'
           'Current Status')
         TabOrder = 0
-        OnClick = ListBox7Click
-        OnDblClick = Button3Click
+        OnClick = WinampListBoxClick
+        OnDblClick = InsertButtonClick
       end
-      object Edit15: TEdit
+      object WinampLocationEdit: TEdit
         Left = 8
         Top = 328
         Width = 153
         Height = 21
         TabOrder = 1
-        Text = 'Edit15'
+        Text = 'WinampLocationEdit'
       end
     end
-    object TabSheet2: TTabSheet
+    object SysInfoTabSheet: TTabSheet
       Caption = 'Sysinfo'
       ImageIndex = 1
       object SpeedButton2: TSpeedButton
@@ -127,7 +127,7 @@ object SetupForm: TSetupForm
           3333333333333333333333333333333333333333333333333333}
         NumGlyphs = 2
       end
-      object ListBox6: TListBox
+      object SysInfoListBox: TListBox
         Left = 0
         Top = 0
         Width = 185
@@ -166,23 +166,23 @@ object SetupForm: TSetupForm
           'Used space Bar drive(X,Length)'
           'Screen Resolution')
         TabOrder = 0
-        OnClick = ListBox6Click
-        OnDblClick = Button3Click
+        OnClick = SysInfoListBoxClick
+        OnDblClick = InsertButtonClick
       end
     end
-    object TabSheet3: TTabSheet
+    object MBMTabSheet: TTabSheet
       Caption = 'MBM'
       ImageIndex = 2
       ParentShowHint = False
       ShowHint = True
-      object Label38: TLabel
+      object RefreshTimeLabel: TLabel
         Left = 8
-        Top = 336
+        Top = 332
         Width = 97
         Height = 13
         Caption = 'Refresh time (secs):'
       end
-      object ListBox5: TListBox
+      object MBMListBox: TListBox
         Left = 0
         Top = 0
         Width = 185
@@ -250,10 +250,10 @@ object SetupForm: TSetupForm
           'Voltage name 9'
           'Voltage name 10')
         TabOrder = 0
-        OnClick = ListBox5Click
-        OnDblClick = Button3Click
+        OnClick = MBMListBoxClick
+        OnDblClick = InsertButtonClick
       end
-      object SpinEdit6: TSpinEdit
+      object MBMRefreshTimeSpinEdit: TSpinEdit
         Left = 120
         Top = 328
         Width = 55
@@ -273,7 +273,7 @@ object SetupForm: TSetupForm
         Value = 10
       end
     end
-    object TabSheet5: TTabSheet
+    object GameStatsTabSheet: TTabSheet
       Caption = 'Gamestats'
       ImageIndex = 4
       object Label11: TLabel
@@ -304,7 +304,7 @@ object SetupForm: TSetupForm
         Height = 13
         Caption = '.'
       end
-      object Label16: TLabel
+      object QStatLabel: TLabel
         Left = 100
         Top = 136
         Width = 28
@@ -317,11 +317,11 @@ object SetupForm: TSetupForm
         Font.Name = 'Tahoma'
         Font.Style = [fsUnderline]
         ParentFont = False
-        OnClick = Label16Click
+        OnClick = QStatLabelClick
       end
       object Label37: TLabel
         Left = 8
-        Top = 240
+        Top = 236
         Width = 97
         Height = 13
         Caption = 'Refresh time (mins):'
@@ -339,7 +339,7 @@ object SetupForm: TSetupForm
         Height = 13
         Caption = 'Game type:'
       end
-      object Edit10: TEdit
+      object GameServerEdit: TEdit
         Left = 16
         Top = 328
         Width = 161
@@ -348,10 +348,10 @@ object SetupForm: TSetupForm
         ParentShowHint = False
         ShowHint = True
         TabOrder = 3
-        Text = 'Edit10'
-        OnExit = Edit10Exit
+        Text = 'GameServerEdit'
+        OnExit = GameServerEditExit
       end
-      object ComboBox6: TComboBox
+      object GameTypeComboBox: TComboBox
         Left = 16
         Top = 288
         Width = 161
@@ -359,14 +359,14 @@ object SetupForm: TSetupForm
         Style = csDropDownList
         ItemHeight = 13
         TabOrder = 2
-        OnChange = ComboBox6Change
+        OnChange = GameTypeComboBoxChange
         Items.Strings = (
           'Half-life'
           'Quake II'
           'Quake III'
           'Unreal / Unreal Tournament')
       end
-      object SpinEdit5: TSpinEdit
+      object GamestatsRefreshTimeSpinEdit: TSpinEdit
         Left = 122
         Top = 232
         Width = 55
@@ -383,7 +383,7 @@ object SetupForm: TSetupForm
         TabOrder = 1
         Value = 3
       end
-      object ListBox8: TListBox
+      object GamestatsListBox: TListBox
         Left = 0
         Top = 0
         Width = 180
@@ -395,21 +395,21 @@ object SetupForm: TSetupForm
           'number of players on server'
           'number of frags for each player')
         TabOrder = 0
-        OnClick = ListBox8Click
-        OnDblClick = Button3Click
+        OnClick = GamestatsListBoxClick
+        OnDblClick = InsertButtonClick
       end
     end
-    object TabSheet6: TTabSheet
+    object InternetTabSheet: TTabSheet
       Caption = 'Internet'
       ImageIndex = 5
       object Label36: TLabel
         Left = 8
-        Top = 288
+        Top = 284
         Width = 97
         Height = 13
         Caption = 'Refresh time (mins):'
       end
-      object ListBox2: TListBox
+      object InternetListBox: TListBox
         Left = 0
         Top = 0
         Width = 180
@@ -440,10 +440,10 @@ object SetupForm: TSetupForm
           'RTL (French)'
           'Tagesschau (German)')
         TabOrder = 0
-        OnClick = ListBox2Click
-        OnDblClick = Button3Click
+        OnClick = InternetListBoxClick
+        OnDblClick = InsertButtonClick
       end
-      object SpinEdit3: TSpinEdit
+      object InternetRefreshTimeSpinEdit: TSpinEdit
         Left = 120
         Top = 280
         Width = 55
@@ -460,7 +460,7 @@ object SetupForm: TSetupForm
         TabOrder = 1
         Value = 3
       end
-      object CheckBox15: TCheckBox
+      object LCDSmartieUpdateCheckBox: TCheckBox
         Left = 2
         Top = 328
         Width = 177
@@ -469,7 +469,7 @@ object SetupForm: TSetupForm
         TabOrder = 2
       end
     end
-    object TabSheet8: TTabSheet
+    object SetiAtHomeTabSheet: TTabSheet
       Caption = 'Seti@Home'
       ImageIndex = 7
       object Label41: TLabel
@@ -479,7 +479,7 @@ object SetupForm: TSetupForm
         Height = 13
         Caption = 'Email address used with Seti@home'
       end
-      object ListBox3: TListBox
+      object SetiAtHomeListBox: TListBox
         Left = 0
         Top = 0
         Width = 180
@@ -496,10 +496,10 @@ object SetupForm: TSetupForm
           'users you share your rank with'
           'completed more work then ...')
         TabOrder = 0
-        OnClick = ListBox3Click
-        OnDblClick = Button3Click
+        OnClick = SetiAtHomeListBoxClick
+        OnDblClick = InsertButtonClick
       end
-      object Edit1: TEdit
+      object SetiAtHomeEmailEdit: TEdit
         Left = 0
         Top = 328
         Width = 177
@@ -507,7 +507,7 @@ object SetupForm: TSetupForm
         TabOrder = 1
       end
     end
-    object TabSheet10: TTabSheet
+    object FoldingAtHomeTabSheet: TTabSheet
       Caption = 'Folding@Home'
       ImageIndex = 9
       object Label23: TLabel
@@ -517,7 +517,7 @@ object SetupForm: TSetupForm
         Height = 13
         Caption = 'Username for Folding@Home:'
       end
-      object Edit2: TEdit
+      object FoldingAtHomeEmailEdit: TEdit
         Left = 8
         Top = 328
         Width = 169
@@ -525,7 +525,7 @@ object SetupForm: TSetupForm
         TabOrder = 1
         Text = 'BobC'
       end
-      object ListBox10: TListBox
+      object FoldingAtHomeListBox: TListBox
         Left = 0
         Top = 0
         Width = 180
@@ -540,44 +540,44 @@ object SetupForm: TSetupForm
           'User Rank'
           '')
         TabOrder = 0
-        OnClick = ListBox10Click
-        OnDblClick = Button3Click
+        OnClick = FoldingAtHomeListBoxClick
+        OnDblClick = InsertButtonClick
       end
     end
-    object TabSheet4: TTabSheet
+    object EmailTabSheet: TTabSheet
       Caption = 'Email'
       ImageIndex = 7
       object Label31: TLabel
         Left = 8
-        Top = 256
+        Top = 252
         Width = 36
         Height = 13
         Caption = 'Server:'
       end
       object Label32: TLabel
         Left = 8
-        Top = 280
+        Top = 276
         Width = 55
         Height = 13
         Caption = 'Loginname:'
       end
       object Label33: TLabel
         Left = 8
-        Top = 304
+        Top = 300
         Width = 50
         Height = 13
         Caption = 'Password:'
       end
       object Label48: TLabel
         Left = 8
-        Top = 336
+        Top = 332
         Width = 113
         Height = 13
         Caption = 'Email check time (mins):'
       end
       object Label50: TLabel
         Left = 8
-        Top = 224
+        Top = 220
         Width = 69
         Height = 13
         Caption = 'Email account:'
@@ -595,7 +595,7 @@ object SetupForm: TSetupForm
         Font.Style = [fsBold]
         ParentFont = False
       end
-      object Edit13: TEdit
+      object EmailPasswordEdit: TEdit
         Left = 64
         Top = 296
         Width = 113
@@ -604,7 +604,7 @@ object SetupForm: TSetupForm
         TabOrder = 4
         Text = 'Ur passw'
       end
-      object Edit12: TEdit
+      object EmailLoginEdit: TEdit
         Left = 64
         Top = 272
         Width = 113
@@ -612,7 +612,7 @@ object SetupForm: TSetupForm
         TabOrder = 3
         Text = 'Ur loginname'
       end
-      object Edit11: TEdit
+      object EmailServerEdit: TEdit
         Left = 64
         Top = 248
         Width = 113
@@ -620,7 +620,7 @@ object SetupForm: TSetupForm
         TabOrder = 2
         Text = 'Ur Server'
       end
-      object SpinEdit4: TSpinEdit
+      object EmailCheckTimeSpinEdit: TSpinEdit
         Left = 120
         Top = 328
         Width = 55
@@ -637,7 +637,7 @@ object SetupForm: TSetupForm
         TabOrder = 5
         Value = 3
       end
-      object ListBox4: TListBox
+      object EmailListBox: TListBox
         Left = 0
         Top = 0
         Width = 185
@@ -675,10 +675,10 @@ object SetupForm: TSetupForm
           'Email 10: Last Subject'
           'Email 10: Last From')
         TabOrder = 0
-        OnClick = ListBox4Click
-        OnDblClick = Button3Click
+        OnClick = EmailListBoxClick
+        OnDblClick = InsertButtonClick
       end
-      object ComboBox8: TComboBox
+      object EmailAccountComboBox: TComboBox
         Left = 104
         Top = 216
         Width = 73
@@ -687,7 +687,7 @@ object SetupForm: TSetupForm
         DropDownCount = 10
         ItemHeight = 13
         TabOrder = 1
-        OnChange = ComboBox8Change
+        OnChange = EmailAccountComboBoxChange
         Items.Strings = (
           '1'
           '2'
@@ -701,10 +701,10 @@ object SetupForm: TSetupForm
           '10')
       end
     end
-    object TabSheet9: TTabSheet
+    object NetworkStatsTabSheet: TTabSheet
       Caption = 'Network Stats'
       ImageIndex = 8
-      object ListBox9: TListBox
+      object NetworkStatsListBox: TListBox
         Left = 0
         Top = 0
         Width = 180
@@ -737,16 +737,16 @@ object SetupForm: TSetupForm
           'Total Discards (adapterNr)'
           'IP address')
         TabOrder = 0
-        OnClick = ListBox9Click
-        OnDblClick = Button3Click
+        OnClick = NetworkStatsListBoxClick
+        OnDblClick = InsertButtonClick
       end
     end
-    object TabSheet7: TTabSheet
+    object MiscTabSheet: TTabSheet
       Caption = 'Misc.'
       ImageIndex = 6
-      object SpeedButton1: TSpeedButton
+      object DistributedNetBrowseButton: TSpeedButton
         Left = 160
-        Top = 304
+        Top = 328
         Width = 23
         Height = 22
         Glyph.Data = {
@@ -758,7 +758,7 @@ object SetupForm: TSetupForm
           08880FB03333333330880BFB0333333333080FBFB000000000000BFBFBFBFB08
           88880FBFBFBFBF0888880BFB0000000888888000888888880008888888888888
           8008888888880888080888888888800088888888888888888888}
-        OnClick = SpeedButton1Click
+        OnClick = DistributedNetBrowseButtonClick
       end
       object Label34: TLabel
         Left = 8
@@ -769,12 +769,12 @@ object SetupForm: TSetupForm
       end
       object Label58: TLabel
         Left = 8
-        Top = 288
+        Top = 284
         Width = 114
         Height = 13
         Caption = 'DLL check interval (ms):'
       end
-      object ListBox1: TListBox
+      object MiscListBox: TListBox
         Left = 0
         Top = 0
         Width = 180
@@ -809,17 +809,17 @@ object SetupForm: TSetupForm
         ParentFont = False
         ScrollWidth = 250
         TabOrder = 0
-        OnClick = ListBox1Click
-        OnDblClick = Button3Click
+        OnClick = MiscListBoxClick
+        OnDblClick = InsertButtonClick
       end
-      object Edit14: TEdit
-        Left = 8
+      object DistributedNetLogfileEdit: TEdit
+        Left = 4
         Top = 328
         Width = 153
         Height = 21
         TabOrder = 2
       end
-      object SpinEdit8: TSpinEdit
+      object DLLCheckIntervalSpinEdit: TSpinEdit
         Left = 128
         Top = 280
         Width = 49
@@ -837,7 +837,7 @@ object SetupForm: TSetupForm
         Value = 200
       end
     end
-    object TabSheet13: TTabSheet
+    object LCDFeaturesTabSheet: TTabSheet
       Caption = 'LCD Features'
       Enabled = False
       ImageIndex = 10
@@ -876,7 +876,7 @@ object SetupForm: TSetupForm
         Height = 13
         Caption = 'they are pushed.'
       end
-      object ListBox12: TListBox
+      object ButtonsListBox: TListBox
         Left = 0
         Top = 0
         Width = 180
@@ -885,12 +885,12 @@ object SetupForm: TSetupForm
         Items.Strings = (
           'Buttons')
         TabOrder = 0
-        OnClick = ListBox12Click
-        OnDblClick = Button3Click
+        OnClick = ButtonsListBoxClick
+        OnDblClick = InsertButtonClick
       end
-      object Edit17: TEdit
+      object LastKeyPressedEdit: TEdit
         Left = 96
-        Top = 312
+        Top = 316
         Width = 33
         Height = 21
         Enabled = False
@@ -899,7 +899,7 @@ object SetupForm: TSetupForm
       end
     end
   end
-  object Button1: TButton
+  object OKButton: TButton
     Left = 576
     Top = 384
     Width = 75
@@ -911,9 +911,10 @@ object SetupForm: TSetupForm
     Font.Height = -11
     Font.Name = 'Tahoma'
     Font.Style = []
+    ModalResult = 1
     ParentFont = False
     TabOrder = 5
-    OnClick = Button1Click
+    OnClick = OKButtonClick
   end
   object CancelButton: TButton
     Left = 656
@@ -930,9 +931,8 @@ object SetupForm: TSetupForm
     ModalResult = 2
     ParentFont = False
     TabOrder = 6
-    OnClick = CancelButtonClick
   end
-  object Edit9: TEdit
+  object VariableEdit: TEdit
     Left = 8
     Top = 376
     Width = 121
@@ -950,7 +950,7 @@ object SetupForm: TSetupForm
     TabOrder = 8
     Text = '[Variable]'
   end
-  object Button3: TButton
+  object InsertButton: TButton
     Left = 128
     Top = 368
     Width = 59
@@ -962,29 +962,29 @@ object SetupForm: TSetupForm
     ParentShowHint = False
     ShowHint = True
     TabOrder = 2
-    OnClick = Button3Click
+    OnClick = InsertButtonClick
   end
-  object Button7: TButton
+  object ApplyButton: TButton
     Left = 736
     Top = 384
     Width = 75
     Height = 25
     Caption = '&Apply'
     TabOrder = 7
-    OnClick = Button7Click
+    OnClick = ApplyButtonClick
   end
-  object PageControl2: TPageControl
+  object MainPageControl: TPageControl
     Left = 232
     Top = 0
     Width = 577
     Height = 377
-    ActivePage = TabSheet11
+    ActivePage = ScreensTabSheet
     TabOrder = 0
     TabStop = False
-    OnChange = PageControl2Change
-    object TabSheet11: TTabSheet
+    OnChange = MainPageControlChange
+    object ScreensTabSheet: TTabSheet
       Caption = 'Screens'
-      object GroupBox1: TGroupBox
+      object ScreenSettingsGroupBox: TGroupBox
         Left = 3
         Top = 168
         Width = 561
@@ -1014,7 +1014,7 @@ object SetupForm: TSetupForm
         end
         object Label42: TLabel
           Left = 200
-          Top = 56
+          Top = 52
           Width = 90
           Height = 13
           Caption = 'Skip this screen if: '
@@ -1170,7 +1170,7 @@ object SetupForm: TSetupForm
         end
         object Label18: TLabel
           Left = 200
-          Top = 24
+          Top = 20
           Width = 49
           Height = 13
           Caption = 'Theme nr.'
@@ -1181,7 +1181,7 @@ object SetupForm: TSetupForm
           Font.Style = []
           ParentFont = False
         end
-        object CheckBox3: TCheckBox
+        object DontScrollLine1CheckBox: TCheckBox
           Left = 436
           Top = 80
           Width = 17
@@ -1192,7 +1192,7 @@ object SetupForm: TSetupForm
           ShowHint = True
           TabOrder = 7
         end
-        object CheckBox4: TCheckBox
+        object DontScrollLine2CheckBox: TCheckBox
           Left = 436
           Top = 104
           Width = 17
@@ -1203,7 +1203,7 @@ object SetupForm: TSetupForm
           ShowHint = True
           TabOrder = 11
         end
-        object CheckBox5: TCheckBox
+        object DontScrollLine3CheckBox: TCheckBox
           Left = 436
           Top = 128
           Width = 17
@@ -1214,7 +1214,7 @@ object SetupForm: TSetupForm
           ShowHint = True
           TabOrder = 15
         end
-        object CheckBox6: TCheckBox
+        object DontScrollLine4CheckBox: TCheckBox
           Left = 436
           Top = 152
           Width = 17
@@ -1233,7 +1233,7 @@ object SetupForm: TSetupForm
           Enabled = False
           TabOrder = 22
         end
-        object CheckBox7: TCheckBox
+        object ContinueLine1CheckBox: TCheckBox
           Left = 480
           Top = 80
           Width = 17
@@ -1243,9 +1243,9 @@ object SetupForm: TSetupForm
           ParentShowHint = False
           ShowHint = True
           TabOrder = 8
-          OnClick = CheckBox7Click
+          OnClick = ContinueLine1CheckBoxClick
         end
-        object CheckBox8: TCheckBox
+        object ContinueLine2CheckBox: TCheckBox
           Left = 480
           Top = 104
           Width = 17
@@ -1255,9 +1255,9 @@ object SetupForm: TSetupForm
           ParentShowHint = False
           ShowHint = True
           TabOrder = 12
-          OnClick = CheckBox8Click
+          OnClick = ContinueLine2CheckBoxClick
         end
-        object CheckBox9: TCheckBox
+        object ContinueLine3CheckBox: TCheckBox
           Left = 480
           Top = 128
           Width = 17
@@ -1267,7 +1267,7 @@ object SetupForm: TSetupForm
           ParentShowHint = False
           ShowHint = True
           TabOrder = 16
-          OnClick = CheckBox9Click
+          OnClick = ContinueLine3CheckBoxClick
         end
         object GroupBox5: TGroupBox
           Left = 512
@@ -1277,7 +1277,7 @@ object SetupForm: TSetupForm
           Enabled = False
           TabOrder = 23
         end
-        object CheckBox10: TCheckBox
+        object CenterLine1CheckBox: TCheckBox
           Left = 528
           Top = 80
           Width = 17
@@ -1288,7 +1288,7 @@ object SetupForm: TSetupForm
           ShowHint = True
           TabOrder = 9
         end
-        object CheckBox11: TCheckBox
+        object CenterLine2CheckBox: TCheckBox
           Left = 528
           Top = 104
           Width = 17
@@ -1299,7 +1299,7 @@ object SetupForm: TSetupForm
           ShowHint = True
           TabOrder = 13
         end
-        object CheckBox12: TCheckBox
+        object CenterLine3CheckBox: TCheckBox
           Left = 528
           Top = 128
           Width = 17
@@ -1310,7 +1310,7 @@ object SetupForm: TSetupForm
           ShowHint = True
           TabOrder = 17
         end
-        object CheckBox13: TCheckBox
+        object CenterLine4CheckBox: TCheckBox
           Left = 528
           Top = 152
           Width = 17
@@ -1329,7 +1329,7 @@ object SetupForm: TSetupForm
           Enabled = False
           TabOrder = 24
         end
-        object SpinEdit7: TSpinEdit
+        object ThemeNumberSpinEdit: TSpinEdit
           Left = 256
           Top = 16
           Width = 41
@@ -1346,7 +1346,7 @@ object SetupForm: TSetupForm
           TabOrder = 1
           Value = 1
         end
-        object Button10: TButton
+        object InteractionsButton: TButton
           Left = 336
           Top = 16
           Width = 83
@@ -1362,15 +1362,15 @@ object SetupForm: TSetupForm
           ParentShowHint = False
           ShowHint = True
           TabOrder = 2
-          OnClick = Button10Click
+          OnClick = InteractionsButtonClick
         end
-        object Sticky: TCheckBox
+        object StickyCheckbox: TCheckBox
           Left = 128
           Top = 53
           Width = 49
           Height = 17
           Hint = 'Don'#39't automatically change from this screen.'
-          Caption = 'Sticky'
+          Caption = 'StickyCheckbox'
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
           Font.Height = -11
@@ -1380,9 +1380,9 @@ object SetupForm: TSetupForm
           ParentShowHint = False
           ShowHint = True
           TabOrder = 4
-          OnClick = StickyClick
+          OnClick = StickyCheckboxClick
         end
-        object ComboBox7: TComboBox
+        object SkipScreenComboBox: TComboBox
           Left = 292
           Top = 49
           Width = 129
@@ -1401,7 +1401,7 @@ object SetupForm: TSetupForm
           ParentShowHint = False
           ShowHint = True
           TabOrder = 5
-          OnChange = ComboBox7Change
+          OnChange = SkipScreenComboBoxChange
           Items.Strings = (
             'Don'#39't skip'
             'Winamp is inactive'
@@ -1413,7 +1413,7 @@ object SetupForm: TSetupForm
             'Not connected'
             'Connected')
         end
-        object ComboBox3: TComboBox
+        object ScreenNumberComboBox: TComboBox
           Left = 77
           Top = 16
           Width = 81
@@ -1433,7 +1433,7 @@ object SetupForm: TSetupForm
           ShowHint = True
           TabOrder = 0
           Text = 'Screen 1'
-          OnChange = ComboBox3Change
+          OnChange = ScreenNumberComboBoxChange
           Items.Strings = (
             'Screen 1'
             'Screen 2'
@@ -1456,7 +1456,7 @@ object SetupForm: TSetupForm
             'Screen 19'
             'Screen 20')
         end
-        object CheckBox1: TCheckBox
+        object ScreenEnabledCheckBox: TCheckBox
           Left = 8
           Top = 16
           Width = 65
@@ -1473,7 +1473,7 @@ object SetupForm: TSetupForm
           ShowHint = True
           TabOrder = 21
         end
-        object SpinEdit2: TSpinEdit
+        object TimeToShowSpinEdit: TSpinEdit
           Left = 77
           Top = 48
           Width = 41
@@ -1495,7 +1495,7 @@ object SetupForm: TSetupForm
           TabOrder = 3
           Value = 3
         end
-        object Edit5: TEdit
+        object Line1Edit: TEdit
           Left = 4
           Top = 74
           Width = 417
@@ -1509,10 +1509,10 @@ object SetupForm: TSetupForm
           Font.Style = []
           ParentFont = False
           TabOrder = 6
-          OnEnter = Edit5Enter
-          OnKeyDown = Edit5KeyDown
+          OnEnter = Line1EditEnter
+          OnKeyDown = Line1EditKeyDown
         end
-        object Edit6: TEdit
+        object Line2Edit: TEdit
           Left = 4
           Top = 98
           Width = 417
@@ -1526,10 +1526,10 @@ object SetupForm: TSetupForm
           Font.Style = []
           ParentFont = False
           TabOrder = 10
-          OnEnter = Edit6Enter
-          OnKeyDown = Edit6KeyDown
+          OnEnter = Line2EditEnter
+          OnKeyDown = Line2EditKeyDown
         end
-        object Edit7: TEdit
+        object Line3Edit: TEdit
           Left = 4
           Top = 122
           Width = 417
@@ -1542,10 +1542,10 @@ object SetupForm: TSetupForm
           Font.Style = []
           ParentFont = False
           TabOrder = 14
-          OnEnter = Edit7Enter
-          OnKeyDown = Edit7KeyDown
+          OnEnter = Line3EditEnter
+          OnKeyDown = Line3EditKeyDown
         end
-        object Edit8: TEdit
+        object Line4Edit: TEdit
           Left = 4
           Top = 146
           Width = 417
@@ -1558,11 +1558,11 @@ object SetupForm: TSetupForm
           Font.Style = []
           ParentFont = False
           TabOrder = 18
-          OnEnter = Edit8Enter
-          OnKeyDown = Edit8KeyDown
+          OnEnter = Line4EditEnter
+          OnKeyDown = Line4EditKeyDown
         end
       end
-      object GroupBox3: TGroupBox
+      object ProgramSettingsGroupBox: TGroupBox
         Left = 3
         Top = 0
         Width = 270
@@ -1590,7 +1590,7 @@ object SetupForm: TSetupForm
         end
         object Label7: TLabel
           Left = 16
-          Top = 120
+          Top = 116
           Width = 91
           Height = 13
           Caption = 'Web proxy server:'
@@ -1603,7 +1603,7 @@ object SetupForm: TSetupForm
         end
         object Label8: TLabel
           Left = 16
-          Top = 144
+          Top = 140
           Width = 80
           Height = 13
           Caption = 'Web proxy port:'
@@ -1629,7 +1629,7 @@ object SetupForm: TSetupForm
         end
         object Label59: TLabel
           Left = 16
-          Top = 24
+          Top = 20
           Width = 147
           Height = 13
           Caption = 'Refresh interval (milliseconds):'
@@ -1640,7 +1640,7 @@ object SetupForm: TSetupForm
           Font.Style = []
           ParentFont = False
         end
-        object Edit3: TEdit
+        object WebProxyServerEdit: TEdit
           Left = 120
           Top = 112
           Width = 137
@@ -1656,7 +1656,7 @@ object SetupForm: TSetupForm
           ShowHint = True
           TabOrder = 3
         end
-        object Edit4: TEdit
+        object WebProxyPortEdit: TEdit
           Left = 168
           Top = 136
           Width = 89
@@ -1674,10 +1674,10 @@ object SetupForm: TSetupForm
           TabOrder = 4
           Text = '0'
         end
-        object ComboBox1: TComboBox
-          Left = 136
+        object ColorSchemeComboBox: TComboBox
+          Left = 120
           Top = 83
-          Width = 121
+          Width = 137
           Height = 21
           Hint = 'The colors used in the virtual display.'
           Style = csDropDownList
@@ -1691,7 +1691,7 @@ object SetupForm: TSetupForm
           ParentShowHint = False
           ShowHint = True
           TabOrder = 2
-          OnChange = ComboBox1Change
+          OnChange = ColorSchemeComboBoxChange
           Items.Strings = (
             'Green'
             'Blue'
@@ -1699,7 +1699,7 @@ object SetupForm: TSetupForm
             'White'
             'Custom for this skin')
         end
-        object SpinEdit1: TSpinEdit
+        object ProgramRefreshIntervalSpinEdit: TSpinEdit
           Left = 200
           Top = 17
           Width = 57
@@ -1719,7 +1719,7 @@ object SetupForm: TSetupForm
           TabOrder = 0
           Value = 200
         end
-        object SpinEdit9: TSpinEdit
+        object ProgramScrollIntervalSpinEdit: TSpinEdit
           Left = 200
           Top = 42
           Width = 57
@@ -1742,7 +1742,7 @@ object SetupForm: TSetupForm
           Value = 200
         end
       end
-      object GroupBox2: TGroupBox
+      object LCDSettingsGroupBox: TGroupBox
         Left = 280
         Top = 0
         Width = 284
@@ -1783,7 +1783,7 @@ object SetupForm: TSetupForm
         end
         object Label2: TLabel
           Left = 73
-          Top = 19
+          Top = 15
           Width = 44
           Height = 13
           Caption = 'LCD size:'
@@ -1794,7 +1794,7 @@ object SetupForm: TSetupForm
           Font.Style = []
           ParentFont = False
         end
-        object RadioButton1: TRadioButton
+        object HD44780RadioButton: TRadioButton
           Left = 16
           Top = 36
           Width = 113
@@ -1812,9 +1812,9 @@ object SetupForm: TSetupForm
           ParentShowHint = False
           ShowHint = True
           TabOrder = 1
-          OnClick = RadioButton1Click
+          OnClick = HD44780RadioButtonClick
         end
-        object RadioButton2: TRadioButton
+        object MatrixOrbitalRadioButton: TRadioButton
           Left = 16
           Top = 56
           Width = 145
@@ -1830,9 +1830,9 @@ object SetupForm: TSetupForm
           ParentShowHint = False
           ShowHint = True
           TabOrder = 2
-          OnClick = RadioButton2Click
+          OnClick = MatrixOrbitalRadioButtonClick
         end
-        object ComboBox4: TComboBox
+        object COMPortComboBox: TComboBox
           Left = 29
           Top = 136
           Width = 105
@@ -1851,9 +1851,9 @@ object SetupForm: TSetupForm
           ParentShowHint = False
           ShowHint = True
           TabOrder = 7
-          OnChange = ComboBox4Change
+          OnChange = COMPortComboBoxChange
         end
-        object ComboBox5: TComboBox
+        object BaudRateComboBox: TComboBox
           Left = 149
           Top = 136
           Width = 105
@@ -1872,7 +1872,7 @@ object SetupForm: TSetupForm
           ParentShowHint = False
           ShowHint = True
           TabOrder = 8
-          OnChange = ComboBox5Change
+          OnChange = BaudRateComboBoxChange
           Items.Strings = (
             '110 bps'
             '300 bps'
@@ -1890,7 +1890,7 @@ object SetupForm: TSetupForm
             '128000 bps'
             '256000 bps')
         end
-        object Button4: TButton
+        object MatrixOrbitalConfigButton: TButton
           Left = 152
           Top = 56
           Width = 113
@@ -1906,9 +1906,9 @@ object SetupForm: TSetupForm
           ParentShowHint = False
           ShowHint = True
           TabOrder = 5
-          OnClick = Button4Click
+          OnClick = MatrixOrbitalConfigButtonClick
         end
-        object RadioButton3: TRadioButton
+        object CrystalFontzRadioButton: TRadioButton
           Left = 16
           Top = 76
           Width = 121
@@ -1924,9 +1924,9 @@ object SetupForm: TSetupForm
           ParentShowHint = False
           ShowHint = True
           TabOrder = 3
-          OnClick = RadioButton3Click
+          OnClick = CrystalFontzRadioButtonClick
         end
-        object Button5: TButton
+        object CrystalFontzConfigButton: TButton
           Left = 152
           Top = 76
           Width = 113
@@ -1942,9 +1942,9 @@ object SetupForm: TSetupForm
           ParentShowHint = False
           ShowHint = True
           TabOrder = 6
-          OnClick = Button5Click
+          OnClick = CrystalFontzConfigButtonClick
         end
-        object Button6: TButton
+        object HD44780ConfigButton: TButton
           Left = 152
           Top = 36
           Width = 113
@@ -1960,9 +1960,9 @@ object SetupForm: TSetupForm
           ParentShowHint = False
           ShowHint = True
           TabOrder = 4
-          OnClick = Button6Click
+          OnClick = HD44780ConfigButtonClick
         end
-        object ComboBox2: TComboBox
+        object LCDSizeComboBox: TComboBox
           Left = 133
           Top = 12
           Width = 77
@@ -1979,7 +1979,7 @@ object SetupForm: TSetupForm
           ParentShowHint = False
           ShowHint = True
           TabOrder = 0
-          OnChange = ComboBox2Change
+          OnChange = LCDSizeComboBoxChange
           Items.Strings = (
             '1 x 10'
             '1 x 16'
@@ -1994,9 +1994,9 @@ object SetupForm: TSetupForm
             '4 x 20'
             '4 x 40')
         end
-        object RadioButton4: TRadioButton
-          Left = 275
-          Top = 9
+        object HD66712RadioButton: TRadioButton
+          Left = 219
+          Top = 13
           Width = 113
           Height = 17
           Caption = 'Parallel (HD66712)'
@@ -2009,7 +2009,7 @@ object SetupForm: TSetupForm
           ParentFont = False
           TabOrder = 9
           Visible = False
-          OnClick = RadioButton4Click
+          OnClick = HD66712RadioButtonClick
         end
         object IRTransRadioButton: TRadioButton
           Left = 16
@@ -2049,7 +2049,7 @@ object SetupForm: TSetupForm
         end
       end
     end
-    object TabSheet12: TTabSheet
+    object ActionsTabSheet: TTabSheet
       Caption = 'Actions'
       ImageIndex = 1
       object Label24: TLabel
@@ -2085,7 +2085,7 @@ object SetupForm: TSetupForm
         Font.Style = [fsBold]
         ParentFont = False
       end
-      object StringGrid1: TStringGrid
+      object ActionsStringGrid: TStringGrid
         Left = 0
         Top = 0
         Width = 393
@@ -2097,9 +2097,9 @@ object SetupForm: TSetupForm
         FixedRows = 0
         Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goRowSelect]
         TabOrder = 7
-        OnClick = StringGrid1Click
+        OnClick = ActionsStringGridClick
       end
-      object ListBox11: TListBox
+      object OutputListBox: TListBox
         Left = 397
         Top = 16
         Width = 169
@@ -2135,16 +2135,16 @@ object SetupForm: TSetupForm
           'GPOFlash(1-8,2)  (nr. of times)'
           'Fan(1-3,0-255) (0-255=speed)')
         TabOrder = 6
-        OnClick = ListBox11Click
+        OnClick = OutputListBoxClick
       end
-      object Edit16: TEdit
+      object Operand1Edit: TEdit
         Left = 16
         Top = 288
         Width = 105
         Height = 21
         TabOrder = 0
       end
-      object ComboBox9: TComboBox
+      object OperatorComboBox: TComboBox
         Left = 124
         Top = 288
         Width = 41
@@ -2152,7 +2152,7 @@ object SetupForm: TSetupForm
         Style = csDropDownList
         ItemHeight = 13
         TabOrder = 1
-        OnChange = ComboBox9Change
+        OnChange = OperatorComboBoxChange
         Items.Strings = (
           '>'
           '<'
@@ -2161,7 +2161,7 @@ object SetupForm: TSetupForm
           '>='
           '<>')
       end
-      object Edit18: TEdit
+      object StatementEdit: TEdit
         Left = 272
         Top = 288
         Width = 113
@@ -2169,34 +2169,34 @@ object SetupForm: TSetupForm
         TabOrder = 3
         Text = 'Backlight(1)'
       end
-      object Button8: TButton
+      object ActionAddButton: TButton
         Left = 312
         Top = 312
         Width = 75
         Height = 25
         Caption = 'Add'
         TabOrder = 5
-        OnClick = Button8Click
+        OnClick = ActionAddButtonClick
       end
-      object Button9: TButton
+      object ActionDeleteButton: TButton
         Left = 232
         Top = 312
         Width = 75
         Height = 25
         Caption = '&Delete'
         TabOrder = 4
-        OnClick = Button9Click
+        OnClick = ActionDeleteButtonClick
       end
-      object Edit19: TEdit
+      object Operand2Edit: TEdit
         Left = 168
         Top = 288
         Width = 73
         Height = 21
         TabOrder = 2
-        Text = 'Edit19'
+        Text = 'Operand2Edit'
       end
     end
-    object TabSheet14: TTabSheet
+    object StartupTabSheet: TTabSheet
       Caption = 'Startup'
       ImageIndex = 2
       object GroupBox7: TGroupBox
@@ -2293,7 +2293,7 @@ object SetupForm: TSetupForm
       end
     end
   end
-  object CheckBox14: TCheckBox
+  object RandomizeScreensCheckBox: TCheckBox
     Left = 384
     Top = 384
     Width = 113
@@ -2312,7 +2312,7 @@ object SetupForm: TSetupForm
     ShowHint = True
     TabOrder = 4
   end
-  object CheckBox2: TCheckBox
+  object StayOnTopCheckBox: TCheckBox
     Left = 240
     Top = 384
     Width = 81

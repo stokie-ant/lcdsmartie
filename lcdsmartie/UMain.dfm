@@ -1,11 +1,11 @@
 object LCDSmartieDisplayForm: TLCDSmartieDisplayForm
-  Left = 162
-  Top = 146
+  Left = 430
+  Top = 439
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsToolWindow
   Caption = 'LCD Smartie 5.3'
-  ClientHeight = 92
-  ClientWidth = 227
+  ClientHeight = 91
+  ClientWidth = 224
   Color = clBtnFace
   TransparentColorValue = clBtnFace
   Font.Charset = ANSI_CHARSET
@@ -23,25 +23,25 @@ object LCDSmartieDisplayForm: TLCDSmartieDisplayForm
   OnShow = FormShow
   PixelsPerInch = 96
   TextHeight = 13
-  object Image13: TImage
+  object BarLeftImage: TImage
     Left = 0
     Top = 64
     Width = 97
     Height = 27
   end
-  object Image15: TImage
+  object BarMiddleImage: TImage
     Left = 88
     Top = 64
     Width = 25
     Height = 27
   end
-  object Image14: TImage
+  object BarRightImage: TImage
     Left = 108
     Top = 64
     Width = 97
     Height = 27
   end
-  object Image1: TImage
+  object LogoImage: TImage
     Left = 196
     Top = 64
     Width = 32
@@ -49,34 +49,10 @@ object LCDSmartieDisplayForm: TLCDSmartieDisplayForm
     Hint = 'Access menu'
     ParentShowHint = False
     ShowHint = True
-    OnClick = Image1Click
-    OnDblClick = Image1DblClick
+    OnClick = LogoImageClick
+    OnDblClick = LogoImageDblClick
   end
-  object SpeedButton10: TSpeedButton
-    Left = 80
-    Top = 112
-    Width = 17
-    Height = 17
-    Flat = True
-    Glyph.Data = {
-      C6010000424DC60100000000000076000000280000000B0000002A0000000100
-      04000000000050010000320B0000320B00001000000010000000000000000000
-      800000800000008080008000000080008000808000007F7F7F00BFBFBF000000
-      FF0000FF000000FFFF00FF000000FF00FF00FFFF0000FFFFFF00333333333330
-      2D01033333333338880003333333333A8A0000333333333C8C0000333333333E
-      8E00090333333330900009033333333292000990333333349400099033333336
-      9600099903333338980009990333333100A00999903333302D0109999033333E
-      9E00099999033330A000099999033332A200099999903334A400099999903336
-      A600099999990338A80009999999033AAA0009999999903CAC0009999999903E
-      AE00099999999030B000099999999032B200099999990334B400099999990336
-      B600099999903338B80009999990333ABA0009999903333CBC0009999903333E
-      BE00099990333330C000099990333332C200099903333334C400099903333336
-      C600099033333338C80009903333333ACA0009033333333CCC0009033333333E
-      CE00003333333330D000003333333332D200033333333334D400033333333336
-      D600333333333338D800}
-    OnClick = SpeedButton10Click
-  end
-  object Image3: TImage
+  object Line1RightScrollImage: TImage
     Left = 16
     Top = 0
     Width = 16
@@ -84,10 +60,10 @@ object LCDSmartieDisplayForm: TLCDSmartieDisplayForm
     Hint = 'Scroll line right.'
     ParentShowHint = False
     ShowHint = True
-    OnMouseDown = Image3MouseDown
-    OnMouseUp = Image3MouseUp
+    OnMouseDown = Line1RightScrollImageMouseDown
+    OnMouseUp = Line1RightScrollImageMouseUp
   end
-  object Image4: TImage
+  object Line2RightScrollImage: TImage
     Left = 16
     Top = 16
     Width = 16
@@ -95,10 +71,10 @@ object LCDSmartieDisplayForm: TLCDSmartieDisplayForm
     Hint = 'Scroll line right.'
     ParentShowHint = False
     ShowHint = True
-    OnMouseDown = Image4MouseDown
-    OnMouseUp = Image4MouseUp
+    OnMouseDown = Line2RightScrollImageMouseDown
+    OnMouseUp = Line2RightScrollImageMouseUp
   end
-  object Image5: TImage
+  object Line3RightScrollImage: TImage
     Left = 16
     Top = 32
     Width = 16
@@ -106,10 +82,10 @@ object LCDSmartieDisplayForm: TLCDSmartieDisplayForm
     Hint = 'Scroll line right.'
     ParentShowHint = False
     ShowHint = True
-    OnMouseDown = Image5MouseDown
-    OnMouseUp = Image5MouseUp
+    OnMouseDown = Line3RightScrollImageMouseDown
+    OnMouseUp = Line3RightScrollImageMouseUp
   end
-  object Image6: TImage
+  object Line4RightScrollImage: TImage
     Left = 16
     Top = 48
     Width = 16
@@ -117,10 +93,10 @@ object LCDSmartieDisplayForm: TLCDSmartieDisplayForm
     Hint = 'Scroll line right.'
     ParentShowHint = False
     ShowHint = True
-    OnMouseDown = Image6MouseDown
-    OnMouseUp = Image6MouseUp
+    OnMouseDown = Line4RightScrollImageMouseDown
+    OnMouseUp = Line4RightScrollImageMouseUp
   end
-  object Image7: TImage
+  object Line1LeftScrollImage: TImage
     Left = 193
     Top = 0
     Width = 16
@@ -128,10 +104,10 @@ object LCDSmartieDisplayForm: TLCDSmartieDisplayForm
     Hint = 'Scroll line left.'
     ParentShowHint = False
     ShowHint = True
-    OnMouseDown = Image7MouseDown
-    OnMouseUp = Image7MouseUp
+    OnMouseDown = Line1LeftScrollImageMouseDown
+    OnMouseUp = Line1LeftScrollImageMouseUp
   end
-  object Image8: TImage
+  object Line2LeftScrollImage: TImage
     Left = 193
     Top = 16
     Width = 16
@@ -139,10 +115,10 @@ object LCDSmartieDisplayForm: TLCDSmartieDisplayForm
     Hint = 'Scroll line left.'
     ParentShowHint = False
     ShowHint = True
-    OnMouseDown = Image8MouseDown
-    OnMouseUp = Image8MouseUp
+    OnMouseDown = Line2LeftScrollImageMouseDown
+    OnMouseUp = Line2LeftScrollImageMouseUp
   end
-  object Image9: TImage
+  object Line3LeftScrollImage: TImage
     Left = 193
     Top = 32
     Width = 16
@@ -150,10 +126,10 @@ object LCDSmartieDisplayForm: TLCDSmartieDisplayForm
     Hint = 'Scroll line left.'
     ParentShowHint = False
     ShowHint = True
-    OnMouseDown = Image9MouseDown
-    OnMouseUp = Image9MouseUp
+    OnMouseDown = Line3LeftScrollImageMouseDown
+    OnMouseUp = Line3LeftScrollImageMouseUp
   end
-  object Image10: TImage
+  object Line4LeftScrollImage: TImage
     Left = 193
     Top = 48
     Width = 16
@@ -161,10 +137,10 @@ object LCDSmartieDisplayForm: TLCDSmartieDisplayForm
     Hint = 'Scroll line left.'
     ParentShowHint = False
     ShowHint = True
-    OnMouseDown = Image10MouseDown
-    OnMouseUp = Image10MouseUp
+    OnMouseDown = Line4LeftScrollImageMouseDown
+    OnMouseUp = Line4LeftScrollImageMouseUp
   end
-  object Image11: TImage
+  object NextScreenImage: TImage
     Left = 208
     Top = 0
     Width = 16
@@ -172,11 +148,11 @@ object LCDSmartieDisplayForm: TLCDSmartieDisplayForm
     Hint = 'Next Screen.'
     ParentShowHint = False
     ShowHint = True
-    OnClick = Image11Click
-    OnMouseDown = Image11MouseDown
-    OnMouseUp = Image11MouseUp
+    OnClick = NextScreenImageClick
+    OnMouseDown = NextScreenImageMouseDown
+    OnMouseUp = NextScreenImageMouseUp
   end
-  object Image12: TImage
+  object PreviousImage: TImage
     Left = 0
     Top = 0
     Width = 16
@@ -184,11 +160,11 @@ object LCDSmartieDisplayForm: TLCDSmartieDisplayForm
     Hint = 'Previous Screen.'
     ParentShowHint = False
     ShowHint = True
-    OnClick = Image12Click
-    OnMouseDown = Image12MouseDown
-    OnMouseUp = Image12MouseUp
+    OnClick = PreviousImageClick
+    OnMouseDown = PreviousImageMouseDown
+    OnMouseUp = PreviousImageMouseUp
   end
-  object Image16: TImage
+  object SetupImage: TImage
     Left = 10
     Top = 69
     Width = 34
@@ -196,11 +172,11 @@ object LCDSmartieDisplayForm: TLCDSmartieDisplayForm
     Hint = 'Configure the display and/or screen content/layout.'
     ParentShowHint = False
     ShowHint = True
-    OnClick = Image16Click
-    OnMouseDown = Image16MouseDown
-    OnMouseUp = Image16MouseUp
+    OnClick = SetupImageClick
+    OnMouseDown = SetupImageMouseDown
+    OnMouseUp = SetupImageMouseUp
   end
-  object Image17: TImage
+  object HideImage: TImage
     Left = 165
     Top = 69
     Width = 32
@@ -208,45 +184,21 @@ object LCDSmartieDisplayForm: TLCDSmartieDisplayForm
     Hint = 'Disappear! Will appear as an icon in the system tray.'
     ParentShowHint = False
     ShowHint = True
-    OnClick = Image17Click
-    OnMouseDown = Image17MouseDown
-    OnMouseUp = Image17MouseUp
+    OnClick = HideImageClick
+    OnMouseDown = HideImageMouseDown
+    OnMouseUp = HideImageMouseUp
   end
-  object SpeedButton1: TSpeedButton
-    Left = 64
-    Top = 112
-    Width = 17
-    Height = 17
-    Flat = True
-    Glyph.Data = {
-      C6010000424DC60100000000000076000000280000000B0000002A0000000100
-      04000000000050010000320B0000320B00001000000010000000000000000000
-      800000800000008080008000000080008000808000007F7F7F00BFBFBF000000
-      FF0000FF000000FFFF00FF000000FF00FF00FFFF0000FFFFFF00333333333330
-      2D01033333333338880003333333333A8A0000333333333C8C0000333333333E
-      8E00090333333330900009033333333292000990333333349400099033333336
-      9600099903333338980009990333333100A00999903333302D0109999033333E
-      9E00099999033330A000099999033332A200099999903334A400099999903336
-      A600099999990338A80009999999033AAA0009999999903CAC0009999999903E
-      AE00099999999030B000099999999032B200099999990334B400099999990336
-      B600099999903338B80009999990333ABA0009999903333CBC0009999903333E
-      BE00099990333330C000099990333332C200099903333334C400099903333336
-      C600099033333338C80009903333333ACA0009033333333CCC0009033333333E
-      CE00003333333330D000003333333332D200033333333334D400033333333336
-      D600333333333338D800}
-    OnClick = SpeedButton1Click
-  end
-  object Button2: TButton
-    Left = 8
-    Top = 112
+  object SetupButton: TButton
+    Left = 4
+    Top = 92
     Width = 49
     Height = 17
     Caption = 'setup'
     TabOrder = 0
     TabStop = False
-    OnClick = Button2Click
+    OnClick = SetupButtonClick
   end
-  object Panel2: TPanel
+  object Line2Panel: TPanel
     Left = 32
     Top = 16
     Width = 161
@@ -265,7 +217,7 @@ object LCDSmartieDisplayForm: TLCDSmartieDisplayForm
     ShowHint = True
     TabOrder = 2
   end
-  object Panel3: TPanel
+  object Line3Panel: TPanel
     Left = 32
     Top = 32
     Width = 161
@@ -284,7 +236,7 @@ object LCDSmartieDisplayForm: TLCDSmartieDisplayForm
     ShowHint = True
     TabOrder = 3
   end
-  object Panel4: TPanel
+  object Line4Panel: TPanel
     Left = 32
     Top = 48
     Width = 161
@@ -303,17 +255,17 @@ object LCDSmartieDisplayForm: TLCDSmartieDisplayForm
     ShowHint = True
     TabOrder = 4
   end
-  object Button1: TButton
-    Left = 104
-    Top = 112
+  object HideButton: TButton
+    Left = 156
+    Top = 92
     Width = 49
     Height = 17
     Caption = 'hide'
     TabOrder = 1
     TabStop = False
-    OnClick = Button1Click
+    OnClick = HideButtonClick
   end
-  object Panel1: TPanel
+  object Line1Panel: TPanel
     Left = 32
     Top = 0
     Width = 161
@@ -333,8 +285,8 @@ object LCDSmartieDisplayForm: TLCDSmartieDisplayForm
     ShowHint = True
     TabOrder = 6
   end
-  object Panel5: TPanel
-    Left = 88
+  object ScreenNumberPanel: TPanel
+    Left = 84
     Top = 72
     Width = 33
     Height = 17
@@ -352,29 +304,47 @@ object LCDSmartieDisplayForm: TLCDSmartieDisplayForm
     ShowHint = True
     TabOrder = 5
   end
+  object PreviousButton: TButton
+    Left = 56
+    Top = 92
+    Width = 51
+    Height = 17
+    Caption = 'Previous'
+    TabOrder = 7
+    OnClick = PreviousButtonClick
+  end
+  object NextButton: TButton
+    Left = 108
+    Top = 92
+    Width = 45
+    Height = 17
+    Caption = 'Next'
+    TabOrder = 8
+    OnClick = NextButtonClick
+  end
   object TimerRefresh: TTimer
     Enabled = False
     Interval = 200
     OnTimer = TimerRefreshTimer
-    Left = 65528
-    Top = 128
+    Left = 164
+    Top = 176
   end
-  object Timer2: TTimer
+  object HTTPUpdateTimer: TTimer
     Enabled = False
     Interval = 10000
-    OnTimer = Timer2Timer
-    Left = 16
-    Top = 128
+    OnTimer = HTTPUpdateTimerTimer
+    Left = 4
+    Top = 144
   end
   object WinampCtrl1: TWinampCtrl
     FreeLists = True
     WinampLocation = 'C:\Program Files\Winamp\winamp.exe'
-    Left = 64
-    Top = 152
+    Left = 4
+    Top = 112
   end
   object PopupMenu1: TPopupMenu
-    Left = 88
-    Top = 152
+    Left = 68
+    Top = 112
     object Commands1: TMenuItem
       Caption = 'Commands'
       object BacklightOn1: TMenuItem
@@ -418,39 +388,39 @@ object LCDSmartieDisplayForm: TLCDSmartieDisplayForm
       OnClick = Close1Click
     end
   end
-  object Timer4: TTimer
+  object LeftManualScrollTimer: TTimer
     Enabled = False
     Interval = 50
-    OnTimer = Timer4Timer
-    Left = 208
-    Top = 152
+    OnTimer = LeftManualScrollTimerTimer
+    Left = 68
+    Top = 176
   end
-  object Timer5: TTimer
+  object RightManualScrollTimer: TTimer
     Enabled = False
     Interval = 50
-    OnTimer = Timer5Timer
-    Left = 65528
-    Top = 152
+    OnTimer = RightManualScrollTimerTimer
+    Left = 100
+    Top = 176
   end
-  object Timer6: TTimer
+  object MBMUpdateTimer: TTimer
     Enabled = False
     Interval = 10
-    OnTimer = Timer6Timer
-    Left = 64
-    Top = 128
+    OnTimer = MBMUpdateTimerTimer
+    Left = 36
+    Top = 144
   end
-  object Timer7: TTimer
+  object NextScreenTimer: TTimer
     Enabled = False
-    OnTimer = Timer7Timer
-    Left = 88
-    Top = 128
+    OnTimer = NextScreenTimerTimer
+    Left = 132
+    Top = 176
   end
-  object Timer8: TTimer
+  object GameUpdateTimer: TTimer
     Enabled = False
     Interval = 4000
-    OnTimer = Timer8Timer
-    Left = 112
-    Top = 128
+    OnTimer = GameUpdateTimerTimer
+    Left = 68
+    Top = 144
   end
   object CoolTrayIcon1: TCoolTrayIcon
     CycleInterval = 0
@@ -537,40 +507,40 @@ object LCDSmartieDisplayForm: TLCDSmartieDisplayForm
     IconIndex = 0
     PopupMenu = PopupMenu1
     OnStartup = CoolTrayIcon1Startup
-    Left = 40
-    Top = 152
+    Left = 36
+    Top = 112
   end
-  object Timer3: TTimer
+  object ActionsTimer: TTimer
     Enabled = False
     Interval = 250
-    OnTimer = Timer3Timer
-    Left = 40
-    Top = 128
+    OnTimer = ActionsTimerTimer
+    Left = 4
+    Top = 176
   end
-  object Timer9: TTimer
+  object EMailTimer: TTimer
     Enabled = False
-    OnTimer = Timer9Timer
-    Left = 136
-    Top = 128
+    OnTimer = EMailTimerTimer
+    Left = 100
+    Top = 144
   end
-  object Timer11: TTimer
+  object LPTStartupTimer: TTimer
     Enabled = False
     Interval = 5000
-    OnTimer = Timer11Timer
-    Left = 184
-    Top = 128
+    OnTimer = LPTStartupTimerTimer
+    Left = 164
+    Top = 144
   end
-  object Timertrans: TTimer
+  object InteractionsTimer: TTimer
     Enabled = False
     Interval = 10
-    OnTimer = TimertransTimer
-    Left = 112
-    Top = 152
+    OnTimer = InteractionsTimerTimer
+    Left = 132
+    Top = 144
   end
-  object Timer12: TTimer
+  object ScrollFlashTimer: TTimer
     Enabled = False
-    OnTimer = Timer12Timer
-    Left = 16
-    Top = 152
+    OnTimer = ScrollFlashTimerTimer
+    Left = 36
+    Top = 176
   end
 end

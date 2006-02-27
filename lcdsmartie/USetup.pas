@@ -19,7 +19,7 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.36 $ $Date: 2006/02/27 18:35:47 $
+ *  $Revision: 1.37 $ $Date: 2006/02/27 22:10:51 $
  *****************************************************************************}
 
 interface
@@ -28,81 +28,79 @@ uses Dialogs, Grids, StdCtrls, Controls, Spin, Buttons, ComCtrls, Classes,
   Forms;
 
 const
-  UPKEY = 38;
-  DOWNKEY = 40;
   USBPALM = 'USB Palm';
 
 
 type
   TSetupForm = class(TForm)
-    Button1: TButton;
+    OKButton: TButton;
     CancelButton: TButton;
-    PageControl1: TPageControl;
-    TabSheet1: TTabSheet;
-    TabSheet2: TTabSheet;
-    TabSheet3: TTabSheet;
-    TabSheet5: TTabSheet;
-    TabSheet6: TTabSheet;
-    TabSheet7: TTabSheet;
-    ListBox1: TListBox;
-    ListBox2: TListBox;
-    ListBox5: TListBox;
-    ListBox6: TListBox;
-    ListBox7: TListBox;
-    Edit9: TEdit;
-    Edit10: TEdit;
+    LeftPageControl: TPageControl;
+    WinampTabSheet: TTabSheet;
+    SysInfoTabSheet: TTabSheet;
+    MBMTabSheet: TTabSheet;
+    GameStatsTabSheet: TTabSheet;
+    InternetTabSheet: TTabSheet;
+    MiscTabSheet: TTabSheet;
+    MiscListBox: TListBox;
+    InternetListBox: TListBox;
+    MBMListBox: TListBox;
+    SysInfoListBox: TListBox;
+    WinampListBox: TListBox;
+    VariableEdit: TEdit;
+    GameServerEdit: TEdit;
     Label11: TLabel;
     Label12: TLabel;
     Label13: TLabel;
     Label15: TLabel;
-    Label16: TLabel;
-    SpeedButton1: TSpeedButton;
+    QStatLabel: TLabel;
+    DistributedNetBrowseButton: TSpeedButton;
     OpenDialog2: TOpenDialog;
-    Edit14: TEdit;
+    DistributedNetLogfileEdit: TEdit;
     Label34: TLabel;
-    ComboBox6: TComboBox;
+    GameTypeComboBox: TComboBox;
     SpeedButton2: TSpeedButton;
-    Button3: TButton;
-    SpinEdit3: TSpinEdit;
+    InsertButton: TButton;
+    InternetRefreshTimeSpinEdit: TSpinEdit;
     Label36: TLabel;
-    SpinEdit5: TSpinEdit;
+    GamestatsRefreshTimeSpinEdit: TSpinEdit;
     Label37: TLabel;
-    Label38: TLabel;
-    SpinEdit6: TSpinEdit;
+    RefreshTimeLabel: TLabel;
+    MBMRefreshTimeSpinEdit: TSpinEdit;
     Label35: TLabel;
     Label40: TLabel;
-    TabSheet8: TTabSheet;
-    ListBox3: TListBox;
-    Edit1: TEdit;
+    SetiAtHomeTabSheet: TTabSheet;
+    SetiAtHomeListBox: TListBox;
+    SetiAtHomeEmailEdit: TEdit;
     Label41: TLabel;
-    TabSheet4: TTabSheet;
+    EmailTabSheet: TTabSheet;
     Label31: TLabel;
     Label32: TLabel;
     Label33: TLabel;
-    Edit13: TEdit;
-    Edit12: TEdit;
-    Edit11: TEdit;
-    SpinEdit4: TSpinEdit;
+    EmailPasswordEdit: TEdit;
+    EmailLoginEdit: TEdit;
+    EmailServerEdit: TEdit;
+    EmailCheckTimeSpinEdit: TSpinEdit;
     Label48: TLabel;
-    ListBox4: TListBox;
-    ComboBox8: TComboBox;
+    EmailListBox: TListBox;
+    EmailAccountComboBox: TComboBox;
     Label50: TLabel;
     OpenDialog1: TOpenDialog;
-    Edit15: TEdit;
-    SpeedButton3: TSpeedButton;
-    Label55: TLabel;
-    ListBox8: TListBox;
-    TabSheet9: TTabSheet;
-    ListBox9: TListBox;
-    TabSheet10: TTabSheet;
-    Edit2: TEdit;
-    ListBox10: TListBox;
+    WinampLocationEdit: TEdit;
+    WinampLocationBrowseButton: TSpeedButton;
+    WinampLocationLabel: TLabel;
+    GamestatsListBox: TListBox;
+    NetworkStatsTabSheet: TTabSheet;
+    NetworkStatsListBox: TListBox;
+    FoldingAtHomeTabSheet: TTabSheet;
+    FoldingAtHomeEmailEdit: TEdit;
+    FoldingAtHomeListBox: TListBox;
     Label23: TLabel;
-    Button7: TButton;
-    PageControl2: TPageControl;
-    TabSheet11: TTabSheet;
-    TabSheet12: TTabSheet;
-    GroupBox1: TGroupBox;
+    ApplyButton: TButton;
+    MainPageControl: TPageControl;
+    ScreensTabSheet: TTabSheet;
+    ActionsTabSheet: TTabSheet;
+    ScreenSettingsGroupBox: TGroupBox;
     Label5: TLabel;
     Label42: TLabel;
     Label43: TLabel;
@@ -117,78 +115,78 @@ type
     Label4: TLabel;
     Label17: TLabel;
     Label18: TLabel;
-    CheckBox3: TCheckBox;
-    CheckBox4: TCheckBox;
-    CheckBox5: TCheckBox;
-    CheckBox6: TCheckBox;
+    DontScrollLine1CheckBox: TCheckBox;
+    DontScrollLine2CheckBox: TCheckBox;
+    DontScrollLine3CheckBox: TCheckBox;
+    DontScrollLine4CheckBox: TCheckBox;
     GroupBox4: TGroupBox;
-    CheckBox7: TCheckBox;
-    CheckBox8: TCheckBox;
-    CheckBox9: TCheckBox;
+    ContinueLine1CheckBox: TCheckBox;
+    ContinueLine2CheckBox: TCheckBox;
+    ContinueLine3CheckBox: TCheckBox;
     GroupBox5: TGroupBox;
-    CheckBox10: TCheckBox;
-    CheckBox11: TCheckBox;
-    CheckBox12: TCheckBox;
-    CheckBox13: TCheckBox;
+    CenterLine1CheckBox: TCheckBox;
+    CenterLine2CheckBox: TCheckBox;
+    CenterLine3CheckBox: TCheckBox;
+    CenterLine4CheckBox: TCheckBox;
     GroupBox6: TGroupBox;
-    SpinEdit7: TSpinEdit;
-    GroupBox3: TGroupBox;
+    ThemeNumberSpinEdit: TSpinEdit;
+    ProgramSettingsGroupBox: TGroupBox;
     Label1: TLabel;
     Label7: TLabel;
     Label8: TLabel;
-    Edit3: TEdit;
-    Edit4: TEdit;
-    SpinEdit1: TSpinEdit;
-    GroupBox2: TGroupBox;
+    WebProxyServerEdit: TEdit;
+    WebProxyPortEdit: TEdit;
+    ProgramRefreshIntervalSpinEdit: TSpinEdit;
+    LCDSettingsGroupBox: TGroupBox;
     Label9: TLabel;
     Label10: TLabel;
-    RadioButton1: TRadioButton;
-    RadioButton2: TRadioButton;
-    ComboBox4: TComboBox;
-    ComboBox5: TComboBox;
-    Button4: TButton;
-    RadioButton3: TRadioButton;
-    Button5: TButton;
-    Button6: TButton;
-    ComboBox3: TComboBox;
-    CheckBox1: TCheckBox;
-    SpinEdit2: TSpinEdit;
-    Edit5: TEdit;
-    Edit6: TEdit;
-    Edit7: TEdit;
-    Edit8: TEdit;
-    StringGrid1: TStringGrid;
-    ListBox11: TListBox;
-    Edit16: TEdit;
+    HD44780RadioButton: TRadioButton;
+    MatrixOrbitalRadioButton: TRadioButton;
+    COMPortComboBox: TComboBox;
+    BaudRateComboBox: TComboBox;
+    MatrixOrbitalConfigButton: TButton;
+    CrystalFontzRadioButton: TRadioButton;
+    CrystalFontzConfigButton: TButton;
+    HD44780ConfigButton: TButton;
+    ScreenNumberComboBox: TComboBox;
+    ScreenEnabledCheckBox: TCheckBox;
+    TimeToShowSpinEdit: TSpinEdit;
+    Line1Edit: TEdit;
+    Line2Edit: TEdit;
+    Line3Edit: TEdit;
+    Line4Edit: TEdit;
+    ActionsStringGrid: TStringGrid;
+    OutputListBox: TListBox;
+    Operand1Edit: TEdit;
     Label24: TLabel;
-    ComboBox9: TComboBox;
-    Edit18: TEdit;
+    OperatorComboBox: TComboBox;
+    StatementEdit: TEdit;
     Label25: TLabel;
-    Button8: TButton;
-    Button9: TButton;
+    ActionAddButton: TButton;
+    ActionDeleteButton: TButton;
     Label26: TLabel;
-    CheckBox15: TCheckBox;
-    TabSheet13: TTabSheet;
-    ListBox12: TListBox;
+    LCDSmartieUpdateCheckBox: TCheckBox;
+    LCDFeaturesTabSheet: TTabSheet;
+    ButtonsListBox: TListBox;
     Label27: TLabel;
     Label29: TLabel;
-    Edit17: TEdit;
+    LastKeyPressedEdit: TEdit;
     Label56: TLabel;
     Label30: TLabel;
     Label57: TLabel;
-    Edit19: TEdit;
+    Operand2Edit: TEdit;
     Label6: TLabel;
-    CheckBox14: TCheckBox;
-    CheckBox2: TCheckBox;
-    Button10: TButton;
+    RandomizeScreensCheckBox: TCheckBox;
+    StayOnTopCheckBox: TCheckBox;
+    InteractionsButton: TButton;
     Label58: TLabel;
-    SpinEdit8: TSpinEdit;
-    SpinEdit9: TSpinEdit;
+    DLLCheckIntervalSpinEdit: TSpinEdit;
+    ProgramScrollIntervalSpinEdit: TSpinEdit;
     Label59: TLabel;
-    RadioButton4: TRadioButton;
+    HD66712RadioButton: TRadioButton;
     Label28: TLabel;
-    Sticky: TCheckBox;
-    TabSheet14: TTabSheet;
+    StickyCheckbox: TCheckBox;
+    StartupTabSheet: TTabSheet;
     GroupBox7: TGroupBox;
     NoAutoStart: TRadioButton;
     AutoStart: TRadioButton;
@@ -196,76 +194,75 @@ type
     GroupBox8: TGroupBox;
     HideOnStartup: TCheckBox;
     Label2: TLabel;
-    ComboBox1: TComboBox;
-    ComboBox2: TComboBox;
-    ComboBox7: TComboBox;
+    ColorSchemeComboBox: TComboBox;
+    LCDSizeComboBox: TComboBox;
+    SkipScreenComboBox: TComboBox;
     IRTransRadioButton: TRadioButton;
     IRTransConfigButton: TButton;
-    procedure CancelButtonClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
-    procedure ComboBox2Change(Sender: TObject);
-    procedure ComboBox3Change(Sender: TObject);
-    procedure RadioButton1Click(Sender: TObject);
-    procedure RadioButton2Click(Sender: TObject);
-    procedure ListBox7Click(Sender: TObject);
-    procedure Button3Click(Sender: TObject);
-    procedure ListBox6Click(Sender: TObject);
-    procedure ListBox5Click(Sender: TObject);
-    procedure ListBox2Click(Sender: TObject);
-    procedure ComboBox6Change(Sender: TObject);
-    procedure Label16Click(Sender: TObject);
-    procedure ListBox1Click(Sender: TObject);
-    procedure PageControl1Change(Sender: TObject);
-    procedure Edit10Exit(Sender: TObject);
-    procedure Button4Click(Sender: TObject);
-    procedure RadioButton3Click(Sender: TObject);
-    procedure ListBox3Click(Sender: TObject);
-    procedure SpeedButton1Click(Sender: TObject);
-    procedure ListBox4Click(Sender: TObject);
-    procedure ComboBox8Change(Sender: TObject);
-    procedure CheckBox7Click(Sender: TObject);
-    procedure CheckBox8Click(Sender: TObject);
-    procedure CheckBox9Click(Sender: TObject);
-    procedure SpeedButton3Click(Sender: TObject);
-    procedure Button5Click(Sender: TObject);
-    procedure ListBox8Click(Sender: TObject);
-    procedure Edit5Enter(Sender: TObject);
-    procedure Edit6Enter(Sender: TObject);
-    procedure Edit7Enter(Sender: TObject);
-    procedure Edit8Enter(Sender: TObject);
-    procedure ListBox9Click(Sender: TObject);
-    procedure Button6Click(Sender: TObject);
-    procedure ListBox10Click(Sender: TObject);
-    procedure Button7Click(Sender: TObject);
-    procedure Button1Click(Sender: TObject);
+    procedure LCDSizeComboBoxChange(Sender: TObject);
+    procedure ScreenNumberComboBoxChange(Sender: TObject);
+    procedure HD44780RadioButtonClick(Sender: TObject);
+    procedure MatrixOrbitalRadioButtonClick(Sender: TObject);
+    procedure WinampListBoxClick(Sender: TObject);
+    procedure InsertButtonClick(Sender: TObject);
+    procedure SysInfoListBoxClick(Sender: TObject);
+    procedure MBMListBoxClick(Sender: TObject);
+    procedure InternetListBoxClick(Sender: TObject);
+    procedure GameTypeComboBoxChange(Sender: TObject);
+    procedure QStatLabelClick(Sender: TObject);
+    procedure MiscListBoxClick(Sender: TObject);
+    procedure LeftPageControlChange(Sender: TObject);
+    procedure GameServerEditExit(Sender: TObject);
+    procedure MatrixOrbitalConfigButtonClick(Sender: TObject);
+    procedure CrystalFontzRadioButtonClick(Sender: TObject);
+    procedure SetiAtHomeListBoxClick(Sender: TObject);
+    procedure DistributedNetBrowseButtonClick(Sender: TObject);
+    procedure EmailListBoxClick(Sender: TObject);
+    procedure EmailAccountComboBoxChange(Sender: TObject);
+    procedure ContinueLine1CheckBoxClick(Sender: TObject);
+    procedure ContinueLine2CheckBoxClick(Sender: TObject);
+    procedure ContinueLine3CheckBoxClick(Sender: TObject);
+    procedure WinampLocationBrowseButtonClick(Sender: TObject);
+    procedure CrystalFontzConfigButtonClick(Sender: TObject);
+    procedure GamestatsListBoxClick(Sender: TObject);
+    procedure Line1EditEnter(Sender: TObject);
+    procedure Line2EditEnter(Sender: TObject);
+    procedure Line3EditEnter(Sender: TObject);
+    procedure Line4EditEnter(Sender: TObject);
+    procedure NetworkStatsListBoxClick(Sender: TObject);
+    procedure HD44780ConfigButtonClick(Sender: TObject);
+    procedure FoldingAtHomeListBoxClick(Sender: TObject);
+    procedure ApplyButtonClick(Sender: TObject);
+    procedure OKButtonClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
-    procedure ListBox11Click(Sender: TObject);
-    procedure PageControl2Change(Sender: TObject);
-    procedure Button8Click(Sender: TObject);
-    procedure Button9Click(Sender: TObject);
-    procedure ListBox12Click(Sender: TObject);
-    procedure Button10Click(Sender: TObject);
-    procedure RadioButton4Click(Sender: TObject);
-    procedure Edit8KeyDown(Sender: TObject; var Key: Word; Shift:
+    procedure OutputListBoxClick(Sender: TObject);
+    procedure MainPageControlChange(Sender: TObject);
+    procedure ActionAddButtonClick(Sender: TObject);
+    procedure ActionDeleteButtonClick(Sender: TObject);
+    procedure ButtonsListBoxClick(Sender: TObject);
+    procedure InteractionsButtonClick(Sender: TObject);
+    procedure HD66712RadioButtonClick(Sender: TObject);
+    procedure Line4EditKeyDown(Sender: TObject; var Key: Word; Shift:
       TShiftState);
-    procedure Edit5KeyDown(Sender: TObject; var Key: Word; Shift:
+    procedure Line1EditKeyDown(Sender: TObject; var Key: Word; Shift:
       TShiftState);
-    procedure Edit6KeyDown(Sender: TObject; var Key: Word; Shift:
+    procedure Line2EditKeyDown(Sender: TObject; var Key: Word; Shift:
       TShiftState);
-    procedure Edit7KeyDown(Sender: TObject; var Key: Word; Shift:
+    procedure Line3EditKeyDown(Sender: TObject; var Key: Word; Shift:
       TShiftState);
-    procedure StickyClick(Sender: TObject);
-    procedure StringGrid1Click(Sender: TObject);
-    procedure ComboBox7Change(Sender: TObject);
-    procedure ComboBox9Change(Sender: TObject);
-    procedure ComboBox4Change(Sender: TObject);
-    procedure ComboBox5Change(Sender: TObject);
-    procedure ComboBox1Change(Sender: TObject);
+    procedure StickyCheckboxClick(Sender: TObject);
+    procedure ActionsStringGridClick(Sender: TObject);
+    procedure SkipScreenComboBoxChange(Sender: TObject);
+    procedure OperatorComboBoxChange(Sender: TObject);
+    procedure COMPortComboBoxChange(Sender: TObject);
+    procedure BaudRateComboBoxChange(Sender: TObject);
+    procedure ColorSchemeComboBoxChange(Sender: TObject);
     procedure IRTransRadioButtonClick(Sender: TObject);
     procedure IRTransConfigButtonClick(Sender: TObject);
   private
     setupbutton: Integer;
-    combobox8temp: Integer;
+    EMailAccountComboboxTemp: Integer;
     tempscreen: Integer;
     Procedure FocusToInputField;
     procedure SaveScreen(scr: Integer);
@@ -292,25 +289,14 @@ begin
   with SetupForm do begin
     ShowModal;
     Result := (ModalResult = mrOK);
+    LCDSmartieDisplayForm.HTTPUpdateTimer.interval := 500;
+    LCDSmartieDisplayForm.NextScreenTimer.interval := 0;
+    if (not config.screen[activeScreen][1].bSticky) then
+      LCDSmartieDisplayForm.NextScreenTimer.interval := config.screen[activeScreen][1].showTime*1000;
     Free;
   end;
   SetupForm := nil;
 end;
-
-// Cancel has been pressed.
-procedure TSetupForm.CancelButtonClick(Sender: TObject);
-begin
-  LCDSmartieDisplayForm.timer2.interval := 500;
-
-  LCDSmartieDisplayForm.timer7.interval := 0;
-  if (not config.screen[activeScreen][1].bSticky) then
-    LCDSmartieDisplayForm.timer7.interval := config.screen[activeScreen][1].showTime*1000;
-
-
-end;
-
-
-
 
 procedure TSetupForm.FormShow(Sender: TObject);
 var
@@ -322,8 +308,8 @@ begin
   { Try to limit the displayed COM port to only those that are useable }
 
   // Delete all entries in the Com Port list
-  for i:= combobox4.Items.Count-1 downto 0 do
-    combobox4.Items.Delete(i);
+  for i:= COMPortComboBox.Items.Count-1 downto 0 do
+    COMPortComboBox.Items.Delete(i);
 
   // Check for COM Ports 1-20.
   for i:=1 to 20 do
@@ -335,108 +321,114 @@ begin
       if (uiTestPort <> INVALID_HANDLE_VALUE) then
       begin
         // Port successfully opened - add to list.
-        comboBox4.Items.Add('COM'+IntToStr(i));
+        COMPortComboBox.Items.Add('COM'+IntToStr(i));
         CloseHandle(uiTestPort);
       end
       else if (GetLastError <> ERROR_FILE_NOT_FOUND)
-        and (GetLastError <> ERROR_PATH_NOT_FOUND) then 
+        and (GetLastError <> ERROR_PATH_NOT_FOUND) then
       begin
 	// Add them to the list - its better to have too many than not enough.
         // This case is also used when the port is already used by smartie.
-        comboBox4.Items.Add('COM'+IntToStr(i));
+        COMPortComboBox.Items.Add('COM'+IntToStr(i));
       end;
   end;
-  comboBox4.Items.Add(USBPALM);
+  COMPortComboBox.Items.Add(USBPALM);
 
-  pagecontrol2.ActivePage := tabsheet11;
+  MainPageControl.ActivePage := ScreensTabSheet;
   //if pagecontrol1.activepage = tabsheet13 then pagecontrol1.ActivePage :=
    // tabsheet1;
   //tabsheet13.Enabled := false;
-  tabsheet13.Enabled := true;
+  LCDFeaturesTabSheet.Enabled := true;
 
   setupbutton := 1;
 
-  edit10.text := config.gameServer[1, 1];
+  GameServerEdit.text := config.gameServer[1, 1];
 
-  StringGrid1.rowcount := 0;
+  ActionsStringGrid.rowcount := 0;
   for blaat := 0 to 999 do
   begin
-    StringGrid1.Cells[0, blaat] := '';
-    StringGrid1.Cells[1, blaat] := '';
-    StringGrid1.Cells[2, blaat] := '';
-    StringGrid1.Cells[3, blaat] := '';
-    StringGrid1.Cells[4, blaat] := '';
+    ActionsStringGrid.Cells[0, blaat] := '';
+    ActionsStringGrid.Cells[1, blaat] := '';
+    ActionsStringGrid.Cells[2, blaat] := '';
+    ActionsStringGrid.Cells[3, blaat] := '';
+    ActionsStringGrid.Cells[4, blaat] := '';
   end;
 
   for i := 1 to config.totalactions do
   begin
-      edit16.text := config.actionsArray[i, 1];
-      combobox9.itemindex := StrToInt(config.actionsArray[i, 2]);
-      edit19.text := config.actionsArray[i, 3];
-      edit18.text := config.actionsArray[i, 4];
-      button8.click;
+      Operand1Edit.text := config.actionsArray[i, 1];
+      OperatorComboBox.itemindex := StrToInt(config.actionsArray[i, 2]);
+      Operand2Edit.text := config.actionsArray[i, 3];
+      StatementEdit.text := config.actionsArray[i, 4];
+      ActionAddButton.click;
   end;
 
   //application.ProcessMessages;
 
-  combobox3.itemindex := 0;
+  ScreenNumberComboBox.itemindex := 0;
   tempscreen := 0;
   LoadScreen( 1 );   // setup screen in setup form
   LCDSmartieDisplayForm.ChangeScreen(1);   // setup screen in main form
 
-  spinEdit1.text := IntToStr(config.refreshRate);
-  edit15.text := config.winampLocation;
-  combobox1.itemindex := config.colorOption;
+  ProgramRefreshIntervalSpinEdit.Value := config.refreshRate;
+  WinampLocationEdit.text := config.winampLocation;
+  ColorSchemeComboBox.itemindex := config.colorOption;
 
 
-  edit1.text := config.setiEmail;
+  SetiAtHomeEmailEdit.text := config.setiEmail;
 
-  edit14.text := config.distLog;
+  DistributedNetLogfileEdit.text := config.distLog;
 
-  spinedit4.text := IntToStr(config.emailPeriod);
-  spinedit8.text := IntToStr(config.dllPeriod);
-  spinedit9.text := IntToStr(config.scrollPeriod);
+  EmailCheckTimeSpinEdit.Value := config.emailPeriod;
+  DLLCheckIntervalSpinEdit.Value := config.dllPeriod;
+  ProgramScrollIntervalSpinEdit.Value := config.scrollPeriod;
 
-  checkbox2.checked := config.alwaysOnTop;
+  StayOnTopCheckBox.checked := config.alwaysOnTop;
   HideOnStartup.Checked := config.bHideOnStartup;
   NoAutoStart.Checked := True;
   AutoStart.Checked := config.bAutoStart;
   AutoStartHide.Checked := config.bAutoStartHide;
 
-  edit3.text := config.httpProxy;
-  edit4.text := IntToStr(config.httpProxyPort);
-  combobox8.itemindex := 0;
-  edit11.text := config.pop[1].server;
-  edit12.text := config.pop[1].user;
-  edit13.text := config.pop[1].pword;
+  WebProxyServerEdit.text := config.httpProxy;
+  WebProxyPortEdit.text := IntToStr(config.httpProxyPort);
+  EmailAccountComboBox.itemindex := 0;
+  EmailServerEdit.text := config.pop[1].server;
+  EmailLoginEdit.text := config.pop[1].user;
+  EmailPasswordEdit.text := config.pop[1].pword;
 
-  button4.enabled := false;
-  button5.enabled := false;
-  button6.enabled := false;
+  MatrixOrbitalConfigButton.enabled := false;
+  CrystalFontzConfigButton.enabled := false;
+  HD44780ConfigButton.enabled := false;
   IRTransConfigButton.Enabled := false;
-  combobox5.enabled := false;
-  combobox4.enabled := false;
+  BaudRateComboBox.enabled := false;
+  COMPortComboBox.enabled := false;
 
   if (config.isHD) or (config.isHD2) then
   begin
-    radiobutton1.checked := true;
-    button6.enabled := true;
+    HD44780RadioButton.checked := true;
+    HD44780ConfigButton.enabled := true;
   end;
   if config.isMO then
   begin
-    radiobutton2.checked := true;
-    button4.enabled := true;
+    MatrixOrbitalRadioButton.checked := true;
+    MatrixOrbitalConfigButton.enabled := true;
 
-    combobox4.enabled := true;
-    combobox5.enabled := true;
+    COMPortComboBox.enabled := true;
+    BaudRateComboBox.enabled := true;
   end;
   if config.isCF then
   begin
-    radiobutton3.checked := true;
-    button5.enabled := true;
+    CrystalFontzRadioButton.checked := true;
+    CrystalFontzConfigButton.enabled := true;
 
-    combobox4.enabled := true;
-    combobox5.enabled := true;
+    COMPortComboBox.enabled := true;
+    BaudRateComboBox.enabled := true;
+  end;
+
+  if config.isIR then
+  begin
+    IRTransRadioButton.Checked := true;
+    IRTransConfigButton.Enabled := true;
   end;
 
   if config.isIR then
@@ -450,9 +442,9 @@ begin
   else sLookFor := 'COM'+IntToStr(config.comPort);
 
   iSelection := -1;
-  for i := 0 to combobox4.Items.Count-1 do
+  for i := 0 to COMPortComboBox.Items.Count-1 do
   begin
-    if (sLookFor = combobox4.Items[i]) then
+    if (sLookFor = COMPortComboBox.Items[i]) then
       iSelection := i;
   end;
 
@@ -462,73 +454,73 @@ begin
     iSelection := 0;
   end;
 
-  combobox4.ItemIndex := iSelection;
+  COMPortComboBox.ItemIndex := iSelection;
 
-  combobox5.ItemIndex := config.baudrate;
-  combobox2.itemindex := config.sizeOption-1;
+  BaudRateComboBox.ItemIndex := config.baudrate;
+  LCDSizeComboBox.itemindex := config.sizeOption-1;
 
-  if combobox2.itemindex < 5 then
+  if LCDSizeComboBox.itemindex < 5 then
   begin
-    checkbox7.checked := false;
-    edit6.Visible := false;
-    edit7.Visible := false;
-    edit8.Visible := false;
-    checkbox4.Visible := false;
-    checkbox5.Visible := false;
-    checkbox6.Visible := false;
-    checkbox7.Visible := false;
-    checkbox8.Visible := false;
-    checkbox9.Visible := false;
-    checkbox11.visible := false;
-    checkbox12.visible := false;
-    checkbox13.visible := false;
+    ContinueLine1CheckBox.checked := false;
+    Line2Edit.Visible := false;
+    Line3Edit.Visible := false;
+    Line4Edit.Visible := false;
+    DontScrollLine2CheckBox.Visible := false;
+    DontScrollLine3CheckBox.Visible := false;
+    DontScrollLine4CheckBox.Visible := false;
+    ContinueLine1CheckBox.Visible := false;
+    ContinueLine2CheckBox.Visible := false;
+    ContinueLine3CheckBox.Visible := false;
+    CenterLine2CheckBox.visible := false;
+    CenterLine3CheckBox.visible := false;
+    CenterLine4CheckBox.visible := false;
   end;
-  if (combobox2.itemindex < 9) and (combobox2.itemindex > 4) then
+  if (LCDSizeComboBox.itemindex < 9) and (LCDSizeComboBox.itemindex > 4) then
   begin
-    if checkbox7.checked = false then edit6.Visible := true;
-    checkbox8.checked := false;
-    edit7.Visible := false;
-    edit8.Visible := false;
-    checkbox4.Visible := true;
-    checkbox5.Visible := false;
-    checkbox6.Visible := false;
-    checkbox7.Visible := true;
-    checkbox8.Visible := false;
-    checkbox9.Visible := false;
-    checkbox11.visible := true;
-    checkbox12.visible := false;
-    checkbox13.visible := false;
+    if ContinueLine1CheckBox.checked = false then Line2Edit.Visible := true;
+    ContinueLine2CheckBox.checked := false;
+    Line3Edit.Visible := false;
+    Line4Edit.Visible := false;
+    DontScrollLine2CheckBox.Visible := true;
+    DontScrollLine3CheckBox.Visible := false;
+    DontScrollLine4CheckBox.Visible := false;
+    ContinueLine1CheckBox.Visible := true;
+    ContinueLine2CheckBox.Visible := false;
+    ContinueLine3CheckBox.Visible := false;
+    CenterLine2CheckBox.visible := true;
+    CenterLine3CheckBox.visible := false;
+    CenterLine4CheckBox.visible := false;
   end;
-  if combobox2.itemindex > 8 then
+  if LCDSizeComboBox.itemindex > 8 then
   begin
-    if checkbox7.checked = false then edit6.Visible := true;
-    if checkbox8.checked = false then edit7.Visible := true;
-    if checkbox9.checked = false then edit8.Visible := true;
-    checkbox4.Visible := true;
-    checkbox5.Visible := true;
-    checkbox6.Visible := true;
-    checkbox7.Visible := true;
-    checkbox8.Visible := true;
-    checkbox9.Visible := true;
-    checkbox11.visible := true;
-    checkbox12.visible := true;
-    checkbox13.visible := true;
+    if ContinueLine1CheckBox.checked = false then Line2Edit.Visible := true;
+    if ContinueLine2CheckBox.checked = false then Line3Edit.Visible := true;
+    if ContinueLine3CheckBox.checked = false then Line4Edit.Visible := true;
+    DontScrollLine2CheckBox.Visible := true;
+    DontScrollLine3CheckBox.Visible := true;
+    DontScrollLine4CheckBox.Visible := true;
+    ContinueLine1CheckBox.Visible := true;
+    ContinueLine2CheckBox.Visible := true;
+    ContinueLine3CheckBox.Visible := true;
+    CenterLine2CheckBox.visible := true;
+    CenterLine3CheckBox.visible := true;
+    CenterLine4CheckBox.visible := true;
   end;
 
-  spinedit3.text := IntToStr(config.newsRefresh);
-  checkbox14.checked := config.randomScreens;
-  spinedit5.text := IntToStr(config.gameRefresh);
-  edit2.text := config.foldUsername;
-  spinedit6.text := IntToStr(config.mbmRefresh);
-  checkbox15.checked := config.checkUpdates;
+  InternetRefreshTimeSpinEdit.Value := config.newsRefresh;
+  RandomizeScreensCheckBox.checked := config.randomScreens;
+  GamestatsRefreshTimeSpinEdit.Value := config.gameRefresh;
+  FoldingAtHomeEmailEdit.text := config.foldUsername;
+  MBMRefreshTimeSpinEdit.Value := config.mbmRefresh;
+  LCDSmartieUpdateCheckBox.checked := config.checkUpdates;
 
 
 
-  for i := 1 to 24 do listbox12.Items.Delete(1);
+  for i := 1 to 24 do ButtonsListBox.Items.Delete(1);
   if (config.isMO) then
   begin
-    //tabsheet13.Enabled := true;
-    listbox12.Items.Add('FanSpeed(1,1) (nr,divider)');
+    //LCDFeaturesTabSheet.Enabled := true;
+    ButtonsListBox.Items.Add('FanSpeed(1,1) (nr,divider)');
 
     { The below is commented out as it is reading/writing directly to the device.
       We need to know more details so we can move it in to the lcd code.
@@ -566,7 +558,7 @@ begin
           begin
             line2 := line2 + IntToHex(ord(line[i + 6]), 2) + ' ';
           end;
-          listbox12.Items.Add(line2);
+          ButtonsListBox.Items.Add(line2);
         end;
       end;
       if laatstepacket <> true then goto nextpacket;
@@ -574,56 +566,56 @@ begin
   end;
 end;
 
-procedure TSetupForm.ComboBox2Change(Sender: TObject);
+procedure TSetupForm.LCDSizeComboBoxChange(Sender: TObject);
 begin
-  if combobox2.itemindex < 0 then combobox2.itemindex := 0;
+  if LCDSizeComboBox.itemindex < 0 then LCDSizeComboBox.itemindex := 0;
 
-  if combobox2.itemindex < 5 then
+  if LCDSizeComboBox.itemindex < 5 then
   begin
-    checkbox7.checked := false;
-    edit6.Visible := false;
-    edit7.Visible := false;
-    edit8.Visible := false;
-    checkbox4.Visible := false;
-    checkbox5.Visible := false;
-    checkbox6.Visible := false;
-    checkbox7.Visible := false;
-    checkbox8.Visible := false;
-    checkbox9.Visible := false;
-    checkbox11.visible := false;
-    checkbox12.visible := false;
-    checkbox13.visible := false;
+    ContinueLine1CheckBox.checked := false;
+    Line2Edit.Visible := false;
+    Line3Edit.Visible := false;
+    Line4Edit.Visible := false;
+    DontScrollLine2CheckBox.Visible := false;
+    DontScrollLine3CheckBox.Visible := false;
+    DontScrollLine4CheckBox.Visible := false;
+    ContinueLine1CheckBox.Visible := false;
+    ContinueLine2CheckBox.Visible := false;
+    ContinueLine3CheckBox.Visible := false;
+    CenterLine2CheckBox.visible := false;
+    CenterLine3CheckBox.visible := false;
+    CenterLine4CheckBox.visible := false;
   end;
-  if (combobox2.itemindex < 9) and (combobox2.itemindex > 4) then
+  if (LCDSizeComboBox.itemindex < 9) and (LCDSizeComboBox.itemindex > 4) then
   begin
-    if checkbox7.checked = false then edit6.Visible := true;
-    checkbox8.checked := false;
-    edit7.Visible := false;
-    edit8.Visible := false;
-    checkbox4.Visible := true;
-    checkbox5.Visible := false;
-    checkbox6.Visible := false;
-    checkbox7.Visible := true;
-    checkbox8.Visible := false;
-    checkbox9.Visible := false;
-    checkbox11.visible := true;
-    checkbox12.visible := false;
-    checkbox13.visible := false;
+    if ContinueLine1CheckBox.checked = false then Line2Edit.Visible := true;
+    ContinueLine2CheckBox.checked := false;
+    Line3Edit.Visible := false;
+    Line4Edit.Visible := false;
+    DontScrollLine2CheckBox.Visible := true;
+    DontScrollLine3CheckBox.Visible := false;
+    DontScrollLine4CheckBox.Visible := false;
+    ContinueLine1CheckBox.Visible := true;
+    ContinueLine2CheckBox.Visible := false;
+    ContinueLine3CheckBox.Visible := false;
+    CenterLine2CheckBox.visible := true;
+    CenterLine3CheckBox.visible := false;
+    CenterLine4CheckBox.visible := false;
   end;
-  if combobox2.itemindex > 8 then
+  if LCDSizeComboBox.itemindex > 8 then
   begin
-    if checkbox7.checked = false then edit6.Visible := true;
-    if checkbox8.checked = false then edit7.Visible := true;
-    if checkbox9.checked = false then edit8.Visible := true;
-    checkbox4.Visible := true;
-    checkbox5.Visible := true;
-    checkbox6.Visible := true;
-    checkbox7.Visible := true;
-    checkbox8.Visible := true;
-    checkbox9.Visible := true;
-    checkbox11.visible := true;
-    checkbox12.visible := true;
-    checkbox13.visible := true;
+    if ContinueLine1CheckBox.checked = false then Line2Edit.Visible := true;
+    if ContinueLine2CheckBox.checked = false then Line3Edit.Visible := true;
+    if ContinueLine3CheckBox.checked = false then Line4Edit.Visible := true;
+    DontScrollLine2CheckBox.Visible := true;
+    DontScrollLine3CheckBox.Visible := true;
+    DontScrollLine4CheckBox.Visible := true;
+    ContinueLine1CheckBox.Visible := true;
+    ContinueLine2CheckBox.Visible := true;
+    ContinueLine3CheckBox.Visible := true;
+    CenterLine2CheckBox.visible := true;
+    CenterLine3CheckBox.visible := true;
+    CenterLine4CheckBox.visible := true;
   end;
 end;
 
@@ -633,40 +625,40 @@ var
 
 begin
 
-  config.screen[scr][1].text := edit5.text;
-  config.screen[scr][2].text := edit6.text;
-  config.screen[scr][3].text := edit7.text;
-  config.screen[scr][4].text := edit8.text;
+  config.screen[scr][1].text := Line1Edit.text;
+  config.screen[scr][2].text := Line2Edit.text;
+  config.screen[scr][3].text := Line3Edit.text;
+  config.screen[scr][4].text := Line4Edit.text;
 
   for y := 1 to 4 do
   begin
-    config.screen[scr][y].enabled := checkbox1.checked;
-    config.screen[scr][y].skip := combobox7.itemindex;
-    config.screen[scr][y].theme := spinedit7.value-1;
+    config.screen[scr][y].enabled := ScreenEnabledCheckBox.checked;
+    config.screen[scr][y].skip := SkipScreenComboBox.itemindex;
+    config.screen[scr][y].theme := ThemeNumberSpinEdit.value-1;
     config.screen[scr][y].interaction := GlobalInteractionStyle;
     config.screen[scr][y].interactionTime := GlobalInteractionTime;
-    config.screen[scr][y].showTime := spinedit2.value;
-    config.screen[scr][y].bSticky := Sticky.Checked;
+    config.screen[scr][y].showTime := TimeToShowSpinEdit.value;
+    config.screen[scr][y].bSticky := StickyCheckbox.Checked;
 
     // ensure no ¿s occur in the text.
     config.screen[scr][y].text := StringReplace(config.screen[scr][y].text,
       '¿', '?', [rfReplaceAll]);
   end;
 
-  config.screen[scr][1].center := checkbox10.checked;
-  config.screen[scr][2].center := checkbox11.checked;
-  config.screen[scr][3].center := checkbox12.checked;
-  config.screen[scr][4].center := checkbox13.checked;
+  config.screen[scr][1].center := CenterLine1CheckBox.checked;
+  config.screen[scr][2].center := CenterLine2CheckBox.checked;
+  config.screen[scr][3].center := CenterLine3CheckBox.checked;
+  config.screen[scr][4].center := CenterLine4CheckBox.checked;
 
-  config.screen[scr][1].noscroll := checkbox3.checked;
-  config.screen[scr][2].noscroll := checkbox4.checked;
-  config.screen[scr][3].noscroll := checkbox5.checked;
-  config.screen[scr][4].noscroll := checkbox6.checked;
+  config.screen[scr][1].noscroll := DontScrollLine1CheckBox.checked;
+  config.screen[scr][2].noscroll := DontScrollLine2CheckBox.checked;
+  config.screen[scr][3].noscroll := DontScrollLine3CheckBox.checked;
+  config.screen[scr][4].noscroll := DontScrollLine4CheckBox.checked;
   LCDSmartieDisplayForm.ResetScrollPositions();
 
-  config.screen[scr][1].contNextLine := checkbox7.checked;
-  config.screen[scr][2].contNextLine := checkbox8.checked;
-  config.screen[scr][3].contNextLine := checkbox9.checked;
+  config.screen[scr][1].contNextLine := ContinueLine1CheckBox.checked;
+  config.screen[scr][2].contNextLine := ContinueLine2CheckBox.checked;
+  config.screen[scr][3].contNextLine := ContinueLine3CheckBox.checked;
   config.screen[scr][4].contNextLine := False;
 end;
 
@@ -675,174 +667,174 @@ var
   ascreen: TScreenLine;
 begin
   ascreen := config.screen[scr][1];
-  checkbox1.checked := ascreen.enabled;
-  combobox7.itemindex := ascreen.skip;
-  spinedit7.value := ascreen.theme + 1;
+  ScreenEnabledCheckBox.checked := ascreen.enabled;
+  SkipScreenComboBox.itemindex := ascreen.skip;
+  ThemeNumberSpinEdit.value := ascreen.theme + 1;
   GlobalInteractionStyle := ascreen.interaction;
   GlobalInteractionTime := ascreen.interactionTime;
-  spinedit2.value := ascreen.showTime;
-  Sticky.checked := ascreen.bSticky;
-  spinedit2.enabled := not ascreen.bSticky;
+  TimeToShowSpinEdit.value := ascreen.showTime;
+  StickyCheckbox.checked := ascreen.bSticky;
+  TimeToShowSpinEdit.enabled := not ascreen.bSticky;
 
-  checkbox3.checked := false;
-  checkbox4.checked := false;
-  checkbox5.checked := false;
-  checkbox6.checked := false;
-  checkbox7.checked := false;
-  checkbox8.checked := false;
-  checkbox9.checked := false;
-  checkbox3.enabled := true;
-  checkbox3.checked := false;
-  edit6.enabled := true;
-  checkbox4.enabled := true;
-  checkbox4.checked := false;
-  edit7.enabled := true;
-  checkbox5.enabled := true;
-  checkbox5.checked := false;
-  edit8.enabled := true;
+  DontScrollLine1CheckBox.checked := false;
+  DontScrollLine2CheckBox.checked := false;
+  DontScrollLine3CheckBox.checked := false;
+  DontScrollLine4CheckBox.checked := false;
+  ContinueLine1CheckBox.checked := false;
+  ContinueLine2CheckBox.checked := false;
+  ContinueLine3CheckBox.checked := false;
+  DontScrollLine1CheckBox.enabled := true;
+  DontScrollLine1CheckBox.checked := false;
+  Line2Edit.enabled := true;
+  DontScrollLine2CheckBox.enabled := true;
+  DontScrollLine2CheckBox.checked := false;
+  Line3Edit.enabled := true;
+  DontScrollLine3CheckBox.enabled := true;
+  DontScrollLine3CheckBox.checked := false;
+  Line4Edit.enabled := true;
 
-  edit5.color := $00A1D7A4;
-  edit6.color := clWhite;
-  edit7.color := clWhite;
-  edit8.color := clWhite;
+  Line1Edit.color := $00A1D7A4;
+  Line2Edit.color := clWhite;
+  Line3Edit.color := clWhite;
+  Line4Edit.color := clWhite;
   setupbutton := 1;
-  edit10.text := config.gameServer[scr, 1];
+  GameServerEdit.text := config.gameServer[scr, 1];
 
   ascreen := config.screen[scr][1];
-  checkbox3.checked := ascreen.noscroll;
+  DontScrollLine1CheckBox.checked := ascreen.noscroll;
   if ascreen.contNextLine then
   begin
-    checkbox7.checked := true;
-    checkbox3.Checked := true;
-    checkbox3.enabled := false;
-    edit6.enabled := false;
-    edit6.color := $00BBBBFF;
+    ContinueLine1CheckBox.checked := true;
+    DontScrollLine1CheckBox.Checked := true;
+    DontScrollLine1CheckBox.enabled := false;
+    Line2Edit.enabled := false;
+    Line2Edit.color := $00BBBBFF;
   end;
-  edit5.text := ascreen.text;
-  checkbox10.Checked := ascreen.center;
+  Line1Edit.text := ascreen.text;
+  CenterLine1CheckBox.Checked := ascreen.center;
 
   ascreen := config.screen[scr][2];
-  checkbox4.checked := ascreen.noscroll;
+  DontScrollLine2CheckBox.checked := ascreen.noscroll;
   if ascreen.contNextLine then
   begin
-    checkbox8.checked := true;
-    checkbox4.Checked := true;
-    checkbox4.enabled := false;
-    edit7.enabled := false;
-    edit7.color := $00BBBBFF;
+    ContinueLine2CheckBox.checked := true;
+    DontScrollLine2CheckBox.Checked := true;
+    DontScrollLine2CheckBox.enabled := false;
+    Line3Edit.enabled := false;
+    Line3Edit.color := $00BBBBFF;
   end;
-  edit6.text := ascreen.text;
-  checkbox11.Checked := ascreen.center;
+  Line2Edit.text := ascreen.text;
+  CenterLine2CheckBox.Checked := ascreen.center;
 
   ascreen := config.screen[scr][3];
-  checkbox5.checked := ascreen.noscroll;
+  DontScrollLine3CheckBox.checked := ascreen.noscroll;
   if ascreen.contNextLine then
   begin
-    checkbox9.checked := true;
-    checkbox5.Checked := true;
-    checkbox5.enabled := false;
-    edit8.enabled := false;
-    edit8.color := $00BBBBFF;
+    ContinueLine3CheckBox.checked := true;
+    DontScrollLine3CheckBox.Checked := true;
+    DontScrollLine3CheckBox.enabled := false;
+    Line4Edit.enabled := false;
+    Line4Edit.color := $00BBBBFF;
   end;
-  edit7.text := ascreen.text;
-  checkbox12.Checked := ascreen.center;
+  Line3Edit.text := ascreen.text;
+  CenterLine3CheckBox.Checked := ascreen.center;
 
   ascreen := config.screen[scr][4];
-  checkbox6.checked := ascreen.noscroll;
-  edit8.text := ascreen.text;
-  checkbox13.Checked := ascreen.center;
+  DontScrollLine4CheckBox.checked := ascreen.noscroll;
+  Line4Edit.text := ascreen.text;
+  CenterLine4CheckBox.Checked := ascreen.center;
 end;
 
-procedure TSetupForm.ComboBox3Change(Sender: TObject);
+procedure TSetupForm.ScreenNumberComboBoxChange(Sender: TObject);
 begin
   SaveScreen(tempscreen + 1);
 
-  if combobox3.itemIndex < 0 then combobox3.itemIndex := 0;
-  tempscreen := combobox3.itemindex;
+  if ScreenNumberComboBox.itemIndex < 0 then ScreenNumberComboBox.itemIndex := 0;
+  tempscreen := ScreenNumberComboBox.itemindex;
 
   LoadScreen(tempscreen + 1);
 
   LCDSmartieDisplayForm.ChangeScreen(tempscreen + 1);
 end;
 
-procedure TSetupForm.RadioButton1Click(Sender: TObject);
+procedure TSetupForm.HD44780RadioButtonClick(Sender: TObject);
 begin
-  //if pagecontrol1.ActivePage = Tabsheet13 then pagecontrol1.ActivePage :=
+  //if pagecontrol1.ActivePage = LCDFeaturesTabSheet then pagecontrol1.ActivePage :=
   //  Tabsheet1;
-  //tabsheet13.Enabled := false;
-  button6.enabled := true;
-  combobox4.enabled := false;
-  combobox5.enabled := false;
-  button4.enabled := false;
-  button5.enabled := false;
+  //LCDFeaturesTabSheet.Enabled := false;
+  HD44780ConfigButton.enabled := true;
+  COMPortComboBox.enabled := false;
+  BaudRateComboBox.enabled := false;
+  MatrixOrbitalConfigButton.enabled := false;
+  CrystalFontzConfigButton.enabled := false;
   IRTransConfigButton.Enabled := false;
 end;
 
-procedure TSetupForm.RadioButton4Click(Sender: TObject);
+procedure TSetupForm.HD66712RadioButtonClick(Sender: TObject);
 begin
-  button6.enabled := true;
-  combobox4.enabled := false;
-  combobox5.enabled := false;
-  button4.enabled := false;
-  button5.enabled := false;
+  HD44780ConfigButton.enabled := true;
+  COMPortComboBox.enabled := false;
+  BaudRateComboBox.enabled := false;
+  MatrixOrbitalConfigButton.enabled := false;
+  CrystalFontzConfigButton.enabled := false;
   IRTransConfigButton.Enabled := false;
 end;
 
-procedure TSetupForm.RadioButton2Click(Sender: TObject);
+procedure TSetupForm.MatrixOrbitalRadioButtonClick(Sender: TObject);
 begin
-  //tabsheet13.Enabled := true;
-  button6.enabled := false;
-  combobox4.enabled := true;
-  combobox5.enabled := true;
-  button4.enabled := true;
-  button5.enabled := false;
+  //LCDFeaturesTabSheet.Enabled := true;
+  HD44780ConfigButton.enabled := false;
+  COMPortComboBox.enabled := true;
+  BaudRateComboBox.enabled := true;
+  MatrixOrbitalConfigButton.enabled := true;
+  CrystalFontzConfigButton.enabled := false;
   IRTransConfigButton.Enabled := false;
 end;
 
-procedure TSetupForm.RadioButton3Click(Sender: TObject);
+procedure TSetupForm.CrystalFontzRadioButtonClick(Sender: TObject);
 begin
-  //if pagecontrol1.ActivePage = Tabsheet13 then pagecontrol1.ActivePage :=
+  //if pagecontrol1.ActivePage = LCDFeaturesTabSheet then pagecontrol1.ActivePage :=
   //  Tabsheet1;
-  //tabsheet13.Enabled := false;
-  button6.enabled := false;
-  combobox4.enabled := true;
-  combobox5.enabled := true;
-  button4.enabled := false;
-  button5.enabled := true;
+  //LCDFeaturesTabSheet.Enabled := false;
+  HD44780ConfigButton.enabled := false;
+  COMPortComboBox.enabled := true;
+  BaudRateComboBox.enabled := true;
+  MatrixOrbitalConfigButton.enabled := false;
+  CrystalFontzConfigButton.enabled := true;
   IRTransConfigButton.Enabled := false;
 end;
 
 procedure TSetupForm.IRTransRadioButtonClick(Sender: TObject);
 begin
-  combobox4.enabled := false;
-  combobox5.enabled := false;
-  button4.enabled := false;
-  button5.enabled := false;
-  button6.enabled := false;
+  COMPortComboBox.enabled := false;
+  BaudRateComboBox.enabled := false;
+  MatrixOrbitalConfigButton.enabled := false;
+  CrystalFontzConfigButton.enabled := false;
+  HD44780ConfigButton.enabled := false;
   IRTransConfigButton.Enabled := true;
 end;
 
-procedure TSetupForm.ListBox7Click(Sender: TObject);
+procedure TSetupForm.WinampListBoxClick(Sender: TObject);
 begin
-  if listbox7.itemindex > -1 then
+  if WinampListBox.itemindex > -1 then
   begin
-    if listbox7.itemindex = 0 then Edit9.Text := '$WinampTitle';
-    if listbox7.itemindex = 1 then Edit9.Text := '$WinampChannels';
-    if listbox7.itemindex = 2 then Edit9.Text := '$WinampKBPS';
-    if listbox7.itemindex = 3 then Edit9.Text := '$WinampFreq';
-    if listbox7.itemindex = 4 then Edit9.Text := '$Winamppos';
-    if listbox7.itemindex = 5 then Edit9.Text := '$WinampPolo';
-    if listbox7.itemindex = 6 then Edit9.Text := '$WinampPosh';
-    if listbox7.itemindex = 7 then Edit9.Text := '$WinampRem';
-    if listbox7.itemindex = 8 then Edit9.Text := '$WinampRelo';
-    if listbox7.itemindex = 9 then Edit9.Text := '$WinampResh';
-    if listbox7.itemindex = 10 then Edit9.Text := '$WinampLength';
-    if listbox7.itemindex = 11 then Edit9.Text := '$WinampLengtl';
-    if listbox7.itemindex = 12 then Edit9.Text := '$WinampLengts';
-    if listbox7.itemindex = 13 then Edit9.Text := '$WinampPosition(10)';
-    if listbox7.itemindex = 14 then Edit9.Text := '$WinampTracknr';
-    if listbox7.itemindex = 15 then Edit9.Text := '$WinampTotalTracks';
-    if listbox7.itemindex = 16 then Edit9.Text := '$WinampStat';
+    if WinampListBox.itemindex = 0 then VariableEdit.Text := '$WinampTitle';
+    if WinampListBox.itemindex = 1 then VariableEdit.Text := '$WinampChannels';
+    if WinampListBox.itemindex = 2 then VariableEdit.Text := '$WinampKBPS';
+    if WinampListBox.itemindex = 3 then VariableEdit.Text := '$WinampFreq';
+    if WinampListBox.itemindex = 4 then VariableEdit.Text := '$Winamppos';
+    if WinampListBox.itemindex = 5 then VariableEdit.Text := '$WinampPolo';
+    if WinampListBox.itemindex = 6 then VariableEdit.Text := '$WinampPosh';
+    if WinampListBox.itemindex = 7 then VariableEdit.Text := '$WinampRem';
+    if WinampListBox.itemindex = 8 then VariableEdit.Text := '$WinampRelo';
+    if WinampListBox.itemindex = 9 then VariableEdit.Text := '$WinampResh';
+    if WinampListBox.itemindex = 10 then VariableEdit.Text := '$WinampLength';
+    if WinampListBox.itemindex = 11 then VariableEdit.Text := '$WinampLengtl';
+    if WinampListBox.itemindex = 12 then VariableEdit.Text := '$WinampLengts';
+    if WinampListBox.itemindex = 13 then VariableEdit.Text := '$WinampPosition(10)';
+    if WinampListBox.itemindex = 14 then VariableEdit.Text := '$WinampTracknr';
+    if WinampListBox.itemindex = 15 then VariableEdit.Text := '$WinampTotalTracks';
+    if WinampListBox.itemindex = 16 then VariableEdit.Text := '$WinampStat';
 
     FocusToInputField();
   end;
@@ -855,279 +847,279 @@ Procedure TSetupForm.FocusToInputField;
 var
   tempint1, tempint2: Integer;
 begin
-  if (TabSheet11.visible) then // in Screens tab
+  if (ScreensTabSheet.visible) then // in Screens tab
   begin
     // not all the lines will be enabled/visible because of different size
     // displays.
 
-    if (setupbutton = 2) and (edit6.Enabled) and (edit6.visible) then
+    if (setupbutton = 2) and (Line2Edit.Enabled) and (Line2Edit.visible) then
     begin
-      tempint1 := edit6.SelStart;
-      tempint2 := edit6.SelLength;
-      edit6.setfocus;
-      edit6.SelStart := tempint1;
-      edit6.SelLength := tempint2;
+      tempint1 := Line2Edit.SelStart;
+      tempint2 := Line2Edit.SelLength;
+      Line2Edit.setfocus;
+      Line2Edit.SelStart := tempint1;
+      Line2Edit.SelLength := tempint2;
     end
-    else if (setupbutton = 3) and (edit7.enabled) and (edit7.visible) then
+    else if (setupbutton = 3) and (Line3Edit.enabled) and (Line3Edit.visible) then
     begin
-      tempint1 := edit7.SelStart;
-      tempint2 := edit7.SelLength;
-      edit7.setfocus;
-      edit7.SelStart := tempint1;
-      edit7.SelLength := tempint2;
+      tempint1 := Line3Edit.SelStart;
+      tempint2 := Line3Edit.SelLength;
+      Line3Edit.setfocus;
+      Line3Edit.SelStart := tempint1;
+      Line3Edit.SelLength := tempint2;
     end
-    else if (setupbutton = 4) and (edit8.enabled) and (edit8.visible) then
+    else if (setupbutton = 4) and (Line4Edit.enabled) and (Line4Edit.visible) then
     begin
-      tempint1 := edit8.SelStart;
-      tempint2 := edit8.SelLength;
-      edit8.setfocus;
-      edit8.SelStart := tempint1;
-      edit8.SelLength := tempint2;
+      tempint1 := Line4Edit.SelStart;
+      tempint2 := Line4Edit.SelLength;
+      Line4Edit.setfocus;
+      Line4Edit.SelStart := tempint1;
+      Line4Edit.SelLength := tempint2;
     end
-    else if (edit5.Enabled) and (edit5.visible) then // default to line 1 of screen section
+    else if (Line1Edit.Enabled) and (Line1Edit.visible) then // default to line 1 of screen section
     begin // setupbutton = 1
-      tempint1 := edit5.SelStart;
-      tempint2 := edit5.SelLength;
-      edit5.setfocus;
-      edit5.SelStart := tempint1;
-      edit5.SelLength := tempint2;
+      tempint1 := Line1Edit.SelStart;
+      tempint2 := Line1Edit.SelLength;
+      Line1Edit.setfocus;
+      Line1Edit.SelStart := tempint1;
+      Line1Edit.SelLength := tempint2;
     end;
   end
-  else if (TabSheet12.visible) then // in Actions tab
+  else if (ActionsTabSheet.visible) then // in Actions tab
   begin
-    if (edit16.Enabled) and (edit16.visible) then
+    if (Operand1Edit.Enabled) and (Operand1Edit.visible) then
     begin
-      tempint1 := edit16.SelStart;
-      tempint2 := edit16.SelLength;
-      edit16.setfocus;
-      edit16.SelStart := tempint1;
-      edit16.SelLength := tempint2;
+      tempint1 := Operand1Edit.SelStart;
+      tempint2 := Operand1Edit.SelLength;
+      Operand1Edit.setfocus;
+      Operand1Edit.SelStart := tempint1;
+      Operand1Edit.SelLength := tempint2;
     end
   end;
 end;
 
-procedure TSetupForm.Button3Click(Sender: TObject);
+procedure TSetupForm.InsertButtonClick(Sender: TObject);
 var
   tempint: Integer;
 
 begin
-  if Edit9.Text <> 'Variable: ' then
+  if VariableEdit.Text <> 'Variable: ' then
   begin
-    if (tabsheet11.visible) then // in Screens tab
+    if (ScreensTabSheet.visible) then // in Screens tab
     begin
-      if (setupbutton = 2) and (edit6.enabled) and (edit6.visible) then
+      if (setupbutton = 2) and (Line2Edit.enabled) and (Line2Edit.visible) then
       begin
-        tempint := edit6.SelStart;
-        edit6.text := copy(edit6.text, 1, Edit6.SelStart) + Edit9.Text +
-          copy(edit6.text, edit6.SelStart + 1 + edit6.SelLength,
-          length(edit6.Text));
-        edit6.SetFocus;
-        edit6.selstart := tempint + length(edit9.text);
+        tempint := Line2Edit.SelStart;
+        Line2Edit.text := copy(Line2Edit.text, 1, Line2Edit.SelStart) + VariableEdit.Text +
+          copy(Line2Edit.text, Line2Edit.SelStart + 1 + Line2Edit.SelLength,
+          length(Line2Edit.Text));
+        Line2Edit.SetFocus;
+        Line2Edit.selstart := tempint + length(VariableEdit.text);
       end
-      else if (setupbutton = 3) and (edit7.enabled) and (edit7.visible) then
+      else if (setupbutton = 3) and (Line3Edit.enabled) and (Line3Edit.visible) then
       begin
-        tempint := edit7.SelStart;
-        edit7.text := copy(edit7.text, 1, Edit7.SelStart) + Edit9.Text +
-          copy(edit7.text, edit7.SelStart + 1 + edit7.SelLength,
-          length(edit7.Text));
-        edit7.SetFocus;
-        edit7.selstart := tempint + length(edit9.text);
+        tempint := Line3Edit.SelStart;
+        Line3Edit.text := copy(Line3Edit.text, 1, Line3Edit.SelStart) + VariableEdit.Text +
+          copy(Line3Edit.text, Line3Edit.SelStart + 1 + Line3Edit.SelLength,
+          length(Line3Edit.Text));
+        Line3Edit.SetFocus;
+        Line3Edit.selstart := tempint + length(VariableEdit.text);
       end
-      else if (setupbutton = 4) and (edit8.enabled) and (edit8.visible) then
+      else if (setupbutton = 4) and (Line4Edit.enabled) and (Line4Edit.visible) then
       begin
-        tempint := edit8.SelStart;
-        edit8.text := copy(edit8.text, 1, Edit8.SelStart) + Edit9.Text +
-          copy(edit8.text, edit8.SelStart + 1 + edit8.SelLength,
-          length(edit8.Text));
-        edit8.SetFocus;
-        edit8.selstart := tempint + length(edit9.text);
+        tempint := Line4Edit.SelStart;
+        Line4Edit.text := copy(Line4Edit.text, 1, Line4Edit.SelStart) + VariableEdit.Text +
+          copy(Line4Edit.text, Line4Edit.SelStart + 1 + Line4Edit.SelLength,
+          length(Line4Edit.Text));
+        Line4Edit.SetFocus;
+        Line4Edit.selstart := tempint + length(VariableEdit.text);
       end
-      else if (edit5.enabled) and (edit5.visible) then // default to line 1
+      else if (Line1Edit.enabled) and (Line1Edit.visible) then // default to line 1
       begin
-        tempint := edit5.SelStart;
-        edit5.text := copy(edit5.text, 1, tempint) + Edit9.Text +
-          copy(edit5.text, tempint + 1 + edit5.SelLength, length(edit5.Text));
-        edit5.SetFocus;
-        edit5.selstart := tempint + length(edit9.text);
+        tempint := Line1Edit.SelStart;
+        Line1Edit.text := copy(Line1Edit.text, 1, tempint) + VariableEdit.Text +
+          copy(Line1Edit.text, tempint + 1 + Line1Edit.SelLength, length(Line1Edit.Text));
+        Line1Edit.SetFocus;
+        Line1Edit.selstart := tempint + length(VariableEdit.text);
       end;
     end
-    else if (tabsheet12.Visible) then // in Actions tab
+    else if (ActionsTabSheet.Visible) then // in Actions tab
     begin
-      if (edit17.text='') and (edit9.text='$MObutton') then
+      if (LastKeyPressedEdit.text='') and (VariableEdit.text='$MObutton') then
       begin
         showmessage ('please press the button you want to bind');
       end
       else
       begin
-        if pos('$MObutton', edit9.Text) <> 0 then
-          edit9.Text := '$MObutton(' + edit17.text + ')';
-        edit16.text := edit9.text;
+        if pos('$MObutton', VariableEdit.Text) <> 0 then
+          VariableEdit.Text := '$MObutton(' + LastKeyPressedEdit.text + ')';
+        Operand1Edit.text := VariableEdit.text;
       end;
     end;
   end;
 end;
 
-procedure TSetupForm.ListBox6Click(Sender: TObject);
+procedure TSetupForm.SysInfoListBoxClick(Sender: TObject);
 begin
-  if listbox6.itemindex > -1 then
+  if SysInfoListBox.itemindex > -1 then
   begin
-    if listbox6.itemindex = 0 then Edit9.Text := '$Username';
-    if listbox6.itemindex = 1 then Edit9.Text := '$Computername';
-    if listbox6.itemindex = 2 then Edit9.Text := '$CPUType';
-    if listbox6.itemindex = 3 then Edit9.Text := '$CPUSpeed';
-    if listbox6.itemindex = 4 then Edit9.Text := '$CPUUsage%';
-    if listbox6.itemindex = 5 then Edit9.Text := '$Bar($CPUUsage%,100,10)';
-    if listbox6.itemindex = 6 then Edit9.Text := '$MemFree';
-    if listbox6.itemindex = 7 then Edit9.Text := '$MemUsed';
-    if listbox6.itemindex = 8 then Edit9.Text := '$MemTotal';
-    if listbox6.itemindex = 9 then Edit9.Text := '$MemF%';
-    if listbox6.itemindex = 10 then Edit9.Text := '$MemU%';
-    if listbox6.itemindex = 11 then Edit9.Text :=
+    if SysInfoListBox.itemindex = 0 then VariableEdit.Text := '$Username';
+    if SysInfoListBox.itemindex = 1 then VariableEdit.Text := '$Computername';
+    if SysInfoListBox.itemindex = 2 then VariableEdit.Text := '$CPUType';
+    if SysInfoListBox.itemindex = 3 then VariableEdit.Text := '$CPUSpeed';
+    if SysInfoListBox.itemindex = 4 then VariableEdit.Text := '$CPUUsage%';
+    if SysInfoListBox.itemindex = 5 then VariableEdit.Text := '$Bar($CPUUsage%,100,10)';
+    if SysInfoListBox.itemindex = 6 then VariableEdit.Text := '$MemFree';
+    if SysInfoListBox.itemindex = 7 then VariableEdit.Text := '$MemUsed';
+    if SysInfoListBox.itemindex = 8 then VariableEdit.Text := '$MemTotal';
+    if SysInfoListBox.itemindex = 9 then VariableEdit.Text := '$MemF%';
+    if SysInfoListBox.itemindex = 10 then VariableEdit.Text := '$MemU%';
+    if SysInfoListBox.itemindex = 11 then VariableEdit.Text :=
       '$Bar($MemFree,$MemTotal,10)';
-    if listbox6.itemindex = 12 then Edit9.Text :=
+    if SysInfoListBox.itemindex = 12 then VariableEdit.Text :=
       '$Bar($MemUsed,$MemTotal,10)';
-    if listbox6.itemindex = 13 then Edit9.Text := '$PageFree';
-    if listbox6.itemindex = 14 then Edit9.Text := '$PageUsed';
-    if listbox6.itemindex = 15 then Edit9.Text := '$PageTotal';
-    if listbox6.itemindex = 16 then Edit9.Text := '$PageF%';
-    if listbox6.itemindex = 17 then Edit9.Text := '$PageU%';
-    if listbox6.itemindex = 18 then Edit9.Text :=
+    if SysInfoListBox.itemindex = 13 then VariableEdit.Text := '$PageFree';
+    if SysInfoListBox.itemindex = 14 then VariableEdit.Text := '$PageUsed';
+    if SysInfoListBox.itemindex = 15 then VariableEdit.Text := '$PageTotal';
+    if SysInfoListBox.itemindex = 16 then VariableEdit.Text := '$PageF%';
+    if SysInfoListBox.itemindex = 17 then VariableEdit.Text := '$PageU%';
+    if SysInfoListBox.itemindex = 18 then VariableEdit.Text :=
       '$Bar($PageFree,$PageTotal,10)';
-    if listbox6.itemindex = 19 then Edit9.Text :=
+    if SysInfoListBox.itemindex = 19 then VariableEdit.Text :=
       '$Bar($PageUsed,$PageTotal,10)';
-    if listbox6.itemindex = 20 then Edit9.Text := '$HDFree(C)';
-    if listbox6.itemindex = 21 then Edit9.Text := '$HDUsed(C)';
-    if listbox6.itemindex = 22 then Edit9.Text := '$HDTotal(C)';
-    if listbox6.itemindex = 23 then Edit9.Text := '$HDFreg(C)';
-    if listbox6.itemindex = 24 then Edit9.Text := '$HDUseg(C)';
-    if listbox6.itemindex = 25 then Edit9.Text := '$HDTotag(C)';
-    if listbox6.itemindex = 26 then Edit9.Text := '$HDF%(C)';
-    if listbox6.itemindex = 27 then Edit9.Text := '$HDU%(C)';
-    if listbox6.itemindex = 28 then Edit9.Text :=
+    if SysInfoListBox.itemindex = 20 then VariableEdit.Text := '$HDFree(C)';
+    if SysInfoListBox.itemindex = 21 then VariableEdit.Text := '$HDUsed(C)';
+    if SysInfoListBox.itemindex = 22 then VariableEdit.Text := '$HDTotal(C)';
+    if SysInfoListBox.itemindex = 23 then VariableEdit.Text := '$HDFreg(C)';
+    if SysInfoListBox.itemindex = 24 then VariableEdit.Text := '$HDUseg(C)';
+    if SysInfoListBox.itemindex = 25 then VariableEdit.Text := '$HDTotag(C)';
+    if SysInfoListBox.itemindex = 26 then VariableEdit.Text := '$HDF%(C)';
+    if SysInfoListBox.itemindex = 27 then VariableEdit.Text := '$HDU%(C)';
+    if SysInfoListBox.itemindex = 28 then VariableEdit.Text :=
       '$Bar($HDFree(C),$HDTotal(C),10)';
-    if listbox6.itemindex = 29 then Edit9.Text :=
+    if SysInfoListBox.itemindex = 29 then VariableEdit.Text :=
       '$Bar($HDUsed(C),$HDTotal(C),10)';
-    if listbox6.itemindex = 30 then Edit9.Text := '$ScreenReso';
+    if SysInfoListBox.itemindex = 30 then VariableEdit.Text := '$ScreenReso';
 
     FocusToInputField();
 
   end;
 end;
 
-procedure TSetupForm.ListBox5Click(Sender: TObject);
+procedure TSetupForm.MBMListBoxClick(Sender: TObject);
 begin
-  if listbox5.itemindex > -1 then
+  if MBMListBox.itemindex > -1 then
   begin
-    if listbox5.itemindex = 0 then Edit9.Text := '$Temp1';
-    if listbox5.itemindex = 1 then Edit9.Text := '$Temp2';
-    if listbox5.itemindex = 2 then Edit9.Text := '$Temp3';
-    if listbox5.itemindex = 3 then Edit9.Text := '$Temp4';
-    if listbox5.itemindex = 4 then Edit9.Text := '$Temp5';
-    if listbox5.itemindex = 5 then Edit9.Text := '$Temp6';
-    if listbox5.itemindex = 6 then Edit9.Text := '$Temp7';
-    if listbox5.itemindex = 7 then Edit9.Text := '$Temp8';
-    if listbox5.itemindex = 8 then Edit9.Text := '$Temp9';
-    if listbox5.itemindex = 9 then Edit9.Text := '$Temp10';
-    if listbox5.itemindex = 10 then Edit9.Text := '$FanS1';
-    if listbox5.itemindex = 11 then Edit9.Text := '$FanS2';
-    if listbox5.itemindex = 12 then Edit9.Text := '$FanS3';
-    if listbox5.itemindex = 13 then Edit9.Text := '$FanS4';
-    if listbox5.itemindex = 14 then Edit9.Text := '$FanS5';
-    if listbox5.itemindex = 15 then Edit9.Text := '$FanS6';
-    if listbox5.itemindex = 16 then Edit9.Text := '$FanS7';
-    if listbox5.itemindex = 17 then Edit9.Text := '$FanS8';
-    if listbox5.itemindex = 18 then Edit9.Text := '$FanS9';
-    if listbox5.itemindex = 19 then Edit9.Text := '$FanS10';
-    if listbox5.itemindex = 20 then Edit9.Text := '$Voltage1';
-    if listbox5.itemindex = 21 then Edit9.Text := '$Voltage2';
-    if listbox5.itemindex = 22 then Edit9.Text := '$Voltage3';
-    if listbox5.itemindex = 23 then Edit9.Text := '$Voltage4';
-    if listbox5.itemindex = 24 then Edit9.Text := '$Voltage5';
-    if listbox5.itemindex = 25 then Edit9.Text := '$Voltage6';
-    if listbox5.itemindex = 26 then Edit9.Text := '$Voltage7';
-    if listbox5.itemindex = 27 then Edit9.Text := '$Voltage8';
-    if listbox5.itemindex = 28 then Edit9.Text := '$Voltage9';
-    if listbox5.itemindex = 29 then Edit9.Text := '$Voltage10';
-    if listbox5.itemindex = 30 then Edit9.Text := '$Tempname1';
-    if listbox5.itemindex = 31 then Edit9.Text := '$Tempname2';
-    if listbox5.itemindex = 32 then Edit9.Text := '$Tempname3';
-    if listbox5.itemindex = 33 then Edit9.Text := '$Tempname4';
-    if listbox5.itemindex = 34 then Edit9.Text := '$Tempname5';
-    if listbox5.itemindex = 35 then Edit9.Text := '$Tempname6';
-    if listbox5.itemindex = 36 then Edit9.Text := '$Tempname7';
-    if listbox5.itemindex = 37 then Edit9.Text := '$Tempname8';
-    if listbox5.itemindex = 38 then Edit9.Text := '$Tempname9';
-    if listbox5.itemindex = 39 then Edit9.Text := '$Tempname10';
-    if listbox5.itemindex = 40 then Edit9.Text := '$Fanname1';
-    if listbox5.itemindex = 41 then Edit9.Text := '$Fanname2';
-    if listbox5.itemindex = 42 then Edit9.Text := '$Fanname3';
-    if listbox5.itemindex = 43 then Edit9.Text := '$Fanname4';
-    if listbox5.itemindex = 44 then Edit9.Text := '$Fanname5';
-    if listbox5.itemindex = 45 then Edit9.Text := '$Fanname6';
-    if listbox5.itemindex = 46 then Edit9.Text := '$Fanname7';
-    if listbox5.itemindex = 47 then Edit9.Text := '$Fanname8';
-    if listbox5.itemindex = 48 then Edit9.Text := '$Fanname9';
-    if listbox5.itemindex = 49 then Edit9.Text := '$Fanname10';
-    if listbox5.itemindex = 50 then Edit9.Text := '$Voltname1';
-    if listbox5.itemindex = 51 then Edit9.Text := '$Voltname2';
-    if listbox5.itemindex = 52 then Edit9.Text := '$Voltname3';
-    if listbox5.itemindex = 53 then Edit9.Text := '$Voltname4';
-    if listbox5.itemindex = 54 then Edit9.Text := '$Voltname5';
-    if listbox5.itemindex = 55 then Edit9.Text := '$Voltname6';
-    if listbox5.itemindex = 56 then Edit9.Text := '$Voltname7';
-    if listbox5.itemindex = 57 then Edit9.Text := '$Voltname8';
-    if listbox5.itemindex = 58 then Edit9.Text := '$Voltname9';
-    if listbox5.itemindex = 59 then Edit9.Text := '$Voltname10';
+    if MBMListBox.itemindex = 0 then VariableEdit.Text := '$Temp1';
+    if MBMListBox.itemindex = 1 then VariableEdit.Text := '$Temp2';
+    if MBMListBox.itemindex = 2 then VariableEdit.Text := '$Temp3';
+    if MBMListBox.itemindex = 3 then VariableEdit.Text := '$Temp4';
+    if MBMListBox.itemindex = 4 then VariableEdit.Text := '$Temp5';
+    if MBMListBox.itemindex = 5 then VariableEdit.Text := '$Temp6';
+    if MBMListBox.itemindex = 6 then VariableEdit.Text := '$Temp7';
+    if MBMListBox.itemindex = 7 then VariableEdit.Text := '$Temp8';
+    if MBMListBox.itemindex = 8 then VariableEdit.Text := '$Temp9';
+    if MBMListBox.itemindex = 9 then VariableEdit.Text := '$Temp10';
+    if MBMListBox.itemindex = 10 then VariableEdit.Text := '$FanS1';
+    if MBMListBox.itemindex = 11 then VariableEdit.Text := '$FanS2';
+    if MBMListBox.itemindex = 12 then VariableEdit.Text := '$FanS3';
+    if MBMListBox.itemindex = 13 then VariableEdit.Text := '$FanS4';
+    if MBMListBox.itemindex = 14 then VariableEdit.Text := '$FanS5';
+    if MBMListBox.itemindex = 15 then VariableEdit.Text := '$FanS6';
+    if MBMListBox.itemindex = 16 then VariableEdit.Text := '$FanS7';
+    if MBMListBox.itemindex = 17 then VariableEdit.Text := '$FanS8';
+    if MBMListBox.itemindex = 18 then VariableEdit.Text := '$FanS9';
+    if MBMListBox.itemindex = 19 then VariableEdit.Text := '$FanS10';
+    if MBMListBox.itemindex = 20 then VariableEdit.Text := '$Voltage1';
+    if MBMListBox.itemindex = 21 then VariableEdit.Text := '$Voltage2';
+    if MBMListBox.itemindex = 22 then VariableEdit.Text := '$Voltage3';
+    if MBMListBox.itemindex = 23 then VariableEdit.Text := '$Voltage4';
+    if MBMListBox.itemindex = 24 then VariableEdit.Text := '$Voltage5';
+    if MBMListBox.itemindex = 25 then VariableEdit.Text := '$Voltage6';
+    if MBMListBox.itemindex = 26 then VariableEdit.Text := '$Voltage7';
+    if MBMListBox.itemindex = 27 then VariableEdit.Text := '$Voltage8';
+    if MBMListBox.itemindex = 28 then VariableEdit.Text := '$Voltage9';
+    if MBMListBox.itemindex = 29 then VariableEdit.Text := '$Voltage10';
+    if MBMListBox.itemindex = 30 then VariableEdit.Text := '$Tempname1';
+    if MBMListBox.itemindex = 31 then VariableEdit.Text := '$Tempname2';
+    if MBMListBox.itemindex = 32 then VariableEdit.Text := '$Tempname3';
+    if MBMListBox.itemindex = 33 then VariableEdit.Text := '$Tempname4';
+    if MBMListBox.itemindex = 34 then VariableEdit.Text := '$Tempname5';
+    if MBMListBox.itemindex = 35 then VariableEdit.Text := '$Tempname6';
+    if MBMListBox.itemindex = 36 then VariableEdit.Text := '$Tempname7';
+    if MBMListBox.itemindex = 37 then VariableEdit.Text := '$Tempname8';
+    if MBMListBox.itemindex = 38 then VariableEdit.Text := '$Tempname9';
+    if MBMListBox.itemindex = 39 then VariableEdit.Text := '$Tempname10';
+    if MBMListBox.itemindex = 40 then VariableEdit.Text := '$Fanname1';
+    if MBMListBox.itemindex = 41 then VariableEdit.Text := '$Fanname2';
+    if MBMListBox.itemindex = 42 then VariableEdit.Text := '$Fanname3';
+    if MBMListBox.itemindex = 43 then VariableEdit.Text := '$Fanname4';
+    if MBMListBox.itemindex = 44 then VariableEdit.Text := '$Fanname5';
+    if MBMListBox.itemindex = 45 then VariableEdit.Text := '$Fanname6';
+    if MBMListBox.itemindex = 46 then VariableEdit.Text := '$Fanname7';
+    if MBMListBox.itemindex = 47 then VariableEdit.Text := '$Fanname8';
+    if MBMListBox.itemindex = 48 then VariableEdit.Text := '$Fanname9';
+    if MBMListBox.itemindex = 49 then VariableEdit.Text := '$Fanname10';
+    if MBMListBox.itemindex = 50 then VariableEdit.Text := '$Voltname1';
+    if MBMListBox.itemindex = 51 then VariableEdit.Text := '$Voltname2';
+    if MBMListBox.itemindex = 52 then VariableEdit.Text := '$Voltname3';
+    if MBMListBox.itemindex = 53 then VariableEdit.Text := '$Voltname4';
+    if MBMListBox.itemindex = 54 then VariableEdit.Text := '$Voltname5';
+    if MBMListBox.itemindex = 55 then VariableEdit.Text := '$Voltname6';
+    if MBMListBox.itemindex = 56 then VariableEdit.Text := '$Voltname7';
+    if MBMListBox.itemindex = 57 then VariableEdit.Text := '$Voltname8';
+    if MBMListBox.itemindex = 58 then VariableEdit.Text := '$Voltname9';
+    if MBMListBox.itemindex = 59 then VariableEdit.Text := '$Voltname10';
 
     FocusToInputField();
 
   end;
 end;
 
-procedure TSetupForm.ListBox2Click(Sender: TObject);
+procedure TSetupForm.InternetListBoxClick(Sender: TObject);
 begin
-  if listbox2.itemindex > -1 then
+  if InternetListBox.itemindex > -1 then
   begin
-    case listbox2.itemindex of
-      0: Edit9.Text :=
+    case InternetListBox.itemindex of
+      0: VariableEdit.Text :=
    '$Rss(http://news.bbc.co.uk/rss/newsonline_uk_edition/world/rss091.xml,b)'
         ;
-      1: Edit9.Text :=
+      1: VariableEdit.Text :=
       '$Rss(http://news.bbc.co.uk/rss/newsonline_uk_edition/uk/rss091.xml,b)'
         ;
-      2: Edit9.Text := '$Rss(http://www.tweakers.net/feeds/mixed.xml,b)';
-      3: Edit9.Text := '$Rss(http://www.theregister.co.uk/headlines.rss,b)';
-      4: Edit9.Text := '$Rss(http://slashdot.org/index.rss,b)';
-      5: Edit9.Text :=
+      2: VariableEdit.Text := '$Rss(http://www.tweakers.net/feeds/mixed.xml,b)';
+      3: VariableEdit.Text := '$Rss(http://www.theregister.co.uk/headlines.rss,b)';
+      4: VariableEdit.Text := '$Rss(http://slashdot.org/index.rss,b)';
+      5: VariableEdit.Text :=
         '$Rss(http://www.wired.com/news_drop/netcenter/netcenter.rdf,b)';
-      6: Edit9.Text :=
+      6: VariableEdit.Text :=
         '$Rss(http://www.fool.com/xml/foolnews_rss091.xml,b,1)';
-      7: Edit9.Text := '$Rss(http://www.fool.com/xml/foolnews_rss091.xml,b)';
-      8: Edit9.Text :=
+      7: VariableEdit.Text := '$Rss(http://www.fool.com/xml/foolnews_rss091.xml,b)';
+      8: VariableEdit.Text :=
 '$Rss(http://sourceforge.net/export/rss2_projnews.php?group_id=122330&rss_fulltext=1,b,1)'
         ;
-      9: Edit9.Text :=
+      9: VariableEdit.Text :=
 '$Rss(http://sourceforge.net/export/rss2_projnews.php?group_id=2987&rss_fulltext=1,b,1)'
         ;
-      10: Edit9.Text :=
+      10: VariableEdit.Text :=
 '$Rss(http://www.weatherclicks.com/xml/fort+lauderdale,t,2): $Rss(http://www.weatherclicks.com/xml/fort+lauderdale,d,2) | '
         ;
-      11: Edit9.Text :=
+      11: VariableEdit.Text :=
 '$Rss(http://news.bbc.co.uk/rss/newsonline_world_edition/business/rss091.xml,b)'
         ;
-      12: Edit9.Text :=
+      12: VariableEdit.Text :=
 '$Rss(http://www.washingtonpost.com/wp-srv/business/rssheadlines.xml,b)'
         ;
-      13: Edit9.Text := '$Rss(http://rss.news.yahoo.com/rss/entertainment,b)';
-      14: Edit9.Text := '$Rss(http://partners.userland.com/nytRss/health.xml,b)';
-      15: Edit9.Text := '$Rss(http://partners.userland.com/nytRss/sports.xml,b)';
-      16: Edit9.Text := '$Rss(http://www.securityfocus.com/rss/news.xml,b)';
-      17: Edit9.Text := '$Rss(http://volkskrant.nl/rss/economie.rss,b)';
-      18: Edit9.Text := '$Rss(http://www.vpro.nl/3voor12/rss/index.jsp?images=false,b)';
-      19: Edit9.Text := '$Rss(http://www.ad.nl/index.xml,b)';
-      20: Edit9.Text := '$Rss(http://www.atletiek.nl/rss.xml,b)';
-      21: Edit9.Text := '$Rss(http://www.rtl.fr/referencement/rtl.asp,b)';
-      22: Edit9.Text := '$Rss(http://www.tagesschau.de/xml/tagesschau-meldungen/,b)';
+      13: VariableEdit.Text := '$Rss(http://rss.news.yahoo.com/rss/entertainment,b)';
+      14: VariableEdit.Text := '$Rss(http://partners.userland.com/nytRss/health.xml,b)';
+      15: VariableEdit.Text := '$Rss(http://partners.userland.com/nytRss/sports.xml,b)';
+      16: VariableEdit.Text := '$Rss(http://www.securityfocus.com/rss/news.xml,b)';
+      17: VariableEdit.Text := '$Rss(http://volkskrant.nl/rss/economie.rss,b)';
+      18: VariableEdit.Text := '$Rss(http://www.vpro.nl/3voor12/rss/index.jsp?images=false,b)';
+      19: VariableEdit.Text := '$Rss(http://www.ad.nl/index.xml,b)';
+      20: VariableEdit.Text := '$Rss(http://www.atletiek.nl/rss.xml,b)';
+      21: VariableEdit.Text := '$Rss(http://www.rtl.fr/referencement/rtl.asp,b)';
+      22: VariableEdit.Text := '$Rss(http://www.tagesschau.de/xml/tagesschau-meldungen/,b)';
     end;
 
 {Stock Indexes
@@ -1136,11 +1128,11 @@ Tweakers.net headlines (in dutch)
 Weather (Holland)
 Weather.com(locationcode)
 
-   if listbox2.itemindex = 1 then Edit9.Text := '$Stocks';
-    if listbox2.itemindex = 2 then Edit9.Text := '$TomsHW';
-    if listbox2.itemindex = 3 then Edit9.Text := '$T.netHL';
-    if listbox2.itemindex = 4 then Edit9.Text := '$DutchWeather';
-    if listbox2.itemindex = 5 then Edit9.Text := '$Weather.com(CAXX0504)';
+   if InternetListBox.itemindex = 1 then VariableEdit.Text := '$Stocks';
+    if InternetListBox.itemindex = 2 then VariableEdit.Text := '$TomsHW';
+    if InternetListBox.itemindex = 3 then VariableEdit.Text := '$T.netHL';
+    if InternetListBox.itemindex = 4 then VariableEdit.Text := '$DutchWeather';
+    if InternetListBox.itemindex = 5 then VariableEdit.Text := '$Weather.com(CAXX0504)';
     }
 
     FocusToInputField();
@@ -1149,376 +1141,376 @@ Weather.com(locationcode)
   end;
 end;
 
-procedure TSetupForm.ComboBox6Change(Sender: TObject);
+procedure TSetupForm.GameTypeComboBoxChange(Sender: TObject);
 begin
-  if listbox8.Itemindex = 1 then
+  if GamestatsListBox.Itemindex = 1 then
   begin
-    if combobox6.itemindex = 0 then Edit9.Text := '$Half-life2';
-    if combobox6.itemindex = 1 then Edit9.Text := '$QuakeII2';
-    if combobox6.itemindex = 2 then Edit9.Text := '$QuakeIII2';
-    if combobox6.itemindex = 3 then Edit9.Text := '$Unreal2';
+    if GameTypeComboBox.itemindex = 0 then VariableEdit.Text := '$Half-life2';
+    if GameTypeComboBox.itemindex = 1 then VariableEdit.Text := '$QuakeII2';
+    if GameTypeComboBox.itemindex = 2 then VariableEdit.Text := '$QuakeIII2';
+    if GameTypeComboBox.itemindex = 3 then VariableEdit.Text := '$Unreal2';
   end
   else
   begin
-    listbox8.ItemIndex := 0;
-    if combobox6.itemindex = 0 then Edit9.Text := '$Half-life1';
-    if combobox6.itemindex = 1 then Edit9.Text := '$QuakeII1';
-    if combobox6.itemindex = 2 then Edit9.Text := '$QuakeIII1';
-    if combobox6.itemindex = 3 then Edit9.Text := '$Unreal1';
+    GamestatsListBox.ItemIndex := 0;
+    if GameTypeComboBox.itemindex = 0 then VariableEdit.Text := '$Half-life1';
+    if GameTypeComboBox.itemindex = 1 then VariableEdit.Text := '$QuakeII1';
+    if GameTypeComboBox.itemindex = 2 then VariableEdit.Text := '$QuakeIII1';
+    if GameTypeComboBox.itemindex = 3 then VariableEdit.Text := '$Unreal1';
   end;
 end;
 
-procedure TSetupForm.Label16Click(Sender: TObject);
+procedure TSetupForm.QStatLabelClick(Sender: TObject);
 begin
   ShellExecute(0, Nil, pchar('www.qstat.org'), Nil, Nil, SW_NORMAL);
 end;
 
-procedure TSetupForm.ListBox1Click(Sender: TObject);
+procedure TSetupForm.MiscListBoxClick(Sender: TObject);
 begin
-  if listbox1.itemindex > -1 then
+  if MiscListBox.itemindex > -1 then
   begin
-    if listbox1.itemindex = 0 then Edit9.Text := '$DnetSpeed';
-    if listbox1.itemindex = 1 then Edit9.Text := '$DnetDone';
-    if listbox1.itemindex = 2 then Edit9.Text :=
+    if MiscListBox.itemindex = 0 then VariableEdit.Text := '$DnetSpeed';
+    if MiscListBox.itemindex = 1 then VariableEdit.Text := '$DnetDone';
+    if MiscListBox.itemindex = 2 then VariableEdit.Text :=
       '$Time(d mmmm yyyy hh: nn: ss)';
-    if listbox1.itemindex = 3 then Edit9.Text := '$UpTime';
-    if listbox1.itemindex = 4 then Edit9.Text := '$UpTims';
-    if listbox1.itemindex = 5 then Edit9.Text := '°';
-    if listbox1.itemindex = 6 then Edit9.Text := 'ž';
-    if listbox1.itemindex = 7 then Edit9.Text := '$Chr(20)';
-    if listbox1.itemindex = 8 then Edit9.Text := '$File(C:\file.txt,1)';
-    if listbox1.itemindex = 9 then Edit9.Text := '$LogFile(C:\file.log,0)';
-    if listbox1.itemindex = 10 then Edit9.Text :=
+    if MiscListBox.itemindex = 3 then VariableEdit.Text := '$UpTime';
+    if MiscListBox.itemindex = 4 then VariableEdit.Text := '$UpTims';
+    if MiscListBox.itemindex = 5 then VariableEdit.Text := '°';
+    if MiscListBox.itemindex = 6 then VariableEdit.Text := 'ž';
+    if MiscListBox.itemindex = 7 then VariableEdit.Text := '$Chr(20)';
+    if MiscListBox.itemindex = 8 then VariableEdit.Text := '$File(C:\file.txt,1)';
+    if MiscListBox.itemindex = 9 then VariableEdit.Text := '$LogFile(C:\file.log,0)';
+    if MiscListBox.itemindex = 10 then VariableEdit.Text :=
       '$dll(demo.dll,5,param1,param2)';
-    if listbox1.itemindex = 11 then Edit9.Text := '$Count(101#$CPUSpeed#4)';
-    if listbox1.itemindex = 12 then Edit9.Text := '$Bar(30,100,20)';
-    if listbox1.itemindex = 13 then Edit9.Text :=
+    if MiscListBox.itemindex = 11 then VariableEdit.Text := '$Count(101#$CPUSpeed#4)';
+    if MiscListBox.itemindex = 12 then VariableEdit.Text := '$Bar(30,100,20)';
+    if MiscListBox.itemindex = 13 then VariableEdit.Text :=
       '$Right(ins variable(s) here,$3%)';
-    if listbox1.itemindex = 14 then Edit9.Text := '$Fill(10)';
-    if listbox1.itemindex = 15 then Edit9.Text :=
+    if MiscListBox.itemindex = 14 then VariableEdit.Text := '$Fill(10)';
+    if MiscListBox.itemindex = 15 then VariableEdit.Text :=
       '$Flash(insert text here$)$';
-    if listbox1.itemindex = 16 then Edit9.Text :=
+    if MiscListBox.itemindex = 16 then VariableEdit.Text :=
       '$CustomChar(1, 31, 31, 31, 31, 31, 31, 31, 31)';
-    if listbox1.itemindex = 17 then Edit9.Text :=
+    if MiscListBox.itemindex = 17 then VariableEdit.Text :=
       '$Rss(URL,t|d|b,ITEM#,MAXFREQHRS)';
-    if listbox1.ItemIndex = 18 then Edit9.Text := '$Center(text here,15)';
-    if listbox1.ItemIndex = 19 then Edit9.Text := '$ScreenChanged';
+    if MiscListBox.ItemIndex = 18 then VariableEdit.Text := '$Center(text here,15)';
+    if MiscListBox.ItemIndex = 19 then VariableEdit.Text := '$ScreenChanged';
     FocusToInputField();
 
   end;
 end;
 
-procedure TSetupForm.ListBox3Click(Sender: TObject);
+procedure TSetupForm.SetiAtHomeListBoxClick(Sender: TObject);
 begin
-  if listbox3.itemindex > -1 then
+  if SetiAtHomeListBox.itemindex > -1 then
   begin
-    if listbox3.itemindex = 0 then Edit9.Text := '$SETIResults';
-    if listbox3.itemindex = 1 then Edit9.Text := '$SETICPUTime';
-    if listbox3.itemindex = 2 then Edit9.Text := '$SETIAverage';
-    if listbox3.itemindex = 3 then Edit9.Text := '$SETILastresult';
-    if listbox3.itemindex = 4 then Edit9.Text := '$SETIusertime';
-    if listbox3.itemindex = 5 then Edit9.Text := '$SETItotalusers';
-    if listbox3.itemindex = 6 then Edit9.Text := '$SETIrank';
-    if listbox3.itemindex = 7 then Edit9.Text := '$SETIsharingrank';
-    if listbox3.itemindex = 8 then Edit9.Text := '$SETImoreWU%';
+    if SetiAtHomeListBox.itemindex = 0 then VariableEdit.Text := '$SETIResults';
+    if SetiAtHomeListBox.itemindex = 1 then VariableEdit.Text := '$SETICPUTime';
+    if SetiAtHomeListBox.itemindex = 2 then VariableEdit.Text := '$SETIAverage';
+    if SetiAtHomeListBox.itemindex = 3 then VariableEdit.Text := '$SETILastresult';
+    if SetiAtHomeListBox.itemindex = 4 then VariableEdit.Text := '$SETIusertime';
+    if SetiAtHomeListBox.itemindex = 5 then VariableEdit.Text := '$SETItotalusers';
+    if SetiAtHomeListBox.itemindex = 6 then VariableEdit.Text := '$SETIrank';
+    if SetiAtHomeListBox.itemindex = 7 then VariableEdit.Text := '$SETIsharingrank';
+    if SetiAtHomeListBox.itemindex = 8 then VariableEdit.Text := '$SETImoreWU%';
 
     FocusToInputField();
   end;
 end;
 
-procedure TSetupForm.PageControl1Change(Sender: TObject);
+procedure TSetupForm.LeftPageControlChange(Sender: TObject);
 begin
-  if Pagecontrol1.ActivePage = Tabsheet1 then
+  if LeftPageControl.ActivePage = WinampTabSheet then
   begin
-    if listbox7.itemindex > -1 then
+    if WinampListBox.itemindex > -1 then
     begin
-      if listbox7.itemindex = 0 then Edit9.Text := '$WinampTitle';
-      if listbox7.itemindex = 1 then Edit9.Text := '$WinampChannels';
-      if listbox7.itemindex = 2 then Edit9.Text := '$WinampKBPS';
-      if listbox7.itemindex = 3 then Edit9.Text := '$WinampFreq';
-      if listbox7.itemindex = 4 then Edit9.Text := '$Winamppos';
-      if listbox7.itemindex = 5 then Edit9.Text := '$WinampPolo';
-      if listbox7.itemindex = 6 then Edit9.Text := '$WinampPosh';
-      if listbox7.itemindex = 7 then Edit9.Text := '$WinampRem';
-      if listbox7.itemindex = 8 then Edit9.Text := '$WinampRelo';
-      if listbox7.itemindex = 9 then Edit9.Text := '$WinampResh';
-      if listbox7.itemindex = 10 then Edit9.Text := '$WinampLength';
-      if listbox7.itemindex = 11 then Edit9.Text := '$WinampLengtl';
-      if listbox7.itemindex = 12 then Edit9.Text := '$WinampLengts';
-      if listbox7.itemindex = 13 then Edit9.Text := '$WinampPosition(10)';
-      if listbox7.itemindex = 14 then Edit9.Text := '$WinampTracknr';
-      if listbox7.itemindex = 15 then Edit9.Text := '$WinampTotalTracks';
-      if listbox7.itemindex = 16 then Edit9.Text := '$WinampStat';
+      if WinampListBox.itemindex = 0 then VariableEdit.Text := '$WinampTitle';
+      if WinampListBox.itemindex = 1 then VariableEdit.Text := '$WinampChannels';
+      if WinampListBox.itemindex = 2 then VariableEdit.Text := '$WinampKBPS';
+      if WinampListBox.itemindex = 3 then VariableEdit.Text := '$WinampFreq';
+      if WinampListBox.itemindex = 4 then VariableEdit.Text := '$Winamppos';
+      if WinampListBox.itemindex = 5 then VariableEdit.Text := '$WinampPolo';
+      if WinampListBox.itemindex = 6 then VariableEdit.Text := '$WinampPosh';
+      if WinampListBox.itemindex = 7 then VariableEdit.Text := '$WinampRem';
+      if WinampListBox.itemindex = 8 then VariableEdit.Text := '$WinampRelo';
+      if WinampListBox.itemindex = 9 then VariableEdit.Text := '$WinampResh';
+      if WinampListBox.itemindex = 10 then VariableEdit.Text := '$WinampLength';
+      if WinampListBox.itemindex = 11 then VariableEdit.Text := '$WinampLengtl';
+      if WinampListBox.itemindex = 12 then VariableEdit.Text := '$WinampLengts';
+      if WinampListBox.itemindex = 13 then VariableEdit.Text := '$WinampPosition(10)';
+      if WinampListBox.itemindex = 14 then VariableEdit.Text := '$WinampTracknr';
+      if WinampListBox.itemindex = 15 then VariableEdit.Text := '$WinampTotalTracks';
+      if WinampListBox.itemindex = 16 then VariableEdit.Text := '$WinampStat';
     end
-    else edit9.text := 'Variable: ';
+    else VariableEdit.text := 'Variable: ';
   end;
-  if Pagecontrol1.ActivePage = Tabsheet2 then
+  if LeftPageControl.ActivePage = SysInfoTabSheet then
   begin
-    if listbox6.itemindex > -1 then
+    if SysInfoListBox.itemindex > -1 then
     begin
-      if listbox6.itemindex = 0 then Edit9.Text := '$Username';
-      if listbox6.itemindex = 1 then Edit9.Text := '$Computername';
-      if listbox6.itemindex = 2 then Edit9.Text := '$CPUType';
-      if listbox6.itemindex = 3 then Edit9.Text := '$CPUSpeed';
-      if listbox6.itemindex = 4 then Edit9.Text := '$CPUUsage%';
-      if listbox6.itemindex = 5 then Edit9.Text :=
+      if SysInfoListBox.itemindex = 0 then VariableEdit.Text := '$Username';
+      if SysInfoListBox.itemindex = 1 then VariableEdit.Text := '$Computername';
+      if SysInfoListBox.itemindex = 2 then VariableEdit.Text := '$CPUType';
+      if SysInfoListBox.itemindex = 3 then VariableEdit.Text := '$CPUSpeed';
+      if SysInfoListBox.itemindex = 4 then VariableEdit.Text := '$CPUUsage%';
+      if SysInfoListBox.itemindex = 5 then VariableEdit.Text :=
         '$Bar($CPUUsage%,100,10)';
-      if listbox6.itemindex = 6 then Edit9.Text := '$MemFree';
-      if listbox6.itemindex = 7 then Edit9.Text := '$MemUsed';
-      if listbox6.itemindex = 8 then Edit9.Text := '$MemTotal';
-      if listbox6.itemindex = 9 then Edit9.Text := '$MemF%';
-      if listbox6.itemindex = 10 then Edit9.Text := '$MemU%';
-      if listbox6.itemindex = 11 then Edit9.Text :=
+      if SysInfoListBox.itemindex = 6 then VariableEdit.Text := '$MemFree';
+      if SysInfoListBox.itemindex = 7 then VariableEdit.Text := '$MemUsed';
+      if SysInfoListBox.itemindex = 8 then VariableEdit.Text := '$MemTotal';
+      if SysInfoListBox.itemindex = 9 then VariableEdit.Text := '$MemF%';
+      if SysInfoListBox.itemindex = 10 then VariableEdit.Text := '$MemU%';
+      if SysInfoListBox.itemindex = 11 then VariableEdit.Text :=
         '$Bar($MemFree,$MemTotal,10)';
-      if listbox6.itemindex = 12 then Edit9.Text :=
+      if SysInfoListBox.itemindex = 12 then VariableEdit.Text :=
         '$Bar($MemUsed,$MemTotal,10)';
-      if listbox6.itemindex = 13 then Edit9.Text := '$PageFree';
-      if listbox6.itemindex = 14 then Edit9.Text := '$PageUsed';
-      if listbox6.itemindex = 15 then Edit9.Text := '$PageTotal';
-      if listbox6.itemindex = 16 then Edit9.Text := '$PageF%';
-      if listbox6.itemindex = 17 then Edit9.Text := '$PageU%';
-      if listbox6.itemindex = 18 then Edit9.Text :=
+      if SysInfoListBox.itemindex = 13 then VariableEdit.Text := '$PageFree';
+      if SysInfoListBox.itemindex = 14 then VariableEdit.Text := '$PageUsed';
+      if SysInfoListBox.itemindex = 15 then VariableEdit.Text := '$PageTotal';
+      if SysInfoListBox.itemindex = 16 then VariableEdit.Text := '$PageF%';
+      if SysInfoListBox.itemindex = 17 then VariableEdit.Text := '$PageU%';
+      if SysInfoListBox.itemindex = 18 then VariableEdit.Text :=
         '$Bar($PageFree,$PageTotal,10)';
-      if listbox6.itemindex = 19 then Edit9.Text :=
+      if SysInfoListBox.itemindex = 19 then VariableEdit.Text :=
         '$Bar($PageUsed,$PageTotal,10)';
-      if listbox6.itemindex = 20 then Edit9.Text := '$HDFree(C)';
-      if listbox6.itemindex = 21 then Edit9.Text := '$HDUsed(C)';
-      if listbox6.itemindex = 22 then Edit9.Text := '$HDTotal(C)';
-      if listbox6.itemindex = 23 then Edit9.Text := '$HDFreg(C)';
-      if listbox6.itemindex = 24 then Edit9.Text := '$HDUseg(C)';
-      if listbox6.itemindex = 25 then Edit9.Text := '$HDTotag(C)';
-      if listbox6.itemindex = 26 then Edit9.Text := '$HDF%(C)';
-      if listbox6.itemindex = 27 then Edit9.Text := '$HDU%(C)';
-      if listbox6.itemindex = 28 then Edit9.Text :=
+      if SysInfoListBox.itemindex = 20 then VariableEdit.Text := '$HDFree(C)';
+      if SysInfoListBox.itemindex = 21 then VariableEdit.Text := '$HDUsed(C)';
+      if SysInfoListBox.itemindex = 22 then VariableEdit.Text := '$HDTotal(C)';
+      if SysInfoListBox.itemindex = 23 then VariableEdit.Text := '$HDFreg(C)';
+      if SysInfoListBox.itemindex = 24 then VariableEdit.Text := '$HDUseg(C)';
+      if SysInfoListBox.itemindex = 25 then VariableEdit.Text := '$HDTotag(C)';
+      if SysInfoListBox.itemindex = 26 then VariableEdit.Text := '$HDF%(C)';
+      if SysInfoListBox.itemindex = 27 then VariableEdit.Text := '$HDU%(C)';
+      if SysInfoListBox.itemindex = 28 then VariableEdit.Text :=
         '$Bar($HDFree(C),$HDTotal(C),10)';
-      if listbox6.itemindex = 29 then Edit9.Text :=
+      if SysInfoListBox.itemindex = 29 then VariableEdit.Text :=
         '$Bar($HDUsed(C),$HDTotal(C),10)';
-      if listbox6.itemindex = 30 then Edit9.Text := '$ScreenReso';
+      if SysInfoListBox.itemindex = 30 then VariableEdit.Text := '$ScreenReso';
     end
-    else edit9.text := 'Variable: ';
+    else VariableEdit.text := 'Variable: ';
   end;
-  if Pagecontrol1.ActivePage = Tabsheet3 then
+  if LeftPageControl.ActivePage = MBMTabSheet then
   begin
-    if listbox5.itemindex > -1 then
+    if MBMListBox.itemindex > -1 then
     begin
-      if listbox5.itemindex = 0 then Edit9.Text := '$Temp1';
-      if listbox5.itemindex = 1 then Edit9.Text := '$Temp2';
-      if listbox5.itemindex = 2 then Edit9.Text := '$Temp3';
-      if listbox5.itemindex = 3 then Edit9.Text := '$Temp4';
-      if listbox5.itemindex = 4 then Edit9.Text := '$Temp5';
-      if listbox5.itemindex = 5 then Edit9.Text := '$Temp6';
-      if listbox5.itemindex = 6 then Edit9.Text := '$Temp7';
-      if listbox5.itemindex = 7 then Edit9.Text := '$Temp8';
-      if listbox5.itemindex = 8 then Edit9.Text := '$Temp9';
-      if listbox5.itemindex = 9 then Edit9.Text := '$Temp10';
-      if listbox5.itemindex = 10 then Edit9.Text := '$FanS1';
-      if listbox5.itemindex = 11 then Edit9.Text := '$FanS2';
-      if listbox5.itemindex = 12 then Edit9.Text := '$FanS3';
-      if listbox5.itemindex = 13 then Edit9.Text := '$FanS4';
-      if listbox5.itemindex = 14 then Edit9.Text := '$FanS5';
-      if listbox5.itemindex = 15 then Edit9.Text := '$FanS6';
-      if listbox5.itemindex = 16 then Edit9.Text := '$FanS7';
-      if listbox5.itemindex = 17 then Edit9.Text := '$FanS8';
-      if listbox5.itemindex = 18 then Edit9.Text := '$FanS9';
-      if listbox5.itemindex = 19 then Edit9.Text := '$FanS10';
-      if listbox5.itemindex = 20 then Edit9.Text := '$Voltage1';
-      if listbox5.itemindex = 21 then Edit9.Text := '$Voltage2';
-      if listbox5.itemindex = 22 then Edit9.Text := '$Voltage3';
-      if listbox5.itemindex = 23 then Edit9.Text := '$Voltage4';
-      if listbox5.itemindex = 24 then Edit9.Text := '$Voltage5';
-      if listbox5.itemindex = 25 then Edit9.Text := '$Voltage6';
-      if listbox5.itemindex = 26 then Edit9.Text := '$Voltage7';
-      if listbox5.itemindex = 27 then Edit9.Text := '$Voltage8';
-      if listbox5.itemindex = 28 then Edit9.Text := '$Voltage9';
-      if listbox5.itemindex = 29 then Edit9.Text := '$Voltage10';
-      if listbox5.itemindex = 30 then Edit9.Text := '$Tempname1';
-      if listbox5.itemindex = 31 then Edit9.Text := '$Tempname2';
-      if listbox5.itemindex = 32 then Edit9.Text := '$Tempname3';
-      if listbox5.itemindex = 33 then Edit9.Text := '$Tempname4';
-      if listbox5.itemindex = 34 then Edit9.Text := '$Tempname5';
-      if listbox5.itemindex = 35 then Edit9.Text := '$Tempname6';
-      if listbox5.itemindex = 36 then Edit9.Text := '$Tempname7';
-      if listbox5.itemindex = 37 then Edit9.Text := '$Tempname8';
-      if listbox5.itemindex = 38 then Edit9.Text := '$Tempname9';
-      if listbox5.itemindex = 39 then Edit9.Text := '$Tempname10';
-      if listbox5.itemindex = 40 then Edit9.Text := '$Fanname1';
-      if listbox5.itemindex = 41 then Edit9.Text := '$Fanname2';
-      if listbox5.itemindex = 42 then Edit9.Text := '$Fanname3';
-      if listbox5.itemindex = 43 then Edit9.Text := '$Fanname4';
-      if listbox5.itemindex = 44 then Edit9.Text := '$Fanname5';
-      if listbox5.itemindex = 45 then Edit9.Text := '$Fanname6';
-      if listbox5.itemindex = 46 then Edit9.Text := '$Fanname7';
-      if listbox5.itemindex = 47 then Edit9.Text := '$Fanname8';
-      if listbox5.itemindex = 48 then Edit9.Text := '$Fanname9';
-      if listbox5.itemindex = 49 then Edit9.Text := '$Fanname10';
-      if listbox5.itemindex = 50 then Edit9.Text := '$Voltname1';
-      if listbox5.itemindex = 51 then Edit9.Text := '$Voltname2';
-      if listbox5.itemindex = 52 then Edit9.Text := '$Voltname3';
-      if listbox5.itemindex = 53 then Edit9.Text := '$Voltname4';
-      if listbox5.itemindex = 54 then Edit9.Text := '$Voltname5';
-      if listbox5.itemindex = 55 then Edit9.Text := '$Voltname6';
-      if listbox5.itemindex = 56 then Edit9.Text := '$Voltname7';
-      if listbox5.itemindex = 57 then Edit9.Text := '$Voltname8';
-      if listbox5.itemindex = 58 then Edit9.Text := '$Voltname9';
-      if listbox5.itemindex = 59 then Edit9.Text := '$Voltname10';
+      if MBMListBox.itemindex = 0 then VariableEdit.Text := '$Temp1';
+      if MBMListBox.itemindex = 1 then VariableEdit.Text := '$Temp2';
+      if MBMListBox.itemindex = 2 then VariableEdit.Text := '$Temp3';
+      if MBMListBox.itemindex = 3 then VariableEdit.Text := '$Temp4';
+      if MBMListBox.itemindex = 4 then VariableEdit.Text := '$Temp5';
+      if MBMListBox.itemindex = 5 then VariableEdit.Text := '$Temp6';
+      if MBMListBox.itemindex = 6 then VariableEdit.Text := '$Temp7';
+      if MBMListBox.itemindex = 7 then VariableEdit.Text := '$Temp8';
+      if MBMListBox.itemindex = 8 then VariableEdit.Text := '$Temp9';
+      if MBMListBox.itemindex = 9 then VariableEdit.Text := '$Temp10';
+      if MBMListBox.itemindex = 10 then VariableEdit.Text := '$FanS1';
+      if MBMListBox.itemindex = 11 then VariableEdit.Text := '$FanS2';
+      if MBMListBox.itemindex = 12 then VariableEdit.Text := '$FanS3';
+      if MBMListBox.itemindex = 13 then VariableEdit.Text := '$FanS4';
+      if MBMListBox.itemindex = 14 then VariableEdit.Text := '$FanS5';
+      if MBMListBox.itemindex = 15 then VariableEdit.Text := '$FanS6';
+      if MBMListBox.itemindex = 16 then VariableEdit.Text := '$FanS7';
+      if MBMListBox.itemindex = 17 then VariableEdit.Text := '$FanS8';
+      if MBMListBox.itemindex = 18 then VariableEdit.Text := '$FanS9';
+      if MBMListBox.itemindex = 19 then VariableEdit.Text := '$FanS10';
+      if MBMListBox.itemindex = 20 then VariableEdit.Text := '$Voltage1';
+      if MBMListBox.itemindex = 21 then VariableEdit.Text := '$Voltage2';
+      if MBMListBox.itemindex = 22 then VariableEdit.Text := '$Voltage3';
+      if MBMListBox.itemindex = 23 then VariableEdit.Text := '$Voltage4';
+      if MBMListBox.itemindex = 24 then VariableEdit.Text := '$Voltage5';
+      if MBMListBox.itemindex = 25 then VariableEdit.Text := '$Voltage6';
+      if MBMListBox.itemindex = 26 then VariableEdit.Text := '$Voltage7';
+      if MBMListBox.itemindex = 27 then VariableEdit.Text := '$Voltage8';
+      if MBMListBox.itemindex = 28 then VariableEdit.Text := '$Voltage9';
+      if MBMListBox.itemindex = 29 then VariableEdit.Text := '$Voltage10';
+      if MBMListBox.itemindex = 30 then VariableEdit.Text := '$Tempname1';
+      if MBMListBox.itemindex = 31 then VariableEdit.Text := '$Tempname2';
+      if MBMListBox.itemindex = 32 then VariableEdit.Text := '$Tempname3';
+      if MBMListBox.itemindex = 33 then VariableEdit.Text := '$Tempname4';
+      if MBMListBox.itemindex = 34 then VariableEdit.Text := '$Tempname5';
+      if MBMListBox.itemindex = 35 then VariableEdit.Text := '$Tempname6';
+      if MBMListBox.itemindex = 36 then VariableEdit.Text := '$Tempname7';
+      if MBMListBox.itemindex = 37 then VariableEdit.Text := '$Tempname8';
+      if MBMListBox.itemindex = 38 then VariableEdit.Text := '$Tempname9';
+      if MBMListBox.itemindex = 39 then VariableEdit.Text := '$Tempname10';
+      if MBMListBox.itemindex = 40 then VariableEdit.Text := '$Fanname1';
+      if MBMListBox.itemindex = 41 then VariableEdit.Text := '$Fanname2';
+      if MBMListBox.itemindex = 42 then VariableEdit.Text := '$Fanname3';
+      if MBMListBox.itemindex = 43 then VariableEdit.Text := '$Fanname4';
+      if MBMListBox.itemindex = 44 then VariableEdit.Text := '$Fanname5';
+      if MBMListBox.itemindex = 45 then VariableEdit.Text := '$Fanname6';
+      if MBMListBox.itemindex = 46 then VariableEdit.Text := '$Fanname7';
+      if MBMListBox.itemindex = 47 then VariableEdit.Text := '$Fanname8';
+      if MBMListBox.itemindex = 48 then VariableEdit.Text := '$Fanname9';
+      if MBMListBox.itemindex = 49 then VariableEdit.Text := '$Fanname10';
+      if MBMListBox.itemindex = 50 then VariableEdit.Text := '$Voltname1';
+      if MBMListBox.itemindex = 51 then VariableEdit.Text := '$Voltname2';
+      if MBMListBox.itemindex = 52 then VariableEdit.Text := '$Voltname3';
+      if MBMListBox.itemindex = 53 then VariableEdit.Text := '$Voltname4';
+      if MBMListBox.itemindex = 54 then VariableEdit.Text := '$Voltname5';
+      if MBMListBox.itemindex = 55 then VariableEdit.Text := '$Voltname6';
+      if MBMListBox.itemindex = 56 then VariableEdit.Text := '$Voltname7';
+      if MBMListBox.itemindex = 57 then VariableEdit.Text := '$Voltname8';
+      if MBMListBox.itemindex = 58 then VariableEdit.Text := '$Voltname9';
+      if MBMListBox.itemindex = 59 then VariableEdit.Text := '$Voltname10';
     end
-    else edit9.text := 'Variable: ';
+    else VariableEdit.text := 'Variable: ';
   end;
-  if Pagecontrol1.ActivePage = Tabsheet13 then
+  if LeftPageControl.ActivePage = LCDFeaturesTabSheet then
   begin
-    //if radiobutton2.Checked = false then pagecontrol1.ActivePage := Tabsheet1;
-    if listbox12.itemindex > -1 then
+    //if MatrixOrbitalRadioButton.Checked = false then LeftPageControl.ActivePage := WinampTabSheet;
+    if ButtonsListBox.itemindex > -1 then
     begin
-      if listbox12.itemindex = 0 then Edit9.Text := '$MObutton';
-      if listbox12.itemindex = 1 then Edit9.Text := '$FanSpeed(1,1)';
-      if listbox12.itemindex = 2 then Edit9.Text := '$Sensor1';
-      if listbox12.itemindex = 3 then Edit9.Text := '$Sensor2';
-      if listbox12.itemindex = 4 then Edit9.Text := '$Sensor3';
-      if listbox12.itemindex = 5 then Edit9.Text := '$Sensor4';
-      if listbox12.itemindex = 6 then Edit9.Text := '$Sensor5';
-      if listbox12.itemindex = 7 then Edit9.Text := '$Sensor6';
-      if listbox12.itemindex = 8 then Edit9.Text := '$Sensor7';
-      if listbox12.itemindex = 9 then Edit9.Text := '$Sensor8';
+      if ButtonsListBox.itemindex = 0 then VariableEdit.Text := '$MObutton';
+      if ButtonsListBox.itemindex = 1 then VariableEdit.Text := '$FanSpeed(1,1)';
+      if ButtonsListBox.itemindex = 2 then VariableEdit.Text := '$Sensor1';
+      if ButtonsListBox.itemindex = 3 then VariableEdit.Text := '$Sensor2';
+      if ButtonsListBox.itemindex = 4 then VariableEdit.Text := '$Sensor3';
+      if ButtonsListBox.itemindex = 5 then VariableEdit.Text := '$Sensor4';
+      if ButtonsListBox.itemindex = 6 then VariableEdit.Text := '$Sensor5';
+      if ButtonsListBox.itemindex = 7 then VariableEdit.Text := '$Sensor6';
+      if ButtonsListBox.itemindex = 8 then VariableEdit.Text := '$Sensor7';
+      if ButtonsListBox.itemindex = 9 then VariableEdit.Text := '$Sensor8';
     end
-    else edit9.text := 'Variable: ';
+    else VariableEdit.text := 'Variable: ';
   end;
-  if Pagecontrol1.ActivePage = Tabsheet5 then
+  if LeftPageControl.ActivePage = GameStatsTabSheet then
   begin
-    if listbox8.itemindex <= -1 then edit9.text := 'Variable: ';
+    if GamestatsListBox.itemindex <= -1 then VariableEdit.text := 'Variable: ';
   end;
-  if Pagecontrol1.ActivePage = Tabsheet6 then
+  if LeftPageControl.ActivePage = InternetTabSheet then
   begin
-    if listbox2.itemindex > -1 then
+    if InternetListBox.itemindex > -1 then
     begin
-      if listbox2.itemindex = 0 then Edit9.Text := '$CNN';
-      if listbox2.itemindex = 1 then Edit9.Text := '$Stocks';
-      if listbox2.itemindex = 2 then Edit9.Text := '$TomsHW';
-      if listbox2.itemindex = 3 then Edit9.Text := '$T.netHL';
-      if listbox2.itemindex = 4 then Edit9.Text := '$DutchWeather';
-      if listbox2.itemindex = 5 then Edit9.Text := '$Weather.com(CAXX0504)';
+      if InternetListBox.itemindex = 0 then VariableEdit.Text := '$CNN';
+      if InternetListBox.itemindex = 1 then VariableEdit.Text := '$Stocks';
+      if InternetListBox.itemindex = 2 then VariableEdit.Text := '$TomsHW';
+      if InternetListBox.itemindex = 3 then VariableEdit.Text := '$T.netHL';
+      if InternetListBox.itemindex = 4 then VariableEdit.Text := '$DutchWeather';
+      if InternetListBox.itemindex = 5 then VariableEdit.Text := '$Weather.com(CAXX0504)';
     end
-    else edit9.text := 'Variable: ';
+    else VariableEdit.text := 'Variable: ';
   end;
-  if Pagecontrol1.ActivePage = Tabsheet7 then
+  if LeftPageControl.ActivePage = MiscTabSheet then
   begin
-    if listbox1.itemindex > -1 then
+    if MiscListBox.itemindex > -1 then
     begin
-      if listbox1.itemindex = 0 then Edit9.Text := '$DnetSpeed';
-      if listbox1.itemindex = 1 then Edit9.Text := '$DnetDone';
-      if listbox1.itemindex = 2 then Edit9.Text :=
+      if MiscListBox.itemindex = 0 then VariableEdit.Text := '$DnetSpeed';
+      if MiscListBox.itemindex = 1 then VariableEdit.Text := '$DnetDone';
+      if MiscListBox.itemindex = 2 then VariableEdit.Text :=
         '$Time(d mmmm yyyy hh: nn: ss)';
-      if listbox1.itemindex = 3 then Edit9.Text := '$UpTime';
-      if listbox1.itemindex = 4 then Edit9.Text := '$UpTims';
-      if listbox1.itemindex = 5 then Edit9.Text := '°';
-      if listbox1.itemindex = 6 then Edit9.Text := 'ž';
-      if listbox1.itemindex = 7 then Edit9.Text := '$Chr(20)';
-      if listbox1.itemindex = 8 then Edit9.Text := '$File(C:\file.txt,1)';
-      if listbox1.itemindex = 9 then Edit9.Text :=
+      if MiscListBox.itemindex = 3 then VariableEdit.Text := '$UpTime';
+      if MiscListBox.itemindex = 4 then VariableEdit.Text := '$UpTims';
+      if MiscListBox.itemindex = 5 then VariableEdit.Text := '°';
+      if MiscListBox.itemindex = 6 then VariableEdit.Text := 'ž';
+      if MiscListBox.itemindex = 7 then VariableEdit.Text := '$Chr(20)';
+      if MiscListBox.itemindex = 8 then VariableEdit.Text := '$File(C:\file.txt,1)';
+      if MiscListBox.itemindex = 9 then VariableEdit.Text :=
         '$LogFile("C:\file.log",0)';
-      if listbox1.itemindex = 10 then Edit9.Text :=
+      if MiscListBox.itemindex = 10 then VariableEdit.Text :=
         '$dll(demo.dll,5,param1,param2)';
-      if listbox1.itemindex = 11 then Edit9.Text := '$Count(101#$CPUSpeed#4)';
-      if listbox1.itemindex = 12 then Edit9.Text := '$Bar(30,100,20)';
-      if listbox1.itemindex = 13 then Edit9.Text :=
+      if MiscListBox.itemindex = 11 then VariableEdit.Text := '$Count(101#$CPUSpeed#4)';
+      if MiscListBox.itemindex = 12 then VariableEdit.Text := '$Bar(30,100,20)';
+      if MiscListBox.itemindex = 13 then VariableEdit.Text :=
         '$Right(ins variable(s) here,$3%)';
-      if listbox1.itemindex = 14 then Edit9.Text := '$Fill(10)';
-      if listbox1.itemindex = 15 then Edit9.Text :=
+      if MiscListBox.itemindex = 14 then VariableEdit.Text := '$Fill(10)';
+      if MiscListBox.itemindex = 15 then VariableEdit.Text :=
         '$Flash(insert text here$)$';
     end
-    else edit9.text := 'Variable: ';
+    else VariableEdit.text := 'Variable: ';
   end;
-  if Pagecontrol1.ActivePage = Tabsheet8 then
+  if LeftPageControl.ActivePage = SetiAtHomeTabSheet then
   begin
-    if listbox3.itemindex > -1 then
+    if SetiAtHomeListBox.itemindex > -1 then
     begin
-      if listbox3.itemindex = 0 then Edit9.Text := '$SETIResults';
-      if listbox3.itemindex = 1 then Edit9.Text := '$SETICPUTime';
-      if listbox3.itemindex = 2 then Edit9.Text := '$SETIAverage';
-      if listbox3.itemindex = 3 then Edit9.Text := '$SETILastresult';
-      if listbox3.itemindex = 4 then Edit9.Text := '$SETIusertime';
-      if listbox3.itemindex = 5 then Edit9.Text := '$SETItotalusers';
-      if listbox3.itemindex = 6 then Edit9.Text := '$SETIrank';
-      if listbox3.itemindex = 7 then Edit9.Text := '$SETIsharingrank';
-      if listbox3.itemindex = 8 then Edit9.Text := '$SETImoreWU%';
+      if SetiAtHomeListBox.itemindex = 0 then VariableEdit.Text := '$SETIResults';
+      if SetiAtHomeListBox.itemindex = 1 then VariableEdit.Text := '$SETICPUTime';
+      if SetiAtHomeListBox.itemindex = 2 then VariableEdit.Text := '$SETIAverage';
+      if SetiAtHomeListBox.itemindex = 3 then VariableEdit.Text := '$SETILastresult';
+      if SetiAtHomeListBox.itemindex = 4 then VariableEdit.Text := '$SETIusertime';
+      if SetiAtHomeListBox.itemindex = 5 then VariableEdit.Text := '$SETItotalusers';
+      if SetiAtHomeListBox.itemindex = 6 then VariableEdit.Text := '$SETIrank';
+      if SetiAtHomeListBox.itemindex = 7 then VariableEdit.Text := '$SETIsharingrank';
+      if SetiAtHomeListBox.itemindex = 8 then VariableEdit.Text := '$SETImoreWU%';
     end
-    else edit9.text := 'Variable: ';
+    else VariableEdit.text := 'Variable: ';
   end;
-  if Pagecontrol1.ActivePage = Tabsheet10 then
+  if LeftPageControl.ActivePage = FoldingAtHomeTabSheet then
   begin
-    if listbox10.itemindex > -1 then
+    if FoldingAtHomeListBox.itemindex > -1 then
     begin
-      if listbox10.itemindex = 0 then Edit9.Text := '$FOLDmemsince';
-      if listbox10.itemindex = 1 then Edit9.Text := '$FOLDlastwu';
-      if listbox10.itemindex = 2 then Edit9.Text := '$FOLDactproc';
-      if listbox10.itemindex = 3 then Edit9.Text := '$FOLDteam';
-      if listbox10.itemindex = 4 then Edit9.Text := '$FOLDscore';
-      if listbox10.itemindex = 5 then Edit9.Text := '$FOLDrank';
-      if listbox10.itemindex = 6 then Edit9.Text := '$FOLDwu';
+      if FoldingAtHomeListBox.itemindex = 0 then VariableEdit.Text := '$FOLDmemsince';
+      if FoldingAtHomeListBox.itemindex = 1 then VariableEdit.Text := '$FOLDlastwu';
+      if FoldingAtHomeListBox.itemindex = 2 then VariableEdit.Text := '$FOLDactproc';
+      if FoldingAtHomeListBox.itemindex = 3 then VariableEdit.Text := '$FOLDteam';
+      if FoldingAtHomeListBox.itemindex = 4 then VariableEdit.Text := '$FOLDscore';
+      if FoldingAtHomeListBox.itemindex = 5 then VariableEdit.Text := '$FOLDrank';
+      if FoldingAtHomeListBox.itemindex = 6 then VariableEdit.Text := '$FOLDwu';
     end
-    else edit9.text := 'Variable: ';
+    else VariableEdit.text := 'Variable: ';
   end;
-  if Pagecontrol1.ActivePage = Tabsheet4 then
+  if LeftPageControl.ActivePage = EmailTabSheet then
   begin
-    if listbox4.itemindex > -1 then
+    if EmailListBox.itemindex > -1 then
     begin
-      if listbox4.itemindex = 0 then Edit9.Text := '$Email1';
-      if listbox4.itemindex = 1 then Edit9.Text := '$Email2';
-      if listbox4.itemindex = 2 then Edit9.Text := '$Email3';
-      if listbox4.itemindex = 3 then Edit9.Text := '$Email4';
-      if listbox4.itemindex = 4 then Edit9.Text := '$Email5';
-      if listbox4.itemindex = 5 then Edit9.Text := '$Email6';
-      if listbox4.itemindex = 6 then Edit9.Text := '$Email7';
-      if listbox4.itemindex = 7 then Edit9.Text := '$Email8';
-      if listbox4.itemindex = 8 then Edit9.Text := '$Email9';
-      if listbox4.itemindex = 9 then Edit9.Text := '$Email0';
+      if EmailListBox.itemindex = 0 then VariableEdit.Text := '$Email1';
+      if EmailListBox.itemindex = 1 then VariableEdit.Text := '$Email2';
+      if EmailListBox.itemindex = 2 then VariableEdit.Text := '$Email3';
+      if EmailListBox.itemindex = 3 then VariableEdit.Text := '$Email4';
+      if EmailListBox.itemindex = 4 then VariableEdit.Text := '$Email5';
+      if EmailListBox.itemindex = 5 then VariableEdit.Text := '$Email6';
+      if EmailListBox.itemindex = 6 then VariableEdit.Text := '$Email7';
+      if EmailListBox.itemindex = 7 then VariableEdit.Text := '$Email8';
+      if EmailListBox.itemindex = 8 then VariableEdit.Text := '$Email9';
+      if EmailListBox.itemindex = 9 then VariableEdit.Text := '$Email0';
     end
-    else edit9.text := 'Variable: ';
+    else VariableEdit.text := 'Variable: ';
   end;
-  if Pagecontrol1.ActivePage = Tabsheet9 then
+  if LeftPageControl.ActivePage = NetworkStatsTabSheet then
   begin
-    if listbox9.itemindex > -1 then
+    if NetworkStatsListBox.itemindex > -1 then
     begin
-      if listbox9.itemindex = 0 then Edit9.Text := '$NetAdapter(1)';
-      if listbox9.itemindex = 1 then Edit9.Text := '$NetDownK(1)';
-      if listbox9.itemindex = 2 then Edit9.Text := '$NetUpK(1)';
-      if listbox9.itemindex = 3 then Edit9.Text := '$NetDownM(1)';
-      if listbox9.itemindex = 4 then Edit9.Text := '$NetUpM(1)';
-      if listbox9.itemindex = 5 then Edit9.Text := '$NetDownG(1)';
-      if listbox9.itemindex = 6 then Edit9.Text := '$NetUpG(1)';
-      if listbox9.itemindex = 7 then Edit9.Text := '$NetSpDownK(1)';
-      if listbox9.itemindex = 8 then Edit9.Text := '$NetSpUpK(1)';
-      if listbox9.itemindex = 9 then Edit9.Text := '$NetSpDownM(1)';
-      if listbox9.itemindex = 10 then Edit9.Text := '$NetSpUpM(1)';
-      if listbox9.itemindex = 11 then Edit9.Text := '$NetErrDown(1)';
-      if listbox9.itemindex = 12 then Edit9.Text := '$NetErrUp(1)';
-      if listbox9.itemindex = 13 then Edit9.Text := '$NetErrTot(1)';
-      if listbox9.itemindex = 14 then Edit9.Text := '$NetUniDown(1)';
-      if listbox9.itemindex = 15 then Edit9.Text := '$NetUniUp(1)';
-      if listbox9.itemindex = 16 then Edit9.Text := '$NetUniTot(1)';
-      if listbox9.itemindex = 17 then Edit9.Text := '$NetNuniDown(1)';
-      if listbox9.itemindex = 18 then Edit9.Text := '$NetNuniUp(1)';
-      if listbox9.itemindex = 19 then Edit9.Text := '$NetNuniTot(1)';
-      if listbox9.itemindex = 20 then Edit9.Text := '$NetPackTot(1)';
-      if listbox9.itemindex = 21 then Edit9.Text := '$NetDiscDown(1)';
-      if listbox9.itemindex = 22 then Edit9.Text := '$NetDiscUp(1)';
-      if listbox9.itemindex = 23 then Edit9.Text := '$NetDiscTot(1)';
-      if listbox9.itemindex = 24 then Edit9.Text := '$NetIPaddress';
+      if NetworkStatsListBox.itemindex = 0 then VariableEdit.Text := '$NetAdapter(1)';
+      if NetworkStatsListBox.itemindex = 1 then VariableEdit.Text := '$NetDownK(1)';
+      if NetworkStatsListBox.itemindex = 2 then VariableEdit.Text := '$NetUpK(1)';
+      if NetworkStatsListBox.itemindex = 3 then VariableEdit.Text := '$NetDownM(1)';
+      if NetworkStatsListBox.itemindex = 4 then VariableEdit.Text := '$NetUpM(1)';
+      if NetworkStatsListBox.itemindex = 5 then VariableEdit.Text := '$NetDownG(1)';
+      if NetworkStatsListBox.itemindex = 6 then VariableEdit.Text := '$NetUpG(1)';
+      if NetworkStatsListBox.itemindex = 7 then VariableEdit.Text := '$NetSpDownK(1)';
+      if NetworkStatsListBox.itemindex = 8 then VariableEdit.Text := '$NetSpUpK(1)';
+      if NetworkStatsListBox.itemindex = 9 then VariableEdit.Text := '$NetSpDownM(1)';
+      if NetworkStatsListBox.itemindex = 10 then VariableEdit.Text := '$NetSpUpM(1)';
+      if NetworkStatsListBox.itemindex = 11 then VariableEdit.Text := '$NetErrDown(1)';
+      if NetworkStatsListBox.itemindex = 12 then VariableEdit.Text := '$NetErrUp(1)';
+      if NetworkStatsListBox.itemindex = 13 then VariableEdit.Text := '$NetErrTot(1)';
+      if NetworkStatsListBox.itemindex = 14 then VariableEdit.Text := '$NetUniDown(1)';
+      if NetworkStatsListBox.itemindex = 15 then VariableEdit.Text := '$NetUniUp(1)';
+      if NetworkStatsListBox.itemindex = 16 then VariableEdit.Text := '$NetUniTot(1)';
+      if NetworkStatsListBox.itemindex = 17 then VariableEdit.Text := '$NetNuniDown(1)';
+      if NetworkStatsListBox.itemindex = 18 then VariableEdit.Text := '$NetNuniUp(1)';
+      if NetworkStatsListBox.itemindex = 19 then VariableEdit.Text := '$NetNuniTot(1)';
+      if NetworkStatsListBox.itemindex = 20 then VariableEdit.Text := '$NetPackTot(1)';
+      if NetworkStatsListBox.itemindex = 21 then VariableEdit.Text := '$NetDiscDown(1)';
+      if NetworkStatsListBox.itemindex = 22 then VariableEdit.Text := '$NetDiscUp(1)';
+      if NetworkStatsListBox.itemindex = 23 then VariableEdit.Text := '$NetDiscTot(1)';
+      if NetworkStatsListBox.itemindex = 24 then VariableEdit.Text := '$NetIPaddress';
     end
-    else edit9.text := 'Variable: ';
+    else VariableEdit.text := 'Variable: ';
   end;
 end;
 
 
-procedure TSetupForm.Edit10Exit(Sender: TObject);
+procedure TSetupForm.GameServerEditExit(Sender: TObject);
 begin
-  if (combobox3.itemIndex >= 0 ) and
+  if (ScreenNumberComboBox.itemIndex >= 0 ) and
      (setupbutton >= 0) and (setupbutton <= 4) then
   begin
-    config.gameServer[combobox3.itemindex + 1, setupbutton] := edit10.text;
+    config.gameServer[ScreenNumberComboBox.itemindex + 1, setupbutton] := GameServerEdit.text;
   end;
 end;
 
-procedure TSetupForm.Button4Click(Sender: TObject);
+procedure TSetupForm.MatrixOrbitalConfigButtonClick(Sender: TObject);
 begin
   if (not config.isMO) then
   begin
@@ -1527,18 +1519,18 @@ begin
       mtConfirmation, [mbYes, mbNo], 0) = mrYes then
     begin
       // press apply for them
-      button7.click();
+      ApplyButton.click();
     end;
   end;
   DoMatrixOrbitalSetupForm;
 end;
 
-procedure TSetupForm.SpeedButton1Click(Sender: TObject);
+procedure TSetupForm.DistributedNetBrowseButtonClick(Sender: TObject);
 var
   line, line2: String;
 
 begin
-  line := edit14.text;
+  line := DistributedNetLogfileEdit.text;
   line2 := '';
   while pos('\', line) <> 0 do
   begin
@@ -1546,46 +1538,46 @@ begin
     line := copy(line, pos('\', line) + 1, length(line));
   end;
   opendialog2.InitialDir := line2;
-  opendialog2.FileName := edit14.text;
+  opendialog2.FileName := DistributedNetLogfileEdit.text;
   Opendialog2.Execute;
-  if opendialog2.FileName <> '' then edit14.text := opendialog2.FileName;
+  if opendialog2.FileName <> '' then DistributedNetLogfileEdit.text := opendialog2.FileName;
 end;
 
-procedure TSetupForm.ListBox4Click(Sender: TObject);
+procedure TSetupForm.EmailListBoxClick(Sender: TObject);
 begin
-  if listbox4.itemindex > -1 then
+  if EmailListBox.itemindex > -1 then
   begin
-    case listbox4.itemindex of
-      0: Edit9.Text := '$Email1';
-      1: Edit9.Text := '$EmailSub1';
-      2: Edit9.Text := '$EmailFrom1';
-      3: Edit9.Text := '$Email2';
-      4: Edit9.Text := '$EmailSub2';
-      5: Edit9.Text := '$EmailFrom2';
-      6: Edit9.Text := '$Email3';
-      7: Edit9.Text := '$EmailSub3';
-      8: Edit9.Text := '$EmailFrom3';
-      9: Edit9.Text := '$Email4';
-      10: Edit9.Text := '$EmailSub4';
-      11: Edit9.Text := '$EmailFrom4';
-      12: Edit9.Text := '$Email5';
-      13: Edit9.Text := '$EmailSub5';
-      14: Edit9.Text := '$EmailFrom5';
-      15: Edit9.Text := '$Email6';
-      16: Edit9.Text := '$EmailSub6';
-      17: Edit9.Text := '$EmailFrom6';
-      18: Edit9.Text := '$Email7';
-      19: Edit9.Text := '$EmailSub7';
-      20: Edit9.Text := '$EmailFrom7';
-      21: Edit9.Text := '$Email8';
-      22: Edit9.Text := '$EmailSub8';
-      23: Edit9.Text := '$EmailFrom8';
-      24: Edit9.Text := '$Email9';
-      25: Edit9.Text := '$EmailSub9';
-      26: Edit9.Text := '$EmailFrom9';
-      27: Edit9.Text := '$Email0';
-      28: Edit9.Text := '$EmailSub0';
-      29: Edit9.Text := '$EmailFrom0';
+    case EmailListBox.itemindex of
+      0: VariableEdit.Text := '$Email1';
+      1: VariableEdit.Text := '$EmailSub1';
+      2: VariableEdit.Text := '$EmailFrom1';
+      3: VariableEdit.Text := '$Email2';
+      4: VariableEdit.Text := '$EmailSub2';
+      5: VariableEdit.Text := '$EmailFrom2';
+      6: VariableEdit.Text := '$Email3';
+      7: VariableEdit.Text := '$EmailSub3';
+      8: VariableEdit.Text := '$EmailFrom3';
+      9: VariableEdit.Text := '$Email4';
+      10: VariableEdit.Text := '$EmailSub4';
+      11: VariableEdit.Text := '$EmailFrom4';
+      12: VariableEdit.Text := '$Email5';
+      13: VariableEdit.Text := '$EmailSub5';
+      14: VariableEdit.Text := '$EmailFrom5';
+      15: VariableEdit.Text := '$Email6';
+      16: VariableEdit.Text := '$EmailSub6';
+      17: VariableEdit.Text := '$EmailFrom6';
+      18: VariableEdit.Text := '$Email7';
+      19: VariableEdit.Text := '$EmailSub7';
+      20: VariableEdit.Text := '$EmailFrom7';
+      21: VariableEdit.Text := '$Email8';
+      22: VariableEdit.Text := '$EmailSub8';
+      23: VariableEdit.Text := '$EmailFrom8';
+      24: VariableEdit.Text := '$Email9';
+      25: VariableEdit.Text := '$EmailSub9';
+      26: VariableEdit.Text := '$EmailFrom9';
+      27: VariableEdit.Text := '$Email0';
+      28: VariableEdit.Text := '$EmailSub0';
+      29: VariableEdit.Text := '$EmailFrom0';
     end;
 
     FocusToInputField();
@@ -1593,109 +1585,109 @@ begin
   end;
 end;
 
-procedure TSetupForm.ComboBox8Change(Sender: TObject);
+procedure TSetupForm.EmailAccountComboBoxChange(Sender: TObject);
 
 begin
-  config.pop[(combobox8temp + 1) mod 10].server := edit11.text;
-  config.pop[(combobox8temp + 1) mod 10].user := edit12.text;
-  config.pop[(combobox8temp + 1) mod 10].pword := edit13.text;
+  config.pop[(EMailAccountComboboxTemp + 1) mod 10].server := EmailServerEdit.text;
+  config.pop[(EMailAccountComboboxTemp + 1) mod 10].user := EmailLoginEdit.text;
+  config.pop[(EMailAccountComboboxTemp + 1) mod 10].pword := EmailPasswordEdit.text;
 
-  if combobox8.itemIndex < 0 then combobox8.itemindex := 0;
+  if EmailAccountComboBox.itemIndex < 0 then EmailAccountComboBox.itemindex := 0;
 
-  combobox8temp := combobox8.itemindex;
-  edit11.text := config.pop[(combobox8temp + 1) mod 10].server;
-  edit12.text := config.pop[(combobox8temp + 1) mod 10].user;
-  edit13.text := config.pop[(combobox8temp + 1) mod 10].pword;
+  EMailAccountComboboxTemp := EmailAccountComboBox.itemindex;
+  EmailServerEdit.text := config.pop[(EMailAccountComboboxTemp + 1) mod 10].server;
+  EmailLoginEdit.text := config.pop[(EMailAccountComboboxTemp + 1) mod 10].user;
+  EmailPasswordEdit.text := config.pop[(EMailAccountComboboxTemp + 1) mod 10].pword;
 end;
 
-procedure TSetupForm.CheckBox7Click(Sender: TObject);
+procedure TSetupForm.ContinueLine1CheckBoxClick(Sender: TObject);
 var
   tempint1: Integer;
 
 begin
-  if checkbox7.checked = true then
+  if ContinueLine1CheckBox.checked = true then
   begin
-    checkbox3.Checked := true;
-    checkbox3.enabled := false;
+    DontScrollLine1CheckBox.Checked := true;
+    DontScrollLine1CheckBox.enabled := false;
     if setupbutton = 2 then
     begin
-      tempint1 := edit5.SelStart;
-      edit5.setfocus;
-      edit5.SelStart := tempint1;
+      tempint1 := Line1Edit.SelStart;
+      Line1Edit.setfocus;
+      Line1Edit.SelStart := tempint1;
     end;
-    edit6.enabled := false;
-    edit6.color := $00BBBBFF;
+    Line2Edit.enabled := false;
+    Line2Edit.color := $00BBBBFF;
   end
   else
   begin
-    checkbox3.enabled := true;
-    checkbox3.checked := false;
-    edit6.enabled := true;
-    edit6.color := clWhite;
+    DontScrollLine1CheckBox.enabled := true;
+    DontScrollLine1CheckBox.checked := false;
+    Line2Edit.enabled := true;
+    Line2Edit.color := clWhite;
   end;
 end;
 
-procedure TSetupForm.CheckBox8Click(Sender: TObject);
+procedure TSetupForm.ContinueLine2CheckBoxClick(Sender: TObject);
 var
   tempint1: Integer;
 
 begin
-  if checkbox8.checked = true then
+  if ContinueLine2CheckBox.checked = true then
   begin
-    checkbox4.Checked := true;
-    checkbox4.enabled := false;
+    DontScrollLine2CheckBox.Checked := true;
+    DontScrollLine2CheckBox.enabled := false;
     if setupbutton = 3 then
     begin
-      tempint1 := edit5.SelStart;
-      edit5.setfocus;
-      edit5.SelStart := tempint1;
+      tempint1 := Line1Edit.SelStart;
+      Line1Edit.setfocus;
+      Line1Edit.SelStart := tempint1;
     end;
-    edit7.enabled := false;
-    edit7.color := $00BBBBFF;
+    Line3Edit.enabled := false;
+    Line3Edit.color := $00BBBBFF;
   end
   else
   begin
-    checkbox4.enabled := true;
-    checkbox4.checked := false;
-    edit7.enabled := true;
-    edit7.color := clWhite;
+    DontScrollLine2CheckBox.enabled := true;
+    DontScrollLine2CheckBox.checked := false;
+    Line3Edit.enabled := true;
+    Line3Edit.color := clWhite;
   end;
 end;
 
-procedure TSetupForm.CheckBox9Click(Sender: TObject);
+procedure TSetupForm.ContinueLine3CheckBoxClick(Sender: TObject);
 var
   tempint1: Integer;
 
 begin
-  if checkbox9.checked = true then
+  if ContinueLine3CheckBox.checked = true then
   begin
-    checkbox5.Checked := true;
-    checkbox5.enabled := false;
+    DontScrollLine3CheckBox.Checked := true;
+    DontScrollLine3CheckBox.enabled := false;
     if setupbutton = 4 then
     begin
-      tempint1 := edit5.SelStart;
-      edit5.setfocus;
-      edit5.SelStart := tempint1;
+      tempint1 := Line1Edit.SelStart;
+      Line1Edit.setfocus;
+      Line1Edit.SelStart := tempint1;
     end;
-    edit8.enabled := false;
-    edit8.color := $00BBBBFF;
+    Line4Edit.enabled := false;
+    Line4Edit.color := $00BBBBFF;
   end
   else
   begin
-    checkbox5.enabled := true;
-    checkbox5.checked := false;
-    edit8.enabled := true;
-    edit8.color := clWhite;
+    DontScrollLine3CheckBox.enabled := true;
+    DontScrollLine3CheckBox.checked := false;
+    Line4Edit.enabled := true;
+    Line4Edit.color := clWhite;
   end;
 end;
 
-procedure TSetupForm.SpeedButton3Click(Sender: TObject);
+procedure TSetupForm.WinampLocationBrowseButtonClick(Sender: TObject);
 begin
   opendialog1.Execute;
-  if opendialog1.FileName <> '' then edit15.text := opendialog1.FileName;
+  if opendialog1.FileName <> '' then WinampLocationEdit.text := opendialog1.FileName;
 end;
 
-procedure TSetupForm.Button5Click(Sender: TObject);
+procedure TSetupForm.CrystalFontzConfigButtonClick(Sender: TObject);
 begin
  if (not config.isCF) then
   begin
@@ -1704,7 +1696,7 @@ begin
       mtConfirmation, [mbYes, mbNo], 0) = mrYes then
     begin
       // press apply for them
-      button7.click();
+      ApplyButton.click();
     end;
   end;
   DoCrystalFontzSetupForm;
@@ -1719,138 +1711,117 @@ begin
       mtConfirmation, [mbYes, mbNo], 0) = mrYes then
     begin
       // press apply for them
-      button7.click();
+      ApplyButton.click();
     end;
   end;
   if DoIRTransForm then begin
     config.isIR := false;  // force a reload with a potential new hostname
-    button7.click();
+    ApplyButton.click();
   end;
 end;
 
-procedure TSetupForm.ListBox8Click(Sender: TObject);
+procedure TSetupForm.GamestatsListBoxClick(Sender: TObject);
+var
+  S : string;
 begin
-  if listbox8.Itemindex = 0 then
-  begin
-    if combobox6.itemindex = 0 then Edit9.Text := '$Half-life1';
-    if combobox6.itemindex = 1 then Edit9.Text := '$QuakeII1';
-    if combobox6.itemindex = 2 then Edit9.Text := '$QuakeIII1';
-    if combobox6.itemindex = 3 then Edit9.Text := '$Unreal1';
+  case GameTypeComboBox.itemindex of
+    0 : S := '$Half-life';
+    1 : S := '$QuakeII';
+    2 : S := '$QuakeIII';
+    3 : S := '$Unreal';
   end;
-  if listbox8.Itemindex = 1 then
-  begin
-    if combobox6.itemindex = 0 then Edit9.Text := '$Half-life2';
-    if combobox6.itemindex = 1 then Edit9.Text := '$QuakeII2';
-    if combobox6.itemindex = 2 then Edit9.Text := '$QuakeIII2';
-    if combobox6.itemindex = 3 then Edit9.Text := '$Unreal2';
-  end;
-  if listbox8.Itemindex = 2 then
-  begin
-    if combobox6.itemindex = 0 then Edit9.Text := '$Half-life3';
-    if combobox6.itemindex = 1 then Edit9.Text := '$QuakeII3';
-    if combobox6.itemindex = 2 then Edit9.Text := '$QuakeIII3';
-    if combobox6.itemindex = 3 then Edit9.Text := '$Unreal3';
-  end;
-  if listbox8.Itemindex = 3 then
-  begin
-    if combobox6.itemindex = 0 then Edit9.Text := '$Half-life4';
-    if combobox6.itemindex = 1 then Edit9.Text := '$QuakeII4';
-    if combobox6.itemindex = 2 then Edit9.Text := '$QuakeIII4';
-    if combobox6.itemindex = 3 then Edit9.Text := '$Unreal4';
-  end;
-
+  VariableEdit.Text := S + IntToStr(GamestatsListBox.Itemindex+1);
   FocusToInputField();
-
 end;
 
 
-procedure TSetupForm.Edit5Enter(Sender: TObject);
+procedure TSetupForm.Line1EditEnter(Sender: TObject);
 begin
-  edit10.text := config.gameServer[combobox3.itemindex + 1, 1];
+  GameServerEdit.text := config.gameServer[ScreenNumberComboBox.itemindex + 1, 1];
   setupbutton := 1;
-  edit5.color := $00A1D7A4;
-  if edit6.enabled= true then edit6.color := clWhite
-  else edit6.color := $00BBBBFF;
-  if edit7.enabled= true then edit7.color := clWhite
-  else edit7.color := $00BBBBFF;
-  if edit8.enabled= true then edit8.color := clWhite
-  else edit8.color := $00BBBBFF;
+  Line1Edit.color := $00A1D7A4;
+  if Line2Edit.enabled= true then Line2Edit.color := clWhite
+  else Line2Edit.color := $00BBBBFF;
+  if Line3Edit.enabled= true then Line3Edit.color := clWhite
+  else Line3Edit.color := $00BBBBFF;
+  if Line4Edit.enabled= true then Line4Edit.color := clWhite
+  else Line4Edit.color := $00BBBBFF;
 end;
 
-procedure TSetupForm.Edit6Enter(Sender: TObject);
+procedure TSetupForm.Line2EditEnter(Sender: TObject);
 begin
-  edit10.text := config.gameServer[combobox3.itemindex + 1, 2];
+  GameServerEdit.text := config.gameServer[ScreenNumberComboBox.itemindex + 1, 2];
   setupbutton := 2;
-  edit6.color := $00A1D7A4;
-  if edit5.enabled= true then edit5.color := clWhite
-  else edit5.color := $00BBBBFF;
-  if edit7.enabled= true then edit7.color := clWhite
-  else edit7.color := $00BBBBFF;
-  if edit8.enabled= true then edit8.color := clWhite
-  else edit8.color := $00BBBBFF;
+  Line2Edit.color := $00A1D7A4;
+  if Line1Edit.enabled= true then Line1Edit.color := clWhite
+  else Line1Edit.color := $00BBBBFF;
+  if Line3Edit.enabled= true then Line3Edit.color := clWhite
+  else Line3Edit.color := $00BBBBFF;
+  if Line4Edit.enabled= true then Line4Edit.color := clWhite
+  else Line4Edit.color := $00BBBBFF;
 end;
 
-procedure TSetupForm.Edit7Enter(Sender: TObject);
+procedure TSetupForm.Line3EditEnter(Sender: TObject);
 begin
-  edit10.text := config.gameServer[combobox3.itemindex + 1, 3];
+  GameServerEdit.text := config.gameServer[ScreenNumberComboBox.itemindex + 1, 3];
   setupbutton := 3;
-  edit7.color := $00A1D7A4;
-  if edit6.enabled= true then edit6.color := clWhite
-  else edit6.color := $00BBBBFF;
-  if edit5.enabled= true then edit5.color := clWhite
-  else edit5.color := $00BBBBFF;
-  if edit8.enabled= true then edit8.color := clWhite
-  else edit8.color := $00BBBBFF;
+  Line3Edit.color := $00A1D7A4;
+  if Line2Edit.enabled= true then Line2Edit.color := clWhite
+  else Line2Edit.color := $00BBBBFF;
+  if Line1Edit.enabled= true then Line1Edit.color := clWhite
+  else Line1Edit.color := $00BBBBFF;
+  if Line4Edit.enabled= true then Line4Edit.color := clWhite
+  else Line4Edit.color := $00BBBBFF;
 end;
 
-procedure TSetupForm.Edit8Enter(Sender: TObject);
+procedure TSetupForm.Line4EditEnter(Sender: TObject);
 begin
-  edit10.text := config.gameServer[combobox3.itemindex + 1, 4];
+  GameServerEdit.text := config.gameServer[ScreenNumberComboBox.itemindex + 1, 4];
   setupbutton := 4;
-  edit8.color := $00A1D7A4;
-  if edit6.enabled= true then edit6.color := clWhite
-  else edit6.color := $00BBBBFF;
-  if edit7.enabled= true then edit7.color := clWhite
-  else edit7.color := $00BBBBFF;
-  if edit5.enabled= true then edit5.color := clWhite
-  else edit5.color := $00BBBBFF;
+  Line4Edit.color := $00A1D7A4;
+  if Line2Edit.enabled= true then Line2Edit.color := clWhite
+  else Line2Edit.color := $00BBBBFF;
+  if Line3Edit.enabled= true then Line3Edit.color := clWhite
+  else Line3Edit.color := $00BBBBFF;
+  if Line1Edit.enabled= true then Line1Edit.color := clWhite
+  else Line1Edit.color := $00BBBBFF;
 end;
 
-procedure TSetupForm.ListBox9Click(Sender: TObject);
+procedure TSetupForm.NetworkStatsListBoxClick(Sender: TObject);
 begin
-  if listbox9.itemindex > -1 then
+  if NetworkStatsListBox.itemindex > -1 then
   begin
-    if listbox9.itemindex = 0 then Edit9.Text := '$NetAdapter(1)';
-    if listbox9.itemindex = 1 then Edit9.Text := '$NetDownK(1)';
-    if listbox9.itemindex = 2 then Edit9.Text := '$NetUpK(1)';
-    if listbox9.itemindex = 3 then Edit9.Text := '$NetDownM(1)';
-    if listbox9.itemindex = 4 then Edit9.Text := '$NetUpM(1)';
-    if listbox9.itemindex = 5 then Edit9.Text := '$NetDownG(1)';
-    if listbox9.itemindex = 6 then Edit9.Text := '$NetUpG(1)';
-    if listbox9.itemindex = 7 then Edit9.Text := '$NetSpDownK(1)';
-    if listbox9.itemindex = 8 then Edit9.Text := '$NetSpUpK(1)';
-    if listbox9.itemindex = 9 then Edit9.Text := '$NetSpDownM(1)';
-    if listbox9.itemindex = 10 then Edit9.Text := '$NetSpUpM(1)';
-    if listbox9.itemindex = 11 then Edit9.Text := '$NetErrDown(1)';
-    if listbox9.itemindex = 12 then Edit9.Text := '$NetErrUp(1)';
-    if listbox9.itemindex = 13 then Edit9.Text := '$NetErrTot(1)';
-    if listbox9.itemindex = 14 then Edit9.Text := '$NetUniDown(1)';
-    if listbox9.itemindex = 15 then Edit9.Text := '$NetUniUp(1)';
-    if listbox9.itemindex = 16 then Edit9.Text := '$NetUniTot(1)';
-    if listbox9.itemindex = 17 then Edit9.Text := '$NetNuniDown(1)';
-    if listbox9.itemindex = 18 then Edit9.Text := '$NetNuniUp(1)';
-    if listbox9.itemindex = 19 then Edit9.Text := '$NetNuniTot(1)';
-    if listbox9.itemindex = 20 then Edit9.Text := '$NetPackTot(1)';
-    if listbox9.itemindex = 21 then Edit9.Text := '$NetDiscDown(1)';
-    if listbox9.itemindex = 22 then Edit9.Text := '$NetDiscUp(1)';
-    if listbox9.itemindex = 23 then Edit9.Text := '$NetDiscTot(1)';
-    if listbox9.itemindex = 24 then Edit9.Text := '$NetIPaddress';
+    if NetworkStatsListBox.itemindex = 0 then VariableEdit.Text := '$NetAdapter(1)';
+    if NetworkStatsListBox.itemindex = 1 then VariableEdit.Text := '$NetDownK(1)';
+    if NetworkStatsListBox.itemindex = 2 then VariableEdit.Text := '$NetUpK(1)';
+    if NetworkStatsListBox.itemindex = 3 then VariableEdit.Text := '$NetDownM(1)';
+    if NetworkStatsListBox.itemindex = 4 then VariableEdit.Text := '$NetUpM(1)';
+    if NetworkStatsListBox.itemindex = 5 then VariableEdit.Text := '$NetDownG(1)';
+    if NetworkStatsListBox.itemindex = 6 then VariableEdit.Text := '$NetUpG(1)';
+    if NetworkStatsListBox.itemindex = 7 then VariableEdit.Text := '$NetSpDownK(1)';
+    if NetworkStatsListBox.itemindex = 8 then VariableEdit.Text := '$NetSpUpK(1)';
+    if NetworkStatsListBox.itemindex = 9 then VariableEdit.Text := '$NetSpDownM(1)';
+    if NetworkStatsListBox.itemindex = 10 then VariableEdit.Text := '$NetSpUpM(1)';
+    if NetworkStatsListBox.itemindex = 11 then VariableEdit.Text := '$NetErrDown(1)';
+    if NetworkStatsListBox.itemindex = 12 then VariableEdit.Text := '$NetErrUp(1)';
+    if NetworkStatsListBox.itemindex = 13 then VariableEdit.Text := '$NetErrTot(1)';
+    if NetworkStatsListBox.itemindex = 14 then VariableEdit.Text := '$NetUniDown(1)';
+    if NetworkStatsListBox.itemindex = 15 then VariableEdit.Text := '$NetUniUp(1)';
+    if NetworkStatsListBox.itemindex = 16 then VariableEdit.Text := '$NetUniTot(1)';
+    if NetworkStatsListBox.itemindex = 17 then VariableEdit.Text := '$NetNuniDown(1)';
+    if NetworkStatsListBox.itemindex = 18 then VariableEdit.Text := '$NetNuniUp(1)';
+    if NetworkStatsListBox.itemindex = 19 then VariableEdit.Text := '$NetNuniTot(1)';
+    if NetworkStatsListBox.itemindex = 20 then VariableEdit.Text := '$NetPackTot(1)';
+    if NetworkStatsListBox.itemindex = 21 then VariableEdit.Text := '$NetDiscDown(1)';
+    if NetworkStatsListBox.itemindex = 22 then VariableEdit.Text := '$NetDiscUp(1)';
+    if NetworkStatsListBox.itemindex = 23 then VariableEdit.Text := '$NetDiscTot(1)';
+    if NetworkStatsListBox.itemindex = 24 then VariableEdit.Text := '$NetIPaddress';
 
     FocusToInputField();
   end;
 end;
 
-procedure TSetupForm.Button6Click(Sender: TObject);
+procedure TSetupForm.HD44780ConfigButtonClick(Sender: TObject);
 begin
  if (not config.isHD) then
   begin
@@ -1859,23 +1830,23 @@ begin
       mtConfirmation, [mbYes, mbNo], 0) = mrYes then
     begin
       // press apply for them
-      button7.click();
+      ApplyButton.click();
     end;
   end;
   if DoHD44780SetupForm then
     config.isHD := false;  // force reload
 end;
 
-procedure TSetupForm.ListBox10Click(Sender: TObject);
+procedure TSetupForm.FoldingAtHomeListBoxClick(Sender: TObject);
 begin
-  if listbox10.itemindex > -1 then
+  if FoldingAtHomeListBox.itemindex > -1 then
   begin
-    if listbox10.itemindex = 0 then Edit9.Text := '$FOLDwu';
-    if listbox10.itemindex = 1 then Edit9.Text := '$FOLDlastwu';
-    if listbox10.itemindex = 2 then Edit9.Text := '$FOLDactproc';
-    if listbox10.itemindex = 3 then Edit9.Text := '$FOLDteam';
-    if listbox10.itemindex = 4 then Edit9.Text := '$FOLDscore';
-    if listbox10.itemindex = 5 then Edit9.Text := '$FOLDrank';
+    if FoldingAtHomeListBox.itemindex = 0 then VariableEdit.Text := '$FOLDwu';
+    if FoldingAtHomeListBox.itemindex = 1 then VariableEdit.Text := '$FOLDlastwu';
+    if FoldingAtHomeListBox.itemindex = 2 then VariableEdit.Text := '$FOLDactproc';
+    if FoldingAtHomeListBox.itemindex = 3 then VariableEdit.Text := '$FOLDteam';
+    if FoldingAtHomeListBox.itemindex = 4 then VariableEdit.Text := '$FOLDscore';
+    if FoldingAtHomeListBox.itemindex = 5 then VariableEdit.Text := '$FOLDrank';
 
     FocusToInputField();
 
@@ -1884,7 +1855,7 @@ end;
 
 
 // Apply pressed.
-procedure TSetupForm.Button7Click(Sender: TObject);
+procedure TSetupForm.ApplyButtonClick(Sender: TObject);
 var
   relood: Boolean;
   x: Integer;
@@ -1894,43 +1865,43 @@ var
 begin
   relood := false;
 
-  if (comboBox4.items[combobox4.itemIndex] = USBPALM)
-    and (radiobutton3.checked) then
+  if (COMPortComboBox.items[COMPortComboBox.itemIndex] = USBPALM)
+    and (CrystalFontzRadioButton.checked) then
   begin
     showmessage('Matrix Orbital must be selected if USB Palm is selected.');
     Exit;
   end;
 
   iMaxUsedRow := -1;
-  for x := 0 to StringGrid1.RowCount-1 do
+  for x := 0 to ActionsStringGrid.RowCount-1 do
   begin
-    if (Stringgrid1.cells[0, x] <> '') and (Stringgrid1.cells[4,
+    if (ActionsStringGrid.cells[0, x] <> '') and (ActionsStringGrid.cells[4,
       x] <> '') then
     begin
         iMaxUsedRow := x;
-        config.actionsArray[x + 1, 1] := StringGrid1.Cells[0, x];
+        config.actionsArray[x + 1, 1] := ActionsStringGrid.Cells[0, x];
 
-        if StringGrid1.Cells[1, x]='>' then
+        if ActionsStringGrid.Cells[1, x]='>' then
            config.actionsArray[x + 1, 2] := '0';
-        if StringGrid1.Cells[1, x]='<' then
+        if ActionsStringGrid.Cells[1, x]='<' then
            config.actionsArray[x + 1, 2] := '1';
-        if StringGrid1.Cells[1, x]='=' then
+        if ActionsStringGrid.Cells[1, x]='=' then
            config.actionsArray[x + 1, 2] := '2';
-        if StringGrid1.Cells[1, x]='<=' then
+        if ActionsStringGrid.Cells[1, x]='<=' then
            config.actionsArray[x + 1, 2] := '3';
-        if StringGrid1.Cells[1, x]='>=' then
+        if ActionsStringGrid.Cells[1, x]='>=' then
            config.actionsArray[x + 1, 2] := '4';
-        if StringGrid1.Cells[1, x]='<>' then
+        if ActionsStringGrid.Cells[1, x]='<>' then
            config.actionsArray[x + 1, 2] := '5';
 
-        config.actionsArray[x + 1, 3] := StringGrid1.Cells[2, x];
-        config.actionsArray[x + 1, 4] := StringGrid1.Cells[4, x];
+        config.actionsArray[x + 1, 3] := ActionsStringGrid.Cells[2, x];
+        config.actionsArray[x + 1, 4] := ActionsStringGrid.Cells[4, x];
     end;
   end;
   config.totalactions := iMaxUsedRow + 1;
 
   // Check if Com settings have changed.
-  sComPort := comboBox4.items[comboBox4.itemIndex];
+  sComPort := COMPortComboBox.items[COMPortComboBox.itemIndex];
   if (config.isUsbPalm) <> (sComPort = USBPALM) then
   begin
     relood := true;
@@ -1941,32 +1912,32 @@ begin
       relood := true;
   end;
 
-  if (config.baudrate <> combobox5.itemindex) then relood := true;
-  if (radiobutton1.checked) and (not config.isHD) then relood := true;
-  if (radiobutton2.checked) and (not config.isMO) then relood := true;
-  if (radiobutton3.checked) and (not config.isCF) then relood := true;
-  if (radiobutton4.checked) and (not config.isHD2) then relood := true;
+  if (config.baudrate <> BaudRateComboBox.itemindex) then relood := true;
+  if (HD44780RadioButton.checked) and (not config.isHD) then relood := true;
+  if (MatrixOrbitalRadioButton.checked) and (not config.isMO) then relood := true;
+  if (CrystalFontzRadioButton.checked) and (not config.isCF) then relood := true;
+  if (HD66712RadioButton.checked) and (not config.isHD2) then relood := true;
   if (IRTransRadioButton.checked) and (not config.isIR) then relood := true;
 
 
-  LCDSmartieDisplayForm.WinampCtrl1.WinampLocation := edit15.text;
-  config.winampLocation := edit15.text;
-  config.refreshRate := StrToInt(spinEdit1.text);
-  config.setiEmail := edit1.text;
+  LCDSmartieDisplayForm.WinampCtrl1.WinampLocation := WinampLocationEdit.text;
+  config.winampLocation := WinampLocationEdit.text;
+  config.refreshRate := ProgramRefreshIntervalSpinEdit.Value;
+  config.setiEmail := SetiAtHomeEmailEdit.text;
 
-  config.sizeOption := combobox2.itemindex + 1;
-  config.randomScreens := checkbox14.checked;
-  config.newsRefresh := StrToInt(spinedit3.text);
-  config.foldUsername := edit2.text;
-  config.gameRefresh := StrToInt(spinedit5.text);
-  config.checkUpdates := checkbox15.checked;
-  config.mbmRefresh := StrToInt(spinedit6.text);
-  config.colorOption := combobox1.itemindex;
-  config.distLog := edit14.text;
-  config.dllPeriod := SpinEdit8.value;
-  config.emailPeriod := StrToInt(SpinEdit4.text);
-  config.scrollPeriod := SpinEdit9.value;
-  config.alwaysOnTop := checkbox2.checked;
+  config.sizeOption := LCDSizeComboBox.itemindex + 1;
+  config.randomScreens := RandomizeScreensCheckBox.checked;
+  config.newsRefresh := InternetRefreshTimeSpinEdit.Value;
+  config.foldUsername := FoldingAtHomeEmailEdit.text;
+  config.gameRefresh := GamestatsRefreshTimeSpinEdit.Value;
+  config.checkUpdates := LCDSmartieUpdateCheckBox.checked;
+  config.mbmRefresh := MBMRefreshTimeSpinEdit.Value;
+  config.colorOption := ColorSchemeComboBox.itemindex;
+  config.distLog := DistributedNetLogfileEdit.text;
+  config.dllPeriod := DLLCheckIntervalSpinEdit.value;
+  config.emailPeriod := EmailCheckTimeSpinEdit.Value;
+  config.scrollPeriod := ProgramScrollIntervalSpinEdit.value;
+  config.alwaysOnTop := StayOnTopCheckBox.checked;
   config.bHideOnStartup := HideOnStartup.Checked;
   config.bAutoStart := AutoStart.checked;
   config.bAutoStartHide := AutoStartHide.checked;
@@ -1974,34 +1945,34 @@ begin
   LCDSmartieDisplayForm.SetupAutoStart();
 
   // Check if Com settings have changed.
-  sComPort := comboBox4.items[comboBox4.itemIndex];
+  sComPort := COMPortComboBox.items[COMPortComboBox.itemIndex];
   config.isUsbPalm := (sComPort = USBPALM);
   if (not config.isUsbPalm) then
   begin
     config.comPort := StrToInt( midstr(sComPort, 4, length(sComPort)-3));
   end;
 
-  config.baudrate := combobox5.itemindex;
-  config.pop[(combobox8.itemindex + 1) mod 10].server := edit11.text;
-  config.pop[(combobox8.itemindex + 1) mod 10].user := edit12.text;
-  config.pop[(combobox8.itemindex + 1) mod 10].pword := edit13.text;
+  config.baudrate := BaudRateComboBox.itemindex;
+  config.pop[(EmailAccountComboBox.itemindex + 1) mod 10].server := EmailServerEdit.text;
+  config.pop[(EmailAccountComboBox.itemindex + 1) mod 10].user := EmailLoginEdit.text;
+  config.pop[(EmailAccountComboBox.itemindex + 1) mod 10].pword := EmailPasswordEdit.text;
 
-  config.isHD := radiobutton1.checked;
-  config.isMO := radiobutton2.checked;
-  config.isCF := radiobutton3.checked;
-  config.isHD2 := radiobutton4.checked;
+  config.isHD := HD44780RadioButton.checked;
+  config.isMO := MatrixOrbitalRadioButton.checked;
+  config.isCF := CrystalFontzRadioButton.checked;
+  config.isHD2 := HD66712RadioButton.checked;
   config.isIR := IRTransRadioButton.checked;
 
-  if edit4.text='' then edit4.text := '0';
-  config.httpProxy := edit3.text;
-  config.httpProxyPort := StrToInt(edit4.text);
+  if (WebProxyPortEdit.text = '') then WebProxyPortEdit.text := '0';
+  config.httpProxy := WebProxyServerEdit.text;
+  config.httpProxyPort := StrToInt(WebProxyPortEdit.text);
 
-  SaveScreen(combobox3.itemindex + 1);
-  LCDSmartieDisplayForm.timer2.interval := 1000;
-  LCDSmartieDisplayForm.timer8.interval := 1000;
-  LCDSmartieDisplayForm.timer6.interval := 1000;
-  LCDSmartieDisplayForm.timer12.interval := config.scrollPeriod;
-  LCDSmartieDisplayForm.timer9.interval := 800;
+  SaveScreen(ScreenNumberComboBox.itemindex + 1);
+  LCDSmartieDisplayForm.HTTPUpdateTimer.interval := 1000;
+  LCDSmartieDisplayForm.GameUpdateTimer.interval := 1000;
+  LCDSmartieDisplayForm.MBMUpdateTimer.interval := 1000;
+  LCDSmartieDisplayForm.ScrollFlashTimer.interval := config.scrollPeriod;
+  LCDSmartieDisplayForm.EMailTimer.interval := 800;
 
   config.save();
 
@@ -2013,274 +1984,271 @@ begin
 end;
 
 // ok has been pressed.
-procedure TSetupForm.Button1Click(Sender: TObject);
+procedure TSetupForm.OKButtonClick(Sender: TObject);
 begin
-  if (comboBox4.items[combobox4.itemIndex] = USBPALM)
-    and (radiobutton3.checked) then
+  if (COMPortComboBox.items[COMPortComboBox.itemIndex] = USBPALM)
+    and (CrystalFontzRadioButton.checked) then
   begin
     showmessage('Matrix Orbital must be selected if USB Palm is selected.');
     Exit;
   end;
 
-  // ok is the same as apply followed by cancel.
-  button7.click();
-
-  CancelButton.Click()
+  ApplyButton.click();
 end;
 
 procedure TSetupForm.FormCreate(Sender: TObject);
 begin
-  StringGrid1.RowCount := 0;
-  StringGrid1.ColWidths[0] := 116;
-  StringGrid1.ColWidths[1] := 20;
-  StringGrid1.ColWidths[2] := 56;
-  StringGrid1.ColWidths[3] := 36;
-  StringGrid1.ColWidths[4] := 156;
+  ActionsStringGrid.RowCount := 0;
+  ActionsStringGrid.ColWidths[0] := 116;
+  ActionsStringGrid.ColWidths[1] := 20;
+  ActionsStringGrid.ColWidths[2] := 56;
+  ActionsStringGrid.ColWidths[3] := 36;
+  ActionsStringGrid.ColWidths[4] := 156;
 end;
 
-procedure TSetupForm.ListBox11Click(Sender: TObject);
+procedure TSetupForm.OutputListBoxClick(Sender: TObject);
 begin
-  if listbox11.itemindex = 0 then Edit18.Text := 'NextTheme';
-  if listbox11.itemindex = 1 then Edit18.Text := 'LastTheme';
-  if listbox11.itemindex = 2 then Edit18.Text := 'NextScreen';
-  if listbox11.itemindex = 3 then Edit18.Text := 'LastScreen';
-  if listbox11.itemindex = 4 then Edit18.Text := 'GotoTheme(2)';
-  if listbox11.itemindex = 5 then Edit18.Text := 'GotoScreen(2)';
-  if listbox11.itemindex = 6 then Edit18.Text := 'FreezeScreen';
-  if listbox11.itemindex = 7 then Edit18.Text := 'RefreshAll';
-  if listbox11.itemindex = 8 then Edit18.Text := 'Backlight(1)';
-  if listbox11.itemindex = 9 then Edit18.Text := 'BacklightToggle';
-  if listbox11.itemindex = 10 then Edit18.Text := 'BLFlash(5)';
-  if listbox11.itemindex = 11 then Edit18.Text := 'Wave[c:\wave.wav]';
-  if listbox11.itemindex = 12 then Edit18.Text := 'Exec[c:\autoexec.bat]';
-  if listbox11.itemindex = 13 then Edit18.Text := 'WANextTrack';
-  if listbox11.itemindex = 14 then Edit18.Text := 'WALastTrack';
-  if listbox11.itemindex = 15 then Edit18.Text := 'WAPlay';
-  if listbox11.itemindex = 16 then Edit18.Text := 'WAStop';
-  if listbox11.itemindex = 17 then Edit18.Text := 'WAPause';
-  if listbox11.itemindex = 18 then Edit18.Text := 'WAShuffle';
-  if listbox11.itemindex = 19 then Edit18.Text := 'WAVolDown';
-  if listbox11.itemindex = 20 then Edit18.Text := 'WAVolUp';
-  if listbox11.itemindex = 21 then Edit18.Text := 'EnableScreen(1)';
-  if listbox11.itemindex = 22 then Edit18.Text := 'DisableScreen(1)';
-  if listbox11.itemindex = 23 then Edit18.Text := '$dll(name.dll,2,param1,param2)';
+  if OutputListBox.itemindex = 0 then StatementEdit.Text := 'NextTheme';
+  if OutputListBox.itemindex = 1 then StatementEdit.Text := 'LastTheme';
+  if OutputListBox.itemindex = 2 then StatementEdit.Text := 'NextScreen';
+  if OutputListBox.itemindex = 3 then StatementEdit.Text := 'LastScreen';
+  if OutputListBox.itemindex = 4 then StatementEdit.Text := 'GotoTheme(2)';
+  if OutputListBox.itemindex = 5 then StatementEdit.Text := 'GotoScreen(2)';
+  if OutputListBox.itemindex = 6 then StatementEdit.Text := 'FreezeScreen';
+  if OutputListBox.itemindex = 7 then StatementEdit.Text := 'RefreshAll';
+  if OutputListBox.itemindex = 8 then StatementEdit.Text := 'Backlight(1)';
+  if OutputListBox.itemindex = 9 then StatementEdit.Text := 'BacklightToggle';
+  if OutputListBox.itemindex = 10 then StatementEdit.Text := 'BLFlash(5)';
+  if OutputListBox.itemindex = 11 then StatementEdit.Text := 'Wave[c:\wave.wav]';
+  if OutputListBox.itemindex = 12 then StatementEdit.Text := 'Exec[c:\autoexec.bat]';
+  if OutputListBox.itemindex = 13 then StatementEdit.Text := 'WANextTrack';
+  if OutputListBox.itemindex = 14 then StatementEdit.Text := 'WALastTrack';
+  if OutputListBox.itemindex = 15 then StatementEdit.Text := 'WAPlay';
+  if OutputListBox.itemindex = 16 then StatementEdit.Text := 'WAStop';
+  if OutputListBox.itemindex = 17 then StatementEdit.Text := 'WAPause';
+  if OutputListBox.itemindex = 18 then StatementEdit.Text := 'WAShuffle';
+  if OutputListBox.itemindex = 19 then StatementEdit.Text := 'WAVolDown';
+  if OutputListBox.itemindex = 20 then StatementEdit.Text := 'WAVolUp';
+  if OutputListBox.itemindex = 21 then StatementEdit.Text := 'EnableScreen(1)';
+  if OutputListBox.itemindex = 22 then StatementEdit.Text := 'DisableScreen(1)';
+  if OutputListBox.itemindex = 23 then StatementEdit.Text := '$dll(name.dll,2,param1,param2)';
 
-  if listbox11.itemindex = 24 then Edit18.Text := 'GPO(4,1)';
-  if listbox11.itemindex = 25 then Edit18.Text := 'GPOToggle(4)';
-  if listbox11.itemindex = 26 then Edit18.Text := 'GPOFlash(4,5)';
-  if listbox11.itemindex = 27 then Edit18.Text := 'Fan(1,255)';
+  if OutputListBox.itemindex = 24 then StatementEdit.Text := 'GPO(4,1)';
+  if OutputListBox.itemindex = 25 then StatementEdit.Text := 'GPOToggle(4)';
+  if OutputListBox.itemindex = 26 then StatementEdit.Text := 'GPOFlash(4,5)';
+  if OutputListBox.itemindex = 27 then StatementEdit.Text := 'Fan(1,255)';
 
 end;
 
-procedure TSetupForm.PageControl2Change(Sender: TObject);
+procedure TSetupForm.MainPageControlChange(Sender: TObject);
 begin
-  if Pagecontrol2.ActivePage = Tabsheet12 then
+  if MainPageControl.ActivePage = ActionsTabSheet then
   begin
     setupbutton := 5;
-    combobox9.ItemIndex := 0;
+    OperatorComboBox.ItemIndex := 0;
 
-    while (listbox11.Items.Count > 24) do
-      listbox11.Items.Delete(24);
+    while (OutputListBox.Items.Count > 24) do
+      OutputListBox.Items.Delete(24);
 
-    if (radiobutton2.Checked) then
+    if (MatrixOrbitalRadioButton.Checked) then
     begin
-      listbox11.Items.Add('GPO(4-8,0/1) (0=off 1=on)');
-      listbox11.Items.Add('GPOToggle(4-8)');
-      listbox11.Items.Add('GPOFlash(4-8,2) (nr. of times)');
+      OutputListBox.Items.Add('GPO(4-8,0/1) (0=off 1=on)');
+      OutputListBox.Items.Add('GPOToggle(4-8)');
+      OutputListBox.Items.Add('GPOFlash(4-8,2) (nr. of times)');
       if (config.mx3Usb) then
       begin
-        listbox11.Items.Add('Fan(1-3,0-255) (0-255=speed)');
+        OutputListBox.Items.Add('Fan(1-3,0-255) (0-255=speed)');
       end;
     end;
   end;
-  if Pagecontrol2.ActivePage = Tabsheet11 then
+  if MainPageControl.ActivePage = ScreensTabSheet then
   begin
-    if pagecontrol1.activepage = tabsheet13 then
+    if LeftPageControl.activepage = LCDFeaturesTabSheet then
     begin
-      if pos('$MObutton', edit9.text) <> 0 then edit9.text := 'Variable: ';
-      pagecontrol1.ActivePage := Tabsheet1;
+      if pos('$MObutton', VariableEdit.text) <> 0 then VariableEdit.text := 'Variable: ';
+      LeftPageControl.ActivePage := WinampTabSheet;
     end;
-    edit10.text := config.gameServer[combobox3.itemindex + 1, 1];
+    GameServerEdit.text := config.gameServer[ScreenNumberComboBox.itemindex + 1, 1];
     setupbutton := 1;
-    edit5.color := $00A1D7A4;
-    if edit6.enabled= true then edit6.color := clWhite
-    else edit6.color := $00BBBBFF;
-    if edit7.enabled= true then edit7.color := clWhite
-    else edit7.color := $00BBBBFF;
-    if edit8.enabled= true then edit8.color := clWhite
-    else edit8.color := $00BBBBFF;
+    Line1Edit.color := $00A1D7A4;
+    if Line2Edit.enabled= true then Line2Edit.color := clWhite
+    else Line2Edit.color := $00BBBBFF;
+    if Line3Edit.enabled= true then Line3Edit.color := clWhite
+    else Line3Edit.color := $00BBBBFF;
+    if Line4Edit.enabled= true then Line4Edit.color := clWhite
+    else Line4Edit.color := $00BBBBFF;
   end;
 end;
 
-procedure TSetupForm.Button8Click(Sender: TObject);
+procedure TSetupForm.ActionAddButtonClick(Sender: TObject);
 begin
-  if (edit16.text <> '') and (combobox9.itemindex <> -1) then
+  if (Operand1Edit.text <> '') and (OperatorComboBox.itemindex <> -1) then
   begin
-    StringGrid1.Cells[0, StringGrid1.RowCount-1] := edit16.text;
-    StringGrid1.Cells[1, StringGrid1.RowCount-1] :=
-      combobox9.Items.Strings[combobox9.itemindex];
-    StringGrid1.Cells[2, StringGrid1.RowCount-1] := edit19.text;
-    StringGrid1.Cells[3, StringGrid1.RowCount-1] := 'then';
-    StringGrid1.Cells[4, StringGrid1.RowCount-1] := edit18.text;
-    StringGrid1.RowCount := StringGrid1.RowCount + 1;
+    ActionsStringGrid.Cells[0, ActionsStringGrid.RowCount-1] := Operand1Edit.text;
+    ActionsStringGrid.Cells[1, ActionsStringGrid.RowCount-1] :=
+      OperatorComboBox.Items.Strings[OperatorComboBox.itemindex];
+    ActionsStringGrid.Cells[2, ActionsStringGrid.RowCount-1] := Operand2Edit.text;
+    ActionsStringGrid.Cells[3, ActionsStringGrid.RowCount-1] := 'then';
+    ActionsStringGrid.Cells[4, ActionsStringGrid.RowCount-1] := StatementEdit.text;
+    ActionsStringGrid.RowCount := ActionsStringGrid.RowCount + 1;
   end;
 end;
 
-procedure TSetupForm.Button9Click(Sender: TObject);
+procedure TSetupForm.ActionDeleteButtonClick(Sender: TObject);
 var
   counter, counter2, counter3: Integer;
 
 begin
   counter2 :=
-    Stringgrid1.Selection.Bottom-Stringgrid1.Selection.Top + 1;
-  for counter := Stringgrid1.Selection.Top to
-    Stringgrid1.Selection.Bottom do
-    StringGrid1.Rows[counter].clear;
+    ActionsStringGrid.Selection.Bottom-ActionsStringGrid.Selection.Top + 1;
+  for counter := ActionsStringGrid.Selection.Top to
+    ActionsStringGrid.Selection.Bottom do
+    ActionsStringGrid.Rows[counter].clear;
   for counter3 := 1 to counter2 do
   begin
-    for counter := Stringgrid1.Selection.Top to
-      Stringgrid1.RowCount do
+    for counter := ActionsStringGrid.Selection.Top to
+      ActionsStringGrid.RowCount do
     begin
-      StringGrid1.Cells[0, counter] := StringGrid1.Cells[0, counter
+      ActionsStringGrid.Cells[0, counter] := ActionsStringGrid.Cells[0, counter
         + 1];
-      StringGrid1.Cells[1, counter] := StringGrid1.Cells[1, counter
+      ActionsStringGrid.Cells[1, counter] := ActionsStringGrid.Cells[1, counter
         + 1];
-      StringGrid1.Cells[2, counter] := StringGrid1.Cells[2, counter
+      ActionsStringGrid.Cells[2, counter] := ActionsStringGrid.Cells[2, counter
         + 1];
-      StringGrid1.Cells[3, counter] := StringGrid1.Cells[3, counter
+      ActionsStringGrid.Cells[3, counter] := ActionsStringGrid.Cells[3, counter
         + 1];
-      StringGrid1.Cells[4, counter] := StringGrid1.Cells[4, counter
+      ActionsStringGrid.Cells[4, counter] := ActionsStringGrid.Cells[4, counter
         + 1];
     end;
   end;
-  StringGrid1.rowcount := StringGrid1.rowcount-counter2;
+  ActionsStringGrid.rowcount := ActionsStringGrid.rowcount-counter2;
 end;
 
-procedure TSetupForm.ListBox12Click(Sender: TObject);
+procedure TSetupForm.ButtonsListBoxClick(Sender: TObject);
 begin
-  if listbox12.itemindex > -1 then
+  if ButtonsListBox.itemindex > -1 then
   begin
-    if listbox12.itemindex = 0 then Edit9.Text := '$MObutton';
+    if ButtonsListBox.itemindex = 0 then VariableEdit.Text := '$MObutton';
 
     FocusToInputField();
 
   end;
 end;
 
-procedure TSetupForm.Button10Click(Sender: TObject);
+procedure TSetupForm.InteractionsButtonClick(Sender: TObject);
 begin
   DoInteractionConfigForm;
 end;
 
 
-procedure TSetupForm.Edit5KeyDown(Sender: TObject; var Key: Word; Shift:
+procedure TSetupForm.Line1EditKeyDown(Sender: TObject; var Key: Word; Shift:
   TShiftState);
 begin
-  if ord(key) = UPKEY then
+  if ord(key) = VK_UP then
   begin
     // select bottom row
-    if (edit8.Enabled) and (edit8.Visible) then edit8.SetFocus
-    else if (edit7.Enabled) and (edit7.Visible) then edit7.SetFocus
-    else if (edit6.Enabled) and (edit6.Visible) then edit6.SetFocus;
+    if (Line4Edit.Enabled) and (Line4Edit.Visible) then Line4Edit.SetFocus
+    else if (Line3Edit.Enabled) and (Line3Edit.Visible) then Line3Edit.SetFocus
+    else if (Line2Edit.Enabled) and (Line2Edit.Visible) then Line2Edit.SetFocus;
   end
-  else if ord(key) = DOWNKEY then
+  else if ord(key) = VK_DOWN then
   begin
     // Select next row if used.
-    if (edit6.Enabled) and (edit6.Visible) then edit6.SetFocus;
+    if (Line2Edit.Enabled) and (Line2Edit.Visible) then Line2Edit.SetFocus;
   end;
 end;
 
-procedure TSetupForm.Edit6KeyDown(Sender: TObject; var Key: Word; Shift:
+procedure TSetupForm.Line2EditKeyDown(Sender: TObject; var Key: Word; Shift:
   TShiftState);
 begin
-  if ord(key) = UPKEY then edit5.SetFocus
-  else if ord(key) = DOWNKEY then
+  if ord(key) = VK_UP then Line1Edit.SetFocus
+  else if ord(key) = VK_DOWN then
   begin
     // Select next row if used otherwise go to top.
-    if (edit7.Enabled) and (edit7.Visible) then edit7.SetFocus
-    else edit5.SetFocus;
+    if (Line3Edit.Enabled) and (Line3Edit.Visible) then Line3Edit.SetFocus
+    else Line1Edit.SetFocus;
   end;
 end;
 
-procedure TSetupForm.Edit7KeyDown(Sender: TObject; var Key: Word; Shift:
+procedure TSetupForm.Line3EditKeyDown(Sender: TObject; var Key: Word; Shift:
   TShiftState);
 begin
-  if ord(key) = UPKEY then edit6.SetFocus
-  else if ord(key) = DOWNKEY then
+  if ord(key) = VK_UP then Line2Edit.SetFocus
+  else if ord(key) = VK_DOWN then
   begin
     // Select next row if used otherwise go to top.
-    if (edit8.Enabled) and (edit8.Visible) then edit8.SetFocus
-    else edit5.SetFocus;
+    if (Line4Edit.Enabled) and (Line4Edit.Visible) then Line4Edit.SetFocus
+    else Line1Edit.SetFocus;
   end;
 end;
 
-procedure TSetupForm.Edit8KeyDown(Sender: TObject; var Key: Word; Shift:
+procedure TSetupForm.Line4EditKeyDown(Sender: TObject; var Key: Word; Shift:
   TShiftState);
 begin
-  if ord(key) = UPKEY then edit7.SetFocus;
-  if ord(key) = DOWNKEY then edit5.SetFocus;
+  if ord(key) = VK_UP then Line3Edit.SetFocus;
+  if ord(key) = VK_DOWN then Line1Edit.SetFocus;
 end;
 
-procedure TSetupForm.StickyClick(Sender: TObject);
+procedure TSetupForm.StickyCheckboxClick(Sender: TObject);
 begin
-  SpinEdit2.enabled := not Sticky.checked;
+  TimeToShowSpinEdit.enabled := not StickyCheckbox.checked;
 end;
 
-procedure TSetupForm.StringGrid1Click(Sender: TObject);
+procedure TSetupForm.ActionsStringGridClick(Sender: TObject);
 var
   selected: Integer;
 begin
 
-  selected := StringGrid1.Selection.Top;
+  selected := ActionsStringGrid.Selection.Top;
 
-  edit16.text := StringGrid1.Cells[0, selected];
+  Operand1Edit.text := ActionsStringGrid.Cells[0, selected];
 
-  if StringGrid1.Cells[1, selected]='>' then
-    combobox9.itemindex := 0
-  else if StringGrid1.Cells[1, selected]='<' then
-    combobox9.itemindex := 1
-  else if StringGrid1.Cells[1, selected]='=' then
-    combobox9.itemindex := 2
-  else if StringGrid1.Cells[1, selected]='<=' then
-    combobox9.itemindex := 3
-  else if StringGrid1.Cells[1, selected]='>=' then
-    combobox9.itemindex := 4
-  else if StringGrid1.Cells[1, selected]='<>' then
-    combobox9.itemindex := 5;
+  if ActionsStringGrid.Cells[1, selected]='>' then
+    OperatorComboBox.itemindex := 0
+  else if ActionsStringGrid.Cells[1, selected]='<' then
+    OperatorComboBox.itemindex := 1
+  else if ActionsStringGrid.Cells[1, selected]='=' then
+    OperatorComboBox.itemindex := 2
+  else if ActionsStringGrid.Cells[1, selected]='<=' then
+    OperatorComboBox.itemindex := 3
+  else if ActionsStringGrid.Cells[1, selected]='>=' then
+    OperatorComboBox.itemindex := 4
+  else if ActionsStringGrid.Cells[1, selected]='<>' then
+    OperatorComboBox.itemindex := 5;
 
-  edit19.text := StringGrid1.Cells[2, selected];
-  edit18.text := StringGrid1.Cells[4, selected];
+  Operand2Edit.text := ActionsStringGrid.Cells[2, selected];
+  StatementEdit.text := ActionsStringGrid.Cells[4, selected];
 end;
 
-procedure TSetupForm.ComboBox7Change(Sender: TObject);
+procedure TSetupForm.SkipScreenComboBoxChange(Sender: TObject);
 begin
-  if (combobox7.ItemIndex < 0) then combobox7.ItemIndex := 0;
+  if (SkipScreenComboBox.ItemIndex < 0) then SkipScreenComboBox.ItemIndex := 0;
 end;
 
-procedure TSetupForm.ComboBox9Change(Sender: TObject);
+procedure TSetupForm.OperatorComboBoxChange(Sender: TObject);
 begin
-  if combobox9.ItemIndex < 0 then combobox9.itemIndex := 0;
+  if OperatorComboBox.ItemIndex < 0 then OperatorComboBox.itemIndex := 0;
 end;
 
-procedure TSetupForm.ComboBox4Change(Sender: TObject);
+procedure TSetupForm.COMPortComboBoxChange(Sender: TObject);
 begin
-  if (combobox4.ItemIndex < 0) then combobox4.ItemIndex := 0;
+  if (COMPortComboBox.ItemIndex < 0) then COMPortComboBox.ItemIndex := 0;
 end;
 
-procedure TSetupForm.ComboBox5Change(Sender: TObject);
+procedure TSetupForm.BaudRateComboBoxChange(Sender: TObject);
 begin
-  if combobox5.itemindex < 0 then combobox5.ItemIndex := 0;
+  if BaudRateComboBox.itemindex < 0 then BaudRateComboBox.ItemIndex := 0;
 end;
 
-procedure TSetupForm.ComboBox1Change(Sender: TObject);
+procedure TSetupForm.ColorSchemeComboBoxChange(Sender: TObject);
 begin
-  if combobox1.ItemIndex < 0 then combobox1.ItemIndex := 0;
+  if ColorSchemeComboBox.ItemIndex < 0 then ColorSchemeComboBox.ItemIndex := 0;
 end;
 
 procedure UpdateSetupForm(cKey : char);
 begin
   if assigned(SetupForm) then
-    SetupForm.Edit17.text := cKey;
+    SetupForm.LastKeyPressedEdit.text := cKey;
 end;
 
 function PerformingSetup : boolean;
@@ -2289,3 +2257,6 @@ begin
 end;
 
 end.
+
+
+
