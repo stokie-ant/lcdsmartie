@@ -19,7 +19,7 @@ unit UCFSetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UCFSetup.pas,v $
- *  $Revision: 1.7 $ $Date: 2006/02/27 18:35:47 $
+ *  $Revision: 1.8 $ $Date: 2006/02/27 22:45:38 $
  *****************************************************************************}
 
 interface
@@ -49,7 +49,8 @@ function DoCrystalFontzSetupForm : boolean;
 
 implementation
 
-uses UMain, USetup;
+uses
+  UMain, USetup, UConfig;
 
 {$R *.DFM}
 
@@ -80,14 +81,14 @@ end;
 // CF options - contrast bar.
 procedure TCrystalFontzSetupForm.ContrastTrackBarChange(Sender: TObject);
 begin
-  if (config.isCF) then
+  if (config.ScreenType = stCF) then
     LCDSmartieDisplayForm.lcd.setContrast(ContrastTrackBar.Position);
 end;
 
 // CF options - brightness bar.
 procedure TCrystalFontzSetupForm.BacklightTrackBarChange(Sender: TObject);
 begin
-  if (config.isCF) then
+  if (config.ScreenType = stCF) then
     LCDSmartieDisplayForm.lcd.setBrightness(BacklightTrackBar.Position);
 end;
 

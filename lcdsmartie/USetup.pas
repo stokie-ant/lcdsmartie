@@ -19,7 +19,7 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.37 $ $Date: 2006/02/27 22:10:51 $
+ *  $Revision: 1.38 $ $Date: 2006/02/27 22:45:38 $
  *****************************************************************************}
 
 interface
@@ -403,39 +403,32 @@ begin
   BaudRateComboBox.enabled := false;
   COMPortComboBox.enabled := false;
 
-  if (config.isHD) or (config.isHD2) then
-  begin
-    HD44780RadioButton.checked := true;
-    HD44780ConfigButton.enabled := true;
-  end;
-  if config.isMO then
-  begin
-    MatrixOrbitalRadioButton.checked := true;
-    MatrixOrbitalConfigButton.enabled := true;
+  case Config.ScreenType of
+    stHD,
+    stHD2 : begin
+      HD44780RadioButton.checked := true;
+      HD44780ConfigButton.enabled := true;
+    end;
+    stMO : begin
+      MatrixOrbitalRadioButton.checked := true;
+      MatrixOrbitalConfigButton.enabled := true;
 
-    COMPortComboBox.enabled := true;
-    BaudRateComboBox.enabled := true;
-  end;
-  if config.isCF then
-  begin
-    CrystalFontzRadioButton.checked := true;
-    CrystalFontzConfigButton.enabled := true;
+      COMPortComboBox.enabled := true;
+      BaudRateComboBox.enabled := true;
+    end;
+    stCF : begin
+      CrystalFontzRadioButton.checked := true;
+      CrystalFontzConfigButton.enabled := true;
 
-    COMPortComboBox.enabled := true;
-    BaudRateComboBox.enabled := true;
-  end;
+      COMPortComboBox.enabled := true;
+      BaudRateComboBox.enabled := true;
+    end;
 
-  if config.isIR then
-  begin
-    IRTransRadioButton.Checked := true;
-    IRTransConfigButton.Enabled := true;
-  end;
-
-  if config.isIR then
-  begin
-    IRTransRadioButton.Checked := true;
-    IRTransConfigButton.Enabled := true;
-  end;
+    stIR : begin
+      IRTransRadioButton.Checked := true;
+      IRTransConfigButton.Enabled := true;
+    end;
+  end; // case
 
   // Set up the com port selection
   if (config.isUsbPalm) then slookFor := USBPALM
@@ -517,7 +510,7 @@ begin
 
 
   for i := 1 to 24 do ButtonsListBox.Items.Delete(1);
-  if (config.isMO) then
+  if (config.ScreenType = stMO) then
   begin
     //LCDFeaturesTabSheet.Enabled := true;
     ButtonsListBox.Items.Add('FanSpeed(1,1) (nr,divider)');
@@ -1512,7 +1505,7 @@ end;
 
 procedure TSetupForm.MatrixOrbitalConfigButtonClick(Sender: TObject);
 begin
-  if (not config.isMO) then
+  if (not (config.ScreenType = stMO)) then
   begin
     if MessageDlg('The Matrix Orbital driver is not currently loaded.' + chr(13) +
       'Should I apply your settings and load the driver?',
@@ -1689,7 +1682,7 @@ end;
 
 procedure TSetupForm.CrystalFontzConfigButtonClick(Sender: TObject);
 begin
- if (not config.isCF) then
+  if (not (config.ScreenType = stCF)) then
   begin
     if MessageDlg('The Crystalfontz driver is not currently loaded.' + chr(13) +
       'Should I apply your settings and load the driver?',
@@ -1704,7 +1697,7 @@ end;
 
 procedure TSetupForm.IRTransConfigButtonClick(Sender: TObject);
 begin
-  if (not config.isIR) then
+  if (not (config.ScreenType = stIR)) then
   begin
     if MessageDlg('The IRTrans driver is not currently loaded.' + chr(13) +
       'Should I apply your settings and load the driver?',
@@ -1715,7 +1708,7 @@ begin
     end;
   end;
   if DoIRTransForm then begin
-    config.isIR := false;  // force a reload with a potential new hostname
+    config.ScreenType := stNone;
     ApplyButton.click();
   end;
 end;
@@ -1823,7 +1816,7 @@ end;
 
 procedure TSetupForm.HD44780ConfigButtonClick(Sender: TObject);
 begin
- if (not config.isHD) then
+  if (not (config.ScreenType = stHD)) then
   begin
     if MessageDlg('The HD44780 driver is not currently loaded.' + chr(13) +
       'Should I apply your settings and load the driver?',
@@ -1833,8 +1826,10 @@ begin
       ApplyButton.click();
     end;
   end;
-  if DoHD44780SetupForm then
-    config.isHD := false;  // force reload
+  if DoHD44780SetupForm then begin
+    config.ScreenType := stNone; // force reload
+    ApplyButton.click();
+  end;
 end;
 
 procedure TSetupForm.FoldingAtHomeListBoxClick(Sender: TObject);
@@ -1913,11 +1908,11 @@ begin
   end;
 
   if (config.baudrate <> BaudRateComboBox.itemindex) then relood := true;
-  if (HD44780RadioButton.checked) and (not config.isHD) then relood := true;
-  if (MatrixOrbitalRadioButton.checked) and (not config.isMO) then relood := true;
-  if (CrystalFontzRadioButton.checked) and (not config.isCF) then relood := true;
-  if (HD66712RadioButton.checked) and (not config.isHD2) then relood := true;
-  if (IRTransRadioButton.checked) and (not config.isIR) then relood := true;
+  if (HD44780RadioButton.checked) and not (config.ScreenType = stHD) then relood := true;
+  if (MatrixOrbitalRadioButton.checked) and not (config.ScreenType = stMO) then relood := true;
+  if (CrystalFontzRadioButton.checked) and not (config.ScreenType = stCF) then relood := true;
+  if (HD66712RadioButton.checked) and not (config.ScreenType = stHD2) then relood := true;
+  if (IRTransRadioButton.checked) and not (config.ScreenType = stIR) then relood := true;
 
 
   LCDSmartieDisplayForm.WinampCtrl1.WinampLocation := WinampLocationEdit.text;
@@ -1957,11 +1952,11 @@ begin
   config.pop[(EmailAccountComboBox.itemindex + 1) mod 10].user := EmailLoginEdit.text;
   config.pop[(EmailAccountComboBox.itemindex + 1) mod 10].pword := EmailPasswordEdit.text;
 
-  config.isHD := HD44780RadioButton.checked;
-  config.isMO := MatrixOrbitalRadioButton.checked;
-  config.isCF := CrystalFontzRadioButton.checked;
-  config.isHD2 := HD66712RadioButton.checked;
-  config.isIR := IRTransRadioButton.checked;
+  if HD44780RadioButton.checked then config.ScreenType := stHD
+  else if MatrixOrbitalRadioButton.checked then config.ScreenType := stMO
+  else if CrystalFontzRadioButton.checked then config.ScreenType := stCF
+  else if HD66712RadioButton.checked then config.ScreenType := stHD2
+  else if IRTransRadioButton.checked then config.ScreenType := stIR;
 
   if (WebProxyPortEdit.text = '') then WebProxyPortEdit.text := '0';
   config.httpProxy := WebProxyServerEdit.text;

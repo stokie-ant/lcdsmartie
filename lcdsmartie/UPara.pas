@@ -19,7 +19,7 @@ unit UPara;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/Attic/UPara.pas,v $
- *  $Revision: 1.6 $ $Date: 2006/02/27 18:35:47 $
+ *  $Revision: 1.7 $ $Date: 2006/02/27 22:45:38 $
  *****************************************************************************}
 
 interface
@@ -47,7 +47,8 @@ function DoHD44780SetupForm : boolean;
 
 implementation
 
-uses UMain, USetup, SysUtils;
+uses
+  UConfig, USetup, SysUtils;
 
 {$R *.DFM}
 

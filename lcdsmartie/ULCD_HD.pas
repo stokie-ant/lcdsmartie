@@ -19,7 +19,7 @@ unit ULCD_HD;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/Attic/ULCD_HD.pas,v $
- *  $Revision: 1.13 $ $Date: 2005/05/07 13:50:40 $
+ *  $Revision: 1.14 $ $Date: 2006/02/27 22:45:38 $
  *
  *  Based on code from the following (open-source) projects:
  *     WinAmp LCD Plugin
@@ -114,7 +114,7 @@ type
 
 implementation
 
-uses UMain, SysUtils, Windows;
+uses UConfig, SysUtils, Windows;
 
 constructor TLCD_HD.CreateParallel(const poortadres: Word; const width, heigth: Byte);
 {var

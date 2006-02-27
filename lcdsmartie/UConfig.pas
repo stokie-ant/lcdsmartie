@@ -19,7 +19,7 @@ unit UConfig;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UConfig.pas,v $
- *  $Revision: 1.34 $ $Date: 2006/02/27 02:43:39 $
+ *  $Revision: 1.35 $ $Date: 2006/02/27 22:45:38 $
  *****************************************************************************}
 
 interface
@@ -31,6 +31,8 @@ const
   sMyScreenTextSyntaxVersion = '1.0';
 
 type
+  TScreenType = (stNone,stHD,stMO,stCF,stHD2,stTestDriver,stIR);
+
   TScreenLine = Record
     text: String;
     enabled: Boolean;
@@ -103,12 +105,7 @@ type
     gameRefresh: Integer;
     mbmRefresh: Integer;
     foldUsername: String;
-    isMO: Boolean;
-    isCF: Boolean;
-    isIR: Boolean;
-    isHD: Boolean;
-    isHD2: Boolean;   // not used.
-    isTestDriver: Boolean;
+    ScreenType : TScreenType;
     checkUpdates: Boolean;
     distLog: String;
     screen: Array[1..20] of Array[1..4] of TScreenLine;
@@ -130,6 +127,9 @@ type
     constructor Create(filename: String);
   end;
 
+var
+  Config: TConfig;
+  
 implementation
 
 uses Forms, INIFiles, StrUtils, Windows;
@@ -438,20 +438,7 @@ begin
   pop[0].pword := copy(configArray[97], pos('¿8', configArray[97]) + 2,
     pos('¿9', configArray[97])-pos('¿8', configArray[97])-2);
 
-  isMO := false;
-  isCF := false;
-  isIR := false;
-  isHD := false;
-  isHD2 := false;
-  case StrToInt(configArray[98]) of
-    1: isHD := true;
-    2: isMO := true;
-    3: isCF := true;
-    4: isHD2 := true;
-    6: isIR := true;
-  end;
-
-
+  ScreenType := TScreenType(StrToInt(configArray[98]));
   comPort := StrToInt(configArray[99]);
   baudrate := StrToInt(configArray[100]);
 
@@ -599,23 +586,10 @@ begin
     'HTTPProxyPort', 0);
   remotehost := initFile.ReadString('Communication Settings', 'RemoteHost', 'localhost');
 
-  isMO := false;
-  isCF := false;
-  isHD := false;
-  isHD2 := false;
-  isIR := false;
-  isTestDriver := false;
-  case initFile.ReadInteger('General Settings', 'LCDType', 0) of
-    1: isHD := true;
-    2: isMO := true;
-    3: isCF := true;
-    4: isHD2 := true;
-    5: isTestDriver := true;
-    6: isIR := true;
-  end;
+  ScreenType := TScreenType(initFile.ReadInteger('General Settings', 'LCDType', 0));
 
   // Readonly settings - not set at all.
-  if (isTestDriver) then
+  if (ScreenType = stTestDriver) then
   begin
     testDriver.iStopBits := initFile.ReadInteger('Test Driver', 'StopBits', 1);
     testDriver.iParity := initFile.ReadInteger('Test Driver', 'Parity', 0);
@@ -798,15 +772,8 @@ begin
     httpProxyPort);
   initFile.WriteString('Communication Settings', 'RemoteHost', remotehost);
 
-  if isHD then initFile.WriteInteger('General Settings', 'LCDType', 1)
-  else if isMO then initFile.WriteInteger('General Settings', 'LCDType', 2)
-  else if isCF then initFile.WriteInteger('General Settings', 'LCDType', 3)
-  else if isHD2 then initFile.WriteInteger('General Settings', 'LCDType', 4)
-  else if isTestDriver then initFile.WriteInteger('General Settings', 'LCDType', 5)
-  else if isIR then initFile.WriteInteger('General Settings', 'LCDType', 6);
-
+  initFile.WriteInteger('General Settings', 'LCDType', ord(ScreenType));
   initFile.WriteInteger('General Settings', 'Size', sizeOption);
-
   initFile.WriteInteger('General Settings', 'Contrast', contrast);
   initFile.WriteInteger('General Settings', 'Brightness', brightness);
 

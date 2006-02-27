@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.56 $ $Date: 2006/02/27 20:57:35 $
+ *  $Revision: 1.57 $ $Date: 2006/02/27 22:45:38 $
  *****************************************************************************}
 
 
@@ -254,7 +254,7 @@ type
 
 implementation
 
-uses cxCpu40, adCpuUsage, UMain, Windows, Forms, IpHlpApi,
+uses cxCpu40, adCpuUsage, UMain, UConfig, Windows, Forms, IpHlpApi,
   IpIfConst, IpRtrMib, WinSock, Dialogs, Buttons, Graphics, ShellAPI,
   mmsystem, ExtActns, Messages, IdBaseComponent, IdComponent,
   IdTCPConnection, IdTCPClient, IdMessageClient, IdMessage, Menus,

@@ -46,7 +46,8 @@ type
 
 implementation
 
-uses UMain, Forms, Windows, StrUtils;
+uses
+  UConfig, Forms, Windows, StrUtils;
 
 const
   {=packet command codes=}

@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.62 $ $Date: 2006/02/27 22:10:51 $
+ *  $Revision: 1.63 $ $Date: 2006/02/27 22:45:38 $
  *****************************************************************************}
 
 interface
@@ -245,7 +245,6 @@ type
 
 var
   LCDSmartieDisplayForm: TLCDSmartieDisplayForm;
-  config: TConfig;
   activeScreen : Integer;
   bTerminating: Boolean;
 
@@ -675,49 +674,38 @@ begin
   for i:= 1 to 8 do
     customCharsChanged[i] := true;
 
-  if (config.isMO) or (config.isCF) or (config.isTestDriver) then
-  begin
-    try
-      if (config.isMO) and (config.isUsbPalm) then
-      begin
-        Lcd := TLCD_MO.CreateUsb;
-      end
-      else
-      begin
-
-        if (config.isCF) then
-          Lcd := TLCD_CF.CreateSerial(config.comPort, baudRates[config.baudrate])
-        else if (config.isMO) then
-          Lcd := TLCD_MO.CreateSerial(config.comPort, baudRates[config.baudrate])
-        else if (config.isTestDriver) then
-          Lcd := TLCD_Test.CreateSerial(config.comPort, baudRates[config.baudrate]);
+  // start connectivity
+  try
+    case config.ScreenType of
+      stMO : begin
+        if config.isUsbPalm then
+          Lcd := TLCD_MO.CreateUsb
+        else
+          Lcd := TLCD_MO.CreateSerial(config.comPort, baudRates[config.baudrate]);
       end;
-    except
-      on E: Exception do
-      begin
-        showmessage('Failed to open device: ' + E.Message);
-        Lcd := TLCD.Create();
+      stCF : Lcd := TLCD_CF.CreateSerial(config.comPort, baudRates[config.baudrate]);
+      stTestDriver : Lcd := TLCD_Test.CreateSerial(config.comPort, baudRates[config.baudrate]);
+      stIR : Lcd := TLCD_IR.CreateSocket(config.RemoteHost);
+      stHD,stHD2 : begin
+        Lcd := TLCD.Create(); // use a dummy LCD until the boot time has passed.
+        // HD/HD2 have a delay start - they will setup the above timers later.
+        LPTStartupTimer.interval := 0;
+        if config.bootDriverDelay = 0 then LPTStartupTimer.interval := 10
+        else LPTStartupTimer.interval := config.bootDriverDelay*1000;
+        LPTStartupTimer.enabled := true;
       end;
+      else Lcd := TLCD.Create(); // catchall case
+    end; // case
+  except
+    on E: Exception do
+    begin
+      showmessage('Failed to open device: ' + E.Message);
+      Lcd := TLCD.Create();
     end;
   end;
 
-  if (config.isIR) then
-  begin
-    try
-      Lcd := TLCD_IR.CreateSocket(config.RemoteHost)
-    except
-      on E: Exception do
-      begin
-        showmessage('Failed to open device: ' + E.Message);
-        Lcd := TLCD.Create();
-      end;
-    end;
-  end;
-
-  if not (config.isCF or config.isMO or config.isHD or config.isTestDriver or config.isIR) then
-    Lcd := TLCD.Create();
-
-  if (config.isMO) or (config.isCF) or (config.isIR) then
+  // load custom characters if the display supports it
+  if (config.ScreenType in [stMO,stCF,stIR]) then
   begin
     customchar('1, 12, 18, 18, 12, 0, 0, 0, 0');
     customchar('2, 31, 31, 31, 31, 31, 31, 31, 31');
@@ -725,34 +713,18 @@ begin
     customchar('4, 28, 28, 28, 28, 28, 28, 31, 28');
   end;
 
-  if (config.isMO) then
-  begin
-    Lcd.setContrast(config.contrast);
-    Lcd.setBrightness(config.brightness);
-  end;
-
-  if (config.isCF) then
-  begin
-    Lcd.setBrightness(config.CF_brightness);
-    Lcd.setContrast(config.CF_contrast);
-  end;
-
-  if (config.isIR) then
-  begin
-    Lcd.setBrightness(config.IR_brightness);
-  end;
-
-  if (config.isHD) or (config.isHD2) then
-  begin
-    Lcd := TLCD.Create(); // use a dummy LCD until the boot time has passed.
-
-      // HD/HD2 have a delay start - they will setup the above timers later.
-    LPTStartupTimer.interval := 0;
-    if config.bootDriverDelay = 0 then LPTStartupTimer.interval := 10
-    else LPTStartupTimer.interval := config.bootDriverDelay*1000;
-    LPTStartupTimer.enabled := true;
-
-  end;
+  // set brightness and contrast if the display supports it
+  case config.ScreenType of
+    stMO : begin
+      Lcd.setContrast(config.contrast);
+      Lcd.setBrightness(config.brightness);
+    end;
+    stCF : begin
+      Lcd.setBrightness(config.CF_brightness);
+      Lcd.setContrast(config.CF_contrast);
+    end;
+    stIR : Lcd.setBrightness(config.IR_brightness);
+  end; // case
 
   DoFullDisplayDraw();
 
@@ -911,7 +883,7 @@ begin
 
               if (TransCycle < maxTransCycles/2) then
               begin
-                if (config.isMO)then x := config.contrast
+                if (config.ScreenType = stMO)then x := config.contrast
                 else x := config.CF_contrast;
 
                 iContrast := round(x-(TransCycle*(x-config.iMinFadeContrast)
@@ -933,7 +905,7 @@ begin
                   screenLcd[x].Caption := EscapeAmp(newline[x]);
                 end;
 
-                if (config.isMO) then x := config.contrast
+                if (config.ScreenType = stMO) then x := config.contrast
                 else x := config.CF_contrast;
 
                 iContrast := round((TransCycle-(MaxTransCycles/2))
@@ -1176,9 +1148,9 @@ begin
       // just in case we failed to get the expected number of cycles (due to
       // high cpu loads etc).
       ResetContrast := False;
-      if (config.isMO) then Lcd.setContrast(config.contrast)
+      if (config.ScreenType = stMO) then Lcd.setContrast(config.contrast)
       else
-        if (config.isCF) then Lcd.setContrast(config.CF_contrast);
+        if (config.ScreenType = stCF) then Lcd.setContrast(config.CF_contrast);
     end;
 
     if (canscroll) then
@@ -1564,7 +1536,7 @@ begin
     end;
   end;
 
-  if (pos('GPO(', sAction) <> 0) and (config.isMO) then
+  if (pos('GPO(', sAction) <> 0) and (config.ScreenType = stMO) then
   begin
     temp1 := copy(sAction, pos('(', sAction) + 1,
       pos(',', sAction)-pos('(', sAction)-1);
@@ -1782,7 +1754,7 @@ begin
       end;
     end;
 
-    if (pos('GPOFlash(', sAction) <> 0) and (config.isMO) then
+    if (pos('GPOFlash(', sAction) <> 0) and (config.ScreenType = stMO) then
     begin
       try
         whatgpo := StrToInt(copy(sAction, pos('(', sAction) + 1,
@@ -2041,7 +2013,7 @@ begin
   LPTStartupTimer.Enabled := false;
 
   // check just in case they've changed they mind in the mean time.
-  if (config.isHD) then
+  if (config.ScreenType in [stHD,stHD2]) then
   begin
 
     FiniLCD(); // get rid of the dummy one.

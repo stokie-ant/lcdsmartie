@@ -19,7 +19,7 @@ unit UMOSetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/Attic/UMOSetup.pas,v $
- *  $Revision: 1.6 $ $Date: 2006/02/27 18:35:47 $
+ *  $Revision: 1.7 $ $Date: 2006/02/27 22:45:38 $
  *****************************************************************************}
 
 
@@ -48,7 +48,8 @@ function DoMatrixOrbitalSetupForm : boolean;
 
 implementation
 
-uses USetup, UMain;
+uses
+  USetup, UConfig, UMain;
 
 {$R *.DFM}
 
@@ -69,7 +70,7 @@ begin
       config.brightness := BrightnessTrackBar.position;
       config.mx3Usb := MOUSBCheckbox.Checked;
     end else begin
-      if (config.isMO) then
+      if (config.ScreenType = stMO) then
       begin
         LCDSmartieDisplayForm.lcd.setContrast(config.contrast);
         LCDSmartieDisplayForm.lcd.setBrightness(config.brightness);
@@ -82,14 +83,14 @@ end;
 // MO options - contrast bar.
 procedure TMatrixOrbitalSetupForm.ContrastTrackBarChange(Sender: TObject);
 begin
-  if (config.isMO) then
+  if (config.ScreenType = stMO) then
     LCDSmartieDisplayForm.lcd.setContrast(ContrastTrackBar.position);
 end;
 
 // MO options - brightness bar.
 procedure TMatrixOrbitalSetupForm.BrightnessTrackBarChange(Sender: TObject);
 begin
-  if (config.isMO) then
+  if (config.ScreenType = stMO) then
     LCDSmartieDisplayForm.lcd.setBrightness(BrightnessTrackBar.position);
 end;
 

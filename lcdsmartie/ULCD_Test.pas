@@ -21,7 +21,7 @@ type
 
 implementation
 
-uses UMain, SysUtils, Forms, Windows, StrUtils;
+uses UConfig, SysUtils, Forms, Windows, StrUtils;
 
 constructor TLCD_Test.CreateSerial(uiPort: Cardinal; baudRate: Cardinal);
 var
