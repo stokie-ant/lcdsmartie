@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.55 $ $Date: 2006/02/27 18:35:47 $
+ *  $Revision: 1.56 $ $Date: 2006/02/27 20:57:35 $
  *****************************************************************************}
 
 
@@ -265,8 +265,8 @@ begin
   bNewScreenEvent := bYes;
   if (bYes) then
   begin
-    LCDSmartieDisplayForm.timer6.Interval := 0;
-    LCDSmartieDisplayForm.timer6.Interval := 250; // force an update of Mbm, etc data in 0.25 seconds
+    LCDSmartieDisplayForm.MBMUpdateTimer.Interval := 0;
+    LCDSmartieDisplayForm.MBMUpdateTimer.Interval := 250; // force an update of Mbm, etc data in 0.25 seconds
     bForceRefresh := true;
     bDoCpuUsage := false;
     bDoCpuSpeed := false;
