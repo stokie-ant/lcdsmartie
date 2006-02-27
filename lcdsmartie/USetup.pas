@@ -19,7 +19,7 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.38 $ $Date: 2006/02/27 22:45:38 $
+ *  $Revision: 1.39 $ $Date: 2006/02/27 23:38:03 $
  *****************************************************************************}
 
 interface
@@ -29,7 +29,7 @@ uses Dialogs, Grids, StdCtrls, Controls, Spin, Buttons, ComCtrls, Classes,
 
 const
   USBPALM = 'USB Palm';
-
+  NoVariable = 'Variable: ';
 
 type
   TSetupForm = class(TForm)
@@ -59,7 +59,6 @@ type
     DistributedNetLogfileEdit: TEdit;
     Label34: TLabel;
     GameTypeComboBox: TComboBox;
-    SpeedButton2: TSpeedButton;
     InsertButton: TButton;
     InternetRefreshTimeSpinEdit: TSpinEdit;
     Label36: TLabel;
@@ -209,7 +208,6 @@ type
     procedure SysInfoListBoxClick(Sender: TObject);
     procedure MBMListBoxClick(Sender: TObject);
     procedure InternetListBoxClick(Sender: TObject);
-    procedure GameTypeComboBoxChange(Sender: TObject);
     procedure QStatLabelClick(Sender: TObject);
     procedure MiscListBoxClick(Sender: TObject);
     procedure LeftPageControlChange(Sender: TObject);
@@ -423,7 +421,6 @@ begin
       COMPortComboBox.enabled := true;
       BaudRateComboBox.enabled := true;
     end;
-
     stIR : begin
       IRTransRadioButton.Checked := true;
       IRTransConfigButton.Enabled := true;
@@ -451,54 +448,7 @@ begin
 
   BaudRateComboBox.ItemIndex := config.baudrate;
   LCDSizeComboBox.itemindex := config.sizeOption-1;
-
-  if LCDSizeComboBox.itemindex < 5 then
-  begin
-    ContinueLine1CheckBox.checked := false;
-    Line2Edit.Visible := false;
-    Line3Edit.Visible := false;
-    Line4Edit.Visible := false;
-    DontScrollLine2CheckBox.Visible := false;
-    DontScrollLine3CheckBox.Visible := false;
-    DontScrollLine4CheckBox.Visible := false;
-    ContinueLine1CheckBox.Visible := false;
-    ContinueLine2CheckBox.Visible := false;
-    ContinueLine3CheckBox.Visible := false;
-    CenterLine2CheckBox.visible := false;
-    CenterLine3CheckBox.visible := false;
-    CenterLine4CheckBox.visible := false;
-  end;
-  if (LCDSizeComboBox.itemindex < 9) and (LCDSizeComboBox.itemindex > 4) then
-  begin
-    if ContinueLine1CheckBox.checked = false then Line2Edit.Visible := true;
-    ContinueLine2CheckBox.checked := false;
-    Line3Edit.Visible := false;
-    Line4Edit.Visible := false;
-    DontScrollLine2CheckBox.Visible := true;
-    DontScrollLine3CheckBox.Visible := false;
-    DontScrollLine4CheckBox.Visible := false;
-    ContinueLine1CheckBox.Visible := true;
-    ContinueLine2CheckBox.Visible := false;
-    ContinueLine3CheckBox.Visible := false;
-    CenterLine2CheckBox.visible := true;
-    CenterLine3CheckBox.visible := false;
-    CenterLine4CheckBox.visible := false;
-  end;
-  if LCDSizeComboBox.itemindex > 8 then
-  begin
-    if ContinueLine1CheckBox.checked = false then Line2Edit.Visible := true;
-    if ContinueLine2CheckBox.checked = false then Line3Edit.Visible := true;
-    if ContinueLine3CheckBox.checked = false then Line4Edit.Visible := true;
-    DontScrollLine2CheckBox.Visible := true;
-    DontScrollLine3CheckBox.Visible := true;
-    DontScrollLine4CheckBox.Visible := true;
-    ContinueLine1CheckBox.Visible := true;
-    ContinueLine2CheckBox.Visible := true;
-    ContinueLine3CheckBox.Visible := true;
-    CenterLine2CheckBox.visible := true;
-    CenterLine3CheckBox.visible := true;
-    CenterLine4CheckBox.visible := true;
-  end;
+  LCDSizeComboBoxChange(Sender);
 
   InternetRefreshTimeSpinEdit.Value := config.newsRefresh;
   RandomizeScreensCheckBox.checked := config.randomScreens;
@@ -809,28 +759,29 @@ end;
 
 procedure TSetupForm.WinampListBoxClick(Sender: TObject);
 begin
-  if WinampListBox.itemindex > -1 then
-  begin
-    if WinampListBox.itemindex = 0 then VariableEdit.Text := '$WinampTitle';
-    if WinampListBox.itemindex = 1 then VariableEdit.Text := '$WinampChannels';
-    if WinampListBox.itemindex = 2 then VariableEdit.Text := '$WinampKBPS';
-    if WinampListBox.itemindex = 3 then VariableEdit.Text := '$WinampFreq';
-    if WinampListBox.itemindex = 4 then VariableEdit.Text := '$Winamppos';
-    if WinampListBox.itemindex = 5 then VariableEdit.Text := '$WinampPolo';
-    if WinampListBox.itemindex = 6 then VariableEdit.Text := '$WinampPosh';
-    if WinampListBox.itemindex = 7 then VariableEdit.Text := '$WinampRem';
-    if WinampListBox.itemindex = 8 then VariableEdit.Text := '$WinampRelo';
-    if WinampListBox.itemindex = 9 then VariableEdit.Text := '$WinampResh';
-    if WinampListBox.itemindex = 10 then VariableEdit.Text := '$WinampLength';
-    if WinampListBox.itemindex = 11 then VariableEdit.Text := '$WinampLengtl';
-    if WinampListBox.itemindex = 12 then VariableEdit.Text := '$WinampLengts';
-    if WinampListBox.itemindex = 13 then VariableEdit.Text := '$WinampPosition(10)';
-    if WinampListBox.itemindex = 14 then VariableEdit.Text := '$WinampTracknr';
-    if WinampListBox.itemindex = 15 then VariableEdit.Text := '$WinampTotalTracks';
-    if WinampListBox.itemindex = 16 then VariableEdit.Text := '$WinampStat';
+  case WinampListBox.itemindex of
+    0 : VariableEdit.Text := '$WinampTitle';
+    1 : VariableEdit.Text := '$WinampChannels';
+    2 : VariableEdit.Text := '$WinampKBPS';
+    3 : VariableEdit.Text := '$WinampFreq';
+    4 : VariableEdit.Text := '$Winamppos';
+    5 : VariableEdit.Text := '$WinampPolo';
+    6 : VariableEdit.Text := '$WinampPosh';
+    7 : VariableEdit.Text := '$WinampRem';
+    8 : VariableEdit.Text := '$WinampRelo';
+    9 : VariableEdit.Text := '$WinampResh';
+    10 : VariableEdit.Text := '$WinampLength';
+    11 : VariableEdit.Text := '$WinampLengtl';
+    12 : VariableEdit.Text := '$WinampLengts';
+    13 : VariableEdit.Text := '$WinampPosition(10)';
+    14 : VariableEdit.Text := '$WinampTracknr';
+    15 : VariableEdit.Text := '$WinampTotalTracks';
+    16 : VariableEdit.Text := '$WinampStat';
+    else VariableEdit.Text := NoVariable;
+  end; // case
 
+  if not (VariableEdit.Text = NoVariable) then
     FocusToInputField();
-  end;
 end;
 
 
@@ -896,7 +847,7 @@ var
   tempint: Integer;
 
 begin
-  if VariableEdit.Text <> 'Variable: ' then
+  if VariableEdit.Text <> NoVariable then
   begin
     if (ScreensTabSheet.visible) then // in Screens tab
     begin
@@ -954,167 +905,116 @@ end;
 
 procedure TSetupForm.SysInfoListBoxClick(Sender: TObject);
 begin
-  if SysInfoListBox.itemindex > -1 then
-  begin
-    if SysInfoListBox.itemindex = 0 then VariableEdit.Text := '$Username';
-    if SysInfoListBox.itemindex = 1 then VariableEdit.Text := '$Computername';
-    if SysInfoListBox.itemindex = 2 then VariableEdit.Text := '$CPUType';
-    if SysInfoListBox.itemindex = 3 then VariableEdit.Text := '$CPUSpeed';
-    if SysInfoListBox.itemindex = 4 then VariableEdit.Text := '$CPUUsage%';
-    if SysInfoListBox.itemindex = 5 then VariableEdit.Text := '$Bar($CPUUsage%,100,10)';
-    if SysInfoListBox.itemindex = 6 then VariableEdit.Text := '$MemFree';
-    if SysInfoListBox.itemindex = 7 then VariableEdit.Text := '$MemUsed';
-    if SysInfoListBox.itemindex = 8 then VariableEdit.Text := '$MemTotal';
-    if SysInfoListBox.itemindex = 9 then VariableEdit.Text := '$MemF%';
-    if SysInfoListBox.itemindex = 10 then VariableEdit.Text := '$MemU%';
-    if SysInfoListBox.itemindex = 11 then VariableEdit.Text :=
-      '$Bar($MemFree,$MemTotal,10)';
-    if SysInfoListBox.itemindex = 12 then VariableEdit.Text :=
-      '$Bar($MemUsed,$MemTotal,10)';
-    if SysInfoListBox.itemindex = 13 then VariableEdit.Text := '$PageFree';
-    if SysInfoListBox.itemindex = 14 then VariableEdit.Text := '$PageUsed';
-    if SysInfoListBox.itemindex = 15 then VariableEdit.Text := '$PageTotal';
-    if SysInfoListBox.itemindex = 16 then VariableEdit.Text := '$PageF%';
-    if SysInfoListBox.itemindex = 17 then VariableEdit.Text := '$PageU%';
-    if SysInfoListBox.itemindex = 18 then VariableEdit.Text :=
-      '$Bar($PageFree,$PageTotal,10)';
-    if SysInfoListBox.itemindex = 19 then VariableEdit.Text :=
-      '$Bar($PageUsed,$PageTotal,10)';
-    if SysInfoListBox.itemindex = 20 then VariableEdit.Text := '$HDFree(C)';
-    if SysInfoListBox.itemindex = 21 then VariableEdit.Text := '$HDUsed(C)';
-    if SysInfoListBox.itemindex = 22 then VariableEdit.Text := '$HDTotal(C)';
-    if SysInfoListBox.itemindex = 23 then VariableEdit.Text := '$HDFreg(C)';
-    if SysInfoListBox.itemindex = 24 then VariableEdit.Text := '$HDUseg(C)';
-    if SysInfoListBox.itemindex = 25 then VariableEdit.Text := '$HDTotag(C)';
-    if SysInfoListBox.itemindex = 26 then VariableEdit.Text := '$HDF%(C)';
-    if SysInfoListBox.itemindex = 27 then VariableEdit.Text := '$HDU%(C)';
-    if SysInfoListBox.itemindex = 28 then VariableEdit.Text :=
-      '$Bar($HDFree(C),$HDTotal(C),10)';
-    if SysInfoListBox.itemindex = 29 then VariableEdit.Text :=
-      '$Bar($HDUsed(C),$HDTotal(C),10)';
-    if SysInfoListBox.itemindex = 30 then VariableEdit.Text := '$ScreenReso';
+  case SysInfoListBox.itemindex of
+    0 : VariableEdit.Text := '$Username';
+    1 : VariableEdit.Text := '$Computername';
+    2 : VariableEdit.Text := '$CPUType';
+    3 : VariableEdit.Text := '$CPUSpeed';
+    4 : VariableEdit.Text := '$CPUUsage%';
+    5 : VariableEdit.Text := '$Bar($CPUUsage%,100,10)';
+    6 : VariableEdit.Text := '$MemFree';
+    7 : VariableEdit.Text := '$MemUsed';
+    8 : VariableEdit.Text := '$MemTotal';
+    9 : VariableEdit.Text := '$MemF%';
+    10 : VariableEdit.Text := '$MemU%';
+    11 : VariableEdit.Text := '$Bar($MemFree,$MemTotal,10)';
+    12 : VariableEdit.Text := '$Bar($MemUsed,$MemTotal,10)';
+    13 : VariableEdit.Text := '$PageFree';
+    14 : VariableEdit.Text := '$PageUsed';
+    15 : VariableEdit.Text := '$PageTotal';
+    16 : VariableEdit.Text := '$PageF%';
+    17 : VariableEdit.Text := '$PageU%';
+    18 : VariableEdit.Text := '$Bar($PageFree,$PageTotal,10)';
+    19 : VariableEdit.Text := '$Bar($PageUsed,$PageTotal,10)';
+    20 : VariableEdit.Text := '$HDFree(C)';
+    21 : VariableEdit.Text := '$HDUsed(C)';
+    22 : VariableEdit.Text := '$HDTotal(C)';
+    23 : VariableEdit.Text := '$HDFreg(C)';
+    24 : VariableEdit.Text := '$HDUseg(C)';
+    25 : VariableEdit.Text := '$HDTotag(C)';
+    26 : VariableEdit.Text := '$HDF%(C)';
+    27 : VariableEdit.Text := '$HDU%(C)';
+    28 : VariableEdit.Text := '$Bar($HDFree(C),$HDTotal(C),10)';
+    29 : VariableEdit.Text := '$Bar($HDUsed(C),$HDTotal(C),10)';
+    30 : VariableEdit.Text := '$ScreenReso';
+    else VariableEdit.Text := NoVariable;
+  end; // case
 
+  if not (VariableEdit.Text = NoVariable) then
     FocusToInputField();
-
-  end;
 end;
 
 procedure TSetupForm.MBMListBoxClick(Sender: TObject);
 begin
-  if MBMListBox.itemindex > -1 then
-  begin
-    if MBMListBox.itemindex = 0 then VariableEdit.Text := '$Temp1';
-    if MBMListBox.itemindex = 1 then VariableEdit.Text := '$Temp2';
-    if MBMListBox.itemindex = 2 then VariableEdit.Text := '$Temp3';
-    if MBMListBox.itemindex = 3 then VariableEdit.Text := '$Temp4';
-    if MBMListBox.itemindex = 4 then VariableEdit.Text := '$Temp5';
-    if MBMListBox.itemindex = 5 then VariableEdit.Text := '$Temp6';
-    if MBMListBox.itemindex = 6 then VariableEdit.Text := '$Temp7';
-    if MBMListBox.itemindex = 7 then VariableEdit.Text := '$Temp8';
-    if MBMListBox.itemindex = 8 then VariableEdit.Text := '$Temp9';
-    if MBMListBox.itemindex = 9 then VariableEdit.Text := '$Temp10';
-    if MBMListBox.itemindex = 10 then VariableEdit.Text := '$FanS1';
-    if MBMListBox.itemindex = 11 then VariableEdit.Text := '$FanS2';
-    if MBMListBox.itemindex = 12 then VariableEdit.Text := '$FanS3';
-    if MBMListBox.itemindex = 13 then VariableEdit.Text := '$FanS4';
-    if MBMListBox.itemindex = 14 then VariableEdit.Text := '$FanS5';
-    if MBMListBox.itemindex = 15 then VariableEdit.Text := '$FanS6';
-    if MBMListBox.itemindex = 16 then VariableEdit.Text := '$FanS7';
-    if MBMListBox.itemindex = 17 then VariableEdit.Text := '$FanS8';
-    if MBMListBox.itemindex = 18 then VariableEdit.Text := '$FanS9';
-    if MBMListBox.itemindex = 19 then VariableEdit.Text := '$FanS10';
-    if MBMListBox.itemindex = 20 then VariableEdit.Text := '$Voltage1';
-    if MBMListBox.itemindex = 21 then VariableEdit.Text := '$Voltage2';
-    if MBMListBox.itemindex = 22 then VariableEdit.Text := '$Voltage3';
-    if MBMListBox.itemindex = 23 then VariableEdit.Text := '$Voltage4';
-    if MBMListBox.itemindex = 24 then VariableEdit.Text := '$Voltage5';
-    if MBMListBox.itemindex = 25 then VariableEdit.Text := '$Voltage6';
-    if MBMListBox.itemindex = 26 then VariableEdit.Text := '$Voltage7';
-    if MBMListBox.itemindex = 27 then VariableEdit.Text := '$Voltage8';
-    if MBMListBox.itemindex = 28 then VariableEdit.Text := '$Voltage9';
-    if MBMListBox.itemindex = 29 then VariableEdit.Text := '$Voltage10';
-    if MBMListBox.itemindex = 30 then VariableEdit.Text := '$Tempname1';
-    if MBMListBox.itemindex = 31 then VariableEdit.Text := '$Tempname2';
-    if MBMListBox.itemindex = 32 then VariableEdit.Text := '$Tempname3';
-    if MBMListBox.itemindex = 33 then VariableEdit.Text := '$Tempname4';
-    if MBMListBox.itemindex = 34 then VariableEdit.Text := '$Tempname5';
-    if MBMListBox.itemindex = 35 then VariableEdit.Text := '$Tempname6';
-    if MBMListBox.itemindex = 36 then VariableEdit.Text := '$Tempname7';
-    if MBMListBox.itemindex = 37 then VariableEdit.Text := '$Tempname8';
-    if MBMListBox.itemindex = 38 then VariableEdit.Text := '$Tempname9';
-    if MBMListBox.itemindex = 39 then VariableEdit.Text := '$Tempname10';
-    if MBMListBox.itemindex = 40 then VariableEdit.Text := '$Fanname1';
-    if MBMListBox.itemindex = 41 then VariableEdit.Text := '$Fanname2';
-    if MBMListBox.itemindex = 42 then VariableEdit.Text := '$Fanname3';
-    if MBMListBox.itemindex = 43 then VariableEdit.Text := '$Fanname4';
-    if MBMListBox.itemindex = 44 then VariableEdit.Text := '$Fanname5';
-    if MBMListBox.itemindex = 45 then VariableEdit.Text := '$Fanname6';
-    if MBMListBox.itemindex = 46 then VariableEdit.Text := '$Fanname7';
-    if MBMListBox.itemindex = 47 then VariableEdit.Text := '$Fanname8';
-    if MBMListBox.itemindex = 48 then VariableEdit.Text := '$Fanname9';
-    if MBMListBox.itemindex = 49 then VariableEdit.Text := '$Fanname10';
-    if MBMListBox.itemindex = 50 then VariableEdit.Text := '$Voltname1';
-    if MBMListBox.itemindex = 51 then VariableEdit.Text := '$Voltname2';
-    if MBMListBox.itemindex = 52 then VariableEdit.Text := '$Voltname3';
-    if MBMListBox.itemindex = 53 then VariableEdit.Text := '$Voltname4';
-    if MBMListBox.itemindex = 54 then VariableEdit.Text := '$Voltname5';
-    if MBMListBox.itemindex = 55 then VariableEdit.Text := '$Voltname6';
-    if MBMListBox.itemindex = 56 then VariableEdit.Text := '$Voltname7';
-    if MBMListBox.itemindex = 57 then VariableEdit.Text := '$Voltname8';
-    if MBMListBox.itemindex = 58 then VariableEdit.Text := '$Voltname9';
-    if MBMListBox.itemindex = 59 then VariableEdit.Text := '$Voltname10';
+  case MBMListBox.itemindex of
+    0 : VariableEdit.Text := '$Temp1';
+    1 : VariableEdit.Text := '$Temp2';
+    2 : VariableEdit.Text := '$Temp3';
+    3 : VariableEdit.Text := '$Temp4';
+    4 : VariableEdit.Text := '$Temp5';
+    5 : VariableEdit.Text := '$Temp6';
+    6 : VariableEdit.Text := '$Temp7';
+    7 : VariableEdit.Text := '$Temp8';
+    8 : VariableEdit.Text := '$Temp9';
+    9 : VariableEdit.Text := '$Temp10';
+    10 : VariableEdit.Text := '$FanS1';
+    11 : VariableEdit.Text := '$FanS2';
+    12 : VariableEdit.Text := '$FanS3';
+    13 : VariableEdit.Text := '$FanS4';
+    14 : VariableEdit.Text := '$FanS5';
+    15 : VariableEdit.Text := '$FanS6';
+    16 : VariableEdit.Text := '$FanS7';
+    17 : VariableEdit.Text := '$FanS8';
+    18 : VariableEdit.Text := '$FanS9';
+    19 : VariableEdit.Text := '$FanS10';
+    20 : VariableEdit.Text := '$Voltage1';
+    21 : VariableEdit.Text := '$Voltage2';
+    22 : VariableEdit.Text := '$Voltage3';
+    23 : VariableEdit.Text := '$Voltage4';
+    24 : VariableEdit.Text := '$Voltage5';
+    25 : VariableEdit.Text := '$Voltage6';
+    26 : VariableEdit.Text := '$Voltage7';
+    27 : VariableEdit.Text := '$Voltage8';
+    28 : VariableEdit.Text := '$Voltage9';
+    29 : VariableEdit.Text := '$Voltage10';
+    30 : VariableEdit.Text := '$Tempname1';
+    31 : VariableEdit.Text := '$Tempname2';
+    32 : VariableEdit.Text := '$Tempname3';
+    33 : VariableEdit.Text := '$Tempname4';
+    34 : VariableEdit.Text := '$Tempname5';
+    35 : VariableEdit.Text := '$Tempname6';
+    36 : VariableEdit.Text := '$Tempname7';
+    37 : VariableEdit.Text := '$Tempname8';
+    38 : VariableEdit.Text := '$Tempname9';
+    39 : VariableEdit.Text := '$Tempname10';
+    40 : VariableEdit.Text := '$Fanname1';
+    41 : VariableEdit.Text := '$Fanname2';
+    42 : VariableEdit.Text := '$Fanname3';
+    43 : VariableEdit.Text := '$Fanname4';
+    44 : VariableEdit.Text := '$Fanname5';
+    45 : VariableEdit.Text := '$Fanname6';
+    46 : VariableEdit.Text := '$Fanname7';
+    47 : VariableEdit.Text := '$Fanname8';
+    48 : VariableEdit.Text := '$Fanname9';
+    49 : VariableEdit.Text := '$Fanname10';
+    50 : VariableEdit.Text := '$Voltname1';
+    51 : VariableEdit.Text := '$Voltname2';
+    52 : VariableEdit.Text := '$Voltname3';
+    53 : VariableEdit.Text := '$Voltname4';
+    54 : VariableEdit.Text := '$Voltname5';
+    55 : VariableEdit.Text := '$Voltname6';
+    56 : VariableEdit.Text := '$Voltname7';
+    57 : VariableEdit.Text := '$Voltname8';
+    58 : VariableEdit.Text := '$Voltname9';
+    59 : VariableEdit.Text := '$Voltname10';
+    else VariableEdit.Text := NoVariable;
+  end; // case
 
+  if not (VariableEdit.Text = NoVariable) then
     FocusToInputField();
-
-  end;
 end;
 
 procedure TSetupForm.InternetListBoxClick(Sender: TObject);
-begin
-  if InternetListBox.itemindex > -1 then
-  begin
-    case InternetListBox.itemindex of
-      0: VariableEdit.Text :=
-   '$Rss(http://news.bbc.co.uk/rss/newsonline_uk_edition/world/rss091.xml,b)'
-        ;
-      1: VariableEdit.Text :=
-      '$Rss(http://news.bbc.co.uk/rss/newsonline_uk_edition/uk/rss091.xml,b)'
-        ;
-      2: VariableEdit.Text := '$Rss(http://www.tweakers.net/feeds/mixed.xml,b)';
-      3: VariableEdit.Text := '$Rss(http://www.theregister.co.uk/headlines.rss,b)';
-      4: VariableEdit.Text := '$Rss(http://slashdot.org/index.rss,b)';
-      5: VariableEdit.Text :=
-        '$Rss(http://www.wired.com/news_drop/netcenter/netcenter.rdf,b)';
-      6: VariableEdit.Text :=
-        '$Rss(http://www.fool.com/xml/foolnews_rss091.xml,b,1)';
-      7: VariableEdit.Text := '$Rss(http://www.fool.com/xml/foolnews_rss091.xml,b)';
-      8: VariableEdit.Text :=
-'$Rss(http://sourceforge.net/export/rss2_projnews.php?group_id=122330&rss_fulltext=1,b,1)'
-        ;
-      9: VariableEdit.Text :=
-'$Rss(http://sourceforge.net/export/rss2_projnews.php?group_id=2987&rss_fulltext=1,b,1)'
-        ;
-      10: VariableEdit.Text :=
-'$Rss(http://www.weatherclicks.com/xml/fort+lauderdale,t,2): $Rss(http://www.weatherclicks.com/xml/fort+lauderdale,d,2) | '
-        ;
-      11: VariableEdit.Text :=
-'$Rss(http://news.bbc.co.uk/rss/newsonline_world_edition/business/rss091.xml,b)'
-        ;
-      12: VariableEdit.Text :=
-'$Rss(http://www.washingtonpost.com/wp-srv/business/rssheadlines.xml,b)'
-        ;
-      13: VariableEdit.Text := '$Rss(http://rss.news.yahoo.com/rss/entertainment,b)';
-      14: VariableEdit.Text := '$Rss(http://partners.userland.com/nytRss/health.xml,b)';
-      15: VariableEdit.Text := '$Rss(http://partners.userland.com/nytRss/sports.xml,b)';
-      16: VariableEdit.Text := '$Rss(http://www.securityfocus.com/rss/news.xml,b)';
-      17: VariableEdit.Text := '$Rss(http://volkskrant.nl/rss/economie.rss,b)';
-      18: VariableEdit.Text := '$Rss(http://www.vpro.nl/3voor12/rss/index.jsp?images=false,b)';
-      19: VariableEdit.Text := '$Rss(http://www.ad.nl/index.xml,b)';
-      20: VariableEdit.Text := '$Rss(http://www.atletiek.nl/rss.xml,b)';
-      21: VariableEdit.Text := '$Rss(http://www.rtl.fr/referencement/rtl.asp,b)';
-      22: VariableEdit.Text := '$Rss(http://www.tagesschau.de/xml/tagesschau-meldungen/,b)';
-    end;
-
 {Stock Indexes
 Tom's Hardware headlines
 Tweakers.net headlines (in dutch)
@@ -1127,30 +1027,36 @@ Weather.com(locationcode)
     if InternetListBox.itemindex = 4 then VariableEdit.Text := '$DutchWeather';
     if InternetListBox.itemindex = 5 then VariableEdit.Text := '$Weather.com(CAXX0504)';
     }
-
-    FocusToInputField();
-
-
-  end;
-end;
-
-procedure TSetupForm.GameTypeComboBoxChange(Sender: TObject);
 begin
-  if GamestatsListBox.Itemindex = 1 then
-  begin
-    if GameTypeComboBox.itemindex = 0 then VariableEdit.Text := '$Half-life2';
-    if GameTypeComboBox.itemindex = 1 then VariableEdit.Text := '$QuakeII2';
-    if GameTypeComboBox.itemindex = 2 then VariableEdit.Text := '$QuakeIII2';
-    if GameTypeComboBox.itemindex = 3 then VariableEdit.Text := '$Unreal2';
-  end
-  else
-  begin
-    GamestatsListBox.ItemIndex := 0;
-    if GameTypeComboBox.itemindex = 0 then VariableEdit.Text := '$Half-life1';
-    if GameTypeComboBox.itemindex = 1 then VariableEdit.Text := '$QuakeII1';
-    if GameTypeComboBox.itemindex = 2 then VariableEdit.Text := '$QuakeIII1';
-    if GameTypeComboBox.itemindex = 3 then VariableEdit.Text := '$Unreal1';
-  end;
+  case InternetListBox.itemindex of
+    0: VariableEdit.Text := '$Rss(http://news.bbc.co.uk/rss/newsonline_uk_edition/world/rss091.xml,b)';
+    1: VariableEdit.Text := '$Rss(http://news.bbc.co.uk/rss/newsonline_uk_edition/uk/rss091.xml,b)';
+    2: VariableEdit.Text := '$Rss(http://www.tweakers.net/feeds/mixed.xml,b)';
+    3: VariableEdit.Text := '$Rss(http://www.theregister.co.uk/headlines.rss,b)';
+    4: VariableEdit.Text := '$Rss(http://slashdot.org/index.rss,b)';
+    5: VariableEdit.Text := '$Rss(http://www.wired.com/news_drop/netcenter/netcenter.rdf,b)';
+    6: VariableEdit.Text := '$Rss(http://www.fool.com/xml/foolnews_rss091.xml,b,1)';
+    7: VariableEdit.Text := '$Rss(http://www.fool.com/xml/foolnews_rss091.xml,b)';
+    8: VariableEdit.Text := '$Rss(http://sourceforge.net/export/rss2_projnews.php?group_id=122330&rss_fulltext=1,b,1)';
+    9: VariableEdit.Text := '$Rss(http://sourceforge.net/export/rss2_projnews.php?group_id=2987&rss_fulltext=1,b,1)';
+    10: VariableEdit.Text := '$Rss(http://www.weatherclicks.com/xml/fort+lauderdale,t,2): $Rss(http://www.weatherclicks.com/xml/fort+lauderdale,d,2) | ';
+    11: VariableEdit.Text := '$Rss(http://news.bbc.co.uk/rss/newsonline_world_edition/business/rss091.xml,b)';
+    12: VariableEdit.Text := '$Rss(http://www.washingtonpost.com/wp-srv/business/rssheadlines.xml,b)';
+    13: VariableEdit.Text := '$Rss(http://rss.news.yahoo.com/rss/entertainment,b)';
+    14: VariableEdit.Text := '$Rss(http://partners.userland.com/nytRss/health.xml,b)';
+    15: VariableEdit.Text := '$Rss(http://partners.userland.com/nytRss/sports.xml,b)';
+    16: VariableEdit.Text := '$Rss(http://www.securityfocus.com/rss/news.xml,b)';
+    17: VariableEdit.Text := '$Rss(http://volkskrant.nl/rss/economie.rss,b)';
+    18: VariableEdit.Text := '$Rss(http://www.vpro.nl/3voor12/rss/index.jsp?images=false,b)';
+    19: VariableEdit.Text := '$Rss(http://www.ad.nl/index.xml,b)';
+    20: VariableEdit.Text := '$Rss(http://www.atletiek.nl/rss.xml,b)';
+    21: VariableEdit.Text := '$Rss(http://www.rtl.fr/referencement/rtl.asp,b)';
+    22: VariableEdit.Text := '$Rss(http://www.tagesschau.de/xml/tagesschau-meldungen/,b)';
+    else VariableEdit.Text := NoVariable;
+  end; // case
+
+  if not (VariableEdit.Text = NoVariable) then
+    FocusToInputField();
 end;
 
 procedure TSetupForm.QStatLabelClick(Sender: TObject);
@@ -1160,337 +1066,77 @@ end;
 
 procedure TSetupForm.MiscListBoxClick(Sender: TObject);
 begin
-  if MiscListBox.itemindex > -1 then
-  begin
-    if MiscListBox.itemindex = 0 then VariableEdit.Text := '$DnetSpeed';
-    if MiscListBox.itemindex = 1 then VariableEdit.Text := '$DnetDone';
-    if MiscListBox.itemindex = 2 then VariableEdit.Text :=
-      '$Time(d mmmm yyyy hh: nn: ss)';
-    if MiscListBox.itemindex = 3 then VariableEdit.Text := '$UpTime';
-    if MiscListBox.itemindex = 4 then VariableEdit.Text := '$UpTims';
-    if MiscListBox.itemindex = 5 then VariableEdit.Text := '°';
-    if MiscListBox.itemindex = 6 then VariableEdit.Text := 'ž';
-    if MiscListBox.itemindex = 7 then VariableEdit.Text := '$Chr(20)';
-    if MiscListBox.itemindex = 8 then VariableEdit.Text := '$File(C:\file.txt,1)';
-    if MiscListBox.itemindex = 9 then VariableEdit.Text := '$LogFile(C:\file.log,0)';
-    if MiscListBox.itemindex = 10 then VariableEdit.Text :=
-      '$dll(demo.dll,5,param1,param2)';
-    if MiscListBox.itemindex = 11 then VariableEdit.Text := '$Count(101#$CPUSpeed#4)';
-    if MiscListBox.itemindex = 12 then VariableEdit.Text := '$Bar(30,100,20)';
-    if MiscListBox.itemindex = 13 then VariableEdit.Text :=
-      '$Right(ins variable(s) here,$3%)';
-    if MiscListBox.itemindex = 14 then VariableEdit.Text := '$Fill(10)';
-    if MiscListBox.itemindex = 15 then VariableEdit.Text :=
-      '$Flash(insert text here$)$';
-    if MiscListBox.itemindex = 16 then VariableEdit.Text :=
-      '$CustomChar(1, 31, 31, 31, 31, 31, 31, 31, 31)';
-    if MiscListBox.itemindex = 17 then VariableEdit.Text :=
-      '$Rss(URL,t|d|b,ITEM#,MAXFREQHRS)';
-    if MiscListBox.ItemIndex = 18 then VariableEdit.Text := '$Center(text here,15)';
-    if MiscListBox.ItemIndex = 19 then VariableEdit.Text := '$ScreenChanged';
-    FocusToInputField();
+  case MiscListBox.itemindex of
+    0 : VariableEdit.Text := '$DnetSpeed';
+    1 : VariableEdit.Text := '$DnetDone';
+    2 : VariableEdit.Text := '$Time(d mmmm yyyy hh: nn: ss)';
+    3 : VariableEdit.Text := '$UpTime';
+    4 : VariableEdit.Text := '$UpTims';
+    5 : VariableEdit.Text := '°';
+    6 : VariableEdit.Text := 'ž';
+    7 : VariableEdit.Text := '$Chr(20)';
+    8 : VariableEdit.Text := '$File(C:\file.txt,1)';
+    9 : VariableEdit.Text := '$LogFile(C:\file.log,0)';
+    10 : VariableEdit.Text := '$dll(demo.dll,5,param1,param2)';
+    11 : VariableEdit.Text := '$Count(101#$CPUSpeed#4)';
+    12 : VariableEdit.Text := '$Bar(30,100,20)';
+    13 : VariableEdit.Text := '$Right(ins variable(s) here,$3%)';
+    14 : VariableEdit.Text := '$Fill(10)';
+    15 : VariableEdit.Text := '$Flash(insert text here$)$';
+    16 : VariableEdit.Text := '$CustomChar(1, 31, 31, 31, 31, 31, 31, 31, 31)';
+    17 : VariableEdit.Text := '$Rss(URL,t|d|b,ITEM#,MAXFREQHRS)';
+    18 : VariableEdit.Text := '$Center(text here,15)';
+    19 : VariableEdit.Text := '$ScreenChanged';
+    else VariableEdit.Text := NoVariable;
+  end; // case
 
-  end;
+  if not (VariableEdit.Text = NoVariable) then
+    FocusToInputField();
 end;
 
 procedure TSetupForm.SetiAtHomeListBoxClick(Sender: TObject);
 begin
-  if SetiAtHomeListBox.itemindex > -1 then
-  begin
-    if SetiAtHomeListBox.itemindex = 0 then VariableEdit.Text := '$SETIResults';
-    if SetiAtHomeListBox.itemindex = 1 then VariableEdit.Text := '$SETICPUTime';
-    if SetiAtHomeListBox.itemindex = 2 then VariableEdit.Text := '$SETIAverage';
-    if SetiAtHomeListBox.itemindex = 3 then VariableEdit.Text := '$SETILastresult';
-    if SetiAtHomeListBox.itemindex = 4 then VariableEdit.Text := '$SETIusertime';
-    if SetiAtHomeListBox.itemindex = 5 then VariableEdit.Text := '$SETItotalusers';
-    if SetiAtHomeListBox.itemindex = 6 then VariableEdit.Text := '$SETIrank';
-    if SetiAtHomeListBox.itemindex = 7 then VariableEdit.Text := '$SETIsharingrank';
-    if SetiAtHomeListBox.itemindex = 8 then VariableEdit.Text := '$SETImoreWU%';
+  case SetiAtHomeListBox.itemindex of
+    0 : VariableEdit.Text := '$SETIResults';
+    1 : VariableEdit.Text := '$SETICPUTime';
+    2 : VariableEdit.Text := '$SETIAverage';
+    3 : VariableEdit.Text := '$SETILastresult';
+    4 : VariableEdit.Text := '$SETIusertime';
+    5 : VariableEdit.Text := '$SETItotalusers';
+    6 : VariableEdit.Text := '$SETIrank';
+    7 : VariableEdit.Text := '$SETIsharingrank';
+    8 : VariableEdit.Text := '$SETImoreWU%';
+    else VariableEdit.Text := NoVariable;
+  end; // case
 
+  if not (VariableEdit.Text = NoVariable) then
     FocusToInputField();
-  end;
 end;
 
 procedure TSetupForm.LeftPageControlChange(Sender: TObject);
 begin
   if LeftPageControl.ActivePage = WinampTabSheet then
-  begin
-    if WinampListBox.itemindex > -1 then
-    begin
-      if WinampListBox.itemindex = 0 then VariableEdit.Text := '$WinampTitle';
-      if WinampListBox.itemindex = 1 then VariableEdit.Text := '$WinampChannels';
-      if WinampListBox.itemindex = 2 then VariableEdit.Text := '$WinampKBPS';
-      if WinampListBox.itemindex = 3 then VariableEdit.Text := '$WinampFreq';
-      if WinampListBox.itemindex = 4 then VariableEdit.Text := '$Winamppos';
-      if WinampListBox.itemindex = 5 then VariableEdit.Text := '$WinampPolo';
-      if WinampListBox.itemindex = 6 then VariableEdit.Text := '$WinampPosh';
-      if WinampListBox.itemindex = 7 then VariableEdit.Text := '$WinampRem';
-      if WinampListBox.itemindex = 8 then VariableEdit.Text := '$WinampRelo';
-      if WinampListBox.itemindex = 9 then VariableEdit.Text := '$WinampResh';
-      if WinampListBox.itemindex = 10 then VariableEdit.Text := '$WinampLength';
-      if WinampListBox.itemindex = 11 then VariableEdit.Text := '$WinampLengtl';
-      if WinampListBox.itemindex = 12 then VariableEdit.Text := '$WinampLengts';
-      if WinampListBox.itemindex = 13 then VariableEdit.Text := '$WinampPosition(10)';
-      if WinampListBox.itemindex = 14 then VariableEdit.Text := '$WinampTracknr';
-      if WinampListBox.itemindex = 15 then VariableEdit.Text := '$WinampTotalTracks';
-      if WinampListBox.itemindex = 16 then VariableEdit.Text := '$WinampStat';
-    end
-    else VariableEdit.text := 'Variable: ';
-  end;
+    WinampListBoxClick(Sender);
   if LeftPageControl.ActivePage = SysInfoTabSheet then
-  begin
-    if SysInfoListBox.itemindex > -1 then
-    begin
-      if SysInfoListBox.itemindex = 0 then VariableEdit.Text := '$Username';
-      if SysInfoListBox.itemindex = 1 then VariableEdit.Text := '$Computername';
-      if SysInfoListBox.itemindex = 2 then VariableEdit.Text := '$CPUType';
-      if SysInfoListBox.itemindex = 3 then VariableEdit.Text := '$CPUSpeed';
-      if SysInfoListBox.itemindex = 4 then VariableEdit.Text := '$CPUUsage%';
-      if SysInfoListBox.itemindex = 5 then VariableEdit.Text :=
-        '$Bar($CPUUsage%,100,10)';
-      if SysInfoListBox.itemindex = 6 then VariableEdit.Text := '$MemFree';
-      if SysInfoListBox.itemindex = 7 then VariableEdit.Text := '$MemUsed';
-      if SysInfoListBox.itemindex = 8 then VariableEdit.Text := '$MemTotal';
-      if SysInfoListBox.itemindex = 9 then VariableEdit.Text := '$MemF%';
-      if SysInfoListBox.itemindex = 10 then VariableEdit.Text := '$MemU%';
-      if SysInfoListBox.itemindex = 11 then VariableEdit.Text :=
-        '$Bar($MemFree,$MemTotal,10)';
-      if SysInfoListBox.itemindex = 12 then VariableEdit.Text :=
-        '$Bar($MemUsed,$MemTotal,10)';
-      if SysInfoListBox.itemindex = 13 then VariableEdit.Text := '$PageFree';
-      if SysInfoListBox.itemindex = 14 then VariableEdit.Text := '$PageUsed';
-      if SysInfoListBox.itemindex = 15 then VariableEdit.Text := '$PageTotal';
-      if SysInfoListBox.itemindex = 16 then VariableEdit.Text := '$PageF%';
-      if SysInfoListBox.itemindex = 17 then VariableEdit.Text := '$PageU%';
-      if SysInfoListBox.itemindex = 18 then VariableEdit.Text :=
-        '$Bar($PageFree,$PageTotal,10)';
-      if SysInfoListBox.itemindex = 19 then VariableEdit.Text :=
-        '$Bar($PageUsed,$PageTotal,10)';
-      if SysInfoListBox.itemindex = 20 then VariableEdit.Text := '$HDFree(C)';
-      if SysInfoListBox.itemindex = 21 then VariableEdit.Text := '$HDUsed(C)';
-      if SysInfoListBox.itemindex = 22 then VariableEdit.Text := '$HDTotal(C)';
-      if SysInfoListBox.itemindex = 23 then VariableEdit.Text := '$HDFreg(C)';
-      if SysInfoListBox.itemindex = 24 then VariableEdit.Text := '$HDUseg(C)';
-      if SysInfoListBox.itemindex = 25 then VariableEdit.Text := '$HDTotag(C)';
-      if SysInfoListBox.itemindex = 26 then VariableEdit.Text := '$HDF%(C)';
-      if SysInfoListBox.itemindex = 27 then VariableEdit.Text := '$HDU%(C)';
-      if SysInfoListBox.itemindex = 28 then VariableEdit.Text :=
-        '$Bar($HDFree(C),$HDTotal(C),10)';
-      if SysInfoListBox.itemindex = 29 then VariableEdit.Text :=
-        '$Bar($HDUsed(C),$HDTotal(C),10)';
-      if SysInfoListBox.itemindex = 30 then VariableEdit.Text := '$ScreenReso';
-    end
-    else VariableEdit.text := 'Variable: ';
-  end;
+    SysInfoListBoxClick(Sender);
   if LeftPageControl.ActivePage = MBMTabSheet then
-  begin
-    if MBMListBox.itemindex > -1 then
-    begin
-      if MBMListBox.itemindex = 0 then VariableEdit.Text := '$Temp1';
-      if MBMListBox.itemindex = 1 then VariableEdit.Text := '$Temp2';
-      if MBMListBox.itemindex = 2 then VariableEdit.Text := '$Temp3';
-      if MBMListBox.itemindex = 3 then VariableEdit.Text := '$Temp4';
-      if MBMListBox.itemindex = 4 then VariableEdit.Text := '$Temp5';
-      if MBMListBox.itemindex = 5 then VariableEdit.Text := '$Temp6';
-      if MBMListBox.itemindex = 6 then VariableEdit.Text := '$Temp7';
-      if MBMListBox.itemindex = 7 then VariableEdit.Text := '$Temp8';
-      if MBMListBox.itemindex = 8 then VariableEdit.Text := '$Temp9';
-      if MBMListBox.itemindex = 9 then VariableEdit.Text := '$Temp10';
-      if MBMListBox.itemindex = 10 then VariableEdit.Text := '$FanS1';
-      if MBMListBox.itemindex = 11 then VariableEdit.Text := '$FanS2';
-      if MBMListBox.itemindex = 12 then VariableEdit.Text := '$FanS3';
-      if MBMListBox.itemindex = 13 then VariableEdit.Text := '$FanS4';
-      if MBMListBox.itemindex = 14 then VariableEdit.Text := '$FanS5';
-      if MBMListBox.itemindex = 15 then VariableEdit.Text := '$FanS6';
-      if MBMListBox.itemindex = 16 then VariableEdit.Text := '$FanS7';
-      if MBMListBox.itemindex = 17 then VariableEdit.Text := '$FanS8';
-      if MBMListBox.itemindex = 18 then VariableEdit.Text := '$FanS9';
-      if MBMListBox.itemindex = 19 then VariableEdit.Text := '$FanS10';
-      if MBMListBox.itemindex = 20 then VariableEdit.Text := '$Voltage1';
-      if MBMListBox.itemindex = 21 then VariableEdit.Text := '$Voltage2';
-      if MBMListBox.itemindex = 22 then VariableEdit.Text := '$Voltage3';
-      if MBMListBox.itemindex = 23 then VariableEdit.Text := '$Voltage4';
-      if MBMListBox.itemindex = 24 then VariableEdit.Text := '$Voltage5';
-      if MBMListBox.itemindex = 25 then VariableEdit.Text := '$Voltage6';
-      if MBMListBox.itemindex = 26 then VariableEdit.Text := '$Voltage7';
-      if MBMListBox.itemindex = 27 then VariableEdit.Text := '$Voltage8';
-      if MBMListBox.itemindex = 28 then VariableEdit.Text := '$Voltage9';
-      if MBMListBox.itemindex = 29 then VariableEdit.Text := '$Voltage10';
-      if MBMListBox.itemindex = 30 then VariableEdit.Text := '$Tempname1';
-      if MBMListBox.itemindex = 31 then VariableEdit.Text := '$Tempname2';
-      if MBMListBox.itemindex = 32 then VariableEdit.Text := '$Tempname3';
-      if MBMListBox.itemindex = 33 then VariableEdit.Text := '$Tempname4';
-      if MBMListBox.itemindex = 34 then VariableEdit.Text := '$Tempname5';
-      if MBMListBox.itemindex = 35 then VariableEdit.Text := '$Tempname6';
-      if MBMListBox.itemindex = 36 then VariableEdit.Text := '$Tempname7';
-      if MBMListBox.itemindex = 37 then VariableEdit.Text := '$Tempname8';
-      if MBMListBox.itemindex = 38 then VariableEdit.Text := '$Tempname9';
-      if MBMListBox.itemindex = 39 then VariableEdit.Text := '$Tempname10';
-      if MBMListBox.itemindex = 40 then VariableEdit.Text := '$Fanname1';
-      if MBMListBox.itemindex = 41 then VariableEdit.Text := '$Fanname2';
-      if MBMListBox.itemindex = 42 then VariableEdit.Text := '$Fanname3';
-      if MBMListBox.itemindex = 43 then VariableEdit.Text := '$Fanname4';
-      if MBMListBox.itemindex = 44 then VariableEdit.Text := '$Fanname5';
-      if MBMListBox.itemindex = 45 then VariableEdit.Text := '$Fanname6';
-      if MBMListBox.itemindex = 46 then VariableEdit.Text := '$Fanname7';
-      if MBMListBox.itemindex = 47 then VariableEdit.Text := '$Fanname8';
-      if MBMListBox.itemindex = 48 then VariableEdit.Text := '$Fanname9';
-      if MBMListBox.itemindex = 49 then VariableEdit.Text := '$Fanname10';
-      if MBMListBox.itemindex = 50 then VariableEdit.Text := '$Voltname1';
-      if MBMListBox.itemindex = 51 then VariableEdit.Text := '$Voltname2';
-      if MBMListBox.itemindex = 52 then VariableEdit.Text := '$Voltname3';
-      if MBMListBox.itemindex = 53 then VariableEdit.Text := '$Voltname4';
-      if MBMListBox.itemindex = 54 then VariableEdit.Text := '$Voltname5';
-      if MBMListBox.itemindex = 55 then VariableEdit.Text := '$Voltname6';
-      if MBMListBox.itemindex = 56 then VariableEdit.Text := '$Voltname7';
-      if MBMListBox.itemindex = 57 then VariableEdit.Text := '$Voltname8';
-      if MBMListBox.itemindex = 58 then VariableEdit.Text := '$Voltname9';
-      if MBMListBox.itemindex = 59 then VariableEdit.Text := '$Voltname10';
-    end
-    else VariableEdit.text := 'Variable: ';
-  end;
+    MBMListBoxClick(Sender);
   if LeftPageControl.ActivePage = LCDFeaturesTabSheet then
-  begin
-    //if MatrixOrbitalRadioButton.Checked = false then LeftPageControl.ActivePage := WinampTabSheet;
-    if ButtonsListBox.itemindex > -1 then
-    begin
-      if ButtonsListBox.itemindex = 0 then VariableEdit.Text := '$MObutton';
-      if ButtonsListBox.itemindex = 1 then VariableEdit.Text := '$FanSpeed(1,1)';
-      if ButtonsListBox.itemindex = 2 then VariableEdit.Text := '$Sensor1';
-      if ButtonsListBox.itemindex = 3 then VariableEdit.Text := '$Sensor2';
-      if ButtonsListBox.itemindex = 4 then VariableEdit.Text := '$Sensor3';
-      if ButtonsListBox.itemindex = 5 then VariableEdit.Text := '$Sensor4';
-      if ButtonsListBox.itemindex = 6 then VariableEdit.Text := '$Sensor5';
-      if ButtonsListBox.itemindex = 7 then VariableEdit.Text := '$Sensor6';
-      if ButtonsListBox.itemindex = 8 then VariableEdit.Text := '$Sensor7';
-      if ButtonsListBox.itemindex = 9 then VariableEdit.Text := '$Sensor8';
-    end
-    else VariableEdit.text := 'Variable: ';
-  end;
+    ButtonsListBoxClick(Sender);
   if LeftPageControl.ActivePage = GameStatsTabSheet then
-  begin
-    if GamestatsListBox.itemindex <= -1 then VariableEdit.text := 'Variable: ';
-  end;
+    GamestatsListBoxClick(Sender);
   if LeftPageControl.ActivePage = InternetTabSheet then
-  begin
-    if InternetListBox.itemindex > -1 then
-    begin
-      if InternetListBox.itemindex = 0 then VariableEdit.Text := '$CNN';
-      if InternetListBox.itemindex = 1 then VariableEdit.Text := '$Stocks';
-      if InternetListBox.itemindex = 2 then VariableEdit.Text := '$TomsHW';
-      if InternetListBox.itemindex = 3 then VariableEdit.Text := '$T.netHL';
-      if InternetListBox.itemindex = 4 then VariableEdit.Text := '$DutchWeather';
-      if InternetListBox.itemindex = 5 then VariableEdit.Text := '$Weather.com(CAXX0504)';
-    end
-    else VariableEdit.text := 'Variable: ';
-  end;
+    InternetListBoxClick(Sender);
   if LeftPageControl.ActivePage = MiscTabSheet then
-  begin
-    if MiscListBox.itemindex > -1 then
-    begin
-      if MiscListBox.itemindex = 0 then VariableEdit.Text := '$DnetSpeed';
-      if MiscListBox.itemindex = 1 then VariableEdit.Text := '$DnetDone';
-      if MiscListBox.itemindex = 2 then VariableEdit.Text :=
-        '$Time(d mmmm yyyy hh: nn: ss)';
-      if MiscListBox.itemindex = 3 then VariableEdit.Text := '$UpTime';
-      if MiscListBox.itemindex = 4 then VariableEdit.Text := '$UpTims';
-      if MiscListBox.itemindex = 5 then VariableEdit.Text := '°';
-      if MiscListBox.itemindex = 6 then VariableEdit.Text := 'ž';
-      if MiscListBox.itemindex = 7 then VariableEdit.Text := '$Chr(20)';
-      if MiscListBox.itemindex = 8 then VariableEdit.Text := '$File(C:\file.txt,1)';
-      if MiscListBox.itemindex = 9 then VariableEdit.Text :=
-        '$LogFile("C:\file.log",0)';
-      if MiscListBox.itemindex = 10 then VariableEdit.Text :=
-        '$dll(demo.dll,5,param1,param2)';
-      if MiscListBox.itemindex = 11 then VariableEdit.Text := '$Count(101#$CPUSpeed#4)';
-      if MiscListBox.itemindex = 12 then VariableEdit.Text := '$Bar(30,100,20)';
-      if MiscListBox.itemindex = 13 then VariableEdit.Text :=
-        '$Right(ins variable(s) here,$3%)';
-      if MiscListBox.itemindex = 14 then VariableEdit.Text := '$Fill(10)';
-      if MiscListBox.itemindex = 15 then VariableEdit.Text :=
-        '$Flash(insert text here$)$';
-    end
-    else VariableEdit.text := 'Variable: ';
-  end;
+    MiscListBoxClick(Sender);
   if LeftPageControl.ActivePage = SetiAtHomeTabSheet then
-  begin
-    if SetiAtHomeListBox.itemindex > -1 then
-    begin
-      if SetiAtHomeListBox.itemindex = 0 then VariableEdit.Text := '$SETIResults';
-      if SetiAtHomeListBox.itemindex = 1 then VariableEdit.Text := '$SETICPUTime';
-      if SetiAtHomeListBox.itemindex = 2 then VariableEdit.Text := '$SETIAverage';
-      if SetiAtHomeListBox.itemindex = 3 then VariableEdit.Text := '$SETILastresult';
-      if SetiAtHomeListBox.itemindex = 4 then VariableEdit.Text := '$SETIusertime';
-      if SetiAtHomeListBox.itemindex = 5 then VariableEdit.Text := '$SETItotalusers';
-      if SetiAtHomeListBox.itemindex = 6 then VariableEdit.Text := '$SETIrank';
-      if SetiAtHomeListBox.itemindex = 7 then VariableEdit.Text := '$SETIsharingrank';
-      if SetiAtHomeListBox.itemindex = 8 then VariableEdit.Text := '$SETImoreWU%';
-    end
-    else VariableEdit.text := 'Variable: ';
-  end;
+    SetiAtHomeListBoxClick(Sender);
   if LeftPageControl.ActivePage = FoldingAtHomeTabSheet then
-  begin
-    if FoldingAtHomeListBox.itemindex > -1 then
-    begin
-      if FoldingAtHomeListBox.itemindex = 0 then VariableEdit.Text := '$FOLDmemsince';
-      if FoldingAtHomeListBox.itemindex = 1 then VariableEdit.Text := '$FOLDlastwu';
-      if FoldingAtHomeListBox.itemindex = 2 then VariableEdit.Text := '$FOLDactproc';
-      if FoldingAtHomeListBox.itemindex = 3 then VariableEdit.Text := '$FOLDteam';
-      if FoldingAtHomeListBox.itemindex = 4 then VariableEdit.Text := '$FOLDscore';
-      if FoldingAtHomeListBox.itemindex = 5 then VariableEdit.Text := '$FOLDrank';
-      if FoldingAtHomeListBox.itemindex = 6 then VariableEdit.Text := '$FOLDwu';
-    end
-    else VariableEdit.text := 'Variable: ';
-  end;
+    FoldingAtHomeListBoxClick(Sender);
   if LeftPageControl.ActivePage = EmailTabSheet then
-  begin
-    if EmailListBox.itemindex > -1 then
-    begin
-      if EmailListBox.itemindex = 0 then VariableEdit.Text := '$Email1';
-      if EmailListBox.itemindex = 1 then VariableEdit.Text := '$Email2';
-      if EmailListBox.itemindex = 2 then VariableEdit.Text := '$Email3';
-      if EmailListBox.itemindex = 3 then VariableEdit.Text := '$Email4';
-      if EmailListBox.itemindex = 4 then VariableEdit.Text := '$Email5';
-      if EmailListBox.itemindex = 5 then VariableEdit.Text := '$Email6';
-      if EmailListBox.itemindex = 6 then VariableEdit.Text := '$Email7';
-      if EmailListBox.itemindex = 7 then VariableEdit.Text := '$Email8';
-      if EmailListBox.itemindex = 8 then VariableEdit.Text := '$Email9';
-      if EmailListBox.itemindex = 9 then VariableEdit.Text := '$Email0';
-    end
-    else VariableEdit.text := 'Variable: ';
-  end;
+    EmailListBoxClick(Sender);
   if LeftPageControl.ActivePage = NetworkStatsTabSheet then
-  begin
-    if NetworkStatsListBox.itemindex > -1 then
-    begin
-      if NetworkStatsListBox.itemindex = 0 then VariableEdit.Text := '$NetAdapter(1)';
-      if NetworkStatsListBox.itemindex = 1 then VariableEdit.Text := '$NetDownK(1)';
-      if NetworkStatsListBox.itemindex = 2 then VariableEdit.Text := '$NetUpK(1)';
-      if NetworkStatsListBox.itemindex = 3 then VariableEdit.Text := '$NetDownM(1)';
-      if NetworkStatsListBox.itemindex = 4 then VariableEdit.Text := '$NetUpM(1)';
-      if NetworkStatsListBox.itemindex = 5 then VariableEdit.Text := '$NetDownG(1)';
-      if NetworkStatsListBox.itemindex = 6 then VariableEdit.Text := '$NetUpG(1)';
-      if NetworkStatsListBox.itemindex = 7 then VariableEdit.Text := '$NetSpDownK(1)';
-      if NetworkStatsListBox.itemindex = 8 then VariableEdit.Text := '$NetSpUpK(1)';
-      if NetworkStatsListBox.itemindex = 9 then VariableEdit.Text := '$NetSpDownM(1)';
-      if NetworkStatsListBox.itemindex = 10 then VariableEdit.Text := '$NetSpUpM(1)';
-      if NetworkStatsListBox.itemindex = 11 then VariableEdit.Text := '$NetErrDown(1)';
-      if NetworkStatsListBox.itemindex = 12 then VariableEdit.Text := '$NetErrUp(1)';
-      if NetworkStatsListBox.itemindex = 13 then VariableEdit.Text := '$NetErrTot(1)';
-      if NetworkStatsListBox.itemindex = 14 then VariableEdit.Text := '$NetUniDown(1)';
-      if NetworkStatsListBox.itemindex = 15 then VariableEdit.Text := '$NetUniUp(1)';
-      if NetworkStatsListBox.itemindex = 16 then VariableEdit.Text := '$NetUniTot(1)';
-      if NetworkStatsListBox.itemindex = 17 then VariableEdit.Text := '$NetNuniDown(1)';
-      if NetworkStatsListBox.itemindex = 18 then VariableEdit.Text := '$NetNuniUp(1)';
-      if NetworkStatsListBox.itemindex = 19 then VariableEdit.Text := '$NetNuniTot(1)';
-      if NetworkStatsListBox.itemindex = 20 then VariableEdit.Text := '$NetPackTot(1)';
-      if NetworkStatsListBox.itemindex = 21 then VariableEdit.Text := '$NetDiscDown(1)';
-      if NetworkStatsListBox.itemindex = 22 then VariableEdit.Text := '$NetDiscUp(1)';
-      if NetworkStatsListBox.itemindex = 23 then VariableEdit.Text := '$NetDiscTot(1)';
-      if NetworkStatsListBox.itemindex = 24 then VariableEdit.Text := '$NetIPaddress';
-    end
-    else VariableEdit.text := 'Variable: ';
-  end;
+    NetworkStatsListBoxClick(Sender);
 end;
 
 
@@ -1538,44 +1184,42 @@ end;
 
 procedure TSetupForm.EmailListBoxClick(Sender: TObject);
 begin
-  if EmailListBox.itemindex > -1 then
-  begin
-    case EmailListBox.itemindex of
-      0: VariableEdit.Text := '$Email1';
-      1: VariableEdit.Text := '$EmailSub1';
-      2: VariableEdit.Text := '$EmailFrom1';
-      3: VariableEdit.Text := '$Email2';
-      4: VariableEdit.Text := '$EmailSub2';
-      5: VariableEdit.Text := '$EmailFrom2';
-      6: VariableEdit.Text := '$Email3';
-      7: VariableEdit.Text := '$EmailSub3';
-      8: VariableEdit.Text := '$EmailFrom3';
-      9: VariableEdit.Text := '$Email4';
-      10: VariableEdit.Text := '$EmailSub4';
-      11: VariableEdit.Text := '$EmailFrom4';
-      12: VariableEdit.Text := '$Email5';
-      13: VariableEdit.Text := '$EmailSub5';
-      14: VariableEdit.Text := '$EmailFrom5';
-      15: VariableEdit.Text := '$Email6';
-      16: VariableEdit.Text := '$EmailSub6';
-      17: VariableEdit.Text := '$EmailFrom6';
-      18: VariableEdit.Text := '$Email7';
-      19: VariableEdit.Text := '$EmailSub7';
-      20: VariableEdit.Text := '$EmailFrom7';
-      21: VariableEdit.Text := '$Email8';
-      22: VariableEdit.Text := '$EmailSub8';
-      23: VariableEdit.Text := '$EmailFrom8';
-      24: VariableEdit.Text := '$Email9';
-      25: VariableEdit.Text := '$EmailSub9';
-      26: VariableEdit.Text := '$EmailFrom9';
-      27: VariableEdit.Text := '$Email0';
-      28: VariableEdit.Text := '$EmailSub0';
-      29: VariableEdit.Text := '$EmailFrom0';
-    end;
+  case EmailListBox.itemindex of
+    0: VariableEdit.Text := '$Email1';
+    1: VariableEdit.Text := '$EmailSub1';
+    2: VariableEdit.Text := '$EmailFrom1';
+    3: VariableEdit.Text := '$Email2';
+    4: VariableEdit.Text := '$EmailSub2';
+    5: VariableEdit.Text := '$EmailFrom2';
+    6: VariableEdit.Text := '$Email3';
+    7: VariableEdit.Text := '$EmailSub3';
+    8: VariableEdit.Text := '$EmailFrom3';
+    9: VariableEdit.Text := '$Email4';
+    10: VariableEdit.Text := '$EmailSub4';
+    11: VariableEdit.Text := '$EmailFrom4';
+    12: VariableEdit.Text := '$Email5';
+    13: VariableEdit.Text := '$EmailSub5';
+    14: VariableEdit.Text := '$EmailFrom5';
+    15: VariableEdit.Text := '$Email6';
+    16: VariableEdit.Text := '$EmailSub6';
+    17: VariableEdit.Text := '$EmailFrom6';
+    18: VariableEdit.Text := '$Email7';
+    19: VariableEdit.Text := '$EmailSub7';
+    20: VariableEdit.Text := '$EmailFrom7';
+    21: VariableEdit.Text := '$Email8';
+    22: VariableEdit.Text := '$EmailSub8';
+    23: VariableEdit.Text := '$EmailFrom8';
+    24: VariableEdit.Text := '$Email9';
+    25: VariableEdit.Text := '$EmailSub9';
+    26: VariableEdit.Text := '$EmailFrom9';
+    27: VariableEdit.Text := '$Email0';
+    28: VariableEdit.Text := '$EmailSub0';
+    29: VariableEdit.Text := '$EmailFrom0';
+    else VariableEdit.Text := NoVariable;
+  end; // case
 
+  if not (VariableEdit.Text = NoVariable) then
     FocusToInputField();
-
-  end;
 end;
 
 procedure TSetupForm.EmailAccountComboBoxChange(Sender: TObject);
@@ -1722,9 +1366,14 @@ begin
     1 : S := '$QuakeII';
     2 : S := '$QuakeIII';
     3 : S := '$Unreal';
-  end;
-  VariableEdit.Text := S + IntToStr(GamestatsListBox.Itemindex+1);
-  FocusToInputField();
+    else S := NoVariable;
+  end; // case
+
+  if not (S = NoVariable) then begin
+    VariableEdit.Text := S + IntToStr(GamestatsListBox.Itemindex+1);
+    FocusToInputField();
+  end else
+    VariableEdit.Text := S;
 end;
 
 
@@ -1782,36 +1431,37 @@ end;
 
 procedure TSetupForm.NetworkStatsListBoxClick(Sender: TObject);
 begin
-  if NetworkStatsListBox.itemindex > -1 then
-  begin
-    if NetworkStatsListBox.itemindex = 0 then VariableEdit.Text := '$NetAdapter(1)';
-    if NetworkStatsListBox.itemindex = 1 then VariableEdit.Text := '$NetDownK(1)';
-    if NetworkStatsListBox.itemindex = 2 then VariableEdit.Text := '$NetUpK(1)';
-    if NetworkStatsListBox.itemindex = 3 then VariableEdit.Text := '$NetDownM(1)';
-    if NetworkStatsListBox.itemindex = 4 then VariableEdit.Text := '$NetUpM(1)';
-    if NetworkStatsListBox.itemindex = 5 then VariableEdit.Text := '$NetDownG(1)';
-    if NetworkStatsListBox.itemindex = 6 then VariableEdit.Text := '$NetUpG(1)';
-    if NetworkStatsListBox.itemindex = 7 then VariableEdit.Text := '$NetSpDownK(1)';
-    if NetworkStatsListBox.itemindex = 8 then VariableEdit.Text := '$NetSpUpK(1)';
-    if NetworkStatsListBox.itemindex = 9 then VariableEdit.Text := '$NetSpDownM(1)';
-    if NetworkStatsListBox.itemindex = 10 then VariableEdit.Text := '$NetSpUpM(1)';
-    if NetworkStatsListBox.itemindex = 11 then VariableEdit.Text := '$NetErrDown(1)';
-    if NetworkStatsListBox.itemindex = 12 then VariableEdit.Text := '$NetErrUp(1)';
-    if NetworkStatsListBox.itemindex = 13 then VariableEdit.Text := '$NetErrTot(1)';
-    if NetworkStatsListBox.itemindex = 14 then VariableEdit.Text := '$NetUniDown(1)';
-    if NetworkStatsListBox.itemindex = 15 then VariableEdit.Text := '$NetUniUp(1)';
-    if NetworkStatsListBox.itemindex = 16 then VariableEdit.Text := '$NetUniTot(1)';
-    if NetworkStatsListBox.itemindex = 17 then VariableEdit.Text := '$NetNuniDown(1)';
-    if NetworkStatsListBox.itemindex = 18 then VariableEdit.Text := '$NetNuniUp(1)';
-    if NetworkStatsListBox.itemindex = 19 then VariableEdit.Text := '$NetNuniTot(1)';
-    if NetworkStatsListBox.itemindex = 20 then VariableEdit.Text := '$NetPackTot(1)';
-    if NetworkStatsListBox.itemindex = 21 then VariableEdit.Text := '$NetDiscDown(1)';
-    if NetworkStatsListBox.itemindex = 22 then VariableEdit.Text := '$NetDiscUp(1)';
-    if NetworkStatsListBox.itemindex = 23 then VariableEdit.Text := '$NetDiscTot(1)';
-    if NetworkStatsListBox.itemindex = 24 then VariableEdit.Text := '$NetIPaddress';
+  case NetworkStatsListBox.itemindex of
+    0 : VariableEdit.Text := '$NetAdapter(1)';
+    1 : VariableEdit.Text := '$NetDownK(1)';
+    2 : VariableEdit.Text := '$NetUpK(1)';
+    3 : VariableEdit.Text := '$NetDownM(1)';
+    4 : VariableEdit.Text := '$NetUpM(1)';
+    5 : VariableEdit.Text := '$NetDownG(1)';
+    6 : VariableEdit.Text := '$NetUpG(1)';
+    7 : VariableEdit.Text := '$NetSpDownK(1)';
+    8 : VariableEdit.Text := '$NetSpUpK(1)';
+    9 : VariableEdit.Text := '$NetSpDownM(1)';
+    10 : VariableEdit.Text := '$NetSpUpM(1)';
+    11 : VariableEdit.Text := '$NetErrDown(1)';
+    12 : VariableEdit.Text := '$NetErrUp(1)';
+    13 : VariableEdit.Text := '$NetErrTot(1)';
+    14 : VariableEdit.Text := '$NetUniDown(1)';
+    15 : VariableEdit.Text := '$NetUniUp(1)';
+    16 : VariableEdit.Text := '$NetUniTot(1)';
+    17 : VariableEdit.Text := '$NetNuniDown(1)';
+    18 : VariableEdit.Text := '$NetNuniUp(1)';
+    19 : VariableEdit.Text := '$NetNuniTot(1)';
+    20 : VariableEdit.Text := '$NetPackTot(1)';
+    21 : VariableEdit.Text := '$NetDiscDown(1)';
+    22 : VariableEdit.Text := '$NetDiscUp(1)';
+    23 : VariableEdit.Text := '$NetDiscTot(1)';
+    24 : VariableEdit.Text := '$NetIPaddress';
+    else VariableEdit.Text := NoVariable;
+  end; // case
 
+  if not (VariableEdit.Text = NoVariable) then
     FocusToInputField();
-  end;
 end;
 
 procedure TSetupForm.HD44780ConfigButtonClick(Sender: TObject);
@@ -1834,18 +1484,18 @@ end;
 
 procedure TSetupForm.FoldingAtHomeListBoxClick(Sender: TObject);
 begin
-  if FoldingAtHomeListBox.itemindex > -1 then
-  begin
-    if FoldingAtHomeListBox.itemindex = 0 then VariableEdit.Text := '$FOLDwu';
-    if FoldingAtHomeListBox.itemindex = 1 then VariableEdit.Text := '$FOLDlastwu';
-    if FoldingAtHomeListBox.itemindex = 2 then VariableEdit.Text := '$FOLDactproc';
-    if FoldingAtHomeListBox.itemindex = 3 then VariableEdit.Text := '$FOLDteam';
-    if FoldingAtHomeListBox.itemindex = 4 then VariableEdit.Text := '$FOLDscore';
-    if FoldingAtHomeListBox.itemindex = 5 then VariableEdit.Text := '$FOLDrank';
+  case FoldingAtHomeListBox.itemindex of
+    0 : VariableEdit.Text := '$FOLDwu';
+    1 : VariableEdit.Text := '$FOLDlastwu';
+    2 : VariableEdit.Text := '$FOLDactproc';
+    3 : VariableEdit.Text := '$FOLDteam';
+    4 : VariableEdit.Text := '$FOLDscore';
+    5 : VariableEdit.Text := '$FOLDrank';
+    else VariableEdit.Text := NoVariable;
+  end; // case
 
+  if not (VariableEdit.Text = NoVariable) then
     FocusToInputField();
-
-  end;
 end;
 
 
@@ -2003,36 +1653,36 @@ end;
 
 procedure TSetupForm.OutputListBoxClick(Sender: TObject);
 begin
-  if OutputListBox.itemindex = 0 then StatementEdit.Text := 'NextTheme';
-  if OutputListBox.itemindex = 1 then StatementEdit.Text := 'LastTheme';
-  if OutputListBox.itemindex = 2 then StatementEdit.Text := 'NextScreen';
-  if OutputListBox.itemindex = 3 then StatementEdit.Text := 'LastScreen';
-  if OutputListBox.itemindex = 4 then StatementEdit.Text := 'GotoTheme(2)';
-  if OutputListBox.itemindex = 5 then StatementEdit.Text := 'GotoScreen(2)';
-  if OutputListBox.itemindex = 6 then StatementEdit.Text := 'FreezeScreen';
-  if OutputListBox.itemindex = 7 then StatementEdit.Text := 'RefreshAll';
-  if OutputListBox.itemindex = 8 then StatementEdit.Text := 'Backlight(1)';
-  if OutputListBox.itemindex = 9 then StatementEdit.Text := 'BacklightToggle';
-  if OutputListBox.itemindex = 10 then StatementEdit.Text := 'BLFlash(5)';
-  if OutputListBox.itemindex = 11 then StatementEdit.Text := 'Wave[c:\wave.wav]';
-  if OutputListBox.itemindex = 12 then StatementEdit.Text := 'Exec[c:\autoexec.bat]';
-  if OutputListBox.itemindex = 13 then StatementEdit.Text := 'WANextTrack';
-  if OutputListBox.itemindex = 14 then StatementEdit.Text := 'WALastTrack';
-  if OutputListBox.itemindex = 15 then StatementEdit.Text := 'WAPlay';
-  if OutputListBox.itemindex = 16 then StatementEdit.Text := 'WAStop';
-  if OutputListBox.itemindex = 17 then StatementEdit.Text := 'WAPause';
-  if OutputListBox.itemindex = 18 then StatementEdit.Text := 'WAShuffle';
-  if OutputListBox.itemindex = 19 then StatementEdit.Text := 'WAVolDown';
-  if OutputListBox.itemindex = 20 then StatementEdit.Text := 'WAVolUp';
-  if OutputListBox.itemindex = 21 then StatementEdit.Text := 'EnableScreen(1)';
-  if OutputListBox.itemindex = 22 then StatementEdit.Text := 'DisableScreen(1)';
-  if OutputListBox.itemindex = 23 then StatementEdit.Text := '$dll(name.dll,2,param1,param2)';
-
-  if OutputListBox.itemindex = 24 then StatementEdit.Text := 'GPO(4,1)';
-  if OutputListBox.itemindex = 25 then StatementEdit.Text := 'GPOToggle(4)';
-  if OutputListBox.itemindex = 26 then StatementEdit.Text := 'GPOFlash(4,5)';
-  if OutputListBox.itemindex = 27 then StatementEdit.Text := 'Fan(1,255)';
-
+  case OutputListBox.itemindex of
+    0 : StatementEdit.Text := 'NextTheme';
+    1 : StatementEdit.Text := 'LastTheme';
+    2 : StatementEdit.Text := 'NextScreen';
+    3 : StatementEdit.Text := 'LastScreen';
+    4 : StatementEdit.Text := 'GotoTheme(2)';
+    5 : StatementEdit.Text := 'GotoScreen(2)';
+    6 : StatementEdit.Text := 'FreezeScreen';
+    7 : StatementEdit.Text := 'RefreshAll';
+    8 : StatementEdit.Text := 'Backlight(1)';
+    9 : StatementEdit.Text := 'BacklightToggle';
+    10 : StatementEdit.Text := 'BLFlash(5)';
+    11 : StatementEdit.Text := 'Wave[c:\wave.wav]';
+    12 : StatementEdit.Text := 'Exec[c:\autoexec.bat]';
+    13 : StatementEdit.Text := 'WANextTrack';
+    14 : StatementEdit.Text := 'WALastTrack';
+    15 : StatementEdit.Text := 'WAPlay';
+    16 : StatementEdit.Text := 'WAStop';
+    17 : StatementEdit.Text := 'WAPause';
+    18 : StatementEdit.Text := 'WAShuffle';
+    19 : StatementEdit.Text := 'WAVolDown';
+    20 : StatementEdit.Text := 'WAVolUp';
+    21 : StatementEdit.Text := 'EnableScreen(1)';
+    22 : StatementEdit.Text := 'DisableScreen(1)';
+    23 : StatementEdit.Text := '$dll(name.dll,2,param1,param2)';
+    24 : StatementEdit.Text := 'GPO(4,1)';
+    25 : StatementEdit.Text := 'GPOToggle(4)';
+    26 : StatementEdit.Text := 'GPOFlash(4,5)';
+    27 : StatementEdit.Text := 'Fan(1,255)';
+  end; // case
 end;
 
 procedure TSetupForm.MainPageControlChange(Sender: TObject);
@@ -2060,7 +1710,7 @@ begin
   begin
     if LeftPageControl.activepage = LCDFeaturesTabSheet then
     begin
-      if pos('$MObutton', VariableEdit.text) <> 0 then VariableEdit.text := 'Variable: ';
+      if pos('$MObutton', VariableEdit.text) <> 0 then VariableEdit.text := NoVariable;
       LeftPageControl.ActivePage := WinampTabSheet;
     end;
     GameServerEdit.text := config.gameServer[ScreenNumberComboBox.itemindex + 1, 1];
@@ -2121,13 +1771,22 @@ end;
 
 procedure TSetupForm.ButtonsListBoxClick(Sender: TObject);
 begin
-  if ButtonsListBox.itemindex > -1 then
-  begin
-    if ButtonsListBox.itemindex = 0 then VariableEdit.Text := '$MObutton';
+  case ButtonsListBox.itemindex of
+    0 : VariableEdit.Text := '$MObutton';
+    1 : VariableEdit.Text := '$FanSpeed(1,1)';
+    2 : VariableEdit.Text := '$Sensor1';
+    3 : VariableEdit.Text := '$Sensor2';
+    4 : VariableEdit.Text := '$Sensor3';
+    5 : VariableEdit.Text := '$Sensor4';
+    6 : VariableEdit.Text := '$Sensor5';
+    7 : VariableEdit.Text := '$Sensor6';
+    8 : VariableEdit.Text := '$Sensor7';
+    9 : VariableEdit.Text := '$Sensor8';
+    else VariableEdit.Text := NoVariable;
+  end; // case
 
+  if not (VariableEdit.Text = NoVariable) then
     FocusToInputField();
-
-  end;
 end;
 
 procedure TSetupForm.InteractionsButtonClick(Sender: TObject);

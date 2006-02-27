@@ -27,7 +27,7 @@ object SetupForm: TSetupForm
     Top = 0
     Width = 233
     Height = 409
-    ActivePage = LCDFeaturesTabSheet
+    ActivePage = WinampTabSheet
     Font.Charset = ANSI_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
@@ -106,27 +106,6 @@ object SetupForm: TSetupForm
     object SysInfoTabSheet: TTabSheet
       Caption = 'Sysinfo'
       ImageIndex = 1
-      object SpeedButton2: TSpeedButton
-        Left = 16
-        Top = 0
-        Width = 17
-        Height = 17
-        AllowAllUp = True
-        Glyph.Data = {
-          76010000424D7601000000000000760000002800000020000000100000000100
-          04000000000000010000120B0000120B00001000000000000000000000000000
-          800000800000008080008000000080008000808000007F7F7F00BFBFBF000000
-          FF0000FF000000FFFF00FF000000FF00FF00FFFF0000FFFFFF00333333333333
-          3333333333333333333333333333333333333333333333333333333333333333
-          3333333333333FF3333333333333003333333333333F77F33333333333009033
-          333333333F7737F333333333009990333333333F773337FFFFFF330099999000
-          00003F773333377777770099999999999990773FF33333FFFFF7330099999000
-          000033773FF33777777733330099903333333333773FF7F33333333333009033
-          33333333337737F3333333333333003333333333333377333333333333333333
-          3333333333333333333333333333333333333333333333333333333333333333
-          3333333333333333333333333333333333333333333333333333}
-        NumGlyphs = 2
-      end
       object SysInfoListBox: TListBox
         Left = 0
         Top = 0
@@ -359,7 +338,7 @@ object SetupForm: TSetupForm
         Style = csDropDownList
         ItemHeight = 13
         TabOrder = 2
-        OnChange = GameTypeComboBoxChange
+        OnChange = GamestatsListBoxClick
         Items.Strings = (
           'Half-life'
           'Quake II'
