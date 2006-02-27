@@ -19,7 +19,7 @@ unit UConfig;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UConfig.pas,v $
- *  $Revision: 1.33 $ $Date: 2005/01/27 10:43:35 $
+ *  $Revision: 1.34 $ $Date: 2006/02/27 02:43:39 $
  *****************************************************************************}
 
 interface
@@ -97,6 +97,7 @@ type
     CF_contrast: Integer;
     CF_brightness: Integer;
     iCF_cgrom: Integer;
+    IR_brightness: Integer;
     newsRefresh: Integer;
     randomScreens: Boolean;
     gameRefresh: Integer;
@@ -104,6 +105,7 @@ type
     foldUsername: String;
     isMO: Boolean;
     isCF: Boolean;
+    isIR: Boolean;
     isHD: Boolean;
     isHD2: Boolean;   // not used.
     isTestDriver: Boolean;
@@ -118,6 +120,7 @@ type
     iMinFadeContrast: Integer;
     bHDAltAddressing: Boolean;
     iHDTimingMultiplier: Integer;
+    remotehost : string;
     function load: Boolean;
     procedure save;
     property sizeOption: Integer read P_sizeOption write setSizeOption;
@@ -437,6 +440,7 @@ begin
 
   isMO := false;
   isCF := false;
+  isIR := false;
   isHD := false;
   isHD2 := false;
   case StrToInt(configArray[98]) of
@@ -444,6 +448,7 @@ begin
     2: isMO := true;
     3: isCF := true;
     4: isHD2 := true;
+    6: isIR := true;
   end;
 
 
@@ -592,11 +597,13 @@ begin
   httpProxy := initFile.ReadString('Communication Settings', 'HTTPProxy', '');
   httpProxyPort := initFile.ReadInteger('Communication Settings',
     'HTTPProxyPort', 0);
+  remotehost := initFile.ReadString('Communication Settings', 'RemoteHost', 'localhost');
 
   isMO := false;
   isCF := false;
   isHD := false;
   isHD2 := false;
+  isIR := false;
   isTestDriver := false;
   case initFile.ReadInteger('General Settings', 'LCDType', 0) of
     1: isHD := true;
@@ -604,6 +611,7 @@ begin
     3: isCF := true;
     4: isHD2 := true;
     5: isTestDriver := true;
+    6: isIR := true;
   end;
 
   // Readonly settings - not set at all.
@@ -633,6 +641,8 @@ begin
   iCF_cgrom := initFile.ReadInteger('General Settings', 'CFCGRomVersion', 2);
   iMinFadeContrast := initFile.ReadInteger('General Settings', 'MinFadeContrast',
     0);
+
+  IR_brightness := initFile.ReadInteger('General Settings', 'IRBrightness', 3);
 
   newsRefresh := initFile.ReadInteger('General Settings', 'NewsRefresh', 120);
   randomScreens := initFile.ReadBool('General Settings', 'RandomScreens',
@@ -786,12 +796,14 @@ begin
   initFile.WriteString('Communication Settings', 'HTTPProxy', httpProxy);
   initFile.WriteInteger('Communication Settings', 'HTTPProxyPort',
     httpProxyPort);
+  initFile.WriteString('Communication Settings', 'RemoteHost', remotehost);
 
   if isHD then initFile.WriteInteger('General Settings', 'LCDType', 1)
   else if isMO then initFile.WriteInteger('General Settings', 'LCDType', 2)
   else if isCF then initFile.WriteInteger('General Settings', 'LCDType', 3)
   else if isHD2 then initFile.WriteInteger('General Settings', 'LCDType', 4)
-  else if isTestDriver then initFile.WriteInteger('General Settings', 'LCDType', 5);
+  else if isTestDriver then initFile.WriteInteger('General Settings', 'LCDType', 5)
+  else if isIR then initFile.WriteInteger('General Settings', 'LCDType', 6);
 
   initFile.WriteInteger('General Settings', 'Size', sizeOption);
 
@@ -802,6 +814,8 @@ begin
   initFile.WriteInteger('General Settings', 'CFBrightness', CF_brightness);
   initFile.WriteInteger('General Settings', 'CFCGRomVersion', iCF_cgrom);
   initFile.WriteInteger('General Settings', 'MinFadeContrast', iMinFadeContrast);
+
+  initFile.WriteInteger('General Settings', 'IRBrightness', IR_brightness);
 
   initFile.WriteInteger('General Settings', 'NewsRefresh', newsRefresh);
   initFile.WriteBool('General Settings', 'RandomScreens', randomScreens);
