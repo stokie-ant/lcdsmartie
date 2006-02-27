@@ -1,6 +1,6 @@
 object Form1: TForm1
-  Left = 181
-  Top = 61
+  Left = 157
+  Top = 176
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsToolWindow
   Caption = 'LCD Smartie 5.3'

@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.59 $ $Date: 2005/05/07 13:50:40 $
+ *  $Revision: 1.60 $ $Date: 2006/02/27 14:12:31 $
  *****************************************************************************}
 
 interface
@@ -253,7 +253,7 @@ var
 implementation
 
 uses Windows, SysUtils, Graphics, Dialogs, ShellAPI, mmsystem, StrUtils,
-  USetup, UCredits, ULCD_MO, ULCD_CF, ULCD_HD, ULCD_Test, ExtActns, UUtils;
+  USetup, UCredits, ULCD_MO, ULCD_CF, ULCD_HD, ULCD_Test, ULCD_IR, ExtActns, UUtils;
 
 function TForm1.EscapeAmp(const sStr: string): String;
 begin
@@ -702,10 +702,23 @@ begin
     end;
   end;
 
-  if not (config.isCF or config.isMO or config.isHD or config.isTestDriver) then
+  if (config.isIR) then
+  begin
+    try
+      Lcd := TLCD_IR.CreateSocket(config.RemoteHost)
+    except
+      on E: Exception do
+      begin
+        showmessage('Failed to open device: ' + E.Message);
+        Lcd := TLCD.Create();
+      end;
+    end;
+  end;
+
+  if not (config.isCF or config.isMO or config.isHD or config.isTestDriver or config.isIR) then
     Lcd := TLCD.Create();
 
-  if (config.isMO) or (config.isCF) then
+  if (config.isMO) or (config.isCF) or (config.isIR) then
   begin
     customchar('1, 12, 18, 18, 12, 0, 0, 0, 0');
     customchar('2, 31, 31, 31, 31, 31, 31, 31, 31');
@@ -723,6 +736,11 @@ begin
   begin
     Lcd.setBrightness(config.CF_brightness);
     Lcd.setContrast(config.CF_contrast);
+  end;
+
+  if (config.isIR) then
+  begin
+    Lcd.setBrightness(config.IR_brightness);
   end;
 
   if (config.isHD) or (config.isHD2) then
