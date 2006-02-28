@@ -1349,7 +1349,7 @@ object SetupForm: TSetupForm
           Width = 49
           Height = 17
           Hint = 'Don'#39't automatically change from this screen.'
-          Caption = 'StickyCheckbox'
+          Caption = 'Sticky'
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
           Font.Height = -11
