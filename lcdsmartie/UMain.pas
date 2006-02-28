@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.65 $ $Date: 2006/02/28 20:42:25 $
+ *  $Revision: 1.66 $ $Date: 2006/02/28 21:01:56 $
  *****************************************************************************}
 
 interface
@@ -205,7 +205,7 @@ type
     TransStart: Cardinal;
     TransitionTemp, TransitionTemp2 : TTransitionStyle;
     TransCycle, TempTransitionTimerInterval : Integer;
-    gamesArray: Array[1..4, 1..40] of Boolean;
+    GuessArray: Array[1..4, 1..40] of Boolean;
     activetheme: Integer; canscroll: Boolean;
     GPO: Array [1..8] of Boolean;
     customChars: Array [1..8, 0..7] of Byte;
@@ -854,71 +854,74 @@ end;
 
 procedure TLCDSmartieDisplayForm.NextScreenTimerTimer(Sender: TObject);
 //NEXT SCREEN!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-Label opnieuwscreen;
 var
   xx, x: Integer;
   y: Integer;
   ascreen: TScreenLine;
   tmpscreen: Integer;
+  FindAnotherScreen : boolean;
 
 begin
   tmpScreen := activeScreen;
   x := 0;
   xx := 0;
-opnieuwscreen:
-  x := x + 1;
-  xx := xx + 1;
-  if (config.randomScreens) and (x < 500) then
-  begin
-    tmpScreen := round(random(20) + 1);
-    if tmpScreen > 20 then tmpScreen := 20;
-    if tmpScreen < 1 then tmpScreen := 1;
-  end
-  else
-  begin
-    tmpScreen := tmpScreen + NumberOfScreensToShift;
-    if tmpScreen > 20 then tmpScreen := 1;
-    if tmpScreen < 1 then tmpScreen := 20;
-  end;
-
-  if xx> 22 then
-  begin
-    activetheme := activetheme + 1;
-    xx := 0;
-  end;
-  if (((x> 242) and (not config.randomScreens)) or ((x> 1000) and
-    (config.randomScreens))) then
-  begin
-
-    // It seems that we are in a endless loop because no screen is able to be
-    // displayed.  Force screen 1 to be displayed.
-    x := 0;
-
-    for y := 1 to 4 do
+  FindAnotherScreen := true;
+  while FindAnotherScreen do begin
+    x := x + 1;
+    xx := xx + 1;
+    if (config.randomScreens) and (x < 500) then
     begin
-      config.screen[1][y].enabled := True;
-      config.screen[1][y].skip := 0;
-      //config.screen[1][y].noscroll := False;
+      tmpScreen := round(random(20) + 1);
+      if tmpScreen > 20 then tmpScreen := 20;
+      if tmpScreen < 1 then tmpScreen := 1;
+    end
+    else
+    begin
+      tmpScreen := tmpScreen + NumberOfScreensToShift;
+      if tmpScreen > 20 then tmpScreen := 1;
+      if tmpScreen < 1 then tmpScreen := 20;
     end;
 
-    tmpScreen := 1;
-    activetheme := 0;
+    if xx> 22 then
+    begin
+      activetheme := activetheme + 1;
+      xx := 0;
+    end;
+    if (((x> 242) and (not config.randomScreens)) or ((x> 1000) and
+      (config.randomScreens))) then
+    begin
+
+      // It seems that we are in a endless loop because no screen is able to be
+      // displayed.  Force screen 1 to be displayed.
+      x := 0;
+
+      for y := 1 to 4 do
+      begin
+        config.screen[1][y].enabled := True;
+        config.screen[1][y].skip := 0;
+        //config.screen[1][y].noscroll := False;
+      end;
+
+      tmpScreen := 1;
+      activetheme := 0;
+    end;
+
+    ascreen := config.screen[tmpScreen][1];
+
+    case ascreen.skip of
+      1 : FindAnotherScreen := (winampctrl1.GetSongInfo(1) = 0);
+      2 : FindAnotherScreen := (winampctrl1.GetSongInfo(1) <> 0);
+      3 : FindAnotherScreen := (not Data.mbmactive);
+      4 : FindAnotherScreen := (Data.mbmactive);
+      5 : FindAnotherScreen := (not Data.gotEmail);
+      6 : FindAnotherScreen := (Data.gotEmail);
+      7 : FindAnotherScreen := (not Data.isconnected);
+      8 : FindAnotherScreen := (Data.isconnected);
+      else FindAnotherScreen := false;
+    end;
+    if (ascreen.theme <> activetheme) then FindAnotherScreen := true;
+    if (not ascreen.enabled) then FindAnotherScreen := true;
   end;
-
-  ascreen := config.screen[tmpScreen][1];
-
-  if (ascreen.theme <> activetheme) then goto opnieuwscreen;
-  if (not ascreen.enabled) then goto opnieuwscreen;
-  if (ascreen.skip = 1) and (winampctrl1.GetSongInfo(1) = 0) then goto
-    opnieuwscreen;
-  if (ascreen.skip = 2) and (winampctrl1.GetSongInfo(1) <> 0) then goto
-    opnieuwscreen;
-  if (ascreen.skip = 3) and (not Data.mbmactive) then goto opnieuwscreen;
-  if (ascreen.skip = 4) and (Data.mbmactive) then goto opnieuwscreen;
-  if (ascreen.skip = 7) and (not Data.isconnected) then goto opnieuwscreen;
-  if (ascreen.skip = 8) and (Data.isconnected) then goto opnieuwscreen;
-  if (ascreen.skip = 5) and (not Data.gotEmail) then goto opnieuwscreen;
-  if (ascreen.skip = 6) and (Data.gotEmail) then goto opnieuwscreen;
 
   NumberOfScreensToShift := 1;
 
@@ -2029,67 +2032,6 @@ begin
   else result := scrollvar;
 end;
 
-procedure TLCDSmartieDisplayForm.ChangeScreen(scr: Integer);
-var
-  y: Integer;
-  ascreen: TScreenLine;
-begin
-
-  if TempTransitionTimerInterval <> 0 then
-  begin
-    TransitionTimer.Interval := 0;
-    TransitionTimer.Interval := TempTransitionTimerInterval;
-  end;
-  NextScreenTimer.Interval := 0; // reset timer
-
-  if (not config.screen[scr][1].bSticky) then
-    NextScreenTimer.Interval := config.screen[scr][1].showTime*1000 + TempTransitionTimerInterval;
-
-  if (activeScreen = scr) then
-    Exit;
-
-  activeScreen := scr;
-  ascreen := config.screen[activeScreen][1];
-
-  for y := 1 to 4 do
-  begin
-    oldline[y] := UnescapeAmp(ScreenLCD[y].Caption);
-  end;
-
-  ResetScrollPositions();
-
-  gotnewlines := false;
-  TransStart := GetTickCount();
-  TransCycle := 0;
-  iLastRandomTranCycle := 0;
-
-  for y := 1 to 40 do
-  begin
-    gamesArray[1, y] := false;
-    gamesArray[2, y] := false;
-    gamesArray[3, y] := false;
-    gamesArray[4, y] := false;
-  end;
-
-  TempTransitionTimerInterval := ascreen.TransitionTime*100;
-
-  TransitionTemp := TransitionTemp2;
-  TransitionTemp2 := ascreen.TransitionStyle;
-
-  if not ascreen.enabled then TransitionTemp2 := tsNone;
-  if TransitionTemp2 = tsNone then TempTransitionTimerInterval := 1;
-
-  if (config.width = 40) then
-    ScreenNumberPanel.Caption := 'Theme: ' + IntToStr(activetheme + 1) + ' Screen: ' +
-      IntToStr(activeScreen)
-  else
-    ScreenNumberPanel.Caption := IntToStr(activetheme + 1) + ' | ' + IntToStr(activeScreen);
-
-  bNewScreen := True;
-  data.NewScreen(True);
-
-end;
-
 procedure TLCDSmartieDisplayForm.freeze();
 begin
   if frozen = false then
@@ -2181,6 +2123,113 @@ begin
     ScreenLCD[Loop].Color := ScreenColor;
     ScreenLCD[Loop].Font.Color := FontColor;
   end;
+end;
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+////                                                                       ////
+////        S C R E E N     C H A N G E      P R O C E D U R E S           ////
+////                                                                       ////
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+
+procedure TLCDSmartieDisplayForm.ChangeScreen(scr: Integer);
+var
+  y: Integer;
+  ascreen: TScreenLine;
+begin
+
+  if TempTransitionTimerInterval <> 0 then
+  begin
+    TransitionTimer.Interval := 0;
+    TransitionTimer.Interval := TempTransitionTimerInterval;
+  end;
+  NextScreenTimer.Interval := 0; // reset timer
+
+  if (not config.screen[scr][1].bSticky) then
+    NextScreenTimer.Interval := config.screen[scr][1].showTime*1000 + TempTransitionTimerInterval;
+
+  if (activeScreen = scr) then
+    Exit;
+
+  activeScreen := scr;
+  ascreen := config.screen[activeScreen][1];
+
+  for y := 1 to 4 do
+  begin
+    oldline[y] := UnescapeAmp(ScreenLCD[y].Caption);
+  end;
+
+  ResetScrollPositions();
+
+  gotnewlines := false;
+  TransStart := GetTickCount();
+  TransCycle := 0;
+  iLastRandomTranCycle := 0;
+
+  for y := 1 to 40 do
+  begin
+    GuessArray[1, y] := false;
+    GuessArray[2, y] := false;
+    GuessArray[3, y] := false;
+    GuessArray[4, y] := false;
+  end;
+
+  TempTransitionTimerInterval := ascreen.TransitionTime*100;
+
+  TransitionTemp := TransitionTemp2;
+  TransitionTemp2 := ascreen.TransitionStyle;
+
+  if not ascreen.enabled then TransitionTemp2 := tsNone;
+  if TransitionTemp2 = tsNone then TempTransitionTimerInterval := 1;
+
+  if (config.width = 40) then
+    ScreenNumberPanel.Caption := 'Theme: ' + IntToStr(activetheme + 1) + ' Screen: ' +
+      IntToStr(activeScreen)
+  else
+    ScreenNumberPanel.Caption := IntToStr(activetheme + 1) + ' | ' + IntToStr(activeScreen);
+
+  bNewScreen := True;
+  data.NewScreen(True);
+
+end;
+
+function TLCDSmartieDisplayForm.DoGuess(line: Integer): Integer;
+var
+  GoodGuess: Boolean;
+  x: Integer;
+  loopcount: Integer;
+
+begin
+  GoodGuess := false;
+  x := 0;
+  loopcount := 0;
+
+  while not GoodGuess do begin
+    Inc(loopcount);
+    x := round(random(config.width) + 1);
+    if GuessArray[line, x] = false then begin
+      GoodGuess := true;
+    end else if (loopcount > config.width*2) then begin
+      // it's taking too long - use first unset element
+      x := 0;
+      repeat
+        Inc(x);
+        if (GuessArray[line, x] = false) then GoodGuess := true;
+      until (x >= config.width) or (GoodGuess);
+      if (not GoodGuess) then
+      begin
+      // all the elements are set - use 1 (arb.)
+        x := 1;
+        GoodGuess := true;
+      end;
+    end;
+  end;
+  GuessArray[line, x] := true;
+  result := x;
 end;
 
 procedure TLCDSmartieDisplayForm.DoTransitions;
@@ -2376,41 +2425,6 @@ end;
 function TLCDSmartieDisplayForm.UnescapeAmp(const sStr: string): String;
 begin
   Result := StringReplace(sStr, '&&', '&', [rfReplaceAll])
-end;
-
-function TLCDSmartieDisplayForm.DoGuess(line: Integer): Integer;
-var
-  GoodGuess: Boolean;
-  x: Integer;
-  loopcount: Integer;
-
-begin
-  GoodGuess := false;
-  x := 0;
-  loopcount := 0;
-
-  while not GoodGuess do begin
-    Inc(loopcount);
-    x := round(random(config.width) + 1);
-    if gamesArray[line, x] = false then begin
-      GoodGuess := true;
-    end else if (loopcount > config.width*2) then begin
-      // it's taking too long - use first unset element
-      x := 0;
-      repeat
-        Inc(x);
-        if (gamesArray[line, x] = false) then GoodGuess := true;
-      until (x >= config.width) or (GoodGuess);
-      if (not GoodGuess) then
-      begin
-      // all the elements are set - use 1 (arb.)
-        x := 1;
-        GoodGuess := true;
-      end;
-    end;
-  end;
-  gamesArray[line, x] := true;
-  result := x;
 end;
 
 
