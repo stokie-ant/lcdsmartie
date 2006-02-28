@@ -17,7 +17,6 @@ object LCDSmartieDisplayForm: TLCDSmartieDisplayForm
   OldCreateOrder = False
   Position = poScreenCenter
   OnClose = FormClose
-  OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
   OnKeyPress = FormKeyPress
   OnShow = FormShow
@@ -343,6 +342,7 @@ object LCDSmartieDisplayForm: TLCDSmartieDisplayForm
     Top = 112
   end
   object PopupMenu1: TPopupMenu
+    OnPopup = PopupMenu1Popup
     Left = 68
     Top = 112
     object Commands1: TMenuItem
@@ -375,10 +375,10 @@ object LCDSmartieDisplayForm: TLCDSmartieDisplayForm
       Caption = 'Configure'
       OnClick = Configure1Click
     end
-    object Showwindow1: TMenuItem
+    object ShowWindow1: TMenuItem
       Caption = '&Show main'
       Default = True
-      OnClick = Showwindow1Click
+      OnClick = ShowWindow1Click
     end
     object N1: TMenuItem
       Caption = '-'
@@ -506,7 +506,7 @@ object LCDSmartieDisplayForm: TLCDSmartieDisplayForm
       E44FFFFFFFFFFE07FFFFFC01FFFFFC01FFFFF800FFFE000007FC000003FC}
     IconIndex = 0
     PopupMenu = PopupMenu1
-    OnStartup = CoolTrayIcon1Startup
+    MinimizeToTray = True
     Left = 36
     Top = 112
   end

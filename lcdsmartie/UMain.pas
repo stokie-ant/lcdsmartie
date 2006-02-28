@@ -19,12 +19,13 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.63 $ $Date: 2006/02/27 22:45:38 $
+ *  $Revision: 1.64 $ $Date: 2006/02/28 19:40:39 $
  *****************************************************************************}
 
 interface
 
-uses Messages, CoolTrayIcon, Menus,
+uses
+  Messages, CoolTrayIcon, Menus,
   WinampCtrl, ExtCtrls, Controls, StdCtrls, Buttons, Classes, Forms,
   UConfig, ULCD, UData;
 
@@ -48,7 +49,7 @@ type
     WinampCtrl1: TWinampCtrl;
     // These are only used by us:
     PopupMenu1: TPopupMenu;
-    Showwindow1: TMenuItem;
+    ShowWindow1: TMenuItem;
     Close1: TMenuItem;
     SetupButton: TButton;
     LogoImage: TImage;
@@ -57,7 +58,7 @@ type
     Line1Panel: TPanel;
     Line2Panel: TPanel;
     Line3Panel: TPanel;
-    Line4Panel: TPanel;   // aka screenLcd[4]
+    Line4Panel: TPanel;   // aka ScreenLCD[4]
     Configure1: TMenuItem;
     BacklightOn1: TMenuItem;
     Commands1: TMenuItem;
@@ -92,7 +93,7 @@ type
     NextButton: TButton;
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
-    procedure Showwindow1Click(Sender: TObject);
+    procedure ShowWindow1Click(Sender: TObject);
     procedure Close1Click(Sender: TObject);
     procedure LogoImageClick(Sender: TObject);
     procedure HideButtonClick(Sender: TObject);
@@ -109,7 +110,6 @@ type
     procedure GameUpdateTimerTimer(Sender: TObject);
     procedure EMailTimerTimer(Sender: TObject);
     procedure LPTStartupTimerTimer(Sender: TObject);
-    procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure Credits1Click(Sender: TObject);
     procedure NextTheme1Click(Sender: TObject);
     procedure LastTheme1Click(Sender: TObject);
@@ -170,14 +170,11 @@ type
     procedure SetupImageClick(Sender: TObject);
     procedure InteractionsTimerTimer(Sender: TObject);
     procedure ScrollFlashTimerTimer(Sender: TObject);
-    procedure WMQueryEndSession (var M: TWMQueryEndSession); message
-      WM_QUERYENDSESSION;
     procedure WMPowerBroadcast (var M: TMessage); message WM_POWERBROADCAST;
-    procedure CoolTrayIcon1Startup(Sender: TObject;
-      var ShowMainForm: Boolean);
     procedure SetupButtonClick(Sender: TObject);
     procedure PreviousButtonClick(Sender: TObject);
     procedure NextButtonClick(Sender: TObject);
+    procedure PopupMenu1Popup(Sender: TObject);
   public
     doesflash: Boolean;
     lcd: TLCD;
@@ -189,8 +186,8 @@ type
     procedure ReInitLCD();
     procedure customchar(fline: String);
   private
-    changeShow: TChangeShow;
-    screenLcd: Array[1..4] of ^TPanel;
+    InitialWindowState: TChangeShow;
+    ScreenLCD: Array[1..4] of ^TPanel;
     canflash: Boolean;
     iSavedHeight, iSavedWidth: Integer;
     iSavedColorMode: Integer;
@@ -210,28 +207,28 @@ type
       timertransIntervaltemp: Integer;
     gamesArray: Array[1..4, 1..40] of Boolean;
     activetheme: Integer; canscroll: Boolean;
-    gpo: Array [1..8] of Boolean;
+    GPO: Array [1..8] of Boolean;
     customChars: Array [1..8, 0..7] of Byte;
     customCharsChanged: Array [1..8] of Boolean;
-    doesgpoflash: Boolean;
-    gpoflash, whatgpo: Integer;
+    doesGPOflash: Boolean;
+    GPOflash, whatGPO: Integer;
     flash: Integer;
     ResetContrast: Boolean;
     flashdelay: Cardinal;
     bNewScreen: Boolean;
     frozen: Boolean;
-    backlight: Integer;
+    Backlight: boolean;
     data: TData;
-    aantalscreensheenweer: Integer;
+    NumberOfScreensToShift: Integer;
     iLastRandomTranCycle: Integer;
-    procedure kleur();
-    function doguess(line: Integer): Integer;
+    ConfigFileName: String;
+    procedure SetOnscreenBacklight();
+    function DoGuess(line: Integer): Integer;
     procedure freeze();
-    procedure doGPO(const ftemp1, ftemp2: Integer);
+    procedure DoGPO(const ftemp1, ftemp2: Integer);
     function scroll(const scrollvar: String;const line, speed: Integer): String;
     procedure scrollLine(line: Byte; direction: Integer);
     procedure doInteractions;
-    procedure OnMinimize(Sender: TObject);
     procedure backlit(iOn: Integer = -1);
     function EscapeAmp(const sStr: string):String;
     function UnescapeAmp(const sStr: string): String;
@@ -241,6 +238,9 @@ type
     procedure FiniLCD();
     procedure ResizeHeight;
     procedure ResizeWidth;
+    procedure LoadSkin;
+    procedure LoadColors;
+    procedure ProcessCommandLineParams;
   end;
 
 var
@@ -250,278 +250,100 @@ var
 
 implementation
 
-uses Windows, SysUtils, Graphics, Dialogs, ShellAPI, mmsystem, StrUtils,
-  USetup, UCredits, ULCD_MO, ULCD_CF, ULCD_HD, ULCD_Test, ULCD_IR, ExtActns, UUtils;
-
-function TLCDSmartieDisplayForm.EscapeAmp(const sStr: string): String;
-begin
-  Result := StringReplace(sStr, '&', '&&', [rfReplaceAll])
-end;
-
-function TLCDSmartieDisplayForm.UnescapeAmp(const sStr: string): String;
-begin
-  Result := StringReplace(sStr, '&&', '&', [rfReplaceAll])
-end;
-
-procedure TLCDSmartieDisplayForm.WMPowerBroadcast (var M: TMessage);
-const
-  PBT_APMSUSPEND = 4;
-  PBT_APMSTANDBY = 5;
-  PBT_APMRESUMECRITICAL = 6;
-  PBT_APMRESUMESUSPEND = 7;
-  PBT_APMRESUMESTANDBY = 8;
-  PBT_APMRESUMEAUTOMATIC = $012;
-begin
-  if (M.WParam = PBT_APMRESUMEAUTOMATIC) or (M.WParam = PBT_APMRESUMECRITICAL)
-    or (M.WParam = PBT_APMRESUMESTANDBY) or (M.WParam = PBT_APMRESUMESUSPEND)
-    then
-  begin
-    ReInitLCD();
-  end
-  else if (M.WParam = PBT_APMSUSPEND) or (M.WParam = PBT_APMSTANDBY) then
-  begin
-    FiniLCD();
-    Lcd := TLCD.Create(); // replace with a dummy driver.
-  end;
-end;
-
-procedure TLCDSmartieDisplayForm.ResetScrollPositions;
-var
-  y: Integer;
-begin
-  for y := 1 to 4 do
-  begin
-    scrollPos[y] := 1; // Reset scroll postion.
-  end;
-end;
-
-
-procedure TLCDSmartieDisplayForm.ChangeScreen(scr: Integer);
-var
-  y: Integer;
-  ascreen: TScreenLine;
-begin
-
-  if timertransIntervaltemp <> 0 then
-  begin
-    InteractionsTimer.Interval := 0;
-    InteractionsTimer.Interval := timertransIntervaltemp;
-  end;
-  NextScreenTimer.Interval := 0; // reset timer
-
-  if (not config.screen[scr][1].bSticky) then
-    NextScreenTimer.Interval := config.screen[scr][1].showTime*1000 + timertransIntervaltemp;
-
-  if (activeScreen = scr) then
-    Exit;
-
-  activeScreen := scr;
-  ascreen := config.screen[activeScreen][1];
-
-  for y := 1 to 4 do
-  begin
-    oldline[y] := UnescapeAmp(screenLcd[y].Caption);
-  end;
-
-  ResetScrollPositions();
-
-  gotnewlines := false;
-  TransStart := GetTickCount();
-  TransCycle := 0;
-  iLastRandomTranCycle := 0;
-
-  for y := 1 to 40 do
-  begin
-    gamesArray[1, y] := false;
-    gamesArray[2, y] := false;
-    gamesArray[3, y] := false;
-    gamesArray[4, y] := false;
-  end;
-
-  timertransIntervaltemp := ascreen.interactionTime*100;
-
-  transActietemp := transActietemp2;
-  transActietemp2 := ascreen.interaction;
-
-  if not ascreen.enabled then transActietemp2 := 0;
-  if transActietemp2 = 0 then timertransIntervaltemp := 1;
-
-  if (config.width = 40) then
-    ScreenNumberPanel.Caption := 'Theme: ' + IntToStr(activetheme + 1) + ' Screen: ' +
-      IntToStr(activeScreen)
-  else
-    ScreenNumberPanel.Caption := IntToStr(activetheme + 1) + ' | ' + IntToStr(activeScreen);
-
-  bNewScreen := True;
-  data.NewScreen(True);
-
-end;
-
-function TLCDSmartieDisplayForm.doguess(line: Integer): Integer;
-var
-  goedgokje: Boolean;
-  x: Integer;
-  loopcount: Integer;
-
-begin
-  goedgokje := false;
-  x := 0;
-  loopcount := 0;
-
-  while goedgokje = false do
-  begin
-    Inc(loopcount);
-    x := round(random(config.width) + 1);
-    if gamesArray[line, x] = false then
-    begin
-      goedgokje := true;
-    end
-    else
-      if (loopcount > config.width*2) then
-      begin
-      // it's taking too long - use first unset element
-        x := 0;
-        repeat
-          Inc(x);
-          if (gamesArray[line, x] = false) then goedgokje := true;
-        until (x >= config.width) or (goedgokje);
-        if (not goedgokje) then
-        begin
-        // all the elements are set - use 1 (arb.)
-          x := 1;
-          goedgokje := true;
-        end;
-      end;
-  end;
-  gamesArray[line, x] := true;
-  result := x;
-end;
-
-
-
-procedure TLCDSmartieDisplayForm.customchar(fline: String);
-var
-  character: Integer;
-  waarde: Array[0..7] of Byte;
-  i: Integer;
-  iPosStart, iPosEnd: Integer;
-
-begin
-  iPosEnd := pos(',', fline);
-  character := StrToIntN(fline, 1, iPosEnd-1);
-  for i := 0 to 6 do
-  begin
-    iPosStart := iPosEnd + 1;
-    iPosEnd := PosEx(',', fline, iPosStart);
-    waarde[i] := StrToIntN(fline, iPosStart, iPosEnd-iPosStart);
-  end;
-  waarde[7] := StrToIntN(fline, iPosEnd+1, length(fline)-iPosEnd);
-
-  // Only send if not already defined.
-  i := 0;
-  while (i <= 7) and (waarde[i] = customChars[character, i]) do Inc(i);
-
-  if (i <= 7) then
-  begin
-    //Lcd.customChar(character, waarde);
-    customCharsChanged[character] := true;
-    for i := 0 to 7 do customChars[character, i] := waarde[i];
-  end;
-end;
-
-procedure TLCDSmartieDisplayForm.SendCustomChars;
-var
-  i: Integer;
-begin
-  for i:= 1 to 8 do
-  begin
-    if (customCharsChanged[i]) then
-    begin
-      Lcd.customChar(i, customChars[i]);
-      customCharsChanged[i] := false;
-    end;
-  end;
-end;
-
-
-
-function TLCDSmartieDisplayForm.scroll(const scrollvar: String;const line, speed: Integer):
-  String;
-var
-  scrolltext: String;
-  len: Integer;
-begin
-
-  if length(scrollvar) > config.width then
-  begin
-    scrollPos[line] := scrollPos[line] + speed;
-    if (scrollPos[line]<1) then scrollPos[line] := length(scrollvar);
-    if (scrollPos[line]>length(scrollvar)) then scrollPos[line] := 1;
-
-    len := length(scrollvar)-scrollPos[line] + 1;
-    if (len > config.width) then len := config.width;
-    scrolltext := copy(scrollvar, scrollPos[line], len);
-
-    if length(scrolltext) < config.width then
-    begin
-      scrolltext := scrolltext + copy(scrollvar, 1,
-        config.width-length(scrolltext));
-    end;
-    result := scrolltext;
-
-  end
-  else result := scrollvar;
-end;
-
 {$R *.DFM}
 
-procedure TLCDSmartieDisplayForm.FormCreate(Sender: TObject);
-var
-  line: String;
-  initfile: textfile;
-  i: Integer;
-  parameter: String;
-  configFile: String;
+uses
+  Windows, SysUtils, Graphics, Dialogs, ShellAPI, mmsystem, StrUtils,
+  USetup, UCredits, ULCD_MO, ULCD_CF, ULCD_HD, ULCD_Test, ULCD_IR, ExtActns, UUtils;
 
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+////                                                                       ////
+////      M A I N      F O R M     E V E N T S                             ////
+////                                                                       ////
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+
+procedure TLCDSmartieDisplayForm.FormCreate(Sender: TObject);
 begin
   bTerminating := false;
   Randomize;
-
-  Application.OnMinimize := OnMinimize;
 
   SetCurrentDir(extractfilepath(application.exename));
   CreateDirectory('cache', nil);
   AddPluginsToPath();
 
-  screenLcd[1] := @Line1Panel;
-  screenLcd[2] := @Line2Panel;
-  screenLcd[3] := @Line3Panel;
-  screenLcd[4] := @Line4Panel;
+  ScreenLCD[1] := @Line1Panel;
+  ScreenLCD[2] := @Line2Panel;
+  ScreenLCD[3] := @Line3Panel;
+  ScreenLCD[4] := @Line4Panel;
 
 
 //SetWindowLong(Application.Handle, GWL_EXSTYLE, GetWindowLong(Application.Handle, GWL_EXSTYLE) or WS_EX_TOOLWINDOW and not W
 //S_EX_APPWINDOW );
+  LoadSkin;
+  LCDSmartieDisplayForm.color := $00BFBFBF;
+  NumberOfScreensToShift := 1;
+  LoadColors;
+
+  ConfigFileName := 'config.ini';
+  ProcessCommandLineParams;  // can change config file name
+  config := TConfig.Create(ConfigFileName);
+
+  if (config.load() = false) then
+  begin
+    showmessage('Fatal Error:  Failed to load configuration');
+    application.Terminate;
+  end;
+
+  if (config.bHideOnStartup) then
+    InitialWindowState := HideMainForm;
+
+  self.Visible := (InitialWindowState = ShowMainForm);
+
+  // delete/create startup shortcut as required.
+  SetupAutoStart();
+
+  Data := TData.Create();
+
+  LCDSmartieDisplayForm.WinampCtrl1.WinampLocation := config.winampLocation;
+  file1 := config.distLog;
+
+  Backlight := true;
+  SetOnscreenBacklight();
+
+  InitLCD();
+
+  ChangeScreen(1);
+end;
+
+procedure TLCDSmartieDisplayForm.LoadSkin;
+var
+  OurPath: String;
+begin
   try
-    line := extractfilepath(application.exename);
-    LogoImage.picture.LoadFromFile(line + 'images\logo.bmp');
-    Line1RightScrollImage.picture.LoadFromFile(line + 'images\small_arrow_left_up1.bmp');
-    Line2RightScrollImage.picture.LoadFromFile(line + 'images\small_arrow_left_up2.bmp');
-    Line3RightScrollImage.picture.LoadFromFile(line + 'images\small_arrow_left_up3.bmp');
-    Line4RightScrollImage.picture.LoadFromFile(line + 'images\small_arrow_left_up4.bmp');
-    Line1LeftScrollImage.picture.LoadFromFile(line + 'images\small_arrow_right_up1.bmp');
-    Line2LeftScrollImage.picture.LoadFromFile(line + 'images\small_arrow_right_up2.bmp');
-    Line3LeftScrollImage.picture.LoadFromFile(line + 'images\small_arrow_right_up3.bmp');
-    Line4LeftScrollImage.picture.LoadFromFile(line + 'images\small_arrow_right_up4.bmp');
-    NextScreenImage.picture.LoadFromFile(line + 'images\big_arrow_right_up.bmp');
-    PreviousImage.picture.LoadFromFile(line + 'images\big_arrow_left_up.bmp');
-    BarLeftImage.picture.LoadFromFile(line + 'images\bar_left.bmp');
-    BarRightImage.picture.LoadFromFile(line + 'images\bar_right.bmp');
-    BarMiddleImage.picture.LoadFromFile(line + 'images\bar_middle.bmp');
-    SetupImage.picture.LoadFromFile(line + 'images\setup_up.bmp');
-    HideImage.picture.LoadFromFile(line + 'images\hide_up.bmp');
-    cooltrayicon1.Icon.LoadFromFile(line + 'images\smartie.ico');
-    application.Icon.LoadFromFile(line + 'images\smartie.ico');
-    cooltrayicon1.Refresh;
+    OurPath := extractfilepath(application.exename);
+    LogoImage.picture.LoadFromFile(OurPath + 'images\logo.bmp');
+    Line1RightScrollImage.picture.LoadFromFile(OurPath + 'images\small_arrow_left_up1.bmp');
+    Line2RightScrollImage.picture.LoadFromFile(OurPath + 'images\small_arrow_left_up2.bmp');
+    Line3RightScrollImage.picture.LoadFromFile(OurPath + 'images\small_arrow_left_up3.bmp');
+    Line4RightScrollImage.picture.LoadFromFile(OurPath + 'images\small_arrow_left_up4.bmp');
+    Line1LeftScrollImage.picture.LoadFromFile(OurPath + 'images\small_arrow_right_up1.bmp');
+    Line2LeftScrollImage.picture.LoadFromFile(OurPath + 'images\small_arrow_right_up2.bmp');
+    Line3LeftScrollImage.picture.LoadFromFile(OurPath + 'images\small_arrow_right_up3.bmp');
+    Line4LeftScrollImage.picture.LoadFromFile(OurPath + 'images\small_arrow_right_up4.bmp');
+    NextScreenImage.picture.LoadFromFile(OurPath + 'images\big_arrow_right_up.bmp');
+    PreviousImage.picture.LoadFromFile(OurPath + 'images\big_arrow_left_up.bmp');
+    BarLeftImage.picture.LoadFromFile(OurPath + 'images\bar_left.bmp');
+    BarRightImage.picture.LoadFromFile(OurPath + 'images\bar_right.bmp');
+    BarMiddleImage.picture.LoadFromFile(OurPath + 'images\bar_middle.bmp');
+    SetupImage.picture.LoadFromFile(OurPath + 'images\setup_up.bmp');
+    HideImage.picture.LoadFromFile(OurPath + 'images\hide_up.bmp');
+    CoolTrayIcon1.Icon.LoadFromFile(OurPath + 'images\smartie.ico');
+    application.Icon.LoadFromFile(OurPath + 'images\smartie.ico');
+    CoolTrayIcon1.Refresh;
   except
     on E: Exception do
     begin
@@ -530,16 +352,16 @@ begin
       application.terminate;
     end;
   end;
-  LCDSmartieDisplayForm.color := $00BFBFBF;
+end;
 
-
-  aantalscreensheenweer := 1;
-
-
+procedure TLCDSmartieDisplayForm.LoadColors;
+var
+  Line : string;
+  initfile: textfile;
+begin
 //register
   try
-    assignfile(initfile, extractfilepath(application.exename) +
-      'images\colors.cfg');
+    assignfile(initfile, extractfilepath(application.exename) +'images\colors.cfg');
     reset(initfile);
     readln(initfile, line);
     ScreenNumberPanel.Color := StrToInt('$00' + copy(line, 1, 6));
@@ -561,374 +383,121 @@ begin
       application.Terminate;
     end;
   end;
+end;
 
-  configFile := 'config.ini';
-  changeShow := ShowMainForm;
+procedure TLCDSmartieDisplayForm.ProcessCommandLineParams;
+var
+  I : integer;
+  parameter: String;
+begin
+  InitialWindowState := ShowMainForm;
   i := 1;
   while (i <= ParamCount) do
   begin
     parameter :=  lowercase(ParamStr(i));
 
     if (parameter = '-hide') then
-      changeShow := HideMainForm
+      InitialWindowState := HideMainForm
     else if (parameter = '-totalhide') then
-      changeShow := TotalHideMainForm
+      InitialWindowState := TotalHideMainForm
     else if (parameter = '-config') then
     begin
       Inc(i);
-      configFile := ParamStr(i);  // will give '' if out of range
+      ConfigFileName := ParamStr(i);  // will give '' if out of range
     end;
     Inc(i);
   end;
-
-  config := TConfig.Create(configFile);
-
-  if (config.load() = false) then
-  begin
-    showmessage('Fatal Error:  Failed to load configuration');
-    application.Terminate;
-  end;
-
-  if (config.bHideOnStartup) then
-    changeShow := HideMainForm;
-
-  self.Visible := (changeShow = ShowMainForm);
-
-  // delete/create startup shortcut as required.
-  SetupAutoStart();
-
-  Data := TData.Create();
-
-  LCDSmartieDisplayForm.WinampCtrl1.WinampLocation := config.winampLocation;
-  file1 := config.distLog;
-
-  backlight := 1;
-  kleur();
-
-  // ensure start up position is sensible
-  if LCDSmartieDisplayForm.left < 0 then LCDSmartieDisplayForm.left := 0;
-  if LCDSmartieDisplayForm.top < 0 then LCDSmartieDisplayForm.top := 0;
-  if LCDSmartieDisplayForm.left + LCDSmartieDisplayForm.Width > screen.desktopwidth then LCDSmartieDisplayForm.left :=
-    screen.desktopwidth-LCDSmartieDisplayForm.width;
-  if LCDSmartieDisplayForm.top + LCDSmartieDisplayForm.height > screen.desktopheight then LCDSmartieDisplayForm.top :=
-    screen.desktopheight-LCDSmartieDisplayForm.height;
-
-  InitLCD();
-
-  ChangeScreen(1);
-
 end;
 
-procedure TLCDSmartieDisplayForm.SetupAutoStart;
-var
-  sParameters: String;
-  sShortCutName: String;
-  bDelete: Boolean;
+procedure TLCDSmartieDisplayForm.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
-  sParameters := '';
-  sShortCutName := 'LCD Smartie';
+  bTerminating := true;
 
-  if (config.bAutoStartHide) then
-    sParameters := sParameters + '-hide ';
+  //application.minimize;
+  //CoolTrayIcon1.HideMainForm;
+  //CoolTrayIcon1.HideTaskbarIcon;
+  //CoolTrayIcon1.enabled := False;
+  //CoolTrayIcon1.IconVisible := False;
+  //CoolTrayIcon1.Refresh;
 
-  if (config.filename <> 'config.ini') then
-  begin
-    sParameters := sParameters + '-config '+config.filename;
-    sShortCutName := sShortCutName + config.filename;
-  end;
+  while timerRefresh.enabled = true do timerRefresh.enabled := false;
+  while HTTPUpdateTimer.enabled = true do HTTPUpdateTimer.enabled := false;
+  while ActionsTimer.enabled = true do ActionsTimer.enabled := false;
+  while LeftManualScrollTimer.enabled = true do LeftManualScrollTimer.enabled := false;
+  while RightManualScrollTimer.enabled = true do RightManualScrollTimer.enabled := false;
+  while MBMUpdateTimer.enabled = true do MBMUpdateTimer.enabled := false;
+  while NextScreenTimer.enabled = true do NextScreenTimer.enabled := false;
+  while GameUpdateTimer.enabled = true do GameUpdateTimer.enabled := false;
+  while EMailTimer.enabled = true do EMailTimer.enabled := false;
+  while LPTStartupTimer.enabled = true do LPTStartupTimer.enabled := false;
+  while ScrollFlashTimer.enabled = true do ScrollFlashTimer.enabled := false;
+  while InteractionsTimer.enabled = true do InteractionsTimer.enabled := false;
 
-  bDelete := not (config.bAutoStart or config.bAutoStartHide);
-
-  CreateShortcut(sShortCutName, application.exename, sParameters, bDelete);
-end;
-
-
-procedure TLCDSmartieDisplayForm.FiniLCD();
-begin
-  LPTStartupTimer.enabled := false; // stop any startup of the HD44780 driver
-  timerRefresh.enabled := false;  // stop updates to lcd
-  try
-    if (Lcd <> nil) Then Lcd.Destroy();
-  except
-  end;
-  Lcd := nil;
-end;
-
-procedure TLCDSmartieDisplayForm.ReInitLCD();
-begin
   FiniLCD();
-  InitLCD();
-end;
 
-procedure TLCDSmartieDisplayForm.InitLCD();
-const
-  baudRates: array [0..14] of Cardinal =(CBR_110, CBR_300, CBR_600, CBR_1200, CBR_2400,
-    CBR_4800, CBR_9600, CBR_14400, CBR_19200, CBR_38400, CBR_56000, CBR_57600,
-    CBR_115200, CBR_128000, CBR_256000);
-var
-  i: Integer;
-begin
-  LPTStartupTimer.enabled := false; // stop any startup of the HD44780 driver
-
-  // Sync the display to our current view of the custom chars.
-  for i:= 1 to 8 do
-    customCharsChanged[i] := true;
-
-  // start connectivity
-  try
-    case config.ScreenType of
-      stMO : begin
-        if config.isUsbPalm then
-          Lcd := TLCD_MO.CreateUsb
-        else
-          Lcd := TLCD_MO.CreateSerial(config.comPort, baudRates[config.baudrate]);
-      end;
-      stCF : Lcd := TLCD_CF.CreateSerial(config.comPort, baudRates[config.baudrate]);
-      stTestDriver : Lcd := TLCD_Test.CreateSerial(config.comPort, baudRates[config.baudrate]);
-      stIR : Lcd := TLCD_IR.CreateSocket(config.RemoteHost);
-      stHD,stHD2 : begin
-        Lcd := TLCD.Create(); // use a dummy LCD until the boot time has passed.
-        // HD/HD2 have a delay start - they will setup the above timers later.
-        LPTStartupTimer.interval := 0;
-        if config.bootDriverDelay = 0 then LPTStartupTimer.interval := 10
-        else LPTStartupTimer.interval := config.bootDriverDelay*1000;
-        LPTStartupTimer.enabled := true;
-      end;
-      else Lcd := TLCD.Create(); // catchall case
-    end; // case
-  except
-    on E: Exception do
+  if (Data <> nil) then
+  begin
+    if (Data.CanExit()) then
     begin
-      showmessage('Failed to open device: ' + E.Message);
-      Lcd := TLCD.Create();
-    end;
+      Data.Free();
+      Data := nil;
+    end;  // otherwise just leak it.
   end;
-
-  // load custom characters if the display supports it
-  if (config.ScreenType in [stMO,stCF,stIR]) then
+  if (Data = nil) and (config <> nil) then
   begin
-    customchar('1, 12, 18, 18, 12, 0, 0, 0, 0');
-    customchar('2, 31, 31, 31, 31, 31, 31, 31, 31');
-    customchar('3, 16, 16, 16, 16, 16, 16, 31, 16');
-    customchar('4, 28, 28, 28, 28, 28, 28, 31, 28');
-  end;
-
-  // set brightness and contrast if the display supports it
-  case config.ScreenType of
-    stMO : begin
-      Lcd.setContrast(config.contrast);
-      Lcd.setBrightness(config.brightness);
-    end;
-    stCF : begin
-      Lcd.setBrightness(config.CF_brightness);
-      Lcd.setContrast(config.CF_contrast);
-    end;
-    stIR : Lcd.setBrightness(config.IR_brightness);
-  end; // case
-
-  DoFullDisplayDraw();
-
-  UpdateTimersState(PerformingSetup);
-end;
-
-procedure TLCDSmartieDisplayForm.DoFullDisplayDraw;
-var
-  x: Integer;
-begin
-  // Wipe the our view of the display - this will cause a full redraw.
-  for x := 1 to config.height do
-  begin
-    tmpline[x] := '';
+    config.Free();
+    config := nil;
   end;
 end;
 
-procedure TLCDSmartieDisplayForm.doInteractions;
-var
-  gokreg: Array[1..4] of String;
-  tempstr: String;
-  line: Integer;
-  maxTransCycles: Integer;
-  gokje: Integer;
-  x: Integer;
-  iContrast: Integer;
-  now: Cardinal;
-
+procedure TLCDSmartieDisplayForm.FormShow(Sender: TObject);
 begin
-  // Changing screen - do any interactions required.
-  //TransCycle := TransCycle + 1;
-  now := GetTickCount();
-  if (now < TransStart) then
-    TransCycle := (now + (MAXDWORD-TransStart)) div timerRefresh.Interval
-  else
-    TransCycle := (now-TransStart) div timerRefresh.Interval;
+  timerRefresh.Interval := 0; // reset timer
+  timerRefresh.Interval := 1; // make it short in case minimized has been selected.
+  CoolTrayIcon1.IconVisible := false;
+end;
 
-  maxTransCycles := InteractionsTimer.Interval div timerRefresh.Interval;
-
-  if (maxTransCycles = 0) then Exit;
-  if (TransCycle > maxTransCycles) then Exit;
-
-  if (TransCycle > maxTransCycles / 2) then SendCustomChars();
-
-  for x := 1 to config.height do
+procedure TLCDSmartieDisplayForm.FormKeyPress(Sender: TObject; var Key: Char);
+begin
+  if upcase(key)='Z' then winampctrl1.Previous;
+  if upcase(key)='X' then winampctrl1.Play;
+  if upcase(key)='C' then winampctrl1.Pause;
+  if upcase(key)='V' then winampctrl1.Stop;
+  if upcase(key)='B' then winampctrl1.Next;
+  if upcase(key)='N' then backlit();
+  if upcase(key)='M' then freeze();
+  if upcase(key)='K' then
   begin
-    oldline[x] := copy(oldline[x] +
-      '                                        ', 1, config.width);
-    newline[x] := copy(newline[x] +
-      '                                        ', 1, config.width);
+    activetheme := activetheme-1;
+    if activetheme=-1 then activetheme := 9;
+    frozen := true;
+    freeze();
   end;
-
-  if transActietemp = 1 then
-  begin                           //left-->right
-
-    for x := 1 to config.height do
-    begin
-      tempstr := copy(newline[x] + '|' + oldline[x], round((config.width +
-        2)-TransCycle*((config.width + 2)/maxTransCycles)), config.width);
-      screenLcd[x].Caption := EscapeAmp(tempstr);
-    end;
-
-  end
-  else
-    if transActietemp = 2 then
-    begin                                  //right-->left
-
-      for x := 1 to config.height do
-      begin
-        tempstr := copy(oldline[x] + '|' + newline[x],
-          round(TransCycle*((config.width + 2)/maxTransCycles)),
-          config.width);
-        screenLcd[x].Caption := EscapeAmp(tempstr);
-      end;
-
-    end
-    else
-      if transActietemp = 3 then
-      begin                                //top-->bottom
-
-        line := round(TransCycle*(config.height/maxTransCycles)) + 1;
-        for x := 1 to line-1 do
-        begin
-          screenLcd[x].Caption := EscapeAmp(newline[config.height-(line-1)+ x]);
-        end;
-
-        if (line <= config.height) then
-          screenLcd[line].Caption :=
-            copy('----------------------------------------', 1, config.width);
-
-        for x := line + 1 to config.height do
-        begin
-          screenLcd[x].Caption := EscapeAmp(oldline[x-(line + 1) + 1]);
-        end;
-
-      end
-      else
-        if transActietemp = 4 then
-        begin                              //bottom-->top
-
-          line := round(TransCycle*(config.height/maxTransCycles)) + 1;
-          for x := 1 to config.height-line do
-          begin
-            screenLcd[x].Caption := EscapeAmp(oldline[x + line-1]);
-          end;
-
-          if (config.height-line + 1 > 0) then
-            screenLcd[config.height-line + 1].Caption :=
-              copy('----------------------------------------', 1, config.width);
-
-          for x := config.height-line + 2 to config.height do
-          begin
-            screenLcd[x].Caption :=
-              EscapeAmp(newline[x-(config.height-line + 2) + 1]);
-          end;
-
-        end
-        else
-          if transActietemp = 5 then
-          begin                            //random blocks
-
-            for x := 1 to 4 do
-            begin
-              gokreg[x] := copy(UnescapeAmp(screenLcd[x].caption) +
-                '                                        ', 1, config.width);
-            end;
-
-            for x := iLastRandomTranCycle to
-              round((config.width/maxTransCycles)*TransCycle)-1 do
-            begin
-              for line := 1 to 4 do
-              begin
-                gokje := doguess(line);
-                gokreg[line] := copy(gokreg[line], 1, gokje-1) +
-                  copy(newline[line], gokje, 1) + copy(gokreg[line], gokje +
-                  1, config.width-gokje);
-              end;
-            end;
-            iLastRandomTranCycle := round((config.width/maxTransCycles)*TransCycle);
-            for x := 1 to 4 do
-            begin
-              screenLcd[x].caption := EscapeAmp(gokreg[x]);
-            end;
-
-          end
-          else
-            if (transActietemp = 6) and (maxTransCycles >= 2) then
-            begin                                                    //contrast fade
-    // The fade is a two step process, so we need at least two cycles.
-
-    // We only fade down to iMinFadeContrast; because many LCDs displays will be
-    // blank long before we reach 0. (One user reported that their display was
-    // blank at a contrast of 40).
-
-    // For the first half of the cycles - lower the contrast
-
-              if (TransCycle < maxTransCycles/2) then
-              begin
-                if (config.ScreenType = stMO)then x := config.contrast
-                else x := config.CF_contrast;
-
-                iContrast := round(x-(TransCycle*(x-config.iMinFadeContrast)
-                  / (MaxTransCycles/2)));
-
-
-                if iContrast < config.iMinFadeContrast then
-                  iContrast := config.iMinFadeContrast
-                else
-                  if iContrast > x then iContrast := x;
-                Lcd.setContrast(iContrast);
-              end
-              else
-              begin
-      // raise the contrast over the second half
-
-                for x := 1 to 4 do
-                begin
-                  screenLcd[x].Caption := EscapeAmp(newline[x]);
-                end;
-
-                if (config.ScreenType = stMO) then x := config.contrast
-                else x := config.CF_contrast;
-
-                iContrast := round((TransCycle-(MaxTransCycles/2))
-                  * (x-config.iMinFadeContrast)/(MaxTransCycles/2))
-                  + config.iMinFadeContrast;
-
-                if iContrast > x then iContrast := x
-                else
-                  if iContrast < config.iMinFadeContrast then
-                    iContrast := config.iMinFadeContrast;
-                Lcd.setContrast(iContrast);
-              end;
-              ResetContrast := True;// Just to be sure the contrast is back to correct levels.
-            end;
+  if upcase(key)='L' then
+  begin
+    activetheme := activetheme + 1;
+    if activetheme = 10 then activetheme := 0;
+    frozen := true;
+    freeze();
+  end;
+  if upcase(key)=',' then PreviousButton.click();
+  if upcase(key)='.' then NextButton.click();
+  if (upcase(key)='?') or (upcase(key)='/') then
+  begin
+    HTTPUpdateTimer.interval := 10;
+    GameUpdateTimer.interval := 10;
+    EMailTimer.interval := 10;
+    MBMUpdateTimer.interval := 10;
+  end;
 end;
 
 procedure TLCDSmartieDisplayForm.ResizeHeight;
 var
   iDelta: Integer;
 begin
-  screenLcd[2].visible := false;
-  screenLcd[3].visible := false;
-  screenLcd[4].visible := false;
+  ScreenLCD[2].visible := false;
+  ScreenLCD[3].visible := false;
+  ScreenLCD[4].visible := false;
   Line2RightScrollImage.visible := false;
   Line3RightScrollImage.visible := false;
   Line4RightScrollImage.visible := false;
@@ -938,19 +507,19 @@ begin
 
   if config.height > 1 then
   begin
-    screenLcd[2].visible := true;
+    ScreenLCD[2].visible := true;
     Line2RightScrollImage.Visible := true;
     Line2LeftScrollImage.Visible := true;
   end;
   if config.height > 2 then
   begin
-    screenLcd[3].visible := true;
+    ScreenLCD[3].visible := true;
     Line3RightScrollImage.Visible := true;
     Line3LeftScrollImage.Visible := true;
   end;
   if config.height > 3 then
   begin
-    screenLcd[4].visible := true;
+    ScreenLCD[4].visible := true;
     Line4RightScrollImage.Visible := true;
     Line4LeftScrollImage.Visible := true;
   end;
@@ -964,7 +533,7 @@ begin
   BarRightImage.Top := 64 - iDelta;
   HideImage.Top := 69 - iDelta;
   LogoImage.Top := 64 - iDelta;
-  LCDSmartieDisplayForm.ClientHeight := 90 - iDelta;
+  ClientHeight := 90 - iDelta;
 
   NextScreenImage.Height := 64 - iDelta;
   PreviousImage.Height := 64 - iDelta;
@@ -991,7 +560,7 @@ begin
   else
     iDelta := 158;}
 
-  LCDSmartieDisplayForm.Width := 389 - iDelta;
+  Width := 389 - iDelta;
   LogoImage.left := 356 - iDelta;
   NextScreenImage.left := 368 - iDelta;
   Line1LeftScrollImage.left := 352 - iDelta;
@@ -1002,7 +571,7 @@ begin
   HideImage.left := 323 - iDelta;
   for h := 1 to 4 do
   begin
-    screenLcd[h].width := 321 - iDelta;
+    ScreenLCD[h].width := 321 - iDelta;
   end;
   BarMiddleImage.width := 220 - iDelta;
 
@@ -1022,6 +591,344 @@ begin
   end;
 end;
 
+procedure TLCDSmartieDisplayForm.WMPowerBroadcast (var M: TMessage);
+const
+  PBT_APMSUSPEND = 4;
+  PBT_APMSTANDBY = 5;
+  PBT_APMRESUMECRITICAL = 6;
+  PBT_APMRESUMESUSPEND = 7;
+  PBT_APMRESUMESTANDBY = 8;
+  PBT_APMRESUMEAUTOMATIC = $012;
+begin
+  if (M.WParam = PBT_APMRESUMEAUTOMATIC) or (M.WParam = PBT_APMRESUMECRITICAL)
+    or (M.WParam = PBT_APMRESUMESTANDBY) or (M.WParam = PBT_APMRESUMESUSPEND)
+    then
+  begin
+    ReInitLCD();
+  end
+  else if (M.WParam = PBT_APMSUSPEND) or (M.WParam = PBT_APMSTANDBY) then
+  begin
+    FiniLCD();
+    Lcd := TLCD.Create(); // replace with a dummy driver.
+  end;
+end;
+
+
+procedure TLCDSmartieDisplayForm.PopupMenu1Popup(Sender: TObject);
+begin
+  if Visible then
+    ShowWindow1.caption := '&Minimize'
+  else
+    ShowWindow1.caption := 'Show Main';
+end;
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+////                                                                       ////
+////      T I M E R      E V E N T S                                       ////
+////                                                                       ////
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+
+procedure TLCDSmartieDisplayForm.HTTPUpdateTimerTimer(Sender: TObject);
+begin
+  if (data.lcdSmartieUpdate) then
+  begin
+    data.lcdSmartieUpdate := False;
+
+    if MessageDlg('A new version of LCD Smartie is detected. ' + chr(13) +
+      data.lcdSmartieUpdateText + chr(13) + 'Go to LCD Smartie website?',
+      mtConfirmation, [mbYes, mbNo], 0) = mrYes then
+    begin
+      ShellExecute(0, Nil, pchar('http://lcdsmartie.sourceforge.net/'), Nil,
+        Nil, SW_NORMAL);
+    end;
+
+    if (bTerminating) then Exit;
+  end;
+
+  Data.UpdateHTTP();
+  HTTPUpdateTimer.Interval := 0;
+  HTTPUpdateTimer.Interval := config.newsRefresh*1000*60;
+end;
+
+procedure TLCDSmartieDisplayForm.GameUpdateTimerTimer(Sender: TObject);
+begin
+  Data.updateGameStats;
+  GameUpdateTimer.Interval := 0;
+  GameUpdateTimer.Interval := config.gameRefresh*60000;
+end;
+
+
+procedure TLCDSmartieDisplayForm.MBMUpdateTimerTimer(Sender: TObject);
+begin
+  Data.updateMBMStats(Sender);
+  MBMUpdateTimer.Interval := 0;
+  MBMUpdateTimer.Interval := config.mbmRefresh*1000;
+end;
+
+procedure TLCDSmartieDisplayForm.EMailTimerTimer(Sender: TObject);
+//MAILS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+begin
+  EMailTimer.Interval := 0;
+  EMailTimer.Interval := config.emailPeriod*60000;
+  Data.UpdateEmail;
+end;
+
+procedure TLCDSmartieDisplayForm.InteractionsTimerTimer(Sender: TObject);
+begin
+  InteractionsTimer.Enabled := false;
+end;
+
+procedure TLCDSmartieDisplayForm.ScrollFlashTimerTimer(Sender: TObject);
+begin
+  ScrollFlashTimer.Interval := 0;
+  ScrollFlashTimer.Interval := config.scrollPeriod;
+  canscroll := true;
+  Inc(flashdelay);
+  if ((not doesflash) and (flashdelay >= 2)) or
+    (doesflash and (flashdelay >= 1)) then
+  begin
+    flashdelay := 0;
+    canflash := true;
+  end;
+end;
+
+procedure TLCDSmartieDisplayForm.LPTStartupTimerTimer(Sender: TObject);
+begin
+  LPTStartupTimer.Enabled := false;
+
+  // check just in case they've changed they mind in the mean time.
+  if (config.ScreenType in [stHD,stHD2]) then
+  begin
+
+    FiniLCD(); // get rid of the dummy one.
+    try
+      Lcd := TLCD_HD.CreateParallel($ + config.parallelPort, config.width, config.height);
+    except
+      on E: Exception do
+      begin
+        showmessage('Failed to open device: ' + E.Message);
+        Lcd := TLCD.Create();
+      end;
+    end;
+    Lcd.setbacklight(true);
+
+    customchar('1, 12, 18, 18, 12, 0, 0, 0, 0');
+    customchar('2, 31, 31, 31, 31, 31, 31, 31, 31');
+    customchar('3, 16, 16, 16, 16, 16, 16, 31, 16');
+    customchar('4, 28, 28, 28, 28, 28, 28, 31, 28');
+  end;
+
+  UpdateTimersState(PerformingSetup);
+end;
+
+procedure TLCDSmartieDisplayForm.ActionsTimerTimer(Sender: TObject);
+//ACTIONS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+var
+  counter: Integer;
+  iTemp: Integer;
+  cKey: Char;
+  iLeftValue, iRightValue: Integer;
+  sLeftValue, sRightValue, sAction: String;
+  bNum: Boolean;
+  bDoAction: Boolean;
+  doAction: Array[1..99] of Boolean;
+  iLeftStrLen: Integer;
+  iRightStrLen: Integer;
+
+begin
+
+  if (Lcd <> nil) and (Lcd.readKey(cKey)) then
+  begin
+    UpdateSetupForm(cKey);
+    data.cLastKeyPressed := cKey;
+  end;
+
+
+  if PerformingSetup then Exit;
+
+
+  //
+  // Work out the state of each action condition.
+  //
+  for counter := 1 to config.totalactions do
+  begin
+    sLeftValue := Data.change(config.actionsArray[counter, 1]);
+    sRightValue := config.actionsArray[counter, 3];
+
+    bDoAction := false;
+
+    // Check if both left and right are numberic.
+    bNum := False;
+    iTemp := 1;
+    iLeftStrLen := Length(sLeftValue);
+    while (iTemp <= iLeftStrLen) and (sLeftValue[iTemp]>='0')
+      and (sLeftValue[iTemp]<='9') do iTemp := iTemp +1 ;
+
+    if (iTemp > iLeftStrLen) then
+    begin
+      iTemp := 1;
+      iRightStrLen := Length(sRightValue);
+      while (iTemp <= iRightStrLen) and (sRightValue[iTemp]>='0')
+        and (sRightValue[iTemp]<='9') do iTemp := iTemp + 1;
+
+      if (iTemp > iRightStrLen) then bNum := True;
+    end;
+
+    if (bNum) then
+    try
+      iLeftValue := StrToInt(sLeftValue);
+      iRightValue := StrToInt(sRightValue);
+      case StrToInt(config.actionsArray[counter, 2]) of
+        0: if (iLeftValue > iRightValue) then bDoAction := true;
+        1: if (iLeftValue < iRightValue) then bDoAction := true;
+        2: if (iLeftValue = iRightValue) then bDoAction := true;
+        3: if (iLeftValue <= iRightValue) then bDoAction := true;
+        4: if (iLeftValue >= iRightValue) then bDoAction := true;
+        5: if (iLeftValue <> iRightValue) then bDoAction := true;
+      end;
+    except
+      on EConvertError do begin bNum:=False end;
+      else raise;
+    end;
+
+    if (not bNum) then
+    begin
+      // not a numeric value - lets do a string comparsion
+      case StrToInt(config.actionsArray[counter, 2]) of
+        0: if (sLeftValue > sRightValue) then bDoAction := true;
+        1: if (sLeftValue < sRightValue) then bDoAction := true;
+        2: if (sLeftValue = sRightValue) then bDoAction := true;
+        3: if (sLeftValue <= sRightValue) then bDoAction := true;
+        4: if (sLeftValue >= sRightValue) then bDoAction := true;
+        5: if (sLeftValue <> sRightValue) then bDoAction := true;
+      end;
+    end;
+
+    doAction[counter] := bDoAction;
+  end;
+
+  // All actions have been processed using this key.
+  // Delete it so a repeated press is processed.
+  data.cLastKeyPressed := Chr(0);
+
+  // Reset new screen - the following actions may set this again.
+  data.NewScreen(False);
+
+  //
+  // Run any required actions.
+  //
+  for counter := 1 to config.totalactions do
+  begin
+    if (doAction[counter] <> didAction[counter]) then
+    begin
+      sAction :=  config.actionsArray[counter, 4];
+      ProcessAction(doAction[counter], sAction);
+
+      didAction[counter] := doAction[counter];
+    end;
+
+    // Ulgy special case - [the action code needs a rewrite]
+    // If action was caused by a key press then don't record that we have
+    // done it - this will reduce the delay required to reset actions.
+    // This delay impacts the user experience when using keys.
+    if (Pos('MObutton', config.actionsArray[counter, 1]) <> 0) then
+      didAction[counter] := false;
+
+  end;
+end;
+
+// For scrolling right when a line scroll button is pressed.
+procedure TLCDSmartieDisplayForm.LeftManualScrollTimerTimer(Sender: TObject);
+begin
+  scrollLine(line2scroll, 1);
+end;
+
+// For scrolling left when a line scroll button is pressed.
+procedure TLCDSmartieDisplayForm.RightManualScrollTimerTimer(Sender: TObject);
+begin
+  scrollLine(line2scroll, -1);
+end;
+
+procedure TLCDSmartieDisplayForm.NextScreenTimerTimer(Sender: TObject);
+//NEXT SCREEN!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+Label opnieuwscreen;
+var
+  xx, x: Integer;
+  y: Integer;
+  ascreen: TScreenLine;
+  tmpscreen: Integer;
+
+begin
+  tmpScreen := activeScreen;
+  x := 0;
+  xx := 0;
+opnieuwscreen:
+  x := x + 1;
+  xx := xx + 1;
+  if (config.randomScreens) and (x < 500) then
+  begin
+    tmpScreen := round(random(20) + 1);
+    if tmpScreen > 20 then tmpScreen := 20;
+    if tmpScreen < 1 then tmpScreen := 1;
+  end
+  else
+  begin
+    tmpScreen := tmpScreen + NumberOfScreensToShift;
+    if tmpScreen > 20 then tmpScreen := 1;
+    if tmpScreen < 1 then tmpScreen := 20;
+  end;
+
+  if xx> 22 then
+  begin
+    activetheme := activetheme + 1;
+    xx := 0;
+  end;
+  if (((x> 242) and (not config.randomScreens)) or ((x> 1000) and
+    (config.randomScreens))) then
+  begin
+
+    // It seems that we are in a endless loop because no screen is able to be
+    // displayed.  Force screen 1 to be displayed.
+    x := 0;
+
+    for y := 1 to 4 do
+    begin
+      config.screen[1][y].enabled := True;
+      config.screen[1][y].skip := 0;
+      //config.screen[1][y].noscroll := False;
+    end;
+
+    tmpScreen := 1;
+    activetheme := 0;
+  end;
+
+  ascreen := config.screen[tmpScreen][1];
+
+  if (ascreen.theme <> activetheme) then goto opnieuwscreen;
+  if (not ascreen.enabled) then goto opnieuwscreen;
+  if (ascreen.skip = 1) and (winampctrl1.GetSongInfo(1) = 0) then goto
+    opnieuwscreen;
+  if (ascreen.skip = 2) and (winampctrl1.GetSongInfo(1) <> 0) then goto
+    opnieuwscreen;
+  if (ascreen.skip = 3) and (not Data.mbmactive) then goto opnieuwscreen;
+  if (ascreen.skip = 4) and (Data.mbmactive) then goto opnieuwscreen;
+  if (ascreen.skip = 7) and (not Data.isconnected) then goto opnieuwscreen;
+  if (ascreen.skip = 8) and (Data.isconnected) then goto opnieuwscreen;
+  if (ascreen.skip = 5) and (not Data.gotEmail) then goto opnieuwscreen;
+  if (ascreen.skip = 6) and (Data.gotEmail) then goto opnieuwscreen;
+
+  NumberOfScreensToShift := 1;
+
+  if (activeScreen <> tmpScreen) then
+  begin
+    ChangeScreen(tmpScreen); // changes activeScreen
+    InteractionsTimer.Enabled := True;
+  end;
+end;
+
 procedure TLCDSmartieDisplayForm.TimerRefreshTimer(Sender: TObject);
 var
   counter, h: Integer;
@@ -1034,30 +941,27 @@ begin
 
   // This code can't go in FormCreate or FormShow because it either
   // doesn't work (FormCreate) or causes an exception (FormShow).
-  if (changeShow <> NoChange) then
+  if (InitialWindowState <> NoChange) then
   begin
-    if (changeShow = ShowMainForm) then
+    if (InitialWindowState = ShowMainForm) then
     begin
-      cooltrayIcon1.ShowMainForm();
+      CoolTrayIcon1.ShowMainForm();
     end
-    else if (changeShow = HideMainForm) then
+    else if (InitialWindowState = HideMainForm) then
     begin
-      application.minimize;
-      coolTrayIcon1.HideMainForm;
-      cooltrayicon1.IconVisible := True;
+      CoolTrayIcon1.HideMainForm;
     end
-    else if (changeShow = TotalHideMainForm) then
+    else if (InitialWindowState = TotalHideMainForm) then
     begin
-      changeShow := NoChange;
-      application.minimize;
-      coolTrayIcon1.HideMainForm;
-      cooltrayicon1.HideTaskbarIcon;
-      cooltrayicon1.enabled := False;
-      cooltrayicon1.IconVisible := False;
-      cooltrayicon1.Refresh;
+      InitialWindowState := NoChange;
+      CoolTrayIcon1.HideMainForm;
+      CoolTrayIcon1.HideTaskbarIcon;
+      CoolTrayIcon1.enabled := False;
+      CoolTrayIcon1.IconVisible := False;
+      CoolTrayIcon1.Refresh;
     end;
 
-    changeShow := NoChange;
+    InitialWindowState := NoChange;
   end;
 
   if ((gotnewlines = false) OR (InteractionsTimer.enabled = false))then
@@ -1074,7 +978,7 @@ begin
     if iSavedColorMode <> config.colorOption then
     begin
       iSavedColorMode := config.colorOption;
-      kleur();
+      SetOnscreenBacklight();
     end;
 
     if (config.alwaysOnTop) {and (not form2.Visible) and (not form4.Visible)}
@@ -1158,11 +1062,11 @@ begin
       canscroll := false;
       scrollcount := 1;
 
-      doesgpoflash := not doesgpoflash;
-      if (gpoflash > 0) then
+      doesGPOflash := not doesGPOflash;
+      if (GPOflash > 0) then
       begin
-        gpoflash := gpoflash -1;
-        doGPO(whatgpo, 2)
+        GPOflash := GPOflash -1;
+        DoGPO(whatGPO, 2)
       end;
     end
     else
@@ -1174,13 +1078,13 @@ begin
     for counter := 1 to config.height do
     begin
       if (not config.screen[activeScreen][counter].noscroll) then
-        screenLcd[counter].Caption := EscapeAmp(scroll(parsedLine[counter],
+        ScreenLCD[counter].Caption := EscapeAmp(scroll(parsedLine[counter],
           counter, scrollcount))
       else
         if (scrollPos[counter]>1) then     // maintain manual scroll postion
-          screenLcd[counter].Caption := EscapeAmp(scroll(parsedLine[counter], counter, 0))
+          ScreenLCD[counter].Caption := EscapeAmp(scroll(parsedLine[counter], counter, 0))
         else
-          screenLcd[counter].Caption := EscapeAmp(copy(parsedLine[counter], 1, config.width));
+          ScreenLCD[counter].Caption := EscapeAmp(copy(parsedLine[counter], 1, config.width));
     end;
 
   end
@@ -1192,240 +1096,92 @@ begin
 
   for h := 1 to config.height do
   begin
-    if tmpline[h] <> copy(UnescapeAmp(screenLcd[h].Caption) +
+    if tmpline[h] <> copy(UnescapeAmp(ScreenLCD[h].Caption) +
       '                                        ', 1, config.width) then
     begin
-      tmpline[h] := copy(UnescapeAmp(screenLcd[h].Caption)
+      tmpline[h] := copy(UnescapeAmp(ScreenLCD[h].Caption)
         + '                                        ', 1, config.width);
 
       Lcd.setPosition(1, h);
       Lcd.write(tmpline[h]);
     end;
   end;
-
-  //Application.ProcessMessages;
 end;
 
-
-// sets backlight - toggles if no parameter given
-procedure TLCDSmartieDisplayForm.backlit(iOn: Integer = -1);
+procedure TLCDSmartieDisplayForm.UpdateTimersState(InSetupState : boolean);
 begin
-  if (iOn = -1) then
-    backlight := 1-backlight
-  else
-    backlight := iOn;
-
-  Lcd.setbacklight(backlight >= 1);
-
-  if backlight = 0 then
-    LCDSmartieDisplayForm.popupmenu1.Items[0].Items[0].Caption := '&Backlight On'
-  else
-    LCDSmartieDisplayForm.popupmenu1.Items[0].Items[0].Caption := '&Backlight Off';
-  LCDSmartieDisplayForm.kleur();
-end;
-
-procedure TLCDSmartieDisplayForm.FormShow(Sender: TObject);
-begin
-  timerRefresh.Interval := 0; // reset timer
-  timerRefresh.Interval := 1; // make it short in case minimized has been selected.
-
-  cooltrayicon1.IconVisible := False;
-end;
-
-procedure TLCDSmartieDisplayForm.HTTPUpdateTimerTimer(Sender: TObject);
-begin
-  if (data.lcdSmartieUpdate) then
-  begin
-    data.lcdSmartieUpdate := False;
-
-    if MessageDlg('A new version of LCD Smartie is detected. ' + chr(13) +
-      data.lcdSmartieUpdateText + chr(13) + 'Go to LCD Smartie website?',
-      mtConfirmation, [mbYes, mbNo], 0) = mrYes then
+  if not InSetupState then
+  begin    // We're not in setup
+    // don't change timer states if we're waiting for a HD44780 to start.
+    if (not LPTStartupTimer.enabled) then
     begin
-      ShellExecute(0, Nil, pchar('http://lcdsmartie.sourceforge.net/'), Nil,
-        Nil, SW_NORMAL);
-    end;
-
-    if (bTerminating) then Exit; 
-  end;
-
-  Data.UpdateHTTP();
-  HTTPUpdateTimer.Interval := 0;
-  HTTPUpdateTimer.Interval := config.newsRefresh*1000*60;
-end;
-
-procedure TLCDSmartieDisplayForm.kleur;
-begin
-  if backlight = 1 then
-  begin
-    if config.colorOption = 0 then
-    begin
-      screenLcd[1].color := $0001FFA8;
-      screenLcd[2].color := $0001FFA8;
-      screenLcd[3].color := $0001FFA8;
-      screenLcd[4].color := $0001FFA8;
-      LCDSmartieDisplayForm.Color := $0001FFA8;
-      screenLcd[1].Font.Color := clBlack;
-      screenLcd[2].Font.Color := clBlack;
-      screenLcd[3].Font.Color := clBlack;
-      screenLcd[4].Font.Color := clBlack;
-    end
-    else if config.colorOption = 1 then
-    begin
-      screenLcd[1].color := $00FDF103;
-      screenLcd[2].color := $00FDF103;
-      screenLcd[3].color := $00FDF103;
-      screenLcd[4].color := $00FDF103;
-      LCDSmartieDisplayForm.Color := $00FDF103;
-      screenLcd[1].Font.Color := clBlack;
-      screenLcd[2].Font.Color := clBlack;
-      screenLcd[3].Font.Color := clBlack;
-      screenLcd[4].Font.Color := clBlack;
-    end
-    else if config.colorOption = 2 then
-    begin
-      screenLcd[1].color := clyellow;
-      screenLcd[2].color := clyellow;
-      screenLcd[3].color := clyellow;
-      screenLcd[4].color := clyellow;
-      LCDSmartieDisplayForm.Color := clyellow;
-      screenLcd[1].Font.Color := clBlack;
-      screenLcd[2].Font.Color := clBlack;
-      screenLcd[3].Font.Color := clBlack;
-      screenLcd[4].Font.Color := clBlack;
-    end
-    else if config.colorOption = 3 then
-    begin
-      screenLcd[1].color := clwhite;
-      screenLcd[2].color := clwhite;
-      screenLcd[3].color := clwhite;
-      screenLcd[4].color := clwhite;
-      LCDSmartieDisplayForm.Color := clwhite;
-      screenLcd[1].Font.Color := clBlack;
-      screenLcd[2].Font.Color := clBlack;
-      screenLcd[3].Font.Color := clBlack;
-      screenLcd[4].Font.Color := clBlack;
-    end
-    else if config.colorOption = 4 then
-    begin
-      screenLcd[1].color := backgroundcoloron;
-      screenLcd[2].color := backgroundcoloron;
-      screenLcd[3].color := backgroundcoloron;
-      screenLcd[4].color := backgroundcoloron;
-      LCDSmartieDisplayForm.Color := backgroundcoloron;
-      screenLcd[1].Font.Color := forgroundcoloron;
-      screenLcd[2].Font.Color := forgroundcoloron;
-      screenLcd[3].Font.Color := forgroundcoloron;
-      screenLcd[4].Font.Color := forgroundcoloron;
+      if not frozen then
+      begin
+        NextScreenTimer.enabled := true; // next screen
+      end;
     end;
   end
   else
-  begin
-    if config.colorOption = 0 then
-    begin
-      screenLcd[1].color := clgreen;
-      screenLcd[2].color := clgreen;
-      screenLcd[3].color := clgreen;
-      screenLcd[4].color := clgreen;
-      LCDSmartieDisplayForm.Color := clgreen;
-      screenLcd[1].Font.Color := clBlack;
-      screenLcd[2].Font.Color := clBlack;
-      screenLcd[3].Font.Color := clBlack;
-      screenLcd[4].Font.Color := clBlack;
-    end
-    else if config.colorOption = 1 then
-    begin
-      screenLcd[1].color := $00C00000;
-      screenLcd[2].color := $00C00000;
-      screenLcd[3].color := $00C00000;
-      screenLcd[4].color := $00C00000;
-      LCDSmartieDisplayForm.Color := $00C00000;
-      screenLcd[1].Font.Color := clWhite;
-      screenLcd[2].Font.Color := clWhite;
-      screenLcd[3].Font.Color := clWhite;
-      screenLcd[4].Font.Color := clWhite;
-    end
-    else if config.colorOption = 2 then
-    begin
-      screenLcd[1].color := clOlive;
-      screenLcd[2].color := clOlive;
-      screenLcd[3].color := clOlive;
-      screenLcd[4].color := clOlive;
-      LCDSmartieDisplayForm.Color := clOlive;
-      screenLcd[1].Font.Color := clBlack;
-      screenLcd[2].Font.Color := clBlack;
-      screenLcd[3].Font.Color := clBlack;
-      screenLcd[4].Font.Color := clBlack;
-    end
-    else if config.colorOption = 3 then
-    begin
-      screenLcd[1].color := clsilver;
-      screenLcd[2].color := clsilver;
-      screenLcd[3].color := clsilver;
-      screenLcd[4].color := clsilver;
-      LCDSmartieDisplayForm.Color := clsilver;
-      screenLcd[1].Font.Color := clBlack;
-      screenLcd[2].Font.Color := clBlack;
-      screenLcd[3].Font.Color := clBlack;
-      screenLcd[4].Font.Color := clBlack;
-    end
-    else if config.colorOption = 4 then
-    begin
-      screenLcd[1].color := backgroundcoloroff;
-      screenLcd[2].color := backgroundcoloroff;
-      screenLcd[3].color := backgroundcoloroff;
-      screenLcd[4].color := backgroundcoloroff;
-      LCDSmartieDisplayForm.Color := backgroundcoloroff;
-      screenLcd[1].Font.Color := forgroundcoloroff;
-      screenLcd[2].Font.Color := forgroundcoloroff;
-      screenLcd[3].Font.Color := forgroundcoloroff;
-      screenLcd[4].Font.Color := forgroundcoloroff;
-    end;
+  begin    // We're in Setup
+    LeftManualScrollTimer.enabled := false;     // left manual scroll
+    RightManualScrollTimer.enabled := false;     // right manual scroll
+    NextScreenTimer.enabled := false;     // next screen
+    InteractionsTimer.enabled := false; // "interactions"
   end;
+
+
+  HTTPUpdateTimer.enabled := true;  // http update
+  ActionsTimer.enabled := true;  // actions
+  MBMUpdateTimer.enabled := true;  // mbm update
+  GameUpdateTimer.enabled := true;  // game update
+  EMailTimer.enabled := true;  // email update
+  ScrollFlashTimer.enabled := true; // scroll/flash
+
+  if (not LPTStartupTimer.enabled) then
+    timerRefresh.enabled := true;  // update lcd and data
 end;
 
-// ShowMenu/Minimize has been selected from the tray/popup menu
-procedure TLCDSmartieDisplayForm.Showwindow1Click(Sender: TObject);
-begin
-  if popupmenu1.Items[3].caption='&Minimize' then
-    HideButton.Click
-  else
-    coolTrayIcon1.ShowMainForm;
-end;
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+////                                                                       ////
+////       B U T T O N  /  M E N U       H A N D L E R S                   ////
+////                                                                       ////
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
 
 procedure TLCDSmartieDisplayForm.Close1Click(Sender: TObject);
 begin
-  LCDSmartieDisplayForm.close();
+  Close;
+end;
+
+// ShowMenu/Minimize has been selected from the tray/popup menu
+procedure TLCDSmartieDisplayForm.ShowWindow1Click(Sender: TObject);
+begin
+  if Visible then
+    Application.Minimize
+  else
+    CoolTrayIcon1.ShowMainForm;
 end;
 
 // The LCD Smartie logo has been clicked - raise popup menu
 procedure TLCDSmartieDisplayForm.LogoImageClick(Sender: TObject);
 begin
-  popupmenu1.Items[3].caption := 'Minimize';
   popupmenu1.Popup(LCDSmartieDisplayForm.left + LogoImage.left + round(LogoImage.width/2), LCDSmartieDisplayForm.top
     + LogoImage.top + round(LogoImage.height));
 end;
 
-// Only used when line scroll button is pressed.
-procedure TLCDSmartieDisplayForm.scrollLine(line: Byte; direction: Integer);
+procedure TLCDSmartieDisplayForm.Configure1Click(Sender: TObject);
 begin
-  tmpline[line] := copy (scroll(parsedLine[line], line, direction)
-    + '                                        ', 1, config.width);
-  screenLcd[line].caption := EscapeAmp(tmpline[line]);
-  Lcd.setPosition(1, line);
-  Lcd.write(tmpline[line]);
+  ShowWindow1.click();
+  SetupButton.click();
 end;
 
-// For scrolling right when a line scroll button is pressed.
-procedure TLCDSmartieDisplayForm.LeftManualScrollTimerTimer(Sender: TObject);
+procedure TLCDSmartieDisplayForm.SetupImageClick(Sender: TObject);
 begin
-  scrollLine(line2scroll, 1);
-end;
-
-// For scrolling left when a line scroll button is pressed.
-procedure TLCDSmartieDisplayForm.RightManualScrollTimerTimer(Sender: TObject);
-begin
-  scrollLine(line2scroll, -1);
+  if not (LPTStartupTimer.enabled) then
+    SetupButton.click;
 end;
 
 procedure TLCDSmartieDisplayForm.SetupButtonClick(Sender: TObject);
@@ -1435,79 +1191,479 @@ begin
   UpdateTimersState(false);
 end;
 
-procedure TLCDSmartieDisplayForm.MBMUpdateTimerTimer(Sender: TObject);
+// Hide has been pressed.
+procedure TLCDSmartieDisplayForm.HideImageClick(Sender: TObject);
 begin
-  Data.updateMBMStats(Sender);
-  MBMUpdateTimer.Interval := 0;
-  MBMUpdateTimer.Interval := config.mbmRefresh*1000;
-end;
-
-procedure TLCDSmartieDisplayForm.NextButtonClick(Sender: TObject);
-begin
-  aantalscreensheenweer := 1;
-  frozen := true;
-  freeze();
+  HideButton.Click;
 end;
 
 procedure TLCDSmartieDisplayForm.HideButtonClick(Sender: TObject);
 begin
   Application.Minimize;
-  CoolTrayIcon1.HideMainForm
 end;
 
-procedure TLCDSmartieDisplayForm.FormClose(Sender: TObject; var Action: TCloseAction);
+procedure TLCDSmartieDisplayForm.PreviousImageClick(Sender: TObject);
 begin
-  bTerminating := true;
+  PreviousButton.click;
+end;
 
-  //application.minimize;
-  //coolTrayIcon1.HideMainForm;
-  //cooltrayicon1.HideTaskbarIcon;
-  //cooltrayicon1.enabled := False;
-  //cooltrayicon1.IconVisible := False;
-  //cooltrayicon1.Refresh;
+procedure TLCDSmartieDisplayForm.PreviousButtonClick(Sender: TObject);
+begin
+  NumberOfScreensToShift := -1;
+  frozen := true;
+  freeze();
+end;
 
-  while timerRefresh.enabled = true do timerRefresh.enabled := false;
-  while HTTPUpdateTimer.enabled = true do HTTPUpdateTimer.enabled := false;
-  while ActionsTimer.enabled = true do ActionsTimer.enabled := false;
-  while LeftManualScrollTimer.enabled = true do LeftManualScrollTimer.enabled := false;
-  while RightManualScrollTimer.enabled = true do RightManualScrollTimer.enabled := false;
-  while MBMUpdateTimer.enabled = true do MBMUpdateTimer.enabled := false;
-  while NextScreenTimer.enabled = true do NextScreenTimer.enabled := false;
-  while GameUpdateTimer.enabled = true do GameUpdateTimer.enabled := false;
-  while EMailTimer.enabled = true do EMailTimer.enabled := false;
-  while LPTStartupTimer.enabled = true do LPTStartupTimer.enabled := false;
-  while ScrollFlashTimer.enabled = true do ScrollFlashTimer.enabled := false;
-  while InteractionsTimer.enabled = true do InteractionsTimer.enabled := false;
+procedure TLCDSmartieDisplayForm.NextScreenImageClick(Sender: TObject);
+begin
+  NextButton.click;
+end;
 
-  FiniLCD();
+procedure TLCDSmartieDisplayForm.NextButtonClick(Sender: TObject);
+begin
+  NumberOfScreensToShift := 1;
+  frozen := true;
+  freeze();
+end;
 
-  if (Data <> nil) then
-  begin
-    if (Data.CanExit()) then
+procedure TLCDSmartieDisplayForm.BacklightOn1Click(Sender: TObject);
+begin
+  backlit();
+end;
+
+procedure TLCDSmartieDisplayForm.Credits1Click(Sender: TObject);
+begin
+  DoCreditsForm;
+end;
+
+procedure TLCDSmartieDisplayForm.LogoImageDblClick(Sender: TObject);
+begin
+  DoCreditsForm;
+end;
+
+procedure TLCDSmartieDisplayForm.NextTheme1Click(Sender: TObject);
+begin
+  activetheme := activetheme + 1;
+  if activetheme = 10 then activetheme := 0;
+  frozen := true;
+  freeze();
+end;
+
+procedure TLCDSmartieDisplayForm.LastTheme1Click(Sender: TObject);
+begin
+  activetheme := activetheme-1;
+  if activetheme=-1 then activetheme := 9;
+  frozen := true;
+  freeze();
+end;
+
+procedure TLCDSmartieDisplayForm.Freeze1Click(Sender: TObject);
+begin
+  freeze();
+end;
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+////                                                                       ////
+////    M O U S E    D O W N / U P    E V E N T    H A N D L E R S         ////
+////                                                                       ////
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+
+procedure TLCDSmartieDisplayForm.Line1RightScrollImageMouseDown(Sender: TObject; Button: TMouseButton; Shift:
+  TShiftState; X, Y: Integer);
+begin
+  Line1RightScrollImage.picture.LoadFromFile(extractfilepath(application.exename) +
+    'images\small_arrow_left_down1.bmp');
+  line2scroll := 1;
+  RightManualScrollTimer.enabled := true;
+  timerRefresh.enabled := false;
+end;
+
+procedure TLCDSmartieDisplayForm.Line1RightScrollImageMouseUp(Sender: TObject; Button: TMouseButton; Shift:
+  TShiftState; X, Y: Integer);
+begin
+  Line1RightScrollImage.picture.LoadFromFile(extractfilepath(application.exename) +
+    'images\small_arrow_left_up1.bmp');
+  RightManualScrollTimer.enabled := false;
+  timerRefresh.enabled := true;
+end;
+
+procedure TLCDSmartieDisplayForm.Line1LeftScrollImageMouseDown(Sender: TObject; Button: TMouseButton; Shift:
+  TShiftState; X, Y: Integer);
+begin
+  Line1LeftScrollImage.picture.LoadFromFile(extractfilepath(application.exename) +
+    'images\small_arrow_right_down1.bmp');
+  line2scroll := 1;
+  LeftManualScrollTimer.enabled := true;
+  timerRefresh.enabled := false;
+end;
+
+procedure TLCDSmartieDisplayForm.Line1LeftScrollImageMouseUp(Sender: TObject; Button: TMouseButton; Shift:
+  TShiftState; X, Y: Integer);
+begin
+  Line1LeftScrollImage.picture.LoadFromFile(extractfilepath(application.exename) +
+    'images\small_arrow_right_up1.bmp');
+  LeftManualScrollTimer.enabled := false;
+  timerRefresh.enabled := true;
+end;
+
+procedure TLCDSmartieDisplayForm.Line2RightScrollImageMouseDown(Sender: TObject; Button: TMouseButton; Shift:
+  TShiftState; X, Y: Integer);
+begin
+  Line2RightScrollImage.picture.LoadFromFile(extractfilepath(application.exename) +
+    'images\small_arrow_left_down2.bmp');
+  line2scroll := 2;
+  RightManualScrollTimer.enabled := true;
+  timerRefresh.enabled := false;
+end;
+
+procedure TLCDSmartieDisplayForm.Line2RightScrollImageMouseUp(Sender: TObject; Button: TMouseButton; Shift:
+  TShiftState; X, Y: Integer);
+begin
+  Line2RightScrollImage.picture.LoadFromFile(extractfilepath(application.exename) +
+    'images\small_arrow_left_up2.bmp');
+  RightManualScrollTimer.enabled := false;
+  timerRefresh.enabled := true;
+end;
+
+procedure TLCDSmartieDisplayForm.Line2LeftScrollImageMouseDown(Sender: TObject; Button: TMouseButton; Shift:
+  TShiftState; X, Y: Integer);
+begin
+  Line2LeftScrollImage.picture.LoadFromFile(extractfilepath(application.exename) +
+    'images\small_arrow_right_down2.bmp');
+  line2scroll := 2;
+  LeftManualScrollTimer.enabled := true;
+  timerRefresh.enabled := false;
+end;
+
+procedure TLCDSmartieDisplayForm.Line2LeftScrollImageMouseUp(Sender: TObject; Button: TMouseButton; Shift:
+  TShiftState; X, Y: Integer);
+begin
+  Line2LeftScrollImage.picture.LoadFromFile(extractfilepath(application.exename) +
+    'images\small_arrow_right_up2.bmp');
+  LeftManualScrollTimer.enabled := false;
+  timerRefresh.enabled := true;
+end;
+
+procedure TLCDSmartieDisplayForm.Line3RightScrollImageMouseDown(Sender: TObject; Button: TMouseButton; Shift:
+  TShiftState; X, Y: Integer);
+begin
+  Line3RightScrollImage.picture.LoadFromFile(extractfilepath(application.exename) +
+    'images\small_arrow_left_down3.bmp');
+  line2scroll := 3;
+  RightManualScrollTimer.enabled := true;
+  timerRefresh.enabled := false;
+end;
+
+procedure TLCDSmartieDisplayForm.Line3RightScrollImageMouseUp(Sender: TObject; Button: TMouseButton; Shift:
+  TShiftState; X, Y: Integer);
+begin
+  Line3RightScrollImage.picture.LoadFromFile(extractfilepath(application.exename) +
+    'images\small_arrow_left_up3.bmp');
+  RightManualScrollTimer.enabled := false;
+  timerRefresh.enabled := true;
+end;
+
+procedure TLCDSmartieDisplayForm.Line3LeftScrollImageMouseDown(Sender: TObject; Button: TMouseButton; Shift:
+  TShiftState; X, Y: Integer);
+begin
+  Line3LeftScrollImage.picture.LoadFromFile(extractfilepath(application.exename) +
+    'images\small_arrow_right_down3.bmp');
+  line2scroll := 3;
+  LeftManualScrollTimer.enabled := true;
+  timerRefresh.enabled := false;
+end;
+
+procedure TLCDSmartieDisplayForm.Line3LeftScrollImageMouseUp(Sender: TObject; Button: TMouseButton; Shift:
+  TShiftState; X, Y: Integer);
+begin
+  Line3LeftScrollImage.picture.LoadFromFile(extractfilepath(application.exename) +
+    'images\small_arrow_right_up3.bmp');
+  LeftManualScrollTimer.enabled := false;
+  timerRefresh.enabled := true;
+end;
+
+procedure TLCDSmartieDisplayForm.Line4RightScrollImageMouseDown(Sender: TObject; Button: TMouseButton; Shift:
+  TShiftState; X, Y: Integer);
+begin
+  Line4RightScrollImage.picture.LoadFromFile(extractfilepath(application.exename) +
+    'images\small_arrow_left_down4.bmp');
+  line2scroll := 4;
+  RightManualScrollTimer.enabled := true;
+  timerRefresh.enabled := false;
+end;
+
+procedure TLCDSmartieDisplayForm.Line4RightScrollImageMouseUp(Sender: TObject; Button: TMouseButton; Shift:
+  TShiftState; X, Y: Integer);
+begin
+  Line4RightScrollImage.picture.LoadFromFile(extractfilepath(application.exename) +
+    'images\small_arrow_left_up4.bmp');
+  RightManualScrollTimer.enabled := false;
+  timerRefresh.enabled := true;
+end;
+
+procedure TLCDSmartieDisplayForm.Line4LeftScrollImageMouseDown(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer);
+begin
+  Line4LeftScrollImage.picture.LoadFromFile(extractfilepath(application.exename) +
+    'images\small_arrow_right_down4.bmp');
+  line2scroll := 4;
+  LeftManualScrollTimer.enabled := true;
+  timerRefresh.enabled := false;
+end;
+
+procedure TLCDSmartieDisplayForm.Line4LeftScrollImageMouseUp(Sender: TObject; Button: TMouseButton; Shift:
+  TShiftState; X, Y: Integer);
+begin
+  Line4LeftScrollImage.picture.LoadFromFile(extractfilepath(application.exename) +
+    'images\small_arrow_right_up4.bmp');
+  LeftManualScrollTimer.enabled := false;
+  timerRefresh.enabled := true;
+end;
+
+procedure TLCDSmartieDisplayForm.PreviousImageMouseDown(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer);
+begin
+  PreviousImage.picture.LoadFromFile(extractfilepath(application.exename) +
+    'images\big_arrow_left_down.bmp');
+end;
+
+procedure TLCDSmartieDisplayForm.PreviousImageMouseUp(Sender: TObject; Button: TMouseButton; Shift:
+  TShiftState; X, Y: Integer);
+begin
+  PreviousImage.picture.LoadFromFile(extractfilepath(application.exename) +
+    'images\big_arrow_left_up.bmp');
+end;
+
+procedure TLCDSmartieDisplayForm.SetupImageMouseDown(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer);
+begin
+  SetupImage.picture.LoadFromFile(extractfilepath(application.exename) +
+    'images\setup_down.bmp');
+end;
+
+procedure TLCDSmartieDisplayForm.SetupImageMouseUp(Sender: TObject; Button: TMouseButton; Shift:
+  TShiftState; X, Y: Integer);
+begin
+  SetupImage.picture.LoadFromFile(extractfilepath(application.exename) +
+    'images\setup_up.bmp');
+end;
+
+procedure TLCDSmartieDisplayForm.HideImageMouseDown(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer);
+begin
+  HideImage.picture.LoadFromFile(extractfilepath(application.exename) +
+    'images\hide_down.bmp');
+end;
+
+procedure TLCDSmartieDisplayForm.HideImageMouseUp(Sender: TObject; Button: TMouseButton; Shift:
+  TShiftState; X, Y: Integer);
+begin
+  HideImage.picture.LoadFromFile(extractfilepath(application.exename) +
+    'images\hide_up.bmp');
+end;
+
+procedure TLCDSmartieDisplayForm.NextScreenImageMouseDown(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer);
+begin
+  NextScreenImage.picture.LoadFromFile(extractfilepath(application.exename) +
+    'images\big_arrow_right_down.bmp');
+end;
+
+procedure TLCDSmartieDisplayForm.NextScreenImageMouseUp(Sender: TObject; Button: TMouseButton; Shift:
+  TShiftState; X, Y: Integer);
+begin
+  NextScreenImage.picture.LoadFromFile(extractfilepath(application.exename) +
+    'images\big_arrow_right_up.bmp');
+end;
+
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+////                                                                       ////
+////      L C D    I N I T I A L I Z A T I O N     P R O C E D U R E S     ////
+////                                                                       ////
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+
+
+procedure TLCDSmartieDisplayForm.InitLCD();
+const
+  baudRates: array [0..14] of Cardinal =(CBR_110, CBR_300, CBR_600, CBR_1200, CBR_2400,
+    CBR_4800, CBR_9600, CBR_14400, CBR_19200, CBR_38400, CBR_56000, CBR_57600,
+    CBR_115200, CBR_128000, CBR_256000);
+var
+  i: Integer;
+begin
+  LPTStartupTimer.enabled := false; // stop any startup of the HD44780 driver
+
+  // Sync the display to our current view of the custom chars.
+  for i:= 1 to 8 do
+    customCharsChanged[i] := true;
+
+  // start connectivity
+  try
+    case config.ScreenType of
+      stMO : begin
+        if config.isUsbPalm then
+          Lcd := TLCD_MO.CreateUsb
+        else
+          Lcd := TLCD_MO.CreateSerial(config.comPort, baudRates[config.baudrate]);
+      end;
+      stCF : Lcd := TLCD_CF.CreateSerial(config.comPort, baudRates[config.baudrate]);
+      stTestDriver : Lcd := TLCD_Test.CreateSerial(config.comPort, baudRates[config.baudrate]);
+      stIR : Lcd := TLCD_IR.CreateSocket(config.RemoteHost);
+      stHD,stHD2 : begin
+        Lcd := TLCD.Create(); // use a dummy LCD until the boot time has passed.
+        // HD/HD2 have a delay start - they will setup the above timers later.
+        LPTStartupTimer.interval := 0;
+        if config.bootDriverDelay = 0 then LPTStartupTimer.interval := 10
+        else LPTStartupTimer.interval := config.bootDriverDelay*1000;
+        LPTStartupTimer.enabled := true;
+      end;
+      else Lcd := TLCD.Create(); // catchall case
+    end; // case
+  except
+    on E: Exception do
     begin
-      Data.Free();
-      Data := nil;
-    end;  // otherwise just leak it.
+      showmessage('Failed to open device: ' + E.Message);
+      Lcd := TLCD.Create();
+    end;
   end;
-  if (Data = nil) and (config <> nil) then
+
+  // load custom characters if the display supports it
+  if (config.ScreenType in [stMO,stCF,stIR]) then
   begin
-    config.Free();
-    config := nil;
+    customchar('1, 12, 18, 18, 12, 0, 0, 0, 0');
+    customchar('2, 31, 31, 31, 31, 31, 31, 31, 31');
+    customchar('3, 16, 16, 16, 16, 16, 16, 31, 16');
+    customchar('4, 28, 28, 28, 28, 28, 28, 31, 28');
+  end;
+
+  // set brightness and contrast if the display supports it
+  case config.ScreenType of
+    stMO : begin
+      Lcd.setContrast(config.contrast);
+      Lcd.setBrightness(config.brightness);
+    end;
+    stCF : begin
+      Lcd.setBrightness(config.CF_brightness);
+      Lcd.setContrast(config.CF_contrast);
+    end;
+    stIR : Lcd.setBrightness(config.IR_brightness);
+  end; // case
+
+  DoFullDisplayDraw();
+
+  UpdateTimersState(PerformingSetup);
+end;
+
+procedure TLCDSmartieDisplayForm.FiniLCD();
+begin
+  LPTStartupTimer.enabled := false; // stop any startup of the HD44780 driver
+  timerRefresh.enabled := false;  // stop updates to lcd
+  try
+    if (Lcd <> nil) Then Lcd.Destroy();
+  except
+  end;
+  Lcd := nil;
+end;
+
+procedure TLCDSmartieDisplayForm.ReInitLCD();
+begin
+  FiniLCD();
+  InitLCD();
+end;
+
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+////                                                                       ////
+////      L C D    D I S P L A Y     G L O B A L   P R O C E D U R E S     ////
+////                                                                       ////
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+
+
+procedure TLCDSmartieDisplayForm.customchar(fline: String);
+var
+  character: Integer;
+  waarde: Array[0..7] of Byte;
+  i: Integer;
+  iPosStart, iPosEnd: Integer;
+
+begin
+  iPosEnd := pos(',', fline);
+  character := StrToIntN(fline, 1, iPosEnd-1);
+  for i := 0 to 6 do
+  begin
+    iPosStart := iPosEnd + 1;
+    iPosEnd := PosEx(',', fline, iPosStart);
+    waarde[i] := StrToIntN(fline, iPosStart, iPosEnd-iPosStart);
+  end;
+  waarde[7] := StrToIntN(fline, iPosEnd+1, length(fline)-iPosEnd);
+
+  // Only send if not already defined.
+  i := 0;
+  while (i <= 7) and (waarde[i] = customChars[character, i]) do Inc(i);
+
+  if (i <= 7) then
+  begin
+    //Lcd.customChar(character, waarde);
+    customCharsChanged[character] := true;
+    for i := 0 to 7 do customChars[character, i] := waarde[i];
   end;
 end;
 
-procedure TLCDSmartieDisplayForm.GameUpdateTimerTimer(Sender: TObject);
+procedure TLCDSmartieDisplayForm.SendCustomChars;
+var
+  i: Integer;
 begin
-  Data.updateGameStats;
-  GameUpdateTimer.Interval := 0;
-  GameUpdateTimer.Interval := config.gameRefresh*60000;
+  for i:= 1 to 8 do
+  begin
+    if (customCharsChanged[i]) then
+    begin
+      Lcd.customChar(i, customChars[i]);
+      customCharsChanged[i] := false;
+    end;
+  end;
 end;
 
-procedure TLCDSmartieDisplayForm.Configure1Click(Sender: TObject);
+
+procedure TLCDSmartieDisplayForm.DoGPO(const ftemp1, ftemp2: Integer);
 begin
-  Showwindow1.click();
-  SetupButton.click();
+  if ftemp1 < 9 then
+  begin
+    if ftemp2 = 0 then
+    begin
+      Lcd.setGPO(ftemp1, false);
+      GPO[ftemp1] := false;
+    end;
+    if ftemp2 = 1 then
+    begin
+      Lcd.setGPO(ftemp1, true);
+      GPO[ftemp1] := true;
+    end;
+    if ftemp2 = 2 then
+    begin
+      if (GPO[ftemp1]) then
+      begin
+        Lcd.setGPO(ftemp1, false);
+        GPO[ftemp1] := false;
+      end
+      else
+      begin
+        Lcd.setGPO(ftemp1, true);
+        GPO[ftemp1] := true;
+      end;
+    end;
+  end;
 end;
+
 
 procedure TLCDSmartieDisplayForm.ProcessAction(bDoAction: Boolean; sAction: String);
 var
@@ -1553,7 +1709,7 @@ begin
       end;
 
       try
-        doGPO(StrToInt(temp1), StrToInt(temp2));
+        DoGPO(StrToInt(temp1), StrToInt(temp2));
       except
         on EConvertError do begin {ignore} end;
         else raise;
@@ -1633,14 +1789,14 @@ begin
 
     if (pos('NextScreen', sAction) <> 0) then
     begin
-      aantalscreensheenweer := 1;
+      NumberOfScreensToShift := 1;
       frozen := true;
       freeze();
     end;
 
     if (pos('LastScreen', sAction) <> 0) then
     begin
-      aantalscreensheenweer := -1;
+      NumberOfScreensToShift := -1;
       frozen := true;
       freeze();
     end;
@@ -1757,11 +1913,11 @@ begin
     if (pos('GPOFlash(', sAction) <> 0) and (config.ScreenType = stMO) then
     begin
       try
-        whatgpo := StrToInt(copy(sAction, pos('(', sAction) + 1,
+        whatGPO := StrToInt(copy(sAction, pos('(', sAction) + 1,
           pos(',', sAction)-pos('(', sAction)-1));
         temp2 := copy(sAction, pos(',', sAction) + 1,
           pos(')', sAction)-pos(',', sAction)-1);
-        gpoflash := StrToInt(temp2)*2;
+        GPOflash := StrToInt(temp2)*2;
       except
         on EConvertError do begin {ignore} end;
         else raise;
@@ -1773,7 +1929,7 @@ begin
       try
         temp1 := copy(sAction, pos('(', sAction) + 1, pos(')', sAction)
            - pos('(', sAction)-1);
-        dogpo(StrToInt(temp1), 2)
+        DoGPO(StrToInt(temp1), 2)
       except
         on EConvertError do begin {ignore} end;
         else raise;
@@ -1795,349 +1951,143 @@ begin
       end;
     end;
   end;
+end;
 
+// sets Backlight - toggles if no parameter given
+procedure TLCDSmartieDisplayForm.backlit(iOn: Integer = -1);
+begin
+  if (iOn = -1) then
+    Backlight := not Backlight
+  else
+    Backlight := boolean(iOn);
+
+  Lcd.setbacklight(Backlight);
+
+  if not Backlight then
+    BacklightOn1.Caption := '&Backlight On'
+  else
+    BacklightOn1.Caption := '&Backlight Off';
+  LCDSmartieDisplayForm.SetOnscreenBacklight();
 end;
 
 
-procedure TLCDSmartieDisplayForm.ActionsTimerTimer(Sender: TObject);
-//ACTIONS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+////                                                                       ////
+////  S C R E E N    D I S P L A Y     G L O B A L   P R O C E D U R E S   ////
+////                                                                       ////
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+
+procedure TLCDSmartieDisplayForm.DoFullDisplayDraw;
 var
-  counter: Integer;
-  iTemp: Integer;
-  cKey: Char;
-  iLeftValue, iRightValue: Integer;
-  sLeftValue, sRightValue, sAction: String;
-  bNum: Boolean;
-  bDoAction: Boolean;
-  doAction: Array[1..99] of Boolean;
-  iLeftStrLen: Integer;
-  iRightStrLen: Integer;
-
+  x: Integer;
 begin
-
-  if (Lcd <> nil) and (Lcd.readKey(cKey)) then
+  // Wipe the our view of the display - this will cause a full redraw.
+  for x := 1 to config.height do
   begin
-    UpdateSetupForm(cKey);
-    data.cLastKeyPressed := cKey;
+    tmpline[x] := '';
   end;
-
-
-  if PerformingSetup then Exit;
-
-
-  //
-  // Work out the state of each action condition.
-  //
-  for counter := 1 to config.totalactions do
-  begin
-    sLeftValue := Data.change(config.actionsArray[counter, 1]);
-    sRightValue := config.actionsArray[counter, 3];
-
-    bDoAction := false;
-
-    // Check if both left and right are numberic.
-    bNum := False;
-    iTemp := 1;
-    iLeftStrLen := Length(sLeftValue);
-    while (iTemp <= iLeftStrLen) and (sLeftValue[iTemp]>='0')
-      and (sLeftValue[iTemp]<='9') do iTemp := iTemp +1 ;
-
-    if (iTemp > iLeftStrLen) then
-    begin
-      iTemp := 1;
-      iRightStrLen := Length(sRightValue);
-      while (iTemp <= iRightStrLen) and (sRightValue[iTemp]>='0')
-        and (sRightValue[iTemp]<='9') do iTemp := iTemp + 1;
-
-      if (iTemp > iRightStrLen) then bNum := True;
-    end;
-
-    if (bNum) then
-    try
-      iLeftValue := StrToInt(sLeftValue);
-      iRightValue := StrToInt(sRightValue);
-      case StrToInt(config.actionsArray[counter, 2]) of
-        0: if (iLeftValue > iRightValue) then bDoAction := true;
-        1: if (iLeftValue < iRightValue) then bDoAction := true;
-        2: if (iLeftValue = iRightValue) then bDoAction := true;
-        3: if (iLeftValue <= iRightValue) then bDoAction := true;
-        4: if (iLeftValue >= iRightValue) then bDoAction := true;
-        5: if (iLeftValue <> iRightValue) then bDoAction := true;
-      end;
-    except
-      on EConvertError do begin bNum:=False end;
-      else raise;
-    end;
-
-    if (not bNum) then
-    begin
-      // not a numeric value - lets do a string comparsion
-      case StrToInt(config.actionsArray[counter, 2]) of
-        0: if (sLeftValue > sRightValue) then bDoAction := true;
-        1: if (sLeftValue < sRightValue) then bDoAction := true;
-        2: if (sLeftValue = sRightValue) then bDoAction := true;
-        3: if (sLeftValue <= sRightValue) then bDoAction := true;
-        4: if (sLeftValue >= sRightValue) then bDoAction := true;
-        5: if (sLeftValue <> sRightValue) then bDoAction := true;
-      end;
-    end;
-
-    doAction[counter] := bDoAction;
-  end;
-
-  // All actions have been processed using this key.
-  // Delete it so a repeated press is processed.
-  data.cLastKeyPressed := Chr(0);
-
-  // Reset new screen - the following actions may set this again.
-  data.NewScreen(False);
-
-  //
-  // Run any required actions.
-  //
-  for counter := 1 to config.totalactions do
-  begin
-    if (doAction[counter] <> didAction[counter]) then
-    begin
-      sAction :=  config.actionsArray[counter, 4];
-      ProcessAction(doAction[counter], sAction);
-
-      didAction[counter] := doAction[counter];
-    end;
-
-    // Ulgy special case - [the action code needs a rewrite]
-    // If action was caused by a key press then don't record that we have
-    // done it - this will reduce the delay required to reset actions.
-    // This delay impacts the user experience when using keys.
-    if (Pos('MObutton', config.actionsArray[counter, 1]) <> 0) then
-      didAction[counter] := false;
-
-  end;
-
 end;
 
-
-procedure TLCDSmartieDisplayForm.EMailTimerTimer(Sender: TObject);
-//MAILS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-begin
-  EMailTimer.Interval := 0;
-  EMailTimer.Interval := config.emailPeriod*60000;
-  Data.UpdateEmail;
-end;
-
-procedure TLCDSmartieDisplayForm.BacklightOn1Click(Sender: TObject);
-begin
-  backlit();
-end;
-
-
-procedure TLCDSmartieDisplayForm.NextScreenTimerTimer(Sender: TObject);
-//NEXT SCREEN!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-Label opnieuwscreen;
+procedure TLCDSmartieDisplayForm.ResetScrollPositions;
 var
-  xx, x: Integer;
+  y: Integer;
+begin
+  for y := 1 to 4 do
+  begin
+    scrollPos[y] := 1; // Reset scroll postion.
+  end;
+end;
+
+function TLCDSmartieDisplayForm.scroll(const scrollvar: String;const line, speed: Integer):
+  String;
+var
+  scrolltext: String;
+  len: Integer;
+begin
+
+  if length(scrollvar) > config.width then
+  begin
+    scrollPos[line] := scrollPos[line] + speed;
+    if (scrollPos[line]<1) then scrollPos[line] := length(scrollvar);
+    if (scrollPos[line]>length(scrollvar)) then scrollPos[line] := 1;
+
+    len := length(scrollvar)-scrollPos[line] + 1;
+    if (len > config.width) then len := config.width;
+    scrolltext := copy(scrollvar, scrollPos[line], len);
+
+    if length(scrolltext) < config.width then
+    begin
+      scrolltext := scrolltext + copy(scrollvar, 1,
+        config.width-length(scrolltext));
+    end;
+    result := scrolltext;
+
+  end
+  else result := scrollvar;
+end;
+
+procedure TLCDSmartieDisplayForm.ChangeScreen(scr: Integer);
+var
   y: Integer;
   ascreen: TScreenLine;
-  tmpscreen: Integer;
-
 begin
-  tmpScreen := activeScreen;
-  x := 0;
-  xx := 0;
-opnieuwscreen:
-  x := x + 1;
-  xx := xx + 1;
-  if (config.randomScreens) and (x < 500) then
+
+  if timertransIntervaltemp <> 0 then
   begin
-    tmpScreen := round(random(20) + 1);
-    if tmpScreen > 20 then tmpScreen := 20;
-    if tmpScreen < 1 then tmpScreen := 1;
-  end
+    InteractionsTimer.Interval := 0;
+    InteractionsTimer.Interval := timertransIntervaltemp;
+  end;
+  NextScreenTimer.Interval := 0; // reset timer
+
+  if (not config.screen[scr][1].bSticky) then
+    NextScreenTimer.Interval := config.screen[scr][1].showTime*1000 + timertransIntervaltemp;
+
+  if (activeScreen = scr) then
+    Exit;
+
+  activeScreen := scr;
+  ascreen := config.screen[activeScreen][1];
+
+  for y := 1 to 4 do
+  begin
+    oldline[y] := UnescapeAmp(ScreenLCD[y].Caption);
+  end;
+
+  ResetScrollPositions();
+
+  gotnewlines := false;
+  TransStart := GetTickCount();
+  TransCycle := 0;
+  iLastRandomTranCycle := 0;
+
+  for y := 1 to 40 do
+  begin
+    gamesArray[1, y] := false;
+    gamesArray[2, y] := false;
+    gamesArray[3, y] := false;
+    gamesArray[4, y] := false;
+  end;
+
+  timertransIntervaltemp := ascreen.interactionTime*100;
+
+  transActietemp := transActietemp2;
+  transActietemp2 := ascreen.interaction;
+
+  if not ascreen.enabled then transActietemp2 := 0;
+  if transActietemp2 = 0 then timertransIntervaltemp := 1;
+
+  if (config.width = 40) then
+    ScreenNumberPanel.Caption := 'Theme: ' + IntToStr(activetheme + 1) + ' Screen: ' +
+      IntToStr(activeScreen)
   else
-  begin
-    tmpScreen := tmpScreen + aantalscreensheenweer;
-    if tmpScreen > 20 then tmpScreen := 1;
-    if tmpScreen < 1 then tmpScreen := 20;
-  end;
+    ScreenNumberPanel.Caption := IntToStr(activetheme + 1) + ' | ' + IntToStr(activeScreen);
 
-  if xx> 22 then
-  begin
-    activetheme := activetheme + 1;
-    xx := 0;
-  end;
-  if (((x> 242) and (not config.randomScreens)) or ((x> 1000) and
-    (config.randomScreens))) then
-  begin
+  bNewScreen := True;
+  data.NewScreen(True);
 
-    // It seems that we are in a endless loop because no screen is able to be
-    // displayed.  Force screen 1 to be displayed.
-    x := 0;
-
-    for y := 1 to 4 do
-    begin
-      config.screen[1][y].enabled := True;
-      config.screen[1][y].skip := 0;
-      //config.screen[1][y].noscroll := False;
-    end;
-
-    tmpScreen := 1;
-    activetheme := 0;
-  end;
-
-  ascreen := config.screen[tmpScreen][1];
-
-  if (ascreen.theme <> activetheme) then goto opnieuwscreen;
-  if (not ascreen.enabled) then goto opnieuwscreen;
-  if (ascreen.skip = 1) and (winampctrl1.GetSongInfo(1) = 0) then goto
-    opnieuwscreen;
-  if (ascreen.skip = 2) and (winampctrl1.GetSongInfo(1) <> 0) then goto
-    opnieuwscreen;
-  if (ascreen.skip = 3) and (not Data.mbmactive) then goto opnieuwscreen;
-  if (ascreen.skip = 4) and (Data.mbmactive) then goto opnieuwscreen;
-  if (ascreen.skip = 7) and (not Data.isconnected) then goto opnieuwscreen;
-  if (ascreen.skip = 8) and (Data.isconnected) then goto opnieuwscreen;
-  if (ascreen.skip = 5) and (not Data.gotEmail) then goto opnieuwscreen;
-  if (ascreen.skip = 6) and (Data.gotEmail) then goto opnieuwscreen;
-
-  aantalscreensheenweer := 1;
-
-  if (activeScreen <> tmpScreen) then
-  begin
-    ChangeScreen(tmpScreen); // changes activeScreen
-    InteractionsTimer.Enabled := True;
-  end;
-end;
-
-procedure TLCDSmartieDisplayForm.LPTStartupTimerTimer(Sender: TObject);
-begin
-  LPTStartupTimer.Enabled := false;
-
-  // check just in case they've changed they mind in the mean time.
-  if (config.ScreenType in [stHD,stHD2]) then
-  begin
-
-    FiniLCD(); // get rid of the dummy one.
-    try
-      Lcd := TLCD_HD.CreateParallel($ + config.parallelPort, config.width, config.height);
-    except
-      on E: Exception do
-      begin
-        showmessage('Failed to open device: ' + E.Message);
-        Lcd := TLCD.Create();
-      end;
-    end;
-    Lcd.setbacklight(true);
-
-    customchar('1, 12, 18, 18, 12, 0, 0, 0, 0');
-    customchar('2, 31, 31, 31, 31, 31, 31, 31, 31');
-    customchar('3, 16, 16, 16, 16, 16, 16, 31, 16');
-    customchar('4, 28, 28, 28, 28, 28, 28, 31, 28');
-  end;
-
-  UpdateTimersState(PerformingSetup);
-end;
-
-procedure TLCDSmartieDisplayForm.UpdateTimersState(InSetupState : boolean);
-begin
-  if not InSetupState then
-  begin    // We're not in setup
-    // don't change timer states if we're waiting for a HD44780 to start.
-    if (not LPTStartupTimer.enabled) then
-    begin
-      if not frozen then
-      begin
-        NextScreenTimer.enabled := true; // next screen
-      end;
-    end;
-  end
-  else
-  begin    // We're in Setup
-    LeftManualScrollTimer.enabled := false;     // left manual scroll
-    RightManualScrollTimer.enabled := false;     // right manual scroll
-    NextScreenTimer.enabled := false;     // next screen
-    InteractionsTimer.enabled := false; // "interactions"
-  end;
-
-
-  HTTPUpdateTimer.enabled := true;  // http update
-  ActionsTimer.enabled := true;  // actions
-  MBMUpdateTimer.enabled := true;  // mbm update
-  GameUpdateTimer.enabled := true;  // game update
-  EMailTimer.enabled := true;  // email update
-  ScrollFlashTimer.enabled := true; // scroll/flash
-
-  if (not LPTStartupTimer.enabled) then
-    timerRefresh.enabled := true;  // update lcd and data
-end;
-
-procedure TLCDSmartieDisplayForm.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
-begin
-  canclose := true;
-end;
-
-procedure TLCDSmartieDisplayForm.Credits1Click(Sender: TObject);
-begin
-  DoCreditsForm;
-end;
-
-procedure TLCDSmartieDisplayForm.NextTheme1Click(Sender: TObject);
-begin
-  activetheme := activetheme + 1;
-  if activetheme = 10 then activetheme := 0;
-  frozen := true;
-  freeze();
-end;
-
-procedure TLCDSmartieDisplayForm.LastTheme1Click(Sender: TObject);
-begin
-  activetheme := activetheme-1;
-  if activetheme=-1 then activetheme := 9;
-  frozen := true;
-  freeze();
-end;
-
-procedure TLCDSmartieDisplayForm.LogoImageDblClick(Sender: TObject);
-begin
-  DoCreditsForm;
-end;
-
-procedure TLCDSmartieDisplayForm.Freeze1Click(Sender: TObject);
-begin
-  freeze();
-end;
-
-procedure TLCDSmartieDisplayForm.FormKeyPress(Sender: TObject; var Key: Char);
-begin
-  if upcase(key)='Z' then winampctrl1.Previous;
-  if upcase(key)='X' then winampctrl1.Play;
-  if upcase(key)='C' then winampctrl1.Pause;
-  if upcase(key)='V' then winampctrl1.Stop;
-  if upcase(key)='B' then winampctrl1.Next;
-  if upcase(key)='N' then backlit();
-  if upcase(key)='M' then freeze();
-  if upcase(key)='K' then
-  begin
-    activetheme := activetheme-1;
-    if activetheme=-1 then activetheme := 9;
-    frozen := true;
-    freeze();
-  end;
-  if upcase(key)='L' then
-  begin
-    activetheme := activetheme + 1;
-    if activetheme = 10 then activetheme := 0;
-    frozen := true;
-    freeze();
-  end;
-  if upcase(key)=',' then PreviousButton.click();
-  if upcase(key)='.' then NextButton.click();
-  if (upcase(key)='?') or (upcase(key)='/') then
-  begin
-    LCDSmartieDisplayForm.HTTPUpdateTimer.interval := 10;
-    LCDSmartieDisplayForm.GameUpdateTimer.interval := 10;
-    LCDSmartieDisplayForm.EMailTimer.interval := 10;
-    LCDSmartieDisplayForm.MBMUpdateTimer.interval := 10;
-  end;
 end;
 
 procedure TLCDSmartieDisplayForm.freeze();
@@ -2146,7 +2096,7 @@ begin
   begin
     frozen := true;
     NextScreenTimer.enabled := false;
-    popupmenu1.Items[0].Items[1].Caption := 'Unfreeze';
+    Freeze1.Caption := 'Unfreeze';
     LCDSmartieDisplayForm.caption := LCDSmartieDisplayForm.caption + ' - frozen'
   end
   else
@@ -2155,321 +2105,326 @@ begin
     NextScreenTimer.enabled := true;
     NextScreenTimer.interval := 0;
     NextScreenTimer.interval := 5;
-    popupmenu1.Items[0].Items[1].Caption := 'Freeze';
+    Freeze1.Caption := 'Freeze';
     if pos('frozen', LCDSmartieDisplayForm.caption) <> 0 then LCDSmartieDisplayForm.caption :=
       copy(LCDSmartieDisplayForm.caption, 1, length(LCDSmartieDisplayForm.caption)-length(' - frozen'));
   end;
 end;
 
-procedure TLCDSmartieDisplayForm.PreviousImageMouseUp(Sender: TObject; Button: TMouseButton; Shift:
-  TShiftState; X, Y: Integer);
+// Only used when line scroll button is pressed.
+procedure TLCDSmartieDisplayForm.scrollLine(line: Byte; direction: Integer);
 begin
-  PreviousImage.picture.LoadFromFile(extractfilepath(application.exename) +
-    'images\big_arrow_left_up.bmp');
+  tmpline[line] := copy (scroll(parsedLine[line], line, direction)
+    + '                                        ', 1, config.width);
+  ScreenLCD[line].caption := EscapeAmp(tmpline[line]);
+  Lcd.setPosition(1, line);
+  Lcd.write(tmpline[line]);
 end;
 
-procedure TLCDSmartieDisplayForm.PreviousImageMouseDown(Sender: TObject; Button: TMouseButton;
-  Shift: TShiftState; X, Y: Integer);
+procedure TLCDSmartieDisplayForm.SetOnscreenBacklight;
+var
+  ScreenColor,FontColor : TColor;
+  Loop : byte;
 begin
-  PreviousImage.picture.LoadFromFile(extractfilepath(application.exename) +
-    'images\big_arrow_left_down.bmp');
+  ScreenColor := clWhite;
+  FontColor := clBlack;
+  if Backlight then begin // Backlight is on
+    case (config.colorOption) of
+      0  : begin
+        ScreenColor := $0001FFA8;
+        FontColor := clBlack;
+      end;
+      1  : begin
+        ScreenColor := $00FDF103;
+        FontColor := clBlack;
+      end;
+      2  : begin
+        ScreenColor := clYellow;
+        FontColor := clBlack;
+      end;
+      3  : begin
+        ScreenColor := clWhite;
+        FontColor := clBlack;
+      end;
+      4  : begin
+        ScreenColor := BackgroundColorOn;
+        FontColor := ForgroundColorOn;
+      end;
+    end; // case
+  end else begin // Backlight is off
+    case (config.colorOption) of
+      0  : begin
+        ScreenColor := clGreen;
+        FontColor := clBlack;
+      end;
+      1  : begin
+        ScreenColor := $00C00000;
+        FontColor := clWhite;
+      end;
+      2  : begin
+        ScreenColor := clOlive;
+        FontColor := clBlack;
+      end;
+      3  : begin
+        ScreenColor := clSilver;
+        FontColor := clBlack;
+      end;
+      4  : begin
+        ScreenColor := BackgroundColorOff;
+        FontColor := ForgroundColorOff;
+      end;
+    end; // case
+  end; // not background on
+
+  LCDSmartieDisplayForm.Color := ScreenColor;
+  for Loop := 1 to 4 do begin
+    ScreenLCD[Loop].Color := ScreenColor;
+    ScreenLCD[Loop].Font.Color := FontColor;
+  end;
 end;
 
-procedure TLCDSmartieDisplayForm.SetupImageMouseDown(Sender: TObject; Button: TMouseButton;
-  Shift: TShiftState; X, Y: Integer);
-begin
-  SetupImage.picture.LoadFromFile(extractfilepath(application.exename) +
-    'images\setup_down.bmp');
-end;
+procedure TLCDSmartieDisplayForm.doInteractions;
+var
+  GuessRegister: Array[1..4] of String;
+  tempstr: String;
+  line: Integer;
+  maxTransCycles: Integer;
+  Guess: Integer;
+  x: Integer;
+  iContrast: Integer;
+  now: Cardinal;
 
-procedure TLCDSmartieDisplayForm.SetupImageMouseUp(Sender: TObject; Button: TMouseButton; Shift:
-  TShiftState; X, Y: Integer);
 begin
-  SetupImage.picture.LoadFromFile(extractfilepath(application.exename) +
-    'images\setup_up.bmp');
-end;
+  // Changing screen - do any interactions required.
+  //TransCycle := TransCycle + 1;
+  now := GetTickCount();
+  if (now < TransStart) then
+    TransCycle := (now + (MAXDWORD-TransStart)) div timerRefresh.Interval
+  else
+    TransCycle := (now-TransStart) div timerRefresh.Interval;
 
-procedure TLCDSmartieDisplayForm.HideImageMouseDown(Sender: TObject; Button: TMouseButton;
-  Shift: TShiftState; X, Y: Integer);
-begin
-  HideImage.picture.LoadFromFile(extractfilepath(application.exename) +
-    'images\hide_down.bmp');
-end;
+  maxTransCycles := InteractionsTimer.Interval div timerRefresh.Interval;
 
-procedure TLCDSmartieDisplayForm.HideImageMouseUp(Sender: TObject; Button: TMouseButton; Shift:
-  TShiftState; X, Y: Integer);
-begin
-  HideImage.picture.LoadFromFile(extractfilepath(application.exename) +
-    'images\hide_up.bmp');
-end;
+  if (maxTransCycles = 0) then Exit;
+  if (TransCycle > maxTransCycles) then Exit;
 
-procedure TLCDSmartieDisplayForm.Line1RightScrollImageMouseDown(Sender: TObject; Button: TMouseButton; Shift:
-  TShiftState; X, Y: Integer);
-begin
-  Line1RightScrollImage.picture.LoadFromFile(extractfilepath(application.exename) +
-    'images\small_arrow_left_down1.bmp');
-  line2scroll := 1;
-  RightManualScrollTimer.enabled := true;
-  timerRefresh.enabled := false;
-end;
+  if (TransCycle > maxTransCycles / 2) then SendCustomChars();
 
-procedure TLCDSmartieDisplayForm.Line1RightScrollImageMouseUp(Sender: TObject; Button: TMouseButton; Shift:
-  TShiftState; X, Y: Integer);
-begin
-  Line1RightScrollImage.picture.LoadFromFile(extractfilepath(application.exename) +
-    'images\small_arrow_left_up1.bmp');
-  RightManualScrollTimer.enabled := false;
-  timerRefresh.enabled := true;
-end;
+  for x := 1 to config.height do begin
+    oldline[x] := copy(oldline[x] +
+      '                                        ', 1, config.width);
+    newline[x] := copy(newline[x] +
+      '                                        ', 1, config.width);
+  end;
 
-procedure TLCDSmartieDisplayForm.Line2RightScrollImageMouseDown(Sender: TObject; Button: TMouseButton; Shift:
-  TShiftState; X, Y: Integer);
-begin
-  Line2RightScrollImage.picture.LoadFromFile(extractfilepath(application.exename) +
-    'images\small_arrow_left_down2.bmp');
-  line2scroll := 2;
-  RightManualScrollTimer.enabled := true;
-  timerRefresh.enabled := false;
-end;
+  if transActietemp = 1 then begin  //left-->right
 
-procedure TLCDSmartieDisplayForm.Line3RightScrollImageMouseDown(Sender: TObject; Button: TMouseButton; Shift:
-  TShiftState; X, Y: Integer);
-begin
-  Line3RightScrollImage.picture.LoadFromFile(extractfilepath(application.exename) +
-    'images\small_arrow_left_down3.bmp');
-  line2scroll := 3;
-  RightManualScrollTimer.enabled := true;
-  timerRefresh.enabled := false;
-end;
-
-procedure TLCDSmartieDisplayForm.Line4RightScrollImageMouseDown(Sender: TObject; Button: TMouseButton; Shift:
-  TShiftState; X, Y: Integer);
-begin
-  Line4RightScrollImage.picture.LoadFromFile(extractfilepath(application.exename) +
-    'images\small_arrow_left_down4.bmp');
-  line2scroll := 4;
-  RightManualScrollTimer.enabled := true;
-  timerRefresh.enabled := false;
-end;
-
-procedure TLCDSmartieDisplayForm.Line1LeftScrollImageMouseDown(Sender: TObject; Button: TMouseButton; Shift:
-  TShiftState; X, Y: Integer);
-begin
-  Line1LeftScrollImage.picture.LoadFromFile(extractfilepath(application.exename) +
-    'images\small_arrow_right_down1.bmp');
-  line2scroll := 1;
-  LeftManualScrollTimer.enabled := true;
-  timerRefresh.enabled := false;
-end;
-
-procedure TLCDSmartieDisplayForm.Line2LeftScrollImageMouseDown(Sender: TObject; Button: TMouseButton; Shift:
-  TShiftState; X, Y: Integer);
-begin
-  Line2LeftScrollImage.picture.LoadFromFile(extractfilepath(application.exename) +
-    'images\small_arrow_right_down2.bmp');
-  line2scroll := 2;
-  LeftManualScrollTimer.enabled := true;
-  timerRefresh.enabled := false;
-end;
-
-procedure TLCDSmartieDisplayForm.Line3LeftScrollImageMouseDown(Sender: TObject; Button: TMouseButton; Shift:
-  TShiftState; X, Y: Integer);
-begin
-  Line3LeftScrollImage.picture.LoadFromFile(extractfilepath(application.exename) +
-    'images\small_arrow_right_down3.bmp');
-  line2scroll := 3;
-  LeftManualScrollTimer.enabled := true;
-  timerRefresh.enabled := false;
-end;
-
-procedure TLCDSmartieDisplayForm.Line4LeftScrollImageMouseDown(Sender: TObject; Button: TMouseButton;
-  Shift: TShiftState; X, Y: Integer);
-begin
-  Line4LeftScrollImage.picture.LoadFromFile(extractfilepath(application.exename) +
-    'images\small_arrow_right_down4.bmp');
-  line2scroll := 4;
-  LeftManualScrollTimer.enabled := true;
-  timerRefresh.enabled := false;
-end;
-
-procedure TLCDSmartieDisplayForm.Line2RightScrollImageMouseUp(Sender: TObject; Button: TMouseButton; Shift:
-  TShiftState; X, Y: Integer);
-begin
-  Line2RightScrollImage.picture.LoadFromFile(extractfilepath(application.exename) +
-    'images\small_arrow_left_up2.bmp');
-  RightManualScrollTimer.enabled := false;
-  timerRefresh.enabled := true;
-end;
-
-procedure TLCDSmartieDisplayForm.Line3RightScrollImageMouseUp(Sender: TObject; Button: TMouseButton; Shift:
-  TShiftState; X, Y: Integer);
-begin
-  Line3RightScrollImage.picture.LoadFromFile(extractfilepath(application.exename) +
-    'images\small_arrow_left_up3.bmp');
-  RightManualScrollTimer.enabled := false;
-  timerRefresh.enabled := true;
-end;
-
-procedure TLCDSmartieDisplayForm.Line4RightScrollImageMouseUp(Sender: TObject; Button: TMouseButton; Shift:
-  TShiftState; X, Y: Integer);
-begin
-  Line4RightScrollImage.picture.LoadFromFile(extractfilepath(application.exename) +
-    'images\small_arrow_left_up4.bmp');
-  RightManualScrollTimer.enabled := false;
-  timerRefresh.enabled := true;
-end;
-
-procedure TLCDSmartieDisplayForm.Line1LeftScrollImageMouseUp(Sender: TObject; Button: TMouseButton; Shift:
-  TShiftState; X, Y: Integer);
-begin
-  Line1LeftScrollImage.picture.LoadFromFile(extractfilepath(application.exename) +
-    'images\small_arrow_right_up1.bmp');
-  LeftManualScrollTimer.enabled := false;
-  timerRefresh.enabled := true;
-end;
-
-procedure TLCDSmartieDisplayForm.Line2LeftScrollImageMouseUp(Sender: TObject; Button: TMouseButton; Shift:
-  TShiftState; X, Y: Integer);
-begin
-  Line2LeftScrollImage.picture.LoadFromFile(extractfilepath(application.exename) +
-    'images\small_arrow_right_up2.bmp');
-  LeftManualScrollTimer.enabled := false;
-  timerRefresh.enabled := true;
-end;
-
-procedure TLCDSmartieDisplayForm.Line3LeftScrollImageMouseUp(Sender: TObject; Button: TMouseButton; Shift:
-  TShiftState; X, Y: Integer);
-begin
-  Line3LeftScrollImage.picture.LoadFromFile(extractfilepath(application.exename) +
-    'images\small_arrow_right_up3.bmp');
-  LeftManualScrollTimer.enabled := false;
-  timerRefresh.enabled := true;
-end;
-
-procedure TLCDSmartieDisplayForm.Line4LeftScrollImageMouseUp(Sender: TObject; Button: TMouseButton; Shift:
-  TShiftState; X, Y: Integer);
-begin
-  Line4LeftScrollImage.picture.LoadFromFile(extractfilepath(application.exename) +
-    'images\small_arrow_right_up4.bmp');
-  LeftManualScrollTimer.enabled := false;
-  timerRefresh.enabled := true;
-end;
-
-procedure TLCDSmartieDisplayForm.NextScreenImageMouseDown(Sender: TObject; Button: TMouseButton;
-  Shift: TShiftState; X, Y: Integer);
-begin
-  NextScreenImage.picture.LoadFromFile(extractfilepath(application.exename) +
-    'images\big_arrow_right_down.bmp');
-end;
-
-procedure TLCDSmartieDisplayForm.NextScreenImageMouseUp(Sender: TObject; Button: TMouseButton; Shift:
-  TShiftState; X, Y: Integer);
-begin
-  NextScreenImage.picture.LoadFromFile(extractfilepath(application.exename) +
-    'images\big_arrow_right_up.bmp');
-end;
-
-procedure TLCDSmartieDisplayForm.PreviousImageClick(Sender: TObject);
-begin
-  PreviousButton.click;
-end;
-
-procedure TLCDSmartieDisplayForm.NextScreenImageClick(Sender: TObject);
-begin
-  NextButton.click;
-end;
-
-// Hide has been pressed.
-procedure TLCDSmartieDisplayForm.HideImageClick(Sender: TObject);
-begin
-  HideButton.click;
-end;
-
-procedure TLCDSmartieDisplayForm.SetupImageClick(Sender: TObject);
-begin
-  if not (LPTStartupTimer.enabled) then
-    SetupButton.click;
-end;
-
-procedure TLCDSmartieDisplayForm.PreviousButtonClick(Sender: TObject);
-begin
-  aantalscreensheenweer := -1;
-  frozen := true;
-  freeze();
-end;
-
-procedure tLCDSmartieDisplayForm.dogpo(const ftemp1, ftemp2: Integer);
-begin
-  if ftemp1 < 9 then
-  begin
-    if ftemp2 = 0 then
+    for x := 1 to config.height do
     begin
-      Lcd.setGPO(ftemp1, false);
-      gpo[ftemp1] := false;
+      tempstr := copy(newline[x] + '|' + oldline[x], round((config.width +
+        2)-TransCycle*((config.width + 2)/maxTransCycles)), config.width);
+      ScreenLCD[x].Caption := EscapeAmp(tempstr);
     end;
-    if ftemp2 = 1 then
+
+  end else if transActietemp = 2 then begin  //right-->left
+
+    for x := 1 to config.height do
     begin
-      Lcd.setGPO(ftemp1, true);
-      gpo[ftemp1] := true;
+      tempstr := copy(oldline[x] + '|' + newline[x],
+        round(TransCycle*((config.width + 2)/maxTransCycles)),
+        config.width);
+      ScreenLCD[x].Caption := EscapeAmp(tempstr);
     end;
-    if ftemp2 = 2 then
+
+  end else if transActietemp = 3 then begin //top-->bottom
+
+    line := round(TransCycle*(config.height/maxTransCycles)) + 1;
+    for x := 1 to line-1 do
     begin
-      if (gpo[ftemp1]) then
+      ScreenLCD[x].Caption := EscapeAmp(newline[config.height-(line-1)+ x]);
+    end;
+
+    if (line <= config.height) then
+      ScreenLCD[line].Caption :=
+        copy('----------------------------------------', 1, config.width);
+
+    for x := line + 1 to config.height do
+    begin
+      ScreenLCD[x].Caption := EscapeAmp(oldline[x-(line + 1) + 1]);
+    end;
+
+  end else if transActietemp = 4 then begin  //bottom-->top
+
+    line := round(TransCycle*(config.height/maxTransCycles)) + 1;
+    for x := 1 to config.height-line do
+    begin
+      ScreenLCD[x].Caption := EscapeAmp(oldline[x + line-1]);
+    end;
+
+    if (config.height-line + 1 > 0) then
+      ScreenLCD[config.height-line + 1].Caption :=
+        copy('----------------------------------------', 1, config.width);
+
+    for x := config.height-line + 2 to config.height do
+    begin
+      ScreenLCD[x].Caption :=
+        EscapeAmp(newline[x-(config.height-line + 2) + 1]);
+    end;
+
+  end else if transActietemp = 5 then begin //random blocks
+
+    for x := 1 to 4 do
+    begin
+      GuessRegister[x] := copy(UnescapeAmp(ScreenLCD[x].caption) +
+        '                                        ', 1, config.width);
+    end;
+
+    for x := iLastRandomTranCycle to
+      round((config.width/maxTransCycles)*TransCycle)-1 do
+    begin
+      for line := 1 to 4 do
       begin
-        Lcd.setGPO(ftemp1, false);
-        gpo[ftemp1] := false;
-      end
+        Guess := DoGuess(line);
+        GuessRegister[line] := copy(GuessRegister[line], 1, Guess-1) +
+          copy(newline[line], Guess, 1) + copy(GuessRegister[line], Guess +
+          1, config.width-Guess);
+      end;
+    end;
+    iLastRandomTranCycle := round((config.width/maxTransCycles)*TransCycle);
+    for x := 1 to 4 do
+    begin
+      ScreenLCD[x].caption := EscapeAmp(GuessRegister[x]);
+    end;
+
+  end else if (transActietemp = 6) and (maxTransCycles >= 2) then begin  //contrast fade
+// The fade is a two step process, so we need at least two cycles.
+
+// We only fade down to iMinFadeContrast; because many LCDs displays will be
+// blank long before we reach 0. (One user reported that their display was
+// blank at a contrast of 40).
+
+// For the first half of the cycles - lower the contrast
+
+    if (TransCycle < maxTransCycles/2) then
+    begin
+      if (config.ScreenType = stMO)then x := config.contrast
+      else x := config.CF_contrast;
+
+      iContrast := round(x-(TransCycle*(x-config.iMinFadeContrast)
+        / (MaxTransCycles/2)));
+
+
+      if iContrast < config.iMinFadeContrast then
+        iContrast := config.iMinFadeContrast
       else
+        if iContrast > x then iContrast := x;
+      Lcd.setContrast(iContrast);
+    end
+    else
+    begin
+// raise the contrast over the second half
+
+      for x := 1 to 4 do
       begin
-        Lcd.setGPO(ftemp1, true);
-        gpo[ftemp1] := true;
+        ScreenLCD[x].Caption := EscapeAmp(newline[x]);
+      end;
+
+      if (config.ScreenType = stMO) then x := config.contrast
+      else x := config.CF_contrast;
+
+      iContrast := round((TransCycle-(MaxTransCycles/2))
+        * (x-config.iMinFadeContrast)/(MaxTransCycles/2))
+        + config.iMinFadeContrast;
+
+      if iContrast > x then iContrast := x
+      else
+        if iContrast < config.iMinFadeContrast then
+          iContrast := config.iMinFadeContrast;
+      Lcd.setContrast(iContrast);
+    end;
+    ResetContrast := True;// Just to be sure the contrast is back to correct levels.
+  end;
+end;
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+////                                                                       ////
+////        M I S C E L L A N E O U S        P R O C E D U R E S           ////
+////                                                                       ////
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+
+
+function TLCDSmartieDisplayForm.EscapeAmp(const sStr: string): String;
+begin
+  Result := StringReplace(sStr, '&', '&&', [rfReplaceAll])
+end;
+
+function TLCDSmartieDisplayForm.UnescapeAmp(const sStr: string): String;
+begin
+  Result := StringReplace(sStr, '&&', '&', [rfReplaceAll])
+end;
+
+function TLCDSmartieDisplayForm.DoGuess(line: Integer): Integer;
+var
+  GoodGuess: Boolean;
+  x: Integer;
+  loopcount: Integer;
+
+begin
+  GoodGuess := false;
+  x := 0;
+  loopcount := 0;
+
+  while not GoodGuess do begin
+    Inc(loopcount);
+    x := round(random(config.width) + 1);
+    if gamesArray[line, x] = false then begin
+      GoodGuess := true;
+    end else if (loopcount > config.width*2) then begin
+      // it's taking too long - use first unset element
+      x := 0;
+      repeat
+        Inc(x);
+        if (gamesArray[line, x] = false) then GoodGuess := true;
+      until (x >= config.width) or (GoodGuess);
+      if (not GoodGuess) then
+      begin
+      // all the elements are set - use 1 (arb.)
+        x := 1;
+        GoodGuess := true;
       end;
     end;
   end;
+  gamesArray[line, x] := true;
+  result := x;
 end;
 
-procedure TLCDSmartieDisplayForm.WMQueryEndSession (var M: TWMQueryEndSession);
-begin
-  inherited;
-  LCDSmartieDisplayForm.Close;
-end;
 
-procedure TLCDSmartieDisplayForm.InteractionsTimerTimer(Sender: TObject);
+procedure TLCDSmartieDisplayForm.SetupAutoStart;
+var
+  sParameters: String;
+  sShortCutName: String;
+  bDelete: Boolean;
 begin
-  InteractionsTimer.Enabled := false;
-end;
+  sParameters := '';
+  sShortCutName := 'LCD Smartie';
 
-procedure TLCDSmartieDisplayForm.ScrollFlashTimerTimer(Sender: TObject);
-begin
-  ScrollFlashTimer.Interval := 0;
-  ScrollFlashTimer.Interval := config.scrollPeriod;
-  canscroll := true;
-  Inc(flashdelay);
-  if ((not doesflash) and (flashdelay >= 2)) or
-    (doesflash and (flashdelay >= 1)) then
+  if (config.bAutoStartHide) then
+    sParameters := sParameters + '-hide ';
+
+  if (config.filename <> 'config.ini') then
   begin
-    flashdelay := 0;
-    canflash := true;
+    sParameters := sParameters + '-config '+config.filename;
+    sShortCutName := sShortCutName + config.filename;
   end;
-end;
 
-procedure TLCDSmartieDisplayForm.OnMinimize(Sender: TObject);
-begin
-  // Only minimize to tray when setup isn't displayed
-  if not PerformingSetup then
-  begin
-    cooltrayicon1.HideMainForm;
-    popupmenu1.Items[3].caption := 'Show Main';
-    cooltrayicon1.IconVisible := True;
-  end
-  else
-    coolTrayIcon1.IconVisible := False;
-end;
+  bDelete := not (config.bAutoStart or config.bAutoStartHide);
 
-procedure TLCDSmartieDisplayForm.CoolTrayIcon1Startup(Sender: TObject;
-  var ShowMainForm: Boolean);
-begin
-  ShowMainForm := False;
+  CreateShortcut(sShortCutName, application.exename, sParameters, bDelete);
 end;
 
 end.
