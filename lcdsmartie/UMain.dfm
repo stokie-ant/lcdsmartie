@@ -1,6 +1,6 @@
 object LCDSmartieDisplayForm: TLCDSmartieDisplayForm
-  Left = 485
-  Top = 273
+  Left = 368
+  Top = 240
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsToolWindow
   Caption = 'LCD Smartie 5.3'

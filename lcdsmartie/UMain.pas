@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.66 $ $Date: 2006/02/28 21:01:56 $
+ *  $Revision: 1.67 $ $Date: 2006/02/28 21:27:45 $
  *****************************************************************************}
 
 interface
@@ -37,7 +37,7 @@ const
   OurVersBuild = 16;
 
 type
-  TChangeShow = (NoChange, ShowMainForm, HideMainForm, TotalHideMainForm);
+  TInitialWindowState = (NoChange, HideMainForm, TotalHideMainForm);
 
   TLCDSmartieDisplayForm = class(TForm)
     HTTPUpdateTimer: TTimer;
@@ -186,7 +186,7 @@ type
     procedure ReInitLCD();
     procedure customchar(fline: String);
   private
-    InitialWindowState: TChangeShow;
+    InitialWindowState: TInitialWindowState;
     ScreenLCD: Array[1..4] of ^TPanel;
     canflash: Boolean;
     iSavedHeight, iSavedWidth: Integer;
@@ -301,8 +301,6 @@ begin
   if (config.bHideOnStartup) then
     InitialWindowState := HideMainForm;
 
-  self.Visible := (InitialWindowState = ShowMainForm);
-
   // delete/create startup shortcut as required.
   SetupAutoStart();
 
@@ -390,7 +388,7 @@ var
   I : integer;
   parameter: String;
 begin
-  InitialWindowState := ShowMainForm;
+  InitialWindowState := NoChange;
   i := 1;
   while (i <= ParamCount) do
   begin
@@ -946,24 +944,10 @@ begin
   // doesn't work (FormCreate) or causes an exception (FormShow).
   if (InitialWindowState <> NoChange) then
   begin
-    if (InitialWindowState = ShowMainForm) then
-    begin
-      CoolTrayIcon1.ShowMainForm();
-    end
-    else if (InitialWindowState = HideMainForm) then
-    begin
-      CoolTrayIcon1.HideMainForm;
-    end
-    else if (InitialWindowState = TotalHideMainForm) then
-    begin
-      InitialWindowState := NoChange;
-      CoolTrayIcon1.HideMainForm;
-      CoolTrayIcon1.HideTaskbarIcon;
-      CoolTrayIcon1.enabled := False;
-      CoolTrayIcon1.IconVisible := False;
-      CoolTrayIcon1.Refresh;
+    case InitialWindowState of
+      HideMainForm : Application.Minimize;
+      TotalHideMainForm : CoolTrayIcon1.HideMainForm;
     end;
-
     InitialWindowState := NoChange;
   end;
 
