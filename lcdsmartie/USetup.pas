@@ -19,7 +19,7 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.39 $ $Date: 2006/02/27 23:38:03 $
+ *  $Revision: 1.40 $ $Date: 2006/02/28 13:34:21 $
  *****************************************************************************}
 
 interface
@@ -1638,7 +1638,7 @@ begin
     Exit;
   end;
 
-  ApplyButton.click();
+  ApplyButtonClick(Sender);
 end;
 
 procedure TSetupForm.FormCreate(Sender: TObject);
