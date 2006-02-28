@@ -19,7 +19,7 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.40 $ $Date: 2006/02/28 13:34:21 $
+ *  $Revision: 1.41 $ $Date: 2006/02/28 20:42:25 $
  *****************************************************************************}
 
 interface
@@ -177,7 +177,7 @@ type
     Label6: TLabel;
     RandomizeScreensCheckBox: TCheckBox;
     StayOnTopCheckBox: TCheckBox;
-    InteractionsButton: TButton;
+    TransitionButton: TButton;
     Label58: TLabel;
     DLLCheckIntervalSpinEdit: TSpinEdit;
     ProgramScrollIntervalSpinEdit: TSpinEdit;
@@ -239,7 +239,7 @@ type
     procedure ActionAddButtonClick(Sender: TObject);
     procedure ActionDeleteButtonClick(Sender: TObject);
     procedure ButtonsListBoxClick(Sender: TObject);
-    procedure InteractionsButtonClick(Sender: TObject);
+    procedure TransitionButtonClick(Sender: TObject);
     procedure HD66712RadioButtonClick(Sender: TObject);
     procedure Line4EditKeyDown(Sender: TObject; var Key: Word; Shift:
       TShiftState);
@@ -261,7 +261,7 @@ type
   private
     setupbutton: Integer;
     EMailAccountComboboxTemp: Integer;
-    tempscreen: Integer;
+    CurrentScreen: Integer;
     Procedure FocusToInputField;
     procedure SaveScreen(scr: Integer);
     procedure LoadScreen(scr: Integer);
@@ -364,9 +364,9 @@ begin
   //application.ProcessMessages;
 
   ScreenNumberComboBox.itemindex := 0;
-  tempscreen := 0;
-  LoadScreen( 1 );   // setup screen in setup form
-  LCDSmartieDisplayForm.ChangeScreen(1);   // setup screen in main form
+  CurrentScreen := 1;
+  LoadScreen( CurrentScreen );   // setup screen in setup form
+  LCDSmartieDisplayForm.ChangeScreen(CurrentScreen);   // setup screen in main form
 
   ProgramRefreshIntervalSpinEdit.Value := config.refreshRate;
   WinampLocationEdit.text := config.winampLocation;
@@ -578,8 +578,6 @@ begin
     config.screen[scr][y].enabled := ScreenEnabledCheckBox.checked;
     config.screen[scr][y].skip := SkipScreenComboBox.itemindex;
     config.screen[scr][y].theme := ThemeNumberSpinEdit.value-1;
-    config.screen[scr][y].interaction := GlobalInteractionStyle;
-    config.screen[scr][y].interactionTime := GlobalInteractionTime;
     config.screen[scr][y].showTime := TimeToShowSpinEdit.value;
     config.screen[scr][y].bSticky := StickyCheckbox.Checked;
 
@@ -613,8 +611,6 @@ begin
   ScreenEnabledCheckBox.checked := ascreen.enabled;
   SkipScreenComboBox.itemindex := ascreen.skip;
   ThemeNumberSpinEdit.value := ascreen.theme + 1;
-  GlobalInteractionStyle := ascreen.interaction;
-  GlobalInteractionTime := ascreen.interactionTime;
   TimeToShowSpinEdit.value := ascreen.showTime;
   StickyCheckbox.checked := ascreen.bSticky;
   TimeToShowSpinEdit.enabled := not ascreen.bSticky;
@@ -690,14 +686,13 @@ end;
 
 procedure TSetupForm.ScreenNumberComboBoxChange(Sender: TObject);
 begin
-  SaveScreen(tempscreen + 1);
+  SaveScreen(CurrentScreen);
 
   if ScreenNumberComboBox.itemIndex < 0 then ScreenNumberComboBox.itemIndex := 0;
-  tempscreen := ScreenNumberComboBox.itemindex;
+  CurrentScreen := ScreenNumberComboBox.itemindex+1;
 
-  LoadScreen(tempscreen + 1);
-
-  LCDSmartieDisplayForm.ChangeScreen(tempscreen + 1);
+  LoadScreen(CurrentScreen);
+  LCDSmartieDisplayForm.ChangeScreen(CurrentScreen);
 end;
 
 procedure TSetupForm.HD44780RadioButtonClick(Sender: TObject);
@@ -1789,9 +1784,20 @@ begin
     FocusToInputField();
 end;
 
-procedure TSetupForm.InteractionsButtonClick(Sender: TObject);
+procedure TSetupForm.TransitionButtonClick(Sender: TObject);
+var
+  Style : TTransitionStyle;
+  Time : byte;
+  Loop : byte;
 begin
-  DoInteractionConfigForm;
+  Style := config.screen[CurrentScreen][1].TransitionStyle;
+  Time := config.screen[CurrentScreen][1].TransitionTime;
+  if DoTransitionConfigForm(Style,Time) then begin
+    for Loop := 1 to 4 do begin
+      config.screen[CurrentScreen][Loop].TransitionStyle := Style;
+      config.screen[CurrentScreen][Loop].TransitionTime := Time;
+    end;
+  end;
 end;
 
 

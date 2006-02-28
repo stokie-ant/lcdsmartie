@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.64 $ $Date: 2006/02/28 19:40:39 $
+ *  $Revision: 1.65 $ $Date: 2006/02/28 20:42:25 $
  *****************************************************************************}
 
 interface
@@ -83,7 +83,7 @@ type
     SetupImage: TImage;
     HideImage: TImage;
     ScreenNumberPanel: TPanel;
-    InteractionsTimer: TTimer;
+    TransitionTimer: TTimer;
     ActionsTimer: TTimer;
     LeftManualScrollTimer: TTimer;
     RightManualScrollTimer: TTimer;
@@ -168,7 +168,7 @@ type
     procedure NextScreenImageClick(Sender: TObject);
     procedure HideImageClick(Sender: TObject);
     procedure SetupImageClick(Sender: TObject);
-    procedure InteractionsTimerTimer(Sender: TObject);
+    procedure TransitionTimerTimer(Sender: TObject);
     procedure ScrollFlashTimerTimer(Sender: TObject);
     procedure WMPowerBroadcast (var M: TMessage); message WM_POWERBROADCAST;
     procedure SetupButtonClick(Sender: TObject);
@@ -203,8 +203,8 @@ type
     Newline: Array[1..4] of String;
     Gotnewlines: Boolean;
     TransStart: Cardinal;
-    transActietemp, transActietemp2, TransCycle,
-      timertransIntervaltemp: Integer;
+    TransitionTemp, TransitionTemp2 : TTransitionStyle;
+    TransCycle, TempTransitionTimerInterval : Integer;
     gamesArray: Array[1..4, 1..40] of Boolean;
     activetheme: Integer; canscroll: Boolean;
     GPO: Array [1..8] of Boolean;
@@ -228,7 +228,7 @@ type
     procedure DoGPO(const ftemp1, ftemp2: Integer);
     function scroll(const scrollvar: String;const line, speed: Integer): String;
     procedure scrollLine(line: Byte; direction: Integer);
-    procedure doInteractions;
+    procedure DoTransitions;
     procedure backlit(iOn: Integer = -1);
     function EscapeAmp(const sStr: string):String;
     function UnescapeAmp(const sStr: string): String;
@@ -431,7 +431,7 @@ begin
   while EMailTimer.enabled = true do EMailTimer.enabled := false;
   while LPTStartupTimer.enabled = true do LPTStartupTimer.enabled := false;
   while ScrollFlashTimer.enabled = true do ScrollFlashTimer.enabled := false;
-  while InteractionsTimer.enabled = true do InteractionsTimer.enabled := false;
+  while TransitionTimer.enabled = true do TransitionTimer.enabled := false;
 
   FiniLCD();
 
@@ -676,9 +676,9 @@ begin
   Data.UpdateEmail;
 end;
 
-procedure TLCDSmartieDisplayForm.InteractionsTimerTimer(Sender: TObject);
+procedure TLCDSmartieDisplayForm.TransitionTimerTimer(Sender: TObject);
 begin
-  InteractionsTimer.Enabled := false;
+  TransitionTimer.Enabled := false;
 end;
 
 procedure TLCDSmartieDisplayForm.ScrollFlashTimerTimer(Sender: TObject);
@@ -925,7 +925,7 @@ opnieuwscreen:
   if (activeScreen <> tmpScreen) then
   begin
     ChangeScreen(tmpScreen); // changes activeScreen
-    InteractionsTimer.Enabled := True;
+    TransitionTimer.Enabled := True;
   end;
 end;
 
@@ -964,7 +964,7 @@ begin
     InitialWindowState := NoChange;
   end;
 
-  if ((gotnewlines = false) OR (InteractionsTimer.enabled = false))then
+  if ((gotnewlines = false) OR (TransitionTimer.enabled = false))then
   begin
     if (bNewScreen) and (gotnewlines) then
     begin
@@ -1026,9 +1026,9 @@ begin
         line := CenterText(line, config.width);
 
       parsedLine[counter] := line;
-      newline[counter] := line;  // Used by screen change interaction.
+      newline[counter] := line;  // Used by screen change transition.
     end;
-    if (not InteractionsTimer.enabled) then SendCustomChars();
+    if (not TransitionTimer.enabled) then SendCustomChars();
     Data.ScreenEnd();
 
     for h := 1 to 4 do
@@ -1044,11 +1044,11 @@ begin
     gotnewlines := true;
   end;
 
-  if InteractionsTimer.Enabled = false then
+  if TransitionTimer.Enabled = false then
   begin
     if (ResetContrast) then
     begin
-      // A contrast fade "interaction" has just happened so reset the contrast
+      // A contrast fade "transition" has just happened so reset the contrast
       // just in case we failed to get the expected number of cycles (due to
       // high cpu loads etc).
       ResetContrast := False;
@@ -1089,8 +1089,8 @@ begin
 
   end
   else
-  begin          // InteractionsTimer.Enabled = true
-    doInteractions();
+  begin          // TransitionTimer.Enabled = true
+    DoTransitions();
   end;
 
 
@@ -1126,7 +1126,7 @@ begin
     LeftManualScrollTimer.enabled := false;     // left manual scroll
     RightManualScrollTimer.enabled := false;     // right manual scroll
     NextScreenTimer.enabled := false;     // next screen
-    InteractionsTimer.enabled := false; // "interactions"
+    TransitionTimer.enabled := false; // "transitions"
   end;
 
 
@@ -2035,15 +2035,15 @@ var
   ascreen: TScreenLine;
 begin
 
-  if timertransIntervaltemp <> 0 then
+  if TempTransitionTimerInterval <> 0 then
   begin
-    InteractionsTimer.Interval := 0;
-    InteractionsTimer.Interval := timertransIntervaltemp;
+    TransitionTimer.Interval := 0;
+    TransitionTimer.Interval := TempTransitionTimerInterval;
   end;
   NextScreenTimer.Interval := 0; // reset timer
 
   if (not config.screen[scr][1].bSticky) then
-    NextScreenTimer.Interval := config.screen[scr][1].showTime*1000 + timertransIntervaltemp;
+    NextScreenTimer.Interval := config.screen[scr][1].showTime*1000 + TempTransitionTimerInterval;
 
   if (activeScreen = scr) then
     Exit;
@@ -2071,13 +2071,13 @@ begin
     gamesArray[4, y] := false;
   end;
 
-  timertransIntervaltemp := ascreen.interactionTime*100;
+  TempTransitionTimerInterval := ascreen.TransitionTime*100;
 
-  transActietemp := transActietemp2;
-  transActietemp2 := ascreen.interaction;
+  TransitionTemp := TransitionTemp2;
+  TransitionTemp2 := ascreen.TransitionStyle;
 
-  if not ascreen.enabled then transActietemp2 := 0;
-  if transActietemp2 = 0 then timertransIntervaltemp := 1;
+  if not ascreen.enabled then TransitionTemp2 := tsNone;
+  if TransitionTemp2 = tsNone then TempTransitionTimerInterval := 1;
 
   if (config.width = 40) then
     ScreenNumberPanel.Caption := 'Theme: ' + IntToStr(activetheme + 1) + ' Screen: ' +
@@ -2183,7 +2183,7 @@ begin
   end;
 end;
 
-procedure TLCDSmartieDisplayForm.doInteractions;
+procedure TLCDSmartieDisplayForm.DoTransitions;
 var
   GuessRegister: Array[1..4] of String;
   tempstr: String;
@@ -2195,7 +2195,7 @@ var
   now: Cardinal;
 
 begin
-  // Changing screen - do any interactions required.
+  // Changing screen - do any transitions required.
   //TransCycle := TransCycle + 1;
   now := GetTickCount();
   if (now < TransStart) then
@@ -2203,7 +2203,7 @@ begin
   else
     TransCycle := (now-TransStart) div timerRefresh.Interval;
 
-  maxTransCycles := InteractionsTimer.Interval div timerRefresh.Interval;
+  maxTransCycles := TransitionTimer.Interval div timerRefresh.Interval;
 
   if (maxTransCycles = 0) then Exit;
   if (TransCycle > maxTransCycles) then Exit;
@@ -2217,133 +2217,143 @@ begin
       '                                        ', 1, config.width);
   end;
 
-  if transActietemp = 1 then begin  //left-->right
+  case TransitionTemp of
 
-    for x := 1 to config.height do
-    begin
-      tempstr := copy(newline[x] + '|' + oldline[x], round((config.width +
-        2)-TransCycle*((config.width + 2)/maxTransCycles)), config.width);
-      ScreenLCD[x].Caption := EscapeAmp(tempstr);
-    end;
+    tsLeftRight  : begin  //left-->right
 
-  end else if transActietemp = 2 then begin  //right-->left
-
-    for x := 1 to config.height do
-    begin
-      tempstr := copy(oldline[x] + '|' + newline[x],
-        round(TransCycle*((config.width + 2)/maxTransCycles)),
-        config.width);
-      ScreenLCD[x].Caption := EscapeAmp(tempstr);
-    end;
-
-  end else if transActietemp = 3 then begin //top-->bottom
-
-    line := round(TransCycle*(config.height/maxTransCycles)) + 1;
-    for x := 1 to line-1 do
-    begin
-      ScreenLCD[x].Caption := EscapeAmp(newline[config.height-(line-1)+ x]);
-    end;
-
-    if (line <= config.height) then
-      ScreenLCD[line].Caption :=
-        copy('----------------------------------------', 1, config.width);
-
-    for x := line + 1 to config.height do
-    begin
-      ScreenLCD[x].Caption := EscapeAmp(oldline[x-(line + 1) + 1]);
-    end;
-
-  end else if transActietemp = 4 then begin  //bottom-->top
-
-    line := round(TransCycle*(config.height/maxTransCycles)) + 1;
-    for x := 1 to config.height-line do
-    begin
-      ScreenLCD[x].Caption := EscapeAmp(oldline[x + line-1]);
-    end;
-
-    if (config.height-line + 1 > 0) then
-      ScreenLCD[config.height-line + 1].Caption :=
-        copy('----------------------------------------', 1, config.width);
-
-    for x := config.height-line + 2 to config.height do
-    begin
-      ScreenLCD[x].Caption :=
-        EscapeAmp(newline[x-(config.height-line + 2) + 1]);
-    end;
-
-  end else if transActietemp = 5 then begin //random blocks
-
-    for x := 1 to 4 do
-    begin
-      GuessRegister[x] := copy(UnescapeAmp(ScreenLCD[x].caption) +
-        '                                        ', 1, config.width);
-    end;
-
-    for x := iLastRandomTranCycle to
-      round((config.width/maxTransCycles)*TransCycle)-1 do
-    begin
-      for line := 1 to 4 do
+      for x := 1 to config.height do
       begin
-        Guess := DoGuess(line);
-        GuessRegister[line] := copy(GuessRegister[line], 1, Guess-1) +
-          copy(newline[line], Guess, 1) + copy(GuessRegister[line], Guess +
-          1, config.width-Guess);
+        tempstr := copy(newline[x] + '|' + oldline[x], round((config.width +
+          2)-TransCycle*((config.width + 2)/maxTransCycles)), config.width);
+        ScreenLCD[x].Caption := EscapeAmp(tempstr);
       end;
     end;
-    iLastRandomTranCycle := round((config.width/maxTransCycles)*TransCycle);
-    for x := 1 to 4 do
-    begin
-      ScreenLCD[x].caption := EscapeAmp(GuessRegister[x]);
+
+    tsRightLeft : begin  //right-->left
+
+      for x := 1 to config.height do
+      begin
+        tempstr := copy(oldline[x] + '|' + newline[x],
+          round(TransCycle*((config.width + 2)/maxTransCycles)),
+          config.width);
+        ScreenLCD[x].Caption := EscapeAmp(tempstr);
+      end;
     end;
 
-  end else if (transActietemp = 6) and (maxTransCycles >= 2) then begin  //contrast fade
-// The fade is a two step process, so we need at least two cycles.
+    tsTopBottom : begin //top-->bottom
 
-// We only fade down to iMinFadeContrast; because many LCDs displays will be
-// blank long before we reach 0. (One user reported that their display was
-// blank at a contrast of 40).
+      line := round(TransCycle*(config.height/maxTransCycles)) + 1;
+      for x := 1 to line-1 do
+      begin
+        ScreenLCD[x].Caption := EscapeAmp(newline[config.height-(line-1)+ x]);
+      end;
 
-// For the first half of the cycles - lower the contrast
+      if (line <= config.height) then
+        ScreenLCD[line].Caption :=
+          copy('----------------------------------------', 1, config.width);
 
-    if (TransCycle < maxTransCycles/2) then
-    begin
-      if (config.ScreenType = stMO)then x := config.contrast
-      else x := config.CF_contrast;
+      for x := line + 1 to config.height do
+      begin
+        ScreenLCD[x].Caption := EscapeAmp(oldline[x-(line + 1) + 1]);
+      end;
+    end;
 
-      iContrast := round(x-(TransCycle*(x-config.iMinFadeContrast)
-        / (MaxTransCycles/2)));
+    tsBottomTop : begin  //bottom-->top
 
+      line := round(TransCycle*(config.height/maxTransCycles)) + 1;
+      for x := 1 to config.height-line do
+      begin
+        ScreenLCD[x].Caption := EscapeAmp(oldline[x + line-1]);
+      end;
 
-      if iContrast < config.iMinFadeContrast then
-        iContrast := config.iMinFadeContrast
-      else
-        if iContrast > x then iContrast := x;
-      Lcd.setContrast(iContrast);
-    end
-    else
-    begin
-// raise the contrast over the second half
+      if (config.height-line + 1 > 0) then
+        ScreenLCD[config.height-line + 1].Caption :=
+          copy('----------------------------------------', 1, config.width);
+
+      for x := config.height-line + 2 to config.height do
+      begin
+        ScreenLCD[x].Caption :=
+          EscapeAmp(newline[x-(config.height-line + 2) + 1]);
+      end;
+    end;
+
+    tsRandomChars : begin //random blocks
 
       for x := 1 to 4 do
       begin
-        ScreenLCD[x].Caption := EscapeAmp(newline[x]);
+        GuessRegister[x] := copy(UnescapeAmp(ScreenLCD[x].caption) +
+          '                                        ', 1, config.width);
       end;
 
-      if (config.ScreenType = stMO) then x := config.contrast
-      else x := config.CF_contrast;
-
-      iContrast := round((TransCycle-(MaxTransCycles/2))
-        * (x-config.iMinFadeContrast)/(MaxTransCycles/2))
-        + config.iMinFadeContrast;
-
-      if iContrast > x then iContrast := x
-      else
-        if iContrast < config.iMinFadeContrast then
-          iContrast := config.iMinFadeContrast;
-      Lcd.setContrast(iContrast);
+      for x := iLastRandomTranCycle to
+        round((config.width/maxTransCycles)*TransCycle)-1 do
+      begin
+        for line := 1 to 4 do
+        begin
+          Guess := DoGuess(line);
+          GuessRegister[line] := copy(GuessRegister[line], 1, Guess-1) +
+            copy(newline[line], Guess, 1) + copy(GuessRegister[line], Guess +
+            1, config.width-Guess);
+        end;
+      end;
+      iLastRandomTranCycle := round((config.width/maxTransCycles)*TransCycle);
+      for x := 1 to 4 do
+      begin
+        ScreenLCD[x].caption := EscapeAmp(GuessRegister[x]);
+      end;
     end;
-    ResetContrast := True;// Just to be sure the contrast is back to correct levels.
-  end;
+
+    tsFade : begin
+      if (maxTransCycles >= 2) then begin  //contrast fade
+  // The fade is a two step process, so we need at least two cycles.
+
+  // We only fade down to iMinFadeContrast; because many LCDs displays will be
+  // blank long before we reach 0. (One user reported that their display was
+  // blank at a contrast of 40).
+
+  // For the first half of the cycles - lower the contrast
+
+        if (TransCycle < maxTransCycles/2) then
+        begin
+          if (config.ScreenType = stMO)then x := config.contrast
+          else x := config.CF_contrast;
+
+          iContrast := round(x-(TransCycle*(x-config.iMinFadeContrast)
+            / (MaxTransCycles/2)));
+
+
+          if iContrast < config.iMinFadeContrast then
+            iContrast := config.iMinFadeContrast
+          else
+            if iContrast > x then iContrast := x;
+          Lcd.setContrast(iContrast);
+        end
+        else
+        begin
+    // raise the contrast over the second half
+
+          for x := 1 to 4 do
+          begin
+            ScreenLCD[x].Caption := EscapeAmp(newline[x]);
+          end;
+
+          if (config.ScreenType = stMO) then x := config.contrast
+          else x := config.CF_contrast;
+
+          iContrast := round((TransCycle-(MaxTransCycles/2))
+            * (x-config.iMinFadeContrast)/(MaxTransCycles/2))
+            + config.iMinFadeContrast;
+
+          if iContrast > x then iContrast := x
+          else
+            if iContrast < config.iMinFadeContrast then
+              iContrast := config.iMinFadeContrast;
+          Lcd.setContrast(iContrast);
+        end;
+        ResetContrast := True;// Just to be sure the contrast is back to correct levels.
+      end;
+    end;
+  end; // case
 end;
 
 

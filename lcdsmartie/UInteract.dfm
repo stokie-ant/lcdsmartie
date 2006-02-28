@@ -1,9 +1,9 @@
-object InteractionConfigForm: TInteractionConfigForm
+object TransitionConfigForm: TTransitionConfigForm
   Left = 449
   Top = 102
   BorderIcons = []
   BorderStyle = bsToolWindow
-  Caption = 'Interaction config'
+  Caption = 'Transition config'
   ClientHeight = 150
   ClientWidth = 222
   Color = clBtnFace
@@ -33,21 +33,21 @@ object InteractionConfigForm: TInteractionConfigForm
   object Label3: TLabel
     Left = 8
     Top = 60
-    Width = 77
+    Width = 73
     Height = 13
-    Caption = 'Interaction &style:'
-    FocusControl = InteractionStyleComboBox
+    Caption = 'Transition &style:'
+    FocusControl = TransitionStyleComboBox
   end
   object Label4: TLabel
     Left = 8
     Top = 92
-    Width = 138
+    Width = 134
     Height = 13
-    Caption = 'Interaction &time:(1/10th secs)'
-    FocusControl = InteractionTimeSpinEdit
+    Caption = 'Transition &time:(1/10th secs)'
+    FocusControl = TransitionTimeSpinEdit
   end
-  object InteractionStyleComboBox: TComboBox
-    Left = 92
+  object TransitionStyleComboBox: TComboBox
+    Left = 89
     Top = 56
     Width = 123
     Height = 21
@@ -60,7 +60,7 @@ object InteractionConfigForm: TInteractionConfigForm
     ItemHeight = 13
     ParentFont = False
     TabOrder = 0
-    OnChange = InteractionStyleComboBoxChange
+    OnChange = TransitionStyleComboBoxChange
     Items.Strings = (
       'None'
       'Left->Right'
@@ -70,7 +70,7 @@ object InteractionConfigForm: TInteractionConfigForm
       'Random chars'
       'Contrast fade light')
   end
-  object InteractionTimeSpinEdit: TSpinEdit
+  object TransitionTimeSpinEdit: TSpinEdit
     Left = 156
     Top = 88
     Width = 57

@@ -19,66 +19,64 @@ unit UInteract;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UInteract.pas,v $
- *  $Revision: 1.5 $ $Date: 2006/02/27 18:35:47 $
+ *  $Revision: 1.6 $ $Date: 2006/02/28 20:42:25 $
  *****************************************************************************}
 
 interface
 
-uses Forms, StdCtrls, Spin, Controls, Classes;
-
-// these should be passed in as variables instead of globals
-var
-  GlobalInteractionStyle : byte = 0;
-  GlobalInteractionTime : byte = 1;
+uses Forms, StdCtrls, Spin, Controls, Classes, UConfig;
 
 type
-  TInteractionConfigForm = class(TForm)
+  TTransitionConfigForm = class(TForm)
     Label1: TLabel;
     Label2: TLabel;
     Label3: TLabel;
     Label4: TLabel;
-    InteractionStyleComboBox: TComboBox;
-    InteractionTimeSpinEdit: TSpinEdit;
+    TransitionStyleComboBox: TComboBox;
+    TransitionTimeSpinEdit: TSpinEdit;
     OKButton: TButton;
     CancelButton: TButton;
-    procedure InteractionStyleComboBoxChange(Sender: TObject);
+    procedure TransitionStyleComboBoxChange(Sender: TObject);
   private
     { Private declarations }
   public
     { Public declarations }
   end;
 
-function DoInteractionConfigForm : boolean;
+function DoTransitionConfigForm(var Style : TTransitionStyle;
+                                var Time : byte) : boolean;
 
 implementation
 
-uses SysUtils, USetup;
+uses
+  SysUtils, USetup;
 
 {$R *.dfm}
 
-function DoInteractionConfigForm : boolean;
+function DoTransitionConfigForm(var Style : TTransitionStyle;
+                                var Time : byte) : boolean;
 var
-  InteractionConfigForm : TInteractionConfigForm;
+  TransitionConfigForm : TTransitionConfigForm;
 begin
-  InteractionConfigForm := TInteractionConfigForm.Create(nil);
-  with InteractionConfigForm do begin
+  TransitionConfigForm := TTransitionConfigForm.Create(nil);
+  with TransitionConfigForm do begin
     // put settings on screen
-    InteractionStyleComboBox.ItemIndex := GlobalInteractionStyle;
-    InteractionTimeSpinEdit.Value := GlobalInteractionTime;
-    InteractionTimeSpinEdit.Enabled := not (InteractionStyleComboBox.ItemIndex = 0);
+    TransitionStyleComboBox.ItemIndex := ord(Style);
+    TransitionTimeSpinEdit.Value := Time;
+    TransitionTimeSpinEdit.Enabled := not (TransitionStyleComboBox.ItemIndex = 0);
     ShowModal;
     Result := (ModalResult = mrOK);
     if Result then begin
-      GlobalInteractionStyle := InteractionStyleComboBox.ItemIndex;
-      GlobalInteractionTime := InteractionTimeSpinEdit.Value;
+      Style := TTransitionStyle(TransitionStyleComboBox.ItemIndex);
+      Time := TransitionTimeSpinEdit.Value;
     end;
     Free;
   end;
 end;
 
-procedure TInteractionConfigForm.InteractionStyleComboBoxChange(Sender: TObject);
+procedure TTransitionConfigForm.TransitionStyleComboBoxChange(Sender: TObject);
 begin
-  InteractionTimeSpinEdit.Enabled := not (InteractionStyleComboBox.ItemIndex = 0);
+  TransitionTimeSpinEdit.Enabled := not (TransitionStyleComboBox.ItemIndex = 0);
 end;
 
 end.

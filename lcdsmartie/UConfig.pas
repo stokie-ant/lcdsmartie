@@ -19,7 +19,7 @@ unit UConfig;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UConfig.pas,v $
- *  $Revision: 1.35 $ $Date: 2006/02/27 22:45:38 $
+ *  $Revision: 1.36 $ $Date: 2006/02/28 20:42:25 $
  *****************************************************************************}
 
 interface
@@ -31,6 +31,8 @@ const
   sMyScreenTextSyntaxVersion = '1.0';
 
 type
+  TTransitionStyle = (tsNone,tsLeftRight,tsRightLeft,tsTopBottom,tsBottomTop,tsRandomChars,tsFade);
+
   TScreenType = (stNone,stHD,stMO,stCF,stHD2,stTestDriver,stIR);
 
   TScreenLine = Record
@@ -40,8 +42,8 @@ type
     noscroll: Boolean;
     contNextLine: Boolean;
     theme: Integer;
-    interaction: Integer;
-    interactionTime: Integer;
+    TransitionStyle : TTransitionStyle;
+    TransitionTime : Integer;
     showTime: Integer;
     bSticky: Boolean;
     center: Boolean;
@@ -321,10 +323,10 @@ begin
         + 9, length(configline)));
       screen[x][y].skip := StrToInt(copy(configline, pos('¿', configline) + 2,
         1));
-      screen[x][y].interactionTime := StrToInt(copy(configline, pos('¿',
+      screen[x][y].TransitionTime := StrToInt(copy(configline, pos('¿',
         configline) + 7, 2));
-      screen[x][y].interaction := StrToInt(copy(configline, pos('¿',
-        configline) + 6, 1));
+      screen[x][y].TransitionStyle := TTransitionStyle(StrToInt(copy(configline, pos('¿',
+        configline) + 6, 1)));
       screen[x][y].noscroll := copy(configline, pos('¿', configline) + 3,
         1)='1';
       screen[x][y].contNextLine := copy(configline, pos('¿', configline) + 4,
@@ -542,10 +544,9 @@ begin
     screen[x][1].showTime := initFile.ReadInteger(sScreen, 'ShowTime', 10);
     screen[x][1].bSticky := initFile.ReadBool(sScreen, 'Sticky', false);
     screen[x][1].skip := initFile.ReadInteger(sScreen, 'Skip', 0);
-    screen[x][1].interactionTime := initFile.ReadInteger(sScreen,
+    screen[x][1].TransitionTime := initFile.ReadInteger(sScreen,
       'InteractionTime', 7);
-    screen[x][1].interaction := initFile.ReadInteger(sScreen, 'Interaction',
-      1);
+    screen[x][1].TransitionStyle := TTransitionStyle(initFile.ReadInteger(sScreen, 'Interaction',1));
 
     for y := 1 to 4 do
     begin
@@ -567,8 +568,8 @@ begin
       screen[x][y].theme := screen[x][1].theme;
       screen[x][y].showTime := screen[x][1].showTime;
       screen[x][y].skip := screen[x][1].skip;
-      screen[x][y].interactionTime := screen[x][1].interactionTime;
-      screen[x][y].interaction := screen[x][1].interaction
+      screen[x][y].TransitionTime := screen[x][1].TransitionTime;
+      screen[x][y].TransitionStyle := screen[x][1].TransitionStyle
     end;
   end;
 
@@ -729,8 +730,8 @@ begin
     initfile.WriteBool(sScreen, 'Sticky', screen[x][1].bSticky);
     initFile.WriteInteger(sScreen, 'Skip', screen[x][1].skip);
     initFile.WriteInteger(sScreen, 'InteractionTime',
-      screen[x][1].interactionTime);
-    initFile.WriteInteger(sScreen, 'Interaction', screen[x][1].interaction);
+      screen[x][1].TransitionTime);
+    initFile.WriteInteger(sScreen, 'Interaction', ord(screen[x][1].TransitionStyle));
 
     for y := 1 to 4 do
     begin

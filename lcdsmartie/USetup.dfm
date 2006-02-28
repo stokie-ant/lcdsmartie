@@ -1325,13 +1325,13 @@ object SetupForm: TSetupForm
           TabOrder = 1
           Value = 1
         end
-        object InteractionsButton: TButton
+        object TransitionButton: TButton
           Left = 336
           Top = 16
           Width = 83
           Height = 25
           Hint = 'Choose an effect to display when changing from this screen.'
-          Caption = 'Interactions'
+          Caption = 'Transition'
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
           Font.Height = -11
@@ -1341,7 +1341,7 @@ object SetupForm: TSetupForm
           ParentShowHint = False
           ShowHint = True
           TabOrder = 2
-          OnClick = InteractionsButtonClick
+          OnClick = TransitionButtonClick
         end
         object StickyCheckbox: TCheckBox
           Left = 128
