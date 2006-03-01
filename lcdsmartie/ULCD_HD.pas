@@ -19,7 +19,7 @@ unit ULCD_HD;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/Attic/ULCD_HD.pas,v $
- *  $Revision: 1.15 $ $Date: 2006/03/01 21:00:37 $
+ *  $Revision: 1.16 $ $Date: 2006/03/01 21:33:57 $
  *
  *  Based on code from the following (open-source) projects:
  *     WinAmp LCD Plugin
@@ -391,11 +391,12 @@ end;
 
 procedure TLCD_HD.UsecDelay(uiUsecs: Cardinal);
 var
-  uiElapsed: Cardinal;
+  uiElapsed: int64;
+  uiUsecsScaled: int64;
   iBegin, iCurr: int64;
 begin
-
-  uiUsecs := uiUsecs * Cardinal(config.iHDTimingMultiplier);
+  {$R-}
+  uiUsecsScaled := int64(uiUsecs) * int64(config.iHDTimingMultiplier);
 
   if (uiUsecs <= 0) then Exit;
 
@@ -407,14 +408,16 @@ begin
       QueryPerformanceCounter(iCurr);
 
       if (iCurr < iBegin) then iBegin := 0;
-		  uiElapsed := ((iCurr - iBegin) * 1000 * 1000) div iHighResTimerFreq;
+		  uiElapsed := ((iCurr - iBegin) * 1000000) div iHighResTimerFreq;
 
-	  until (uiElapsed > uiUsecs);
+	  until (uiElapsed > uiUsecsScaled);
   end
   else
   begin
     raise exception.create('PerformanceCounter not supported on this system');
   end;
+
+  {$R+}
 end;
 
 procedure TLCD_HD.writectrl(const controllers: TControllers; const x: Byte);

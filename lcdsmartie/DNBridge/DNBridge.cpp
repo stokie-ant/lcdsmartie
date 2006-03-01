@@ -9,6 +9,7 @@
 
 using namespace System;
 using namespace System::Reflection;
+using namespace System::Text;
 
 const int maxPlugins = 100;
 
@@ -127,11 +128,66 @@ __declspec(dllexport) char * __stdcall BridgeInit(const char *param1, int *id, i
 	return buffer;
 }
 
+char *ConvertUtf8ToAnsi(char *input)
+{
+	unsigned int n, nn, nLength;
+	unsigned char *inputString = (unsigned char *)input;
+
+	nLength = strlen(input);
+	nn = 0;
+	for (n=0; n<nLength; n++)
+	{
+		if (inputString[n] > 127 && (n+1) < nLength)
+		{
+			if (inputString[n] == 194 || inputString[n] == 195)
+			{
+				inputString[nn] = 64 * (inputString[n] - 194)  + inputString[n+1];
+			}
+			n++;
+		}
+		else
+		{
+			inputString[nn] = inputString[n];
+		}
+		nn++;
+	}
+	if (nLength>0)
+		inputString[nn] = 0;
+	return input;
+}
+
+char *ConvertAnsiToUtf8(const char *input)
+{
+	static unsigned char buffer[2048];
+	unsigned int n, nn, nLength;
+	unsigned const char *inputString = (unsigned const char *)input;
+
+	nLength = strlen(input);
+	nn = 0;
+	for (n=0; n<nLength && inputString[n]!=0; n++)
+	{
+		if (inputString[n] > 127)
+		{
+			buffer[nn++] = 192 + inputString[n]/64;
+			buffer[nn++] = 128 + inputString[n]%64;
+		}
+		else
+		{
+			buffer[nn++] = inputString[n];
+		}
+	}
+	buffer[nn] = '\0';
+	return (char *) buffer;
+}
 
 __declspec(dllexport) char * __stdcall BridgeFunc(int iBridgeId, int iFunc, const char *param1, const char *param2)
 {
-	String __gc *managed_param1 = new String(param1);
-	String __gc *managed_param2 = new String(param2);
+	char *param;
+	UTF8Encoding* encoder = new UTF8Encoding();
+	param = ConvertAnsiToUtf8(param1);
+	String __gc *managed_param1 = new String(param, 0, strlen(param), encoder);
+	param = ConvertAnsiToUtf8(param2);
+	String __gc *managed_param2 = new String(param, 0, strlen(param), encoder);
 	String __gc *result = new String("");
 	plugin __gc *current = globals::plugins[iBridgeId - 1];
 
@@ -162,13 +218,13 @@ __declspec(dllexport) char * __stdcall BridgeFunc(int iBridgeId, int iFunc, cons
 	buffer[0] = 0;
 	if (result != "")
 	{
-		char tmp __gc[] = System::Text::Encoding::UTF8->GetBytes(result->ToCharArray());
+		char tmp __gc[] = encoder->GetBytes(result->ToCharArray());
 		char __pin *value = &tmp[0];
 	
 		strncpy(buffer, value, 1024);
+		ConvertUtf8ToAnsi(buffer);
 	}
 	return buffer;
 }
-
 
 }

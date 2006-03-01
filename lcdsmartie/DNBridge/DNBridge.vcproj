@@ -72,15 +72,20 @@
 				InlineFunctionExpansion="1"
 				PreprocessorDefinitions="WIN32;NDEBUG"
 				MinimalRebuild="FALSE"
+				RuntimeLibrary="2"
 				UsePrecompiledHeader="3"
 				WarningLevel="3"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="msvcrt.lib"
 				OutputFile="$(OutDir)/DNBridge.dll"
+				Version="2.0"
 				LinkIncremental="1"
-				GenerateDebugInformation="TRUE"/>
+				ForceSymbolReferences="__DllMainCRTStartup@12"
+				GenerateDebugInformation="TRUE"
+				ResourceOnlyDLL="TRUE"/>
 			<Tool
 				Name="VCMIDLTool"/>
 			<Tool

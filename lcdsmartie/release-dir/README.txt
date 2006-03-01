@@ -8,6 +8,9 @@ See: http://sourceforge.net/tracker/?func=browse&group_id=122330&atid=693136
 
 Changes
 =======
+5.3.3b3
+	- Added patch to DNBridge to handle ANSI characters > 128
+	  [provided by Mike Brownlow of Axcis Pty Ltd]
 5.3.2b2
 	- Fixed seti for non-english users.
 5.3.2b1
