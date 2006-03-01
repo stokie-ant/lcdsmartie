@@ -4,7 +4,7 @@ object LCDSmartieDisplayForm: TLCDSmartieDisplayForm
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsToolWindow
   Caption = 'LCD Smartie 5.3'
-  ClientHeight = 91
+  ClientHeight = 92
   ClientWidth = 224
   Color = clBtnFace
   TransparentColorValue = clBtnFace
@@ -171,7 +171,7 @@ object LCDSmartieDisplayForm: TLCDSmartieDisplayForm
     Hint = 'Configure the display and/or screen content/layout.'
     ParentShowHint = False
     ShowHint = True
-    OnClick = SetupImageClick
+    OnClick = SetupButtonClick
     OnMouseDown = SetupImageMouseDown
     OnMouseUp = SetupImageMouseUp
   end
@@ -183,7 +183,7 @@ object LCDSmartieDisplayForm: TLCDSmartieDisplayForm
     Hint = 'Disappear! Will appear as an icon in the system tray.'
     ParentShowHint = False
     ShowHint = True
-    OnClick = HideImageClick
+    OnClick = HideButtonClick
     OnMouseDown = HideImageMouseDown
     OnMouseUp = HideImageMouseUp
   end
@@ -373,7 +373,7 @@ object LCDSmartieDisplayForm: TLCDSmartieDisplayForm
     end
     object Configure1: TMenuItem
       Caption = 'Configure'
-      OnClick = Configure1Click
+      OnClick = SetupButtonClick
     end
     object ShowWindow1: TMenuItem
       Caption = '&Show main'

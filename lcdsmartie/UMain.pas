@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.67 $ $Date: 2006/02/28 21:27:45 $
+ *  $Revision: 1.68 $ $Date: 2006/03/01 13:48:09 $
  *****************************************************************************}
 
 interface
@@ -98,7 +98,6 @@ type
     procedure LogoImageClick(Sender: TObject);
     procedure HideButtonClick(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
-    procedure Configure1Click(Sender: TObject);
     procedure BacklightOn1Click(Sender: TObject);
     procedure TimerRefreshTimer(Sender: TObject);
     procedure HTTPUpdateTimerTimer(Sender: TObject);
@@ -166,8 +165,6 @@ type
       TShiftState; X, Y: Integer);
     procedure PreviousImageClick(Sender: TObject);
     procedure NextScreenImageClick(Sender: TObject);
-    procedure HideImageClick(Sender: TObject);
-    procedure SetupImageClick(Sender: TObject);
     procedure TransitionTimerTimer(Sender: TObject);
     procedure ScrollFlashTimerTimer(Sender: TObject);
     procedure WMPowerBroadcast (var M: TMessage); message WM_POWERBROADCAST;
@@ -1159,29 +1156,15 @@ begin
     + LogoImage.top + round(LogoImage.height));
 end;
 
-procedure TLCDSmartieDisplayForm.Configure1Click(Sender: TObject);
-begin
-  ShowWindow1.click();
-  SetupButton.click();
-end;
-
-procedure TLCDSmartieDisplayForm.SetupImageClick(Sender: TObject);
-begin
-  if not (LPTStartupTimer.enabled) then
-    SetupButton.click;
-end;
-
 procedure TLCDSmartieDisplayForm.SetupButtonClick(Sender: TObject);
 begin
-  UpdateTimersState(true); // turns off required timers as form2 is visible.
-  DoSetupForm;
-  UpdateTimersState(false);
-end;
-
-// Hide has been pressed.
-procedure TLCDSmartieDisplayForm.HideImageClick(Sender: TObject);
-begin
-  HideButton.Click;
+  if not (LPTStartupTimer.enabled) then begin
+    UpdateTimersState(true); // turns off required timers as form2 is visible.
+    if not Visible then
+      CoolTrayIcon1.ShowMainForm;
+    DoSetupForm;
+    UpdateTimersState(false);
+  end;
 end;
 
 procedure TLCDSmartieDisplayForm.HideButtonClick(Sender: TObject);
