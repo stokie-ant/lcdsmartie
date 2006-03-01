@@ -19,7 +19,7 @@ unit ULCD_HD;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/Attic/ULCD_HD.pas,v $
- *  $Revision: 1.16 $ $Date: 2006/03/01 21:33:57 $
+ *  $Revision: 1.17 $ $Date: 2006/03/01 23:31:51 $
  *
  *  Based on code from the following (open-source) projects:
  *     WinAmp LCD Plugin
@@ -110,6 +110,7 @@ type
       procedure UnloadIO;
       procedure LoadDlPortIO;
       procedure UnloadDlPortIO;
+      procedure LoadInpOut32IO;
       procedure LoadCanIO;
       procedure UnloadCanIO;
   end;
