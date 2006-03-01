@@ -19,7 +19,7 @@ unit ULCD_HD;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/Attic/ULCD_HD.pas,v $
- *  $Revision: 1.14 $ $Date: 2006/02/27 22:45:38 $
+ *  $Revision: 1.15 $ $Date: 2006/03/01 21:00:37 $
  *
  *  Based on code from the following (open-source) projects:
  *     WinAmp LCD Plugin
@@ -44,7 +44,8 @@ interface
 uses ULCD;
 
 const
-  USE_DL_PORT_IO = true;
+  USE_DL_PORT_IO = false; // use Inpout32 instead - krisp
+  USE_INPOUT32 = true;
   // control pins
   RS = 4; // pin 16
   RW = 2; // pin 14
@@ -94,6 +95,7 @@ type
       DlPortWritePortUchar: TDlPortWritePortUchar;
       DlPortReadPortUchar: TDlPortReadPortUchar;
       bDlPortIO: Boolean;
+      bInp32: Boolean;
       bHasIO: Boolean;
       procedure writectrl(const controllers: TControllers; const x: Byte);
       procedure writedata(const controllers: TControllers; const x: Byte);
@@ -129,6 +131,8 @@ begin
   self.height := heigth;
 
   bDlPortIO := USE_DL_PORT_IO;
+  bInp32 := USE_INPOUT32;
+
   LoadIO();
   bHasIO := True;
 
@@ -159,12 +163,13 @@ end;
 procedure TLCD_HD.LoadIO;
 begin
   if (bDlPortIO) then LoadDlPortIO()
+  else if (bInp32) then LoadInpOut32IO()
   else LoadCanIO();
 end;
 
 procedure TLCD_HD.UnloadIO;
 begin
-  if (bDlPortIO) then UnloadDlPortIO()
+  if (bDlPortIO or bInp32) then UnloadDlPortIO()
   else UnloadCanIO();
 end;
 
@@ -211,6 +216,20 @@ begin
     raise Exception.Create('Unable to get required apis from dlportio');
 end;
 
+procedure TLCD_HD.LoadInpOut32IO;
+begin
+  dlportio := LoadLibrary(PChar('inpout32.dll'));
+  if (dlportio = 0) then
+    raise Exception.Create(
+      'Unable to load inpout32.dll: Please ensure that inpout32.dll is in the program directory.');
+
+  DlPortWritePortUchar := TDlPortWritePortUchar(GetProcAddress(dlportio,'Inp32'));
+  DlPortReadPortUchar := TDlPortReadPortUchar(GetProcAddress(dlportio,'Out32'));
+
+  if (not Assigned(DlPortWritePortUchar)) or (not Assigned(DlPortReadPortUchar)) then
+    raise Exception.Create('Unable to get required apis from dlportio');
+
+end;
 procedure TLCD_HD.UnloadCanIO;
 begin
   if (dlportio <> 0) then
