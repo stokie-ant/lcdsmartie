@@ -19,7 +19,7 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.41 $ $Date: 2006/02/28 20:42:25 $
+ *  $Revision: 1.42 $ $Date: 2006/03/02 13:39:51 $
  *****************************************************************************}
 
 interface
@@ -265,6 +265,7 @@ type
     Procedure FocusToInputField;
     procedure SaveScreen(scr: Integer);
     procedure LoadScreen(scr: Integer);
+    procedure DetectCommPorts;
   end;
 
 function DoSetupForm : boolean;
@@ -273,7 +274,8 @@ function PerformingSetup : boolean;
 
 implementation
 
-uses Windows, ShellApi, graphics, sysutils, UMain, UMOSetup,
+uses
+  Windows, ShellApi, graphics, sysutils, Registry, UMain, UMOSetup,
   UCFSetup, UPara, UIRSetup, UInteract, UConfig, ULCD_MO, StrUtils;
 
 {$R *.DFM}
@@ -296,6 +298,48 @@ begin
   SetupForm := nil;
 end;
 
+const
+  SerialDeviceRoot = '\HARDWARE\DEVICEMAP\SERIALCOMM';
+
+procedure TSetupForm.DetectCommPorts;
+var
+  Reg : TRegistry;
+  Names : TStrings;
+  S : string;
+  I : byte;
+  LoopCounter : integer;
+  ComPorts : array[0..255] of boolean;
+begin
+  fillchar(ComPorts,sizeof(ComPorts),$00);
+  Reg := TRegistry.Create;
+  with Reg do begin
+    RootKey := HKEY_LOCAL_MACHINE;
+    if not OpenKeyReadOnly(SerialDeviceRoot) then exit;
+    Names := TStringList.Create;
+    GetValueNames(Names);
+    fillchar(Comports,sizeof(Comports),$00);
+    for LoopCounter := 1 to Names.Count do begin
+      S := ReadString(Names[LoopCounter-1]);
+      if (pos('COM',S) = 1) then begin
+        delete(S,1,3);
+        try
+          I := StrToInt(S);
+        except
+          I := 0;
+        end;
+        ComPorts[I] := true;
+      end;
+    end;
+    CloseKey;
+  end;
+  Reg.Free;
+  Names.Free;
+  for LoopCounter := 1 to 255 do begin
+    if ComPorts[LoopCounter] then
+      COMPortComboBox.Items.Add('COM'+IntToStr(LoopCounter));
+  end;
+end;
+
 procedure TSetupForm.FormShow(Sender: TObject);
 var
   i, blaat: Integer;
@@ -305,31 +349,7 @@ var
 begin
   { Try to limit the displayed COM port to only those that are useable }
 
-  // Delete all entries in the Com Port list
-  for i:= COMPortComboBox.Items.Count-1 downto 0 do
-    COMPortComboBox.Items.Delete(i);
-
-  // Check for COM Ports 1-20.
-  for i:=1 to 20 do
-  begin
-      uiTestPort := CreateFile (PChar('\\.\COM'+IntToStr(i)),
-                      GENERIC_READ or GENERIC_WRITE,
-                      FILE_SHARE_READ or FILE_SHARE_WRITE, nil,
-                      OPEN_EXISTING, 0, 0);
-      if (uiTestPort <> INVALID_HANDLE_VALUE) then
-      begin
-        // Port successfully opened - add to list.
-        COMPortComboBox.Items.Add('COM'+IntToStr(i));
-        CloseHandle(uiTestPort);
-      end
-      else if (GetLastError <> ERROR_FILE_NOT_FOUND)
-        and (GetLastError <> ERROR_PATH_NOT_FOUND) then
-      begin
-	// Add them to the list - its better to have too many than not enough.
-        // This case is also used when the port is already used by smartie.
-        COMPortComboBox.Items.Add('COM'+IntToStr(i));
-      end;
-  end;
+  DetectCommPorts;
   COMPortComboBox.Items.Add(USBPALM);
 
   MainPageControl.ActivePage := ScreensTabSheet;
