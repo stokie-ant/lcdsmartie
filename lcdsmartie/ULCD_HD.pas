@@ -19,7 +19,7 @@ unit ULCD_HD;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/Attic/ULCD_HD.pas,v $
- *  $Revision: 1.20 $ $Date: 2006/03/02 19:41:12 $
+ *  $Revision: 1.21 $ $Date: 2006/03/02 20:42:43 $
  *
  *  Based on code from the following (open-source) projects:
  *     WinAmp LCD Plugin
@@ -154,6 +154,8 @@ begin
 end;
 
 procedure TLCD_HD.LoadIO;
+var
+  VI: TOSVERSIONINFO; // For checking Windows version
 begin
   { Try inpout32.dll first, since it supports x64 }
   IOPlugin := LoadLibrary(PChar('inpout32.dll'));
@@ -187,10 +189,25 @@ begin
     end;
   end;
 
-  { Last resort: fallback to low-level I/O and warn user.
-    TODO: Should check that this is not NT/XP before attempting low-level I/O! }
+  { Last resort: If Win9x, fallback to low-level I/O.  This option isn't available
+    for WinNT/2000/XP due to access priviledges. }
   bHasIOPlugin := False;
-  raise Exception.Create('Couldn''t find inpout32.dll or dlportio.dll, attempting to use low-level I/O routines.');
+  VI.dwOSVersionInfoSize := SizeOf(VI);
+  if not GetVersionEx(VI)
+  then
+  begin
+    bHasIO := False;
+    raise Exception.Create('Unable to determine Windows version');
+  end;
+  if VI.dwPlatformId = VER_PLATFORM_WIN32_NT
+  then
+  begin
+    bHasIO := False;
+    raise Exception.Create('Either dlportio.dll or inpout32.dll are required for Windows NT/2000/XP');
+  end
+  else
+    { Safe to use low-level I/O under Win9x }
+    bHasIO := True;
 
 end;
 
