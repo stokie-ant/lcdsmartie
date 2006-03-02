@@ -9,6 +9,9 @@ See: http://sourceforge.net/tracker/?func=browse&group_id=122330&atid=693136
 Changes
 =======
 5.3.3b3
+	- Added support for IRTrans based displays
+        - Changed Interactions to Transition
+        - Default position for windows now centered on desktop
 	- Added patch to DNBridge to handle ANSI characters > 128
 	  [provided by Mike Brownlow of Axcis Pty Ltd]
 5.3.2b2
