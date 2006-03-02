@@ -19,7 +19,7 @@ unit ULCD_HD;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/Attic/ULCD_HD.pas,v $
- *  $Revision: 1.19 $ $Date: 2006/03/02 18:54:14 $
+ *  $Revision: 1.20 $ $Date: 2006/03/02 19:41:12 $
  *
  *  Based on code from the following (open-source) projects:
  *     WinAmp LCD Plugin
@@ -47,8 +47,6 @@ interface
 uses ULCD;
 
 const
-  USE_DL_PORT_IO = false; // use Inpout32 instead - krisp
-  USE_INPOUT32 = true;
   // control pins
   RS = 4; // pin 16
   RW = 2; // pin 14
@@ -74,8 +72,8 @@ const
   OOCursorNoBlink = 0;
 
 type
-  TDlPortWritePortUchar = procedure (Port: Integer; Data: Byte); stdcall;//  external 'dlportio.dll';
-  TDlPortReadPortUchar = function (Port: Integer): Byte; stdcall;//  external 'dlportio.dll';
+  TDlPortWritePortUchar = procedure (Port: Integer; Data: Byte); stdcall;//  external 'IOPlugin.dll';
+  TDlPortReadPortUchar = function (Port: Integer): Byte; stdcall;//  external 'IOPlugin.dll';
 
   TControllers = (All, C1, C2);
 
@@ -83,11 +81,11 @@ type
       procedure customChar(character: Integer; data: Array of Byte); override;
       procedure setPosition(x, y: Integer); override;
       procedure write(str: String); override;
-      procedure setbacklight(on: Boolean); override;
+      procedure setbacklight(state: Boolean); override;
       constructor CreateParallel(const poortadres: Word; const width, heigth: Byte);
       destructor Destroy; override;
     private
-      dlportio: HMODULE;
+      IOPlugin: HMODULE;
       FBaseAddr: Word;
       FCtrlAddr: Word;
       cursorx, cursory: Word;
@@ -97,8 +95,7 @@ type
       iHighResTimerFreq: Int64;
       DlPortWritePortUchar: TDlPortWritePortUchar;
       DlPortReadPortUchar: TDlPortReadPortUchar;
-      bDlPortIO: Boolean;
-      bInp32: Boolean;
+      bHasIOPlugin: Boolean;
       bHasIO: Boolean;
       procedure writectrl(const controllers: TControllers; const x: Byte);
       procedure writedata(const controllers: TControllers; const x: Byte);
@@ -111,11 +108,6 @@ type
       procedure initClass;
       procedure LoadIO;
       procedure UnloadIO;
-      procedure LoadDlPortIO;
-      procedure UnloadDlPortIO;
-      procedure LoadInpOut32IO;
-      procedure LoadCanIO;
-      procedure UnloadCanIO;
   end;
 
 implementation
@@ -133,9 +125,6 @@ begin
   FCtrlAddr := FBaseAddr + 2;
   self.width := width;
   self.height := heigth;
-
-  bDlPortIO := USE_DL_PORT_IO;
-  bInp32 := USE_INPOUT32;
 
   LoadIO();
   bHasIO := True;
@@ -166,99 +155,51 @@ end;
 
 procedure TLCD_HD.LoadIO;
 begin
-//  if (bDlPortIO) then LoadDlPortIO()
-//  else if (bInp32) then LoadInpOut32IO()
-//  else LoadCanIO();
-  if(bInp32) then
+  { Try inpout32.dll first, since it supports x64 }
+  IOPlugin := LoadLibrary(PChar('inpout32.dll'));
+  if (IOPlugin <> 0) then
   begin
-    LoadInpOut32IO();
-    if(dlportio = 0) then
-      bDlPortIO := true;
-      bInp32 := false;
-      LoadDLPortIo();
+    DlPortWritePortUchar := TDlPortWritePortUchar(GetProcAddress(IOPlugin,'Inp32'));
+    DlPortReadPortUchar := TDlPortReadPortUchar(GetProcAddress(IOPlugin,'Out32'));
+    if (not Assigned(DlPortWritePortUchar)) or (not Assigned(DlPortReadPortUchar)) then
+      raise Exception.Create('Loaded inpout32, but unable to obtain API.')
+    else
+    begin
+      bHasIOPlugin := True;
+      Exit; { Got our plugin, we're done }
+    end;
   end;
 
-  if(bDlPortIO) then LoadDlPortIO();
+  { Try good old dlportio.dll next, for backwards compatiability }
+  IOPlugin := LoadLibrary(PChar('dlportio.dll'));
+  if (IOPlugin <> 0) then
+  begin
+    DlPortWritePortUchar := TDlPortWritePortUchar(GetProcAddress(IOPlugin,
+      'DlPortWritePortUchar'));
+    DlPortReadPortUchar := TDlPortReadPortUchar(GetProcAddress(IOPlugin,
+      'DlPortReadPortUchar'));
+    if (not Assigned(DlPortWritePortUchar)) or (not Assigned(DlPortReadPortUchar)) then
+      raise Exception.Create('Loaded dlportio, but unable to obtain API.')
+    else
+    begin
+      bHasIOPlugin := True;
+      Exit;
+    end;
+  end;
+
+  { Last resort: fallback to low-level I/O and warn user.
+    TODO: Should check that this is not NT/XP before attempting low-level I/O! }
+  bHasIOPlugin := False;
+  raise Exception.Create('Couldn''t find inpout32.dll or dlportio.dll, attempting to use low-level I/O routines.');
 
 end;
 
 procedure TLCD_HD.UnloadIO;
 begin
-  if (bDlPortIO or bInp32) then UnloadDlPortIO()
-  else UnloadCanIO();
-end;
-
-procedure TLCD_HD.LoadCanIO;
-type
-  TCanIOAddMultiPort = Function (addr: longword; len: integer): Boolean; stdcall;
-var
-  CanIOAddMultiPort: TCanIOAddMultiPort;
-  res: Boolean;
-begin
-  dlportio := LoadLibrary(PChar('canio.dll'));
-  if (dlportio = 0) then
-    raise Exception.Create(
-      'Unable to load canio.dll: Please ensure you have installed canio.');
-
-  CanIOAddMultiPort := TCanIOAddMultiPort(GetProcAddress(dlportio,'AddMultiPort'));
-  if (@CanIOAddMultiPort = nil) then
-      raise Exception.Create(
-      'Unable to find AddMultiPort in canio.dll.');
-
-  res := CanIOAddMultiPort(FCtrlAddr, 1);
-  if (not res) then
-    raise Exception.Create(
-      'Failed to add ctrl port.');
-
-  res := CanIOAddMultiPort(FBaseAddr, 1);
-  if (not res) then
-    raise Exception.Create(
-      'Failed to add base port.');
-end;
-
-procedure TLCD_HD.LoadDlPortIO;
-begin
-  dlportio := LoadLibrary(PChar('dlportio.dll'));
-  if (dlportio = 0) then
-    raise Exception.Create(
-      'Unable to load dlportio.dll: Please ensure you have installed port95nt.');
-
-  DlPortWritePortUchar := TDlPortWritePortUchar(GetProcAddress(dlportio,
-    'DlPortWritePortUchar'));
-  DlPortReadPortUchar := TDlPortReadPortUchar(GetProcAddress(dlportio,
-    'DlPortReadPortUchar'));
-  if (not Assigned(DlPortWritePortUchar)) or (not Assigned(DlPortReadPortUchar)) then
-    raise Exception.Create('Unable to get required apis from dlportio');
-end;
-
-procedure TLCD_HD.LoadInpOut32IO;
-begin
-  dlportio := LoadLibrary(PChar('inpout32.dll'));
-  if (dlportio = 0) then
-    raise Exception.Create(
-      'Unable to load inpout32.dll: Please ensure that inpout32.dll is in the program directory.');
-
-  DlPortWritePortUchar := TDlPortWritePortUchar(GetProcAddress(dlportio,'Inp32'));
-  DlPortReadPortUchar := TDlPortReadPortUchar(GetProcAddress(dlportio,'Out32'));
-
-  if (not Assigned(DlPortWritePortUchar)) or (not Assigned(DlPortReadPortUchar)) then
-    raise Exception.Create('Unable to get required apis from inpout32');
-
-end;
-procedure TLCD_HD.UnloadCanIO;
-begin
-  if (dlportio <> 0) then
-  begin
-    FreeLibrary(dlportio);
-  end;
-
-  dlportio := 0;
-end;
-
-procedure TLCD_HD.UnloadDlPortIO;
-begin
-  if (dlportio <> 0) then FreeLibrary(dlportio);
-  dlportio := 0;
+  if (bHasIOPlugin = True) then FreeLibrary(IOPlugin);
+  IOPlugin := 0;
+  bHasIOPlugin := False;
+  bHasIO := False;
   DlPortWritePortUchar := nil;
   DlPortReadPortUchar := nil;
 end;
@@ -297,6 +238,14 @@ const
   EMShift = 1;
   EMNoShift = 0;
   HomeCursor = 2;
+  { Extra functions of KS0073 }
+  ExtFuncSet = 8;
+  FSExtReg = 4;
+  EFSFourLine = 1;
+  EFSOneTwoLine = 0;
+  EFSFontWidth6 = 4;
+  EFSFontWidth5 = 0;
+
 begin
   // perform initalising by instruction, just in case std power reset failed.
 
@@ -311,6 +260,21 @@ begin
 
   writectrl(All, FuncSet or FSInterface8Bit or FSTwoLine or FSSmallFont);
   UsecDelay(uiDelayShort);
+
+  if (config.bHDKS0073Addressing = True) then
+  begin
+    { Need to set extended functions }
+    writectrl(All, FuncSet or FSInterface8Bit or FSTwoLine or FSSmallFont
+      or FSExtReg);
+    UsecDelay(uiDelayShort);
+    if height = 4
+    then
+      writectrl(All, ExtFuncSet or EFSFourLine)
+    else
+      writectrl(All, ExtFuncSet);
+    UsecDelay(uiDelayShort);
+    writectrl(All, FuncSet or FSInterface8Bit or FSTwoLine or FSSmallFont);
+  end;
 
   writectrl(All, OnOffCtrl or OODisplayOff);
   UsecDelay(uiDelayShort);
@@ -340,9 +304,9 @@ begin
  }
 end;
 
-procedure TLCD_HD.setbacklight(on: Boolean);
+procedure TLCD_HD.setbacklight(state: Boolean);
 begin
-  if on and not bTwoControllers then
+  if state = True and not bTwoControllers then
     backlight := 8
   else
     backlight := 0;
@@ -568,20 +532,34 @@ begin
   end
   else
     controller := C1;
-
-  // special case for 1 chip 1x16 displays, acts like 2x8 display
-  if (config.bHDAltAddressing) and (width = 16) and (height = 1)
-    and (tempX >= 8) then
+  if (config.bHDKS0073Addressing = False) then
   begin
-    tempX := tempX - 8;
-    tempY := tempY + 1;
+    // Find DDRAM address for HDD44780
+
+    // special case for 1 chip 1x16 displays, acts like 2x8 display
+    if (config.bHDAltAddressing) and (width = 16) and (height = 1)
+      and (tempX >= 8) then
+    begin
+      tempX := tempX - 8;
+      tempY := tempY + 1;
+    end;
+
+    DDaddr := tempX + (tempY mod 2) * 64;
+
+    // line 3 logically follows line 1, (same for 4 and 2)
+    if ((tempY mod 4) >= 2) then
+      DDaddr := DDaddr + width;
+  end
+  else
+  begin
+    // Find DDRAM address for KS0073
+    { Addressing:
+      Line 1 - 0x00
+      Line 2 - 0x20
+      Line 3 - 0x40
+      Line 4 - 0x60 }
+    DDaddr := tempX + 32 * tempY;
   end;
-
-  DDaddr := tempX + (tempY mod 2) * 64;
-
-  // line 3 logically follows line 1, (same for 4 and 2)
-  if ((tempY mod 4) >= 2) then
-    DDaddr := DDaddr + width;
 
   writectrl(controller, SetPos or DDaddr);
 end;
@@ -595,7 +573,7 @@ end;
 procedure TLCD_HD.CtrlOut(const AValue: Byte);
 begin
   if (not bHasIO) then exit;
-  if (bDlPortIO or bInp32) then
+  if (bHasIOPlugin) then
   begin
     if (@DlPortWritePortUchar <> nil) then
       DlPortWritePortUchar(FCtrlAddr, AValue xor CtrlMask);
@@ -604,12 +582,10 @@ begin
     PortOut(FCtrlAddr, AValue xor CtrlMask);
 end;
 
-
-
 procedure TLCD_HD.DataOut(const AValue: Byte);
 begin
   if (not bHasIO) then exit;
-  if (bDlPortIO or bInp32) then
+  if (bHasIOPlugin) then
   begin
     if (@DlPortWritePortUchar <> nil) then
       DlPortWritePortUchar(FBaseAddr, AValue);

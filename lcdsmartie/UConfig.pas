@@ -19,7 +19,7 @@ unit UConfig;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UConfig.pas,v $
- *  $Revision: 1.36 $ $Date: 2006/02/28 20:42:25 $
+ *  $Revision: 1.37 $ $Date: 2006/03/02 19:41:12 $
  *****************************************************************************}
 
 interface
@@ -118,6 +118,7 @@ type
     totalactions: Integer;
     iMinFadeContrast: Integer;
     bHDAltAddressing: Boolean;
+    bHDKS0073Addressing: Boolean;
     iHDTimingMultiplier: Integer;
     remotehost : string;
     function load: Boolean;
@@ -524,6 +525,8 @@ begin
 
   bHDAltAddressing := initFile.ReadBool('Communication Settings',
    'HDAlternativeAddressing', false);
+  bHDKS0073Addressing := initFile.ReadBool('Communication Settings',
+   'HDKS0073Adressing', false);
   iHDTimingMultiplier := initFile.ReadInteger('Communication Settings',
    'HDTimingMultiplier', 1);
 
@@ -708,6 +711,8 @@ begin
 
   initFile.WriteBool('Communication Settings', 'HDAlternativeAddressing',
     bHDAltAddressing);
+  initFile.WriteBool('Communication Settings', 'HDKS0073Addressing',
+    bHDKS0073Addressing);
   initfile.WriteInteger('Communication Settings', 'HDTimingMultiplier',
     iHDTimingMultiplier);
 
