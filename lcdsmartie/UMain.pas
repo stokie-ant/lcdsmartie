@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.69 $ $Date: 2006/03/02 13:13:00 $
+ *  $Revision: 1.70 $ $Date: 2006/03/02 21:45:09 $
  *****************************************************************************}
 
 interface
@@ -251,7 +251,8 @@ implementation
 
 uses
   Windows, SysUtils, Graphics, Dialogs, ShellAPI, mmsystem, StrUtils,
-  USetup, UCredits, ULCD_MO, ULCD_CF, ULCD_HD, ULCD_Test, ULCD_IR, ExtActns, UUtils;
+  USetup, UCredits, ULCD_MO, ULCD_CF, ULCD_HD, ULCD_Test, ULCD_IR, ULCD_DLL,
+  ExtActns, UUtils;
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1036,9 +1037,11 @@ begin
       // just in case we failed to get the expected number of cycles (due to
       // high cpu loads etc).
       ResetContrast := False;
-      if (config.ScreenType = stMO) then Lcd.setContrast(config.contrast)
-      else
-        if (config.ScreenType = stCF) then Lcd.setContrast(config.CF_contrast);
+      case (config.ScreenType) of
+        stMO : Lcd.setContrast(config.contrast);
+        stCF : Lcd.setContrast(config.CF_contrast);
+        stDLL : Lcd.setContrast(config.DLL_contrast);
+      end; // case
     end;
 
     if (canscroll) then
@@ -1486,6 +1489,7 @@ begin
       stCF : Lcd := TLCD_CF.CreateSerial(config.comPort, baudRates[config.baudrate]);
       stTestDriver : Lcd := TLCD_Test.CreateSerial(config.comPort, baudRates[config.baudrate]);
       stIR : Lcd := TLCD_IR.CreateSocket(config.RemoteHost);
+      stDLL : Lcd := TLCD_DLL.CreateDLL(config.DisplayDLLName,config.DisplayDLLParameters);
       stHD,stHD2 : begin
         Lcd := TLCD.Create(); // use a dummy LCD until the boot time has passed.
         // HD/HD2 have a delay start - they will setup the above timers later.
@@ -1505,7 +1509,7 @@ begin
   end;
 
   // load custom characters if the display supports it
-  if (config.ScreenType in [stMO,stCF,stIR]) then
+  if (config.ScreenType in [stMO,stCF,stIR,stDLL]) then
   begin
     customchar('1, 12, 18, 18, 12, 0, 0, 0, 0');
     customchar('2, 31, 31, 31, 31, 31, 31, 31, 31');
@@ -1524,6 +1528,10 @@ begin
       Lcd.setContrast(config.CF_contrast);
     end;
     stIR : Lcd.setBrightness(config.IR_brightness);
+    stDLL : begin
+      Lcd.setContrast(config.DLL_contrast);
+      Lcd.setBrightness(config.DLL_brightness);
+    end;
   end; // case
 
   DoFullDisplayDraw();
@@ -1662,7 +1670,7 @@ begin
     end;
   end;
 
-  if (pos('GPO(', sAction) <> 0) and (config.ScreenType = stMO) then
+  if (pos('GPO(', sAction) <> 0) and (config.ScreenType in [stMO,stDLL]) then
   begin
     temp1 := copy(sAction, pos('(', sAction) + 1,
       pos(',', sAction)-pos('(', sAction)-1);
@@ -1880,7 +1888,7 @@ begin
       end;
     end;
 
-    if (pos('GPOFlash(', sAction) <> 0) and (config.ScreenType = stMO) then
+    if (pos('GPOFlash(', sAction) <> 0) and (config.ScreenType in [stMO,stDLL]) then
     begin
       try
         whatGPO := StrToInt(copy(sAction, pos('(', sAction) + 1,
@@ -2331,8 +2339,12 @@ begin
 
         if (TransCycle < maxTransCycles/2) then
         begin
-          if (config.ScreenType = stMO)then x := config.contrast
-          else x := config.CF_contrast;
+
+          case (config.ScreenType) of
+            stCF : x := config.CF_contrast;
+            stDLL : x := config.DLL_contrast;
+            else x := config.contrast;
+          end;
 
           iContrast := round(x-(TransCycle*(x-config.iMinFadeContrast)
             / (MaxTransCycles/2)));
@@ -2353,8 +2365,11 @@ begin
             ScreenLCD[x].Caption := EscapeAmp(newline[x]);
           end;
 
-          if (config.ScreenType = stMO) then x := config.contrast
-          else x := config.CF_contrast;
+          case (config.ScreenType) of
+            stCF : x := config.CF_contrast;
+            stDLL : x := config.DLL_contrast;
+            else x := config.contrast;
+          end;
 
           iContrast := round((TransCycle-(MaxTransCycles/2))
             * (x-config.iMinFadeContrast)/(MaxTransCycles/2))

@@ -19,7 +19,7 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.42 $ $Date: 2006/03/02 13:39:51 $
+ *  $Revision: 1.43 $ $Date: 2006/03/02 21:45:09 $
  *****************************************************************************}
 
 interface
@@ -198,6 +198,8 @@ type
     SkipScreenComboBox: TComboBox;
     IRTransRadioButton: TRadioButton;
     IRTransConfigButton: TButton;
+    DLLRadioButton: TRadioButton;
+    DLLConfigButton: TButton;
     procedure FormShow(Sender: TObject);
     procedure LCDSizeComboBoxChange(Sender: TObject);
     procedure ScreenNumberComboBoxChange(Sender: TObject);
@@ -258,6 +260,8 @@ type
     procedure ColorSchemeComboBoxChange(Sender: TObject);
     procedure IRTransRadioButtonClick(Sender: TObject);
     procedure IRTransConfigButtonClick(Sender: TObject);
+    procedure DLLRadioButtonClick(Sender: TObject);
+    procedure DLLConfigButtonClick(Sender: TObject);
   private
     setupbutton: Integer;
     EMailAccountComboboxTemp: Integer;
@@ -276,7 +280,8 @@ implementation
 
 uses
   Windows, ShellApi, graphics, sysutils, Registry, UMain, UMOSetup,
-  UCFSetup, UPara, UIRSetup, UInteract, UConfig, ULCD_MO, StrUtils;
+  UCFSetup, UPara, UIRSetup, UDLLSetup, UInteract, UConfig, ULCD_MO,
+  StrUtils;
 
 {$R *.DFM}
 
@@ -345,7 +350,6 @@ var
   i, blaat: Integer;
   iSelection: Integer;
   sLookFor: String;
-  uiTestPort: Cardinal;
 begin
   { Try to limit the displayed COM port to only those that are useable }
 
@@ -444,6 +448,10 @@ begin
     stIR : begin
       IRTransRadioButton.Checked := true;
       IRTransConfigButton.Enabled := true;
+    end;
+    stDLL : begin
+      DLLRadioButton.Checked := true;
+      DLLConfigButton.Enabled := true;
     end;
   end; // case
 
@@ -726,6 +734,7 @@ begin
   MatrixOrbitalConfigButton.enabled := false;
   CrystalFontzConfigButton.enabled := false;
   IRTransConfigButton.Enabled := false;
+  DLLConfigButton.Enabled := false;
 end;
 
 procedure TSetupForm.HD66712RadioButtonClick(Sender: TObject);
@@ -736,6 +745,7 @@ begin
   MatrixOrbitalConfigButton.enabled := false;
   CrystalFontzConfigButton.enabled := false;
   IRTransConfigButton.Enabled := false;
+  DLLConfigButton.Enabled := false;
 end;
 
 procedure TSetupForm.MatrixOrbitalRadioButtonClick(Sender: TObject);
@@ -747,6 +757,7 @@ begin
   MatrixOrbitalConfigButton.enabled := true;
   CrystalFontzConfigButton.enabled := false;
   IRTransConfigButton.Enabled := false;
+  DLLConfigButton.Enabled := false;
 end;
 
 procedure TSetupForm.CrystalFontzRadioButtonClick(Sender: TObject);
@@ -760,6 +771,7 @@ begin
   MatrixOrbitalConfigButton.enabled := false;
   CrystalFontzConfigButton.enabled := true;
   IRTransConfigButton.Enabled := false;
+  DLLConfigButton.Enabled := false;
 end;
 
 procedure TSetupForm.IRTransRadioButtonClick(Sender: TObject);
@@ -770,6 +782,18 @@ begin
   CrystalFontzConfigButton.enabled := false;
   HD44780ConfigButton.enabled := false;
   IRTransConfigButton.Enabled := true;
+  DLLConfigButton.Enabled := false;
+end;
+
+procedure TSetupForm.DLLRadioButtonClick(Sender: TObject);
+begin
+  COMPortComboBox.enabled := false;
+  BaudRateComboBox.enabled := false;
+  MatrixOrbitalConfigButton.enabled := false;
+  CrystalFontzConfigButton.enabled := false;
+  HD44780ConfigButton.enabled := false;
+  IRTransConfigButton.Enabled := false;
+  DLLConfigButton.Enabled := true;
 end;
 
 procedure TSetupForm.WinampListBoxClick(Sender: TObject);
@@ -1372,6 +1396,24 @@ begin
   end;
 end;
 
+procedure TSetupForm.DLLConfigButtonClick(Sender: TObject);
+begin
+  if (not (config.ScreenType = stDLL)) then
+  begin
+    if MessageDlg('The display plugin is not currently loaded.' + chr(13) +
+      'Should I apply your settings and load the plugin?',
+      mtConfirmation, [mbYes, mbNo], 0) = mrYes then
+    begin
+      // press apply for them
+      ApplyButton.click();
+    end;
+  end;
+  if DoDLLSetupForm then begin
+    config.ScreenType := stNone;
+    ApplyButton.click();
+  end;
+end;
+
 procedure TSetupForm.GamestatsListBoxClick(Sender: TObject);
 var
   S : string;
@@ -1578,6 +1620,7 @@ begin
   if (CrystalFontzRadioButton.checked) and not (config.ScreenType = stCF) then relood := true;
   if (HD66712RadioButton.checked) and not (config.ScreenType = stHD2) then relood := true;
   if (IRTransRadioButton.checked) and not (config.ScreenType = stIR) then relood := true;
+  if (DLLRadioButton.checked) and not (config.ScreenType = stDLL) then relood := true;
 
 
   LCDSmartieDisplayForm.WinampCtrl1.WinampLocation := WinampLocationEdit.text;
@@ -1621,7 +1664,8 @@ begin
   else if MatrixOrbitalRadioButton.checked then config.ScreenType := stMO
   else if CrystalFontzRadioButton.checked then config.ScreenType := stCF
   else if HD66712RadioButton.checked then config.ScreenType := stHD2
-  else if IRTransRadioButton.checked then config.ScreenType := stIR;
+  else if IRTransRadioButton.checked then config.ScreenType := stIR
+  else if DLLRadioButton.checked then config.ScreenType := stDLL;
 
   if (WebProxyPortEdit.text = '') then WebProxyPortEdit.text := '0';
   config.httpProxy := WebProxyServerEdit.text;

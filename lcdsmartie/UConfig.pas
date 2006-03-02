@@ -19,7 +19,7 @@ unit UConfig;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UConfig.pas,v $
- *  $Revision: 1.37 $ $Date: 2006/03/02 19:41:12 $
+ *  $Revision: 1.38 $ $Date: 2006/03/02 21:45:09 $
  *****************************************************************************}
 
 interface
@@ -33,7 +33,7 @@ const
 type
   TTransitionStyle = (tsNone,tsLeftRight,tsRightLeft,tsTopBottom,tsBottomTop,tsRandomChars,tsFade);
 
-  TScreenType = (stNone,stHD,stMO,stCF,stHD2,stTestDriver,stIR);
+  TScreenType = (stNone,stHD,stMO,stCF,stHD2,stTestDriver,stIR,stDLL);
 
   TScreenLine = Record
     text: String;
@@ -121,6 +121,10 @@ type
     bHDKS0073Addressing: Boolean;
     iHDTimingMultiplier: Integer;
     remotehost : string;
+    DisplayDLLName : string;
+    DisplayDLLParameters : string;
+    DLL_Contrast: integer;
+    DLL_Brightness: integer;
     function load: Boolean;
     procedure save;
     property sizeOption: Integer read P_sizeOption write setSizeOption;
@@ -132,7 +136,7 @@ type
 
 var
   Config: TConfig;
-  
+
 implementation
 
 uses Forms, INIFiles, StrUtils, Windows;
@@ -589,6 +593,9 @@ begin
   httpProxyPort := initFile.ReadInteger('Communication Settings',
     'HTTPProxyPort', 0);
   remotehost := initFile.ReadString('Communication Settings', 'RemoteHost', 'localhost');
+  DisplayDLLName := initFile.ReadString('Communication Settings', 'DisplayDLLName', 'matrix.dll');
+  DisplayDLLParameters := initFile.ReadString('Communication Settings', 'DisplayDLLParameters', 'COM1,9600,8,N,1');
+
 
   ScreenType := TScreenType(initFile.ReadInteger('General Settings', 'LCDType', 0));
 
@@ -621,6 +628,9 @@ begin
     0);
 
   IR_brightness := initFile.ReadInteger('General Settings', 'IRBrightness', 3);
+
+  DLL_contrast := initFile.ReadInteger('General Settings', 'DLLContrast', 127);
+  DLL_brightness := initFile.ReadInteger('General Settings', 'DLLBrightness',127);
 
   newsRefresh := initFile.ReadInteger('General Settings', 'NewsRefresh', 120);
   randomScreens := initFile.ReadBool('General Settings', 'RandomScreens',
@@ -777,6 +787,8 @@ begin
   initFile.WriteInteger('Communication Settings', 'HTTPProxyPort',
     httpProxyPort);
   initFile.WriteString('Communication Settings', 'RemoteHost', remotehost);
+  initFile.WriteString('Communication Settings', 'DisplayDLLName', DisplayDLLName);
+  initFile.WriteString('Communication Settings', 'DisplayDLLParameters', DisplayDLLParameters);
 
   initFile.WriteInteger('General Settings', 'LCDType', ord(ScreenType));
   initFile.WriteInteger('General Settings', 'Size', sizeOption);
@@ -789,6 +801,9 @@ begin
   initFile.WriteInteger('General Settings', 'MinFadeContrast', iMinFadeContrast);
 
   initFile.WriteInteger('General Settings', 'IRBrightness', IR_brightness);
+
+  initFile.WriteInteger('General Settings', 'DLLContrast', DLL_contrast);
+  initFile.WriteInteger('General Settings', 'DLLBrightness', DLL_brightness);
 
   initFile.WriteInteger('General Settings', 'NewsRefresh', newsRefresh);
   initFile.WriteBool('General Settings', 'RandomScreens', randomScreens);

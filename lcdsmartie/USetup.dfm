@@ -1735,8 +1735,8 @@ object SetupForm: TSetupForm
         ParentFont = False
         TabOrder = 2
         object Label9: TLabel
-          Left = 32
-          Top = 120
+          Left = 4
+          Top = 144
           Width = 50
           Height = 13
           Caption = 'COM port:'
@@ -1748,11 +1748,11 @@ object SetupForm: TSetupForm
           ParentFont = False
         end
         object Label10: TLabel
-          Left = 152
-          Top = 120
-          Width = 85
+          Left = 140
+          Top = 144
+          Width = 57
           Height = 13
-          Caption = 'Speed/baud rate:'
+          Caption = 'BAUD Rate:'
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
           Font.Height = -11
@@ -1812,9 +1812,9 @@ object SetupForm: TSetupForm
           OnClick = MatrixOrbitalRadioButtonClick
         end
         object COMPortComboBox: TComboBox
-          Left = 29
-          Top = 136
-          Width = 105
+          Left = 56
+          Top = 140
+          Width = 78
           Height = 21
           Hint = 
             'The serial port (or for usb devices, the virtual serial port) th' +
@@ -1829,13 +1829,13 @@ object SetupForm: TSetupForm
           ParentFont = False
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 7
+          TabOrder = 11
           OnChange = COMPortComboBoxChange
         end
         object BaudRateComboBox: TComboBox
-          Left = 149
-          Top = 136
-          Width = 105
+          Left = 196
+          Top = 140
+          Width = 86
           Height = 21
           Hint = 
             'The serial speed of your display - please refer to your displays' +
@@ -1850,7 +1850,7 @@ object SetupForm: TSetupForm
           ParentFont = False
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 8
+          TabOrder = 12
           OnChange = BaudRateComboBoxChange
           Items.Strings = (
             '110 bps'
@@ -1884,7 +1884,7 @@ object SetupForm: TSetupForm
           ParentFont = False
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 5
+          TabOrder = 7
           OnClick = MatrixOrbitalConfigButtonClick
         end
         object CrystalFontzRadioButton: TRadioButton
@@ -1920,7 +1920,7 @@ object SetupForm: TSetupForm
           ParentFont = False
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 6
+          TabOrder = 8
           OnClick = CrystalFontzConfigButtonClick
         end
         object HD44780ConfigButton: TButton
@@ -1938,7 +1938,7 @@ object SetupForm: TSetupForm
           ParentFont = False
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 4
+          TabOrder = 6
           OnClick = HD44780ConfigButtonClick
         end
         object LCDSizeComboBox: TComboBox
@@ -1986,7 +1986,7 @@ object SetupForm: TSetupForm
           Font.Name = 'Tahoma'
           Font.Style = []
           ParentFont = False
-          TabOrder = 9
+          TabOrder = 13
           Visible = False
           OnClick = HD66712RadioButtonClick
         end
@@ -2005,7 +2005,7 @@ object SetupForm: TSetupForm
           ParentFont = False
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 10
+          TabOrder = 4
           OnClick = IRTransRadioButtonClick
         end
         object IRTransConfigButton: TButton
@@ -2023,8 +2023,44 @@ object SetupForm: TSetupForm
           ParentFont = False
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 11
+          TabOrder = 9
           OnClick = IRTransConfigButtonClick
+        end
+        object DLLRadioButton: TRadioButton
+          Left = 16
+          Top = 116
+          Width = 121
+          Height = 17
+          Hint = 'Select if your display is controlled by IRTrans'
+          Caption = 'Display Plugin (DLL)'
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
+          TabOrder = 5
+          OnClick = DLLRadioButtonClick
+        end
+        object DLLConfigButton: TButton
+          Left = 152
+          Top = 116
+          Width = 113
+          Height = 17
+          Hint = 'Set IRTrans display specific settings.'
+          Caption = 'Plugin Settings'
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
+          TabOrder = 10
+          OnClick = DLLConfigButtonClick
         end
       end
     end
