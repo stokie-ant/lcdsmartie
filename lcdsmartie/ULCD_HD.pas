@@ -19,7 +19,7 @@ unit ULCD_HD;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/Attic/ULCD_HD.pas,v $
- *  $Revision: 1.21 $ $Date: 2006/03/02 20:42:43 $
+ *  $Revision: 1.22 $ $Date: 2006/03/02 21:21:58 $
  *
  *  Based on code from the following (open-source) projects:
  *     WinAmp LCD Plugin
@@ -115,7 +115,7 @@ implementation
 uses UConfig, SysUtils, Windows;
 
 constructor TLCD_HD.CreateParallel(const poortadres: Word; const width, heigth: Byte);
-{var
+{ var
   x, y: integer; }
 begin
   bHasIO := False;
@@ -131,11 +131,11 @@ begin
 
   initClass;
 
-     {    // DEBUG CODE for checking addressing.
+   {      // DEBUG CODE for checking addressing.
     for y:=1 to height do
       for x:=1 to width do
          SetPosition(x, y);
-         }
+          }
 end;
 
 destructor TLCD_HD.Destroy;
@@ -161,8 +161,8 @@ begin
   IOPlugin := LoadLibrary(PChar('inpout32.dll'));
   if (IOPlugin <> 0) then
   begin
-    DlPortWritePortUchar := TDlPortWritePortUchar(GetProcAddress(IOPlugin,'Inp32'));
-    DlPortReadPortUchar := TDlPortReadPortUchar(GetProcAddress(IOPlugin,'Out32'));
+    DlPortWritePortUchar := TDlPortWritePortUchar(GetProcAddress(IOPlugin,'Out32'));
+    DlPortReadPortUchar := TDlPortReadPortUchar(GetProcAddress(IOPlugin,'Inp32'));
     if (not Assigned(DlPortWritePortUchar)) or (not Assigned(DlPortReadPortUchar)) then
       raise Exception.Create('Loaded inpout32, but unable to obtain API.')
     else
@@ -592,8 +592,8 @@ begin
   if (not bHasIO) then exit;
   if (bHasIOPlugin) then
   begin
-    if (@DlPortWritePortUchar <> nil) then
-      DlPortWritePortUchar(FCtrlAddr, AValue xor CtrlMask);
+      if (@DlPortWritePortUchar <> nil) then
+        DlPortWritePortUchar(FCtrlAddr, AValue xor CtrlMask);
   end
   else
     PortOut(FCtrlAddr, AValue xor CtrlMask);
