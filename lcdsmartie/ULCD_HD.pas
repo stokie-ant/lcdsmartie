@@ -19,7 +19,7 @@ unit ULCD_HD;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/Attic/ULCD_HD.pas,v $
- *  $Revision: 1.18 $ $Date: 2006/03/02 18:28:20 $
+ *  $Revision: 1.19 $ $Date: 2006/03/02 18:54:14 $
  *
  *  Based on code from the following (open-source) projects:
  *     WinAmp LCD Plugin
@@ -166,9 +166,20 @@ end;
 
 procedure TLCD_HD.LoadIO;
 begin
-  if (bDlPortIO) then LoadDlPortIO()
-  else if (bInp32) then LoadInpOut32IO()
-  else LoadCanIO();
+//  if (bDlPortIO) then LoadDlPortIO()
+//  else if (bInp32) then LoadInpOut32IO()
+//  else LoadCanIO();
+  if(bInp32) then
+  begin
+    LoadInpOut32IO();
+    if(dlportio = 0) then
+      bDlPortIO := true;
+      bInp32 := false;
+      LoadDLPortIo();
+  end;
+
+  if(bDlPortIO) then LoadDlPortIO();
+
 end;
 
 procedure TLCD_HD.UnloadIO;
@@ -584,7 +595,7 @@ end;
 procedure TLCD_HD.CtrlOut(const AValue: Byte);
 begin
   if (not bHasIO) then exit;
-  if (bDlPortIO) then
+  if (bDlPortIO or bInp32) then
   begin
     if (@DlPortWritePortUchar <> nil) then
       DlPortWritePortUchar(FCtrlAddr, AValue xor CtrlMask);
@@ -598,7 +609,7 @@ end;
 procedure TLCD_HD.DataOut(const AValue: Byte);
 begin
   if (not bHasIO) then exit;
-  if (bDlPortIO) then
+  if (bDlPortIO or bInp32) then
   begin
     if (@DlPortWritePortUchar <> nil) then
       DlPortWritePortUchar(FBaseAddr, AValue);
