@@ -19,7 +19,7 @@ unit ULCD_HD;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/Attic/ULCD_HD.pas,v $
- *  $Revision: 1.17 $ $Date: 2006/03/01 23:31:51 $
+ *  $Revision: 1.18 $ $Date: 2006/03/02 18:28:20 $
  *
  *  Based on code from the following (open-source) projects:
  *     WinAmp LCD Plugin
@@ -37,6 +37,9 @@ unit ULCD_HD;
  *
  *  note: DLPortIO.DLL should be in $windir/system32/
  *        DLPortIO.SYS should be in $windir/system32/drivers/
+ *
+ *  The addidion of inpout32.dll support requires that the dll file be
+ *  placed in the program directory or the %windir/system32 directory.
  *****************************************************************************}
 
 interface
@@ -228,7 +231,7 @@ begin
   DlPortReadPortUchar := TDlPortReadPortUchar(GetProcAddress(dlportio,'Out32'));
 
   if (not Assigned(DlPortWritePortUchar)) or (not Assigned(DlPortReadPortUchar)) then
-    raise Exception.Create('Unable to get required apis from dlportio');
+    raise Exception.Create('Unable to get required apis from inpout32');
 
 end;
 procedure TLCD_HD.UnloadCanIO;
