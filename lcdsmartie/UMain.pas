@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.68 $ $Date: 2006/03/01 13:48:09 $
+ *  $Revision: 1.69 $ $Date: 2006/03/02 13:13:00 $
  *****************************************************************************}
 
 interface
@@ -33,8 +33,8 @@ const
   WM_ICONTRAY = WM_USER + 1;   // User-defined message
   OurVersMaj = 5;
   OurVersMin = 3;
-  OurVersRel = 1;
-  OurVersBuild = 16;
+  OurVersRel = 3;
+  OurVersBuild = 18;
 
 type
   TInitialWindowState = (NoChange, HideMainForm, TotalHideMainForm);
