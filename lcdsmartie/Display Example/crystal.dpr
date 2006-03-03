@@ -138,7 +138,7 @@ begin
 
   tries := 0;
   repeat
-    COMPort.Write(command, dataLen+4);
+    COMPort.Write(@command[0], dataLen+4);
     Inc(tries);
     bOk := PacketReply(cmdCode)
   until (bOk) or (tries >= 3);
@@ -381,7 +381,6 @@ begin
     COMPort.WriteByte(12);
 end;
 
-
 // level is in the range of 0-100
 procedure TLCD_CF.setContrast(level: Integer);
 begin
@@ -411,8 +410,6 @@ begin
     COMPort.WriteByte(level);
   end;
 end;
-
-
 
 
 procedure TLCD_CF.setbacklight(on: Boolean);
@@ -714,8 +711,9 @@ begin
 end;
 
 procedure DISPLAYDLL_SetContrast(Contrast : byte); stdcall;
-// 0 - 255
 begin
+// level is in the range of 0-100
+  Contrast := round(cardinal(Contrast)*100 div 255);
   try
     if assigned(LCD_CF) then
        LCD_CF.SetContrast(Contrast);
@@ -724,8 +722,9 @@ begin
 end;
 
 procedure DISPLAYDLL_SetBrightness(Brightness : byte); stdcall;
-// 0 - 255
 begin
+// level is in the range of 0-100
+  Brightness := round(cardinal(Brightness)*100 div 255);
   try
     if assigned(LCD_CF) then
        LCD_CF.SetBrightness(Brightness);
