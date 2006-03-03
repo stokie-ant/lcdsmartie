@@ -19,7 +19,7 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.45 $ $Date: 2006/03/03 01:32:58 $
+ *  $Revision: 1.46 $ $Date: 2006/03/03 15:58:04 $
  *****************************************************************************}
 
 interface
@@ -147,7 +147,6 @@ type
     CrystalFontzRadioButton: TRadioButton;
     CrystalFontzConfigButton: TButton;
     HD44780ConfigButton: TButton;
-    ScreenNumberComboBox: TComboBox;
     ScreenEnabledCheckBox: TCheckBox;
     TimeToShowSpinEdit: TSpinEdit;
     Line1Edit: TEdit;
@@ -200,9 +199,11 @@ type
     IRTransConfigButton: TButton;
     DLLRadioButton: TRadioButton;
     DLLConfigButton: TButton;
+    ScreenLabel: TLabel;
+    ScreenSpinEdit: TSpinEdit;
     procedure FormShow(Sender: TObject);
     procedure LCDSizeComboBoxChange(Sender: TObject);
-    procedure ScreenNumberComboBoxChange(Sender: TObject);
+    procedure ScreenSpinEditChange(Sender: TObject);
     procedure HD44780RadioButtonClick(Sender: TObject);
     procedure MatrixOrbitalRadioButtonClick(Sender: TObject);
     procedure WinampListBoxClick(Sender: TObject);
@@ -339,6 +340,7 @@ begin
   end;
   Reg.Free;
   Names.Free;
+  COMPortComboBox.Items.Clear;
   for LoopCounter := 1 to 255 do begin
     if ComPorts[LoopCounter] then
       COMPortComboBox.Items.Add('COM'+IntToStr(LoopCounter));
@@ -387,7 +389,8 @@ begin
 
   //application.ProcessMessages;
 
-  ScreenNumberComboBox.itemindex := 0;
+  ScreenSpinEdit.MaxValue := MaxScreens;
+  ScreenSpinEdit.Value := 1;
   CurrentScreen := 1;
   LoadScreen( CurrentScreen );   // setup screen in setup form
   LCDSmartieDisplayForm.ChangeScreen(CurrentScreen);   // setup screen in main form
@@ -477,7 +480,12 @@ begin
   COMPortComboBox.ItemIndex := iSelection;
 
   BaudRateComboBox.ItemIndex := config.baudrate;
-  LCDSizeComboBox.itemindex := config.sizeOption-1;
+
+  LCDSizeComboBox.Items.Clear;
+  for i := 1 to MaxScreenSizes do
+    LCDSizeComboBox.Items.Add(ScreenSizes[i].SizeName);
+  LCDSizeComboBox.itemindex := config.ScreenSize-1;
+
   LCDSizeComboBoxChange(Sender);
 
   InternetRefreshTimeSpinEdit.Value := config.newsRefresh;
@@ -714,12 +722,11 @@ begin
   CenterLine4CheckBox.Checked := ascreen.center;
 end;
 
-procedure TSetupForm.ScreenNumberComboBoxChange(Sender: TObject);
+procedure TSetupForm.ScreenSpinEditChange(Sender: TObject);
 begin
   SaveScreen(CurrentScreen);
 
-  if ScreenNumberComboBox.itemIndex < 0 then ScreenNumberComboBox.itemIndex := 0;
-  CurrentScreen := ScreenNumberComboBox.itemindex+1;
+  CurrentScreen := ScreenSpinEdit.Value;
 
   LoadScreen(CurrentScreen);
   LCDSmartieDisplayForm.ChangeScreen(CurrentScreen);
@@ -1183,10 +1190,9 @@ end;
 
 procedure TSetupForm.GameServerEditExit(Sender: TObject);
 begin
-  if (ScreenNumberComboBox.itemIndex >= 0 ) and
-     (setupbutton >= 0) and (setupbutton <= 4) then
+  if (setupbutton >= 0) and (setupbutton <= 4) then
   begin
-    config.gameServer[ScreenNumberComboBox.itemindex + 1, setupbutton] := GameServerEdit.text;
+    config.gameServer[ScreenSpinEdit.Value, setupbutton] := GameServerEdit.text;
   end;
 end;
 
@@ -1440,7 +1446,7 @@ end;
 
 procedure TSetupForm.Line1EditEnter(Sender: TObject);
 begin
-  GameServerEdit.text := config.gameServer[ScreenNumberComboBox.itemindex + 1, 1];
+  GameServerEdit.text := config.gameServer[ScreenSpinEdit.Value, 1];
   setupbutton := 1;
   Line1Edit.color := $00A1D7A4;
   if Line2Edit.enabled= true then Line2Edit.color := clWhite
@@ -1453,7 +1459,7 @@ end;
 
 procedure TSetupForm.Line2EditEnter(Sender: TObject);
 begin
-  GameServerEdit.text := config.gameServer[ScreenNumberComboBox.itemindex + 1, 2];
+  GameServerEdit.text := config.gameServer[ScreenSpinEdit.Value, 2];
   setupbutton := 2;
   Line2Edit.color := $00A1D7A4;
   if Line1Edit.enabled= true then Line1Edit.color := clWhite
@@ -1466,7 +1472,7 @@ end;
 
 procedure TSetupForm.Line3EditEnter(Sender: TObject);
 begin
-  GameServerEdit.text := config.gameServer[ScreenNumberComboBox.itemindex + 1, 3];
+  GameServerEdit.text := config.gameServer[ScreenSpinEdit.Value, 3];
   setupbutton := 3;
   Line3Edit.color := $00A1D7A4;
   if Line2Edit.enabled= true then Line2Edit.color := clWhite
@@ -1479,7 +1485,7 @@ end;
 
 procedure TSetupForm.Line4EditEnter(Sender: TObject);
 begin
-  GameServerEdit.text := config.gameServer[ScreenNumberComboBox.itemindex + 1, 4];
+  GameServerEdit.text := config.gameServer[ScreenSpinEdit.Value, 4];
   setupbutton := 4;
   Line4Edit.color := $00A1D7A4;
   if Line2Edit.enabled= true then Line2Edit.color := clWhite
@@ -1632,7 +1638,7 @@ begin
   config.refreshRate := ProgramRefreshIntervalSpinEdit.Value;
   config.setiEmail := SetiAtHomeEmailEdit.text;
 
-  config.sizeOption := LCDSizeComboBox.itemindex + 1;
+  config.ScreenSize := LCDSizeComboBox.itemindex + 1;
   config.randomScreens := RandomizeScreensCheckBox.checked;
   config.newsRefresh := InternetRefreshTimeSpinEdit.Value;
   config.foldUsername := FoldingAtHomeEmailEdit.text;
@@ -1675,7 +1681,7 @@ begin
   config.httpProxy := WebProxyServerEdit.text;
   config.httpProxyPort := StrToInt(WebProxyPortEdit.text);
 
-  SaveScreen(ScreenNumberComboBox.itemindex + 1);
+  SaveScreen(ScreenSpinEdit.Value);
   LCDSmartieDisplayForm.HTTPUpdateTimer.interval := 1000;
   LCDSmartieDisplayForm.GameUpdateTimer.interval := 1000;
   LCDSmartieDisplayForm.MBMUpdateTimer.interval := 1000;
@@ -1776,7 +1782,7 @@ begin
       if pos('$MObutton', VariableEdit.text) <> 0 then VariableEdit.text := NoVariable;
       LeftPageControl.ActivePage := WinampTabSheet;
     end;
-    GameServerEdit.text := config.gameServer[ScreenNumberComboBox.itemindex + 1, 1];
+    GameServerEdit.text := config.gameServer[ScreenSpinEdit.Value, 1];
     setupbutton := 1;
     Line1Edit.color := $00A1D7A4;
     if Line2Edit.enabled= true then Line2Edit.color := clWhite

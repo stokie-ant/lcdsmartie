@@ -1,6 +1,6 @@
 object SetupForm: TSetupForm
-  Left = 233
-  Top = 237
+  Left = 228
+  Top = 330
   Anchors = []
   BiDiMode = bdLeftToRight
   BorderIcons = []
@@ -27,7 +27,7 @@ object SetupForm: TSetupForm
     Top = 0
     Width = 233
     Height = 409
-    ActivePage = GameStatsTabSheet
+    ActivePage = WinampTabSheet
     Font.Charset = ANSI_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
@@ -1149,10 +1149,23 @@ object SetupForm: TSetupForm
         end
         object Label18: TLabel
           Left = 200
-          Top = 20
+          Top = 19
           Width = 49
           Height = 13
           Caption = 'Theme nr.'
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          ParentFont = False
+        end
+        object ScreenLabel: TLabel
+          Left = 8
+          Top = 19
+          Width = 37
+          Height = 13
+          Caption = 'Screen:'
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
           Font.Height = -11
@@ -1169,7 +1182,7 @@ object SetupForm: TSetupForm
           Caption = ' '
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 7
+          TabOrder = 6
         end
         object DontScrollLine2CheckBox: TCheckBox
           Left = 436
@@ -1180,7 +1193,7 @@ object SetupForm: TSetupForm
           Caption = ' '
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 11
+          TabOrder = 10
         end
         object DontScrollLine3CheckBox: TCheckBox
           Left = 436
@@ -1191,7 +1204,7 @@ object SetupForm: TSetupForm
           Caption = ' '
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 15
+          TabOrder = 14
         end
         object DontScrollLine4CheckBox: TCheckBox
           Left = 436
@@ -1202,7 +1215,7 @@ object SetupForm: TSetupForm
           Caption = ' '
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 19
+          TabOrder = 18
         end
         object GroupBox4: TGroupBox
           Left = 464
@@ -1210,7 +1223,7 @@ object SetupForm: TSetupForm
           Width = 2
           Height = 161
           Enabled = False
-          TabOrder = 22
+          TabOrder = 21
         end
         object ContinueLine1CheckBox: TCheckBox
           Left = 480
@@ -1221,7 +1234,7 @@ object SetupForm: TSetupForm
           Caption = ' '
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 8
+          TabOrder = 7
           OnClick = ContinueLine1CheckBoxClick
         end
         object ContinueLine2CheckBox: TCheckBox
@@ -1233,7 +1246,7 @@ object SetupForm: TSetupForm
           Caption = ' '
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 12
+          TabOrder = 11
           OnClick = ContinueLine2CheckBoxClick
         end
         object ContinueLine3CheckBox: TCheckBox
@@ -1245,7 +1258,7 @@ object SetupForm: TSetupForm
           Caption = ' '
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 16
+          TabOrder = 15
           OnClick = ContinueLine3CheckBoxClick
         end
         object GroupBox5: TGroupBox
@@ -1254,7 +1267,7 @@ object SetupForm: TSetupForm
           Width = 2
           Height = 161
           Enabled = False
-          TabOrder = 23
+          TabOrder = 22
         end
         object CenterLine1CheckBox: TCheckBox
           Left = 528
@@ -1265,7 +1278,7 @@ object SetupForm: TSetupForm
           Caption = ' '
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 9
+          TabOrder = 8
         end
         object CenterLine2CheckBox: TCheckBox
           Left = 528
@@ -1276,7 +1289,7 @@ object SetupForm: TSetupForm
           Caption = ' '
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 13
+          TabOrder = 12
         end
         object CenterLine3CheckBox: TCheckBox
           Left = 528
@@ -1287,7 +1300,7 @@ object SetupForm: TSetupForm
           Caption = ' '
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 17
+          TabOrder = 16
         end
         object CenterLine4CheckBox: TCheckBox
           Left = 528
@@ -1298,7 +1311,7 @@ object SetupForm: TSetupForm
           Caption = ' '
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 20
+          TabOrder = 19
         end
         object GroupBox6: TGroupBox
           Left = 424
@@ -1306,11 +1319,11 @@ object SetupForm: TSetupForm
           Width = 2
           Height = 57
           Enabled = False
-          TabOrder = 24
+          TabOrder = 23
         end
         object ThemeNumberSpinEdit: TSpinEdit
           Left = 256
-          Top = 16
+          Top = 15
           Width = 41
           Height = 22
           Font.Charset = ANSI_CHARSET
@@ -1322,7 +1335,7 @@ object SetupForm: TSetupForm
           MaxValue = 10
           MinValue = 1
           ParentFont = False
-          TabOrder = 1
+          TabOrder = 0
           Value = 1
         end
         object TransitionButton: TButton
@@ -1340,7 +1353,7 @@ object SetupForm: TSetupForm
           ParentFont = False
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 2
+          TabOrder = 1
           OnClick = TransitionButtonClick
         end
         object StickyCheckbox: TCheckBox
@@ -1358,7 +1371,7 @@ object SetupForm: TSetupForm
           ParentFont = False
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 4
+          TabOrder = 3
           OnClick = StickyCheckboxClick
         end
         object SkipScreenComboBox: TComboBox
@@ -1379,7 +1392,7 @@ object SetupForm: TSetupForm
           ParentFont = False
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 5
+          TabOrder = 4
           OnChange = SkipScreenComboBoxChange
           Items.Strings = (
             'Don'#39't skip'
@@ -1392,52 +1405,9 @@ object SetupForm: TSetupForm
             'Not connected'
             'Connected')
         end
-        object ScreenNumberComboBox: TComboBox
-          Left = 77
-          Top = 16
-          Width = 81
-          Height = 21
-          Hint = 'Selects the current screen for editing'
-          Style = csDropDownList
-          DropDownCount = 10
-          Font.Charset = ANSI_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -11
-          Font.Name = 'Tahoma'
-          Font.Style = []
-          ItemHeight = 13
-          ItemIndex = 0
-          ParentFont = False
-          ParentShowHint = False
-          ShowHint = True
-          TabOrder = 0
-          Text = 'Screen 1'
-          OnChange = ScreenNumberComboBoxChange
-          Items.Strings = (
-            'Screen 1'
-            'Screen 2'
-            'Screen 3'
-            'Screen 4'
-            'Screen 5'
-            'Screen 6'
-            'Screen 7'
-            'Screen 8'
-            'Screen 9'
-            'Screen 10'
-            'Screen 11'
-            'Screen 12'
-            'Screen 13'
-            'Screen 14'
-            'Screen 15'
-            'Screen 16'
-            'Screen 17'
-            'Screen 18'
-            'Screen 19'
-            'Screen 20')
-        end
         object ScreenEnabledCheckBox: TCheckBox
-          Left = 8
-          Top = 16
+          Left = 128
+          Top = 14
           Width = 65
           Height = 25
           Hint = 'Show this screen automatically'
@@ -1450,7 +1420,7 @@ object SetupForm: TSetupForm
           ParentFont = False
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 21
+          TabOrder = 20
         end
         object TimeToShowSpinEdit: TSpinEdit
           Left = 77
@@ -1471,7 +1441,7 @@ object SetupForm: TSetupForm
           ParentFont = False
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 3
+          TabOrder = 2
           Value = 3
         end
         object Line1Edit: TEdit
@@ -1487,7 +1457,7 @@ object SetupForm: TSetupForm
           Font.Name = 'Fixedsys'
           Font.Style = []
           ParentFont = False
-          TabOrder = 6
+          TabOrder = 5
           OnEnter = Line1EditEnter
           OnKeyDown = Line1EditKeyDown
         end
@@ -1504,7 +1474,7 @@ object SetupForm: TSetupForm
           Font.Name = 'Fixedsys'
           Font.Style = []
           ParentFont = False
-          TabOrder = 10
+          TabOrder = 9
           OnEnter = Line2EditEnter
           OnKeyDown = Line2EditKeyDown
         end
@@ -1520,7 +1490,7 @@ object SetupForm: TSetupForm
           Font.Name = 'Fixedsys'
           Font.Style = []
           ParentFont = False
-          TabOrder = 14
+          TabOrder = 13
           OnEnter = Line3EditEnter
           OnKeyDown = Line3EditKeyDown
         end
@@ -1536,9 +1506,27 @@ object SetupForm: TSetupForm
           Font.Name = 'Fixedsys'
           Font.Style = []
           ParentFont = False
-          TabOrder = 18
+          TabOrder = 17
           OnEnter = Line4EditEnter
           OnKeyDown = Line4EditKeyDown
+        end
+        object ScreenSpinEdit: TSpinEdit
+          Left = 52
+          Top = 15
+          Width = 49
+          Height = 22
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          MaxLength = 2
+          MaxValue = 20
+          MinValue = 1
+          ParentFont = False
+          TabOrder = 24
+          Value = 1
+          OnChange = ScreenSpinEditChange
         end
       end
       object ProgramSettingsGroupBox: TGroupBox
@@ -1959,19 +1947,6 @@ object SetupForm: TSetupForm
           ShowHint = True
           TabOrder = 0
           OnChange = LCDSizeComboBoxChange
-          Items.Strings = (
-            '1 x 10'
-            '1 x 16'
-            '1 x 20'
-            '1 x 24'
-            '1 x 40'
-            '2 x 16'
-            '2 x 20'
-            '2 x 24'
-            '2 x 40'
-            '4 x 16'
-            '4 x 20'
-            '4 x 40')
         end
         object HD66712RadioButton: TRadioButton
           Left = 315
