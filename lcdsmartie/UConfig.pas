@@ -19,7 +19,7 @@ unit UConfig;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UConfig.pas,v $
- *  $Revision: 1.39 $ $Date: 2006/03/03 00:53:16 $
+ *  $Revision: 1.40 $ $Date: 2006/03/03 01:32:58 $
  *****************************************************************************}
 
 interface
@@ -29,6 +29,12 @@ Uses  SysUtils;
 const
   sMyConfigFileFormatVersion = '1.0';
   sMyScreenTextSyntaxVersion = '1.0';
+
+  MaxScreens = 20;
+  MaxLines = 4;
+  MaxCols = 40;
+  MaxThemes = 10;
+  MaxActions = 99;
 
 type
   TTransitionStyle = (tsNone,tsLeftRight,tsRightLeft,tsTopBottom,tsBottomTop,tsRandomChars,tsFade);
@@ -110,11 +116,11 @@ type
     ScreenType : TScreenType;
     checkUpdates: Boolean;
     distLog: String;
-    screen: Array[1..20] of Array[1..4] of TScreenLine;
+    screen: Array[1..MaxScreens] of Array[1..MaxLines] of TScreenLine;
     winampLocation: String;
     setiEmail: String;
     contrast: Integer;
-    actionsArray: Array[1..99, 1..4] of String;
+    actionsArray: Array[1..MaxActions, 1..4] of String;
     totalactions: Integer;
     iMinFadeContrast: Integer;
     bHDAltAddressing: Boolean;
@@ -685,7 +691,7 @@ begin
       Format('%.2u', [x], localeFormat) + 'ConditionValue', '');
     actionsArray[x, 4] := initfile.ReadString('Actions', 'Action' +
       Format('%.2u', [x], localeFormat) + 'Action', '')
-  until (actionsArray[x, 1] = '') or (x = 99);
+  until (actionsArray[x, 1] = '') or (x = MaxActions);
   totalactions := x - 1;
   uiActionsLoaded := totalactions;
 

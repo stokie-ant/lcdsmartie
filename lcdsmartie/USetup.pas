@@ -19,7 +19,7 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.44 $ $Date: 2006/03/03 00:53:16 $
+ *  $Revision: 1.45 $ $Date: 2006/03/03 01:32:58 $
  *****************************************************************************}
 
 interface
@@ -603,7 +603,7 @@ begin
   config.screen[scr][3].text := Line3Edit.text;
   config.screen[scr][4].text := Line4Edit.text;
 
-  for y := 1 to 4 do
+  for y := 1 to MaxLines do
   begin
     config.screen[scr][y].enabled := ScreenEnabledCheckBox.checked;
     config.screen[scr][y].skip := SkipScreenComboBox.itemindex;
@@ -1861,7 +1861,7 @@ begin
   Style := config.screen[CurrentScreen][1].TransitionStyle;
   Time := config.screen[CurrentScreen][1].TransitionTime;
   if DoTransitionConfigForm(Style,Time) then begin
-    for Loop := 1 to 4 do begin
+    for Loop := 1 to MaxLines do begin
       config.screen[CurrentScreen][Loop].TransitionStyle := Style;
       config.screen[CurrentScreen][Loop].TransitionTime := Time;
     end;

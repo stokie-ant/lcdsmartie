@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.71 $ $Date: 2006/03/03 00:53:16 $
+ *  $Revision: 1.72 $ $Date: 2006/03/03 01:32:58 $
  *****************************************************************************}
 
 interface
@@ -184,25 +184,25 @@ type
     procedure customchar(fline: String);
   private
     InitialWindowState: TInitialWindowState;
-    ScreenLCD: Array[1..4] of ^TPanel;
+    ScreenLCD: Array[1..MaxLines] of ^TPanel;
+    parsedLine: Array[1..MaxLines] of String;
+    scrollPos: Array[1..MaxLines] of Integer;
+    tmpline: Array [1..MaxLines] of String;
+    Oldline: Array[1..MaxLines] of String;
+    Newline: Array[1..MaxLines] of String;
+    GuessArray: Array[1..MaxLines, 1..MaxCols] of Boolean;
     canflash: Boolean;
     iSavedHeight, iSavedWidth: Integer;
     iSavedColorMode: Integer;
-    didAction: Array [1..99] of Boolean;
+    didAction: Array [1..MaxActions] of Boolean;
     file1: String;
-    parsedLine: Array[1..4] of String;
-    scrollPos: Array[1..4] of Integer;
     line2scroll: Integer;
-    tmpline: Array [1..4] of String;
     forgroundcoloroff, forgroundcoloron, backgroundcoloroff,
       backgroundcoloron: Integer;
-    Oldline: Array[1..4] of String;
-    Newline: Array[1..4] of String;
     Gotnewlines: Boolean;
     TransStart: Cardinal;
     TransitionTemp, TransitionTemp2 : TTransitionStyle;
     TransCycle, TempTransitionTimerInterval : Integer;
-    GuessArray: Array[1..4, 1..40] of Boolean;
     activetheme: Integer; canscroll: Boolean;
     GPO: Array [1..8] of Boolean;
     customChars: Array [1..8, 0..7] of Byte;
@@ -565,7 +565,7 @@ begin
   Line4LeftScrollImage.left := 352 - iDelta;
   BarRightImage.left := 266 - iDelta;
   HideImage.left := 323 - iDelta;
-  for h := 1 to 4 do
+  for h := 1 to MaxLines do
   begin
     ScreenLCD[h].width := 321 - iDelta;
   end;
@@ -730,7 +730,7 @@ var
   sLeftValue, sRightValue, sAction: String;
   bNum: Boolean;
   bDoAction: Boolean;
-  doAction: Array[1..99] of Boolean;
+  doAction: Array[1..MaxActions] of Boolean;
   iLeftStrLen: Integer;
   iRightStrLen: Integer;
 
@@ -851,7 +851,7 @@ end;
 procedure TLCDSmartieDisplayForm.NextScreenTimerTimer(Sender: TObject);
 //NEXT SCREEN!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 var
-  xx, x: Integer;
+  ScreenCount, TotalScreenCount: Integer;
   y: Integer;
   ascreen: TScreenLine;
   tmpscreen: Integer;
@@ -859,39 +859,39 @@ var
 
 begin
   tmpScreen := activeScreen;
-  x := 0;
-  xx := 0;
+  TotalScreenCount := 0;
+  ScreenCount := 0;
   FindAnotherScreen := true;
   while FindAnotherScreen do begin
-    x := x + 1;
-    xx := xx + 1;
-    if (config.randomScreens) and (x < 500) then
+    inc(TotalScreenCount);
+    inc(ScreenCount);
+    if (config.randomScreens) and (TotalScreenCount < 500) then
     begin
-      tmpScreen := round(random(20) + 1);
-      if tmpScreen > 20 then tmpScreen := 20;
+      tmpScreen := round(random(MaxScreens) + 1);
+      if tmpScreen > MaxScreens then tmpScreen := MaxScreens;
       if tmpScreen < 1 then tmpScreen := 1;
     end
     else
     begin
       tmpScreen := tmpScreen + NumberOfScreensToShift;
-      if tmpScreen > 20 then tmpScreen := 1;
-      if tmpScreen < 1 then tmpScreen := 20;
+      if tmpScreen > MaxScreens then tmpScreen := 1;
+      if tmpScreen < 1 then tmpScreen := MaxScreens;
     end;
 
-    if xx> 22 then
+    if ScreenCount > (MaxScreens+2) then
     begin
       activetheme := activetheme + 1;
-      xx := 0;
+      ScreenCount := 0;
     end;
-    if (((x> 242) and (not config.randomScreens)) or ((x> 1000) and
+    if (((TotalScreenCount > (MaxScreens+2)*(MaxThemes+1)) and (not config.randomScreens)) or ((TotalScreenCount> 1000) and
       (config.randomScreens))) then
     begin
 
       // It seems that we are in a endless loop because no screen is able to be
       // displayed.  Force screen 1 to be displayed.
-      x := 0;
+      TotalScreenCount := 0;
 
-      for y := 1 to 4 do
+      for y := 1 to MaxLines do
       begin
         config.screen[1][y].enabled := True;
         config.screen[1][y].skip := 0;
@@ -1016,10 +1016,10 @@ begin
     if (not TransitionTimer.enabled) then SendCustomChars();
     Data.ScreenEnd();
 
-    for h := 1 to 4 do
+    for h := 1 to MaxLines do
     begin
       // handle continuing on the next line (if req)
-      if (h < 4) and (config.screen[activeScreen][h].contNextLine) then
+      if (h < MaxLines) and (config.screen[activeScreen][h].contNextLine) then
       begin
         parsedLine[h + 1] := copy(parsedLine[h], 1 + config.width,
           length(parsedLine[h]));
@@ -1217,7 +1217,7 @@ end;
 procedure TLCDSmartieDisplayForm.NextTheme1Click(Sender: TObject);
 begin
   activetheme := activetheme + 1;
-  if activetheme = 10 then activetheme := 0;
+  if activetheme = MaxThemes then activetheme := 0;
   frozen := true;
   freeze();
 end;
@@ -1225,7 +1225,7 @@ end;
 procedure TLCDSmartieDisplayForm.LastTheme1Click(Sender: TObject);
 begin
   activetheme := activetheme-1;
-  if activetheme=-1 then activetheme := 9;
+  if activetheme=-1 then activetheme := MaxThemes-1;
   frozen := true;
   freeze();
 end;
@@ -1701,7 +1701,7 @@ begin
     try
       iTemp := StrToInt(copy(sAction, pos('EnableScreen(', sAction) + 13,
         pos(')', sAction)-pos('EnableScreen(', sAction)-13));
-      if (iTemp >= 1) and (iTemp <= 20) then
+      if (iTemp >= 1) and (iTemp <= MaxScreens) then
       begin
         if (bDoAction) then
           ChangeScreen(iTemp);
@@ -1718,7 +1718,7 @@ begin
     try
       iTemp := StrToInt(copy(sAction, pos('DisableScreen(', sAction) + 14,
         pos(')', sAction)-pos('DisableScreen(', sAction)-14));
-      if (iTemp >= 1) and (iTemp <= 20) then
+      if (iTemp >= 1) and (iTemp <= MaxScreens) then
       begin
         config.Screen[iTemp][1].Enabled := not bDoAction;
       end;
@@ -1752,7 +1752,7 @@ begin
     if (Pos('NextTheme', sAction) <> 0) then
     begin
       activetheme := activetheme + 1;
-      if activetheme = 10 then activetheme := 0;
+      if activetheme = MaxThemes then activetheme := 0;
       frozen := true;
       freeze();
     end;
@@ -1760,7 +1760,7 @@ begin
     if (pos('LastTheme', sAction) <> 0) then
     begin
       activetheme := activetheme-1;
-      if activetheme=-1 then activetheme := 9;
+      if activetheme=-1 then activetheme := MaxThemes-1;
       frozen := true;
       freeze();
     end;
@@ -1784,7 +1784,7 @@ begin
       try
         iTemp := StrToInt(copy(sAction, pos('GotoTheme(', sAction) + 10,
           pos(')', sAction)-pos('GotoTheme(', sAction)-10))-1;
-        if (iTemp >= 0) and (iTemp < 10) then
+        if (iTemp >= 0) and (iTemp < MaxThemes) then
           activetheme := iTemp;
       except
         on EConvertError do begin {ignore} end;
@@ -1797,7 +1797,7 @@ begin
       try
         iTemp := StrToInt(copy(sAction, pos('GotoScreen(', sAction) + 11,
           pos(')', sAction)-pos('GotoScreen(', sAction)-11));
-        if (iTemp >= 1) and (iTemp <= 20) then
+        if (iTemp >= 1) and (iTemp <= MaxScreens) then
           ChangeScreen(iTemp);
       except
         on EConvertError do begin {ignore} end;
@@ -1973,7 +1973,7 @@ procedure TLCDSmartieDisplayForm.ResetScrollPositions;
 var
   y: Integer;
 begin
-  for y := 1 to 4 do
+  for y := 1 to MaxLines do
   begin
     scrollPos[y] := 1; // Reset scroll postion.
   end;
@@ -2094,7 +2094,7 @@ begin
   end; // not background on
 
   LCDSmartieDisplayForm.Color := ScreenColor;
-  for Loop := 1 to 4 do begin
+  for Loop := 1 to MaxLines do begin
     ScreenLCD[Loop].Color := ScreenColor;
     ScreenLCD[Loop].Font.Color := FontColor;
   end;
@@ -2133,7 +2133,7 @@ begin
   activeScreen := scr;
   ascreen := config.screen[activeScreen][1];
 
-  for y := 1 to 4 do
+  for y := 1 to MaxLines do
   begin
     oldline[y] := UnescapeAmp(ScreenLCD[y].Caption);
   end;
@@ -2145,7 +2145,7 @@ begin
   TransCycle := 0;
   iLastRandomTranCycle := 0;
 
-  for y := 1 to 40 do
+  for y := 1 to MaxCols do
   begin
     GuessArray[1, y] := false;
     GuessArray[2, y] := false;
@@ -2209,7 +2209,7 @@ end;
 
 procedure TLCDSmartieDisplayForm.DoTransitions;
 var
-  GuessRegister: Array[1..4] of String;
+  GuessRegister: Array[1..MaxLines] of String;
   tempstr: String;
   line: Integer;
   maxTransCycles: Integer;
@@ -2303,7 +2303,7 @@ begin
 
     tsRandomChars : begin //random blocks
 
-      for x := 1 to 4 do
+      for x := 1 to MaxLines do
       begin
         GuessRegister[x] := copy(UnescapeAmp(ScreenLCD[x].caption) +
           '                                        ', 1, config.width);
@@ -2312,7 +2312,7 @@ begin
       for x := iLastRandomTranCycle to
         round((config.width/maxTransCycles)*TransCycle)-1 do
       begin
-        for line := 1 to 4 do
+        for line := 1 to MaxLines do
         begin
           Guess := DoGuess(line);
           GuessRegister[line] := copy(GuessRegister[line], 1, Guess-1) +
@@ -2321,7 +2321,7 @@ begin
         end;
       end;
       iLastRandomTranCycle := round((config.width/maxTransCycles)*TransCycle);
-      for x := 1 to 4 do
+      for x := 1 to MaxLines do
       begin
         ScreenLCD[x].caption := EscapeAmp(GuessRegister[x]);
       end;
@@ -2360,7 +2360,7 @@ begin
         begin
     // raise the contrast over the second half
 
-          for x := 1 to 4 do
+          for x := 1 to MaxLines do
           begin
             ScreenLCD[x].Caption := EscapeAmp(newline[x]);
           end;

@@ -27,7 +27,7 @@ object SetupForm: TSetupForm
     Top = 0
     Width = 233
     Height = 409
-    ActivePage = WinampTabSheet
+    ActivePage = GameStatsTabSheet
     Font.Charset = ANSI_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
@@ -2033,7 +2033,7 @@ object SetupForm: TSetupForm
           Top = 112
           Width = 121
           Height = 17
-          Hint = 'Select if your display is controlled by IRTrans'
+          Hint = 'Select if your display is interfaced through a DLL'
           Caption = 'Display Plugin (DLL)'
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
@@ -2051,7 +2051,7 @@ object SetupForm: TSetupForm
           Top = 112
           Width = 113
           Height = 17
-          Hint = 'Set IRTrans display specific settings.'
+          Hint = 'Set display DLL specific settings.'
           Caption = 'Plugin Settings'
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
