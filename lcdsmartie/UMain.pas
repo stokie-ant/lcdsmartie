@@ -9,7 +9,7 @@ unit UMain;
  *  as published by the Free Software Foundation; either version 2
  *  of the License, or (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful, 
+ *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.73 $ $Date: 2006/03/03 15:57:22 $
+ *  $Revision: 1.74 $ $Date: 2006/03/03 20:59:00 $
  *****************************************************************************}
 
 interface
@@ -251,7 +251,7 @@ implementation
 
 uses
   Windows, SysUtils, Graphics, Dialogs, ShellAPI, mmsystem, StrUtils,
-  USetup, UCredits, ULCD_MO, ULCD_CF, ULCD_HD, ULCD_Test, {ULCD_IR, }ULCD_DLL,
+  USetup, UCredits, {ULCD_MO, ULCD_CF, ULCD_HD, ULCD_Test, ULCD_IR, }ULCD_DLL,
   ExtActns, UUtils;
 
 
@@ -696,6 +696,7 @@ begin
   LPTStartupTimer.Enabled := false;
 
   // check just in case they've changed they mind in the mean time.
+(*
   if (config.ScreenType in [stHD,stHD2]) then
   begin
 
@@ -716,7 +717,7 @@ begin
     customchar('3, 16, 16, 16, 16, 16, 16, 31, 16');
     customchar('4, 28, 28, 28, 28, 28, 28, 31, 28');
   end;
-
+*)
   UpdateTimersState(PerformingSetup);
 end;
 
@@ -1037,11 +1038,14 @@ begin
       // just in case we failed to get the expected number of cycles (due to
       // high cpu loads etc).
       ResetContrast := False;
+{
       case (config.ScreenType) of
         stMO : Lcd.setContrast(config.contrast);
         stCF : Lcd.setContrast(config.CF_contrast);
         stDLL : Lcd.setContrast(config.DLL_contrast);
       end; // case
+}
+      Lcd.setContrast(config.DLL_contrast);
     end;
 
     if (canscroll) then
@@ -1464,10 +1468,6 @@ end;
 
 
 procedure TLCDSmartieDisplayForm.InitLCD();
-const
-  baudRates: array [0..14] of Cardinal =(CBR_110, CBR_300, CBR_600, CBR_1200, CBR_2400,
-    CBR_4800, CBR_9600, CBR_14400, CBR_19200, CBR_38400, CBR_56000, CBR_57600,
-    CBR_115200, CBR_128000, CBR_256000);
 var
   i: Integer;
 begin
@@ -1479,6 +1479,7 @@ begin
 
   // start connectivity
   try
+(*
     case config.ScreenType of
       stMO : begin
         if config.isUsbPalm then
@@ -1500,6 +1501,8 @@ begin
       end;
       else Lcd := TLCD.Create(); // catchall case
     end; // case
+*)
+    Lcd := TLCD_DLL.CreateDLL(config.width,config.height,config.DisplayDLLName,config.DisplayDLLParameters);
   except
     on E: Exception do
     begin
@@ -1509,7 +1512,7 @@ begin
   end;
 
   // load custom characters if the display supports it
-  if (config.ScreenType in [stMO,stCF,{stIR,}stDLL]) then
+//  if (config.ScreenType in [stMO,stCF,{stIR,}stDLL]) then
   begin
     customchar('1, 12, 18, 18, 12, 0, 0, 0, 0');
     customchar('2, 31, 31, 31, 31, 31, 31, 31, 31');
@@ -1518,6 +1521,7 @@ begin
   end;
 
   // set brightness and contrast if the display supports it
+(*
   case config.ScreenType of
     stMO : begin
       Lcd.setContrast(config.contrast);
@@ -1533,6 +1537,9 @@ begin
       Lcd.setBrightness(config.DLL_brightness);
     end;
   end; // case
+*)
+  Lcd.setContrast(config.DLL_contrast);
+  Lcd.setBrightness(config.DLL_brightness);
 
   DoFullDisplayDraw();
 
@@ -1670,7 +1677,7 @@ begin
     end;
   end;
 
-  if (pos('GPO(', sAction) <> 0) and (config.ScreenType in [stMO,stDLL]) then
+  if (pos('GPO(', sAction) <> 0) {and (config.ScreenType in [stMO,stDLL])} then
   begin
     temp1 := copy(sAction, pos('(', sAction) + 1,
       pos(',', sAction)-pos('(', sAction)-1);
@@ -1888,7 +1895,7 @@ begin
       end;
     end;
 
-    if (pos('GPOFlash(', sAction) <> 0) and (config.ScreenType in [stMO,stDLL]) then
+    if (pos('GPOFlash(', sAction) <> 0) {and (config.ScreenType in [stMO,stDLL])} then
     begin
       try
         whatGPO := StrToInt(copy(sAction, pos('(', sAction) + 1,
@@ -2340,18 +2347,21 @@ begin
         if (TransCycle < maxTransCycles/2) then
         begin
 
+{
           case (config.ScreenType) of
             stCF : x := config.CF_contrast;
             stDLL : x := config.DLL_contrast;
             else x := config.contrast;
           end;
+}
+          x := config.DLL_contrast;
 
-          iContrast := round(x-(TransCycle*(x-config.iMinFadeContrast)
+          iContrast := round(x-(TransCycle*(x-config.xiMinFadeContrast)
             / (MaxTransCycles/2)));
 
 
-          if iContrast < config.iMinFadeContrast then
-            iContrast := config.iMinFadeContrast
+          if iContrast < config.xiMinFadeContrast then
+            iContrast := config.xiMinFadeContrast
           else
             if iContrast > x then iContrast := x;
           Lcd.setContrast(iContrast);
@@ -2365,20 +2375,23 @@ begin
             ScreenLCD[x].Caption := EscapeAmp(newline[x]);
           end;
 
+{
           case (config.ScreenType) of
             stCF : x := config.CF_contrast;
             stDLL : x := config.DLL_contrast;
             else x := config.contrast;
           end;
+}
+          x := config.DLL_contrast;
 
           iContrast := round((TransCycle-(MaxTransCycles/2))
-            * (x-config.iMinFadeContrast)/(MaxTransCycles/2))
-            + config.iMinFadeContrast;
+            * (x-config.xiMinFadeContrast)/(MaxTransCycles/2))
+            + config.xiMinFadeContrast;
 
           if iContrast > x then iContrast := x
           else
-            if iContrast < config.iMinFadeContrast then
-              iContrast := config.iMinFadeContrast;
+            if iContrast < config.xiMinFadeContrast then
+              iContrast := config.xiMinFadeContrast;
           Lcd.setContrast(iContrast);
         end;
         ResetContrast := True;// Just to be sure the contrast is back to correct levels.

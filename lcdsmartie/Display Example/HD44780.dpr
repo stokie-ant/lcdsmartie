@@ -745,7 +745,9 @@ end;
 
 function DISPLAYDLL_Usage : pchar; stdcall;
 begin
-  Result := pchar('Usage: PORT[,m,a1,a2]'+#13#10+'PORT = LPT1 or $378'+#13#10+'a1 = 1x16 addressing'+#13#10+'a2 = KS0073 addressing');
+  Result := pchar('Usage: PORT[,m,a1,a2]'+#13#10+
+                  'PORT = LPT1 or $378    m = timing multiplier'+#13#10+
+                  'a1 = 1x16 addressing   a2 = KS0073 addressing');
 end;
 
 function DISPLAYDLL_DriverName : pchar; stdcall;

@@ -19,16 +19,16 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.46 $ $Date: 2006/03/03 15:58:04 $
+ *  $Revision: 1.47 $ $Date: 2006/03/03 20:59:00 $
  *****************************************************************************}
 
 interface
 
 uses Dialogs, Grids, StdCtrls, Controls, Spin, Buttons, ComCtrls, Classes,
-  Forms;
+  Forms, ExtCtrls;
 
 const
-  USBPALM = 'USB Palm';
+//  USBPALM = 'USB Palm';
   NoVariable = 'Variable: ';
 
 type
@@ -193,7 +193,7 @@ type
     HideOnStartup: TCheckBox;
     Label2: TLabel;
     ColorSchemeComboBox: TComboBox;
-    LCDSizeComboBox: TComboBox;
+    xLCDSizeComboBox: TComboBox;
     SkipScreenComboBox: TComboBox;
     IRTransRadioButton: TRadioButton;
     IRTransConfigButton: TButton;
@@ -201,11 +201,26 @@ type
     DLLConfigButton: TButton;
     ScreenLabel: TLabel;
     ScreenSpinEdit: TSpinEdit;
+    DisplayGroup2: TGroupBox;
+    Panel1: TPanel;
+    DisplayPageControl: TPageControl;
+    PluginTabsheet: TTabSheet;
+    DisplayPluginsLabel: TLabel;
+    IDLabel: TLabel;
+    Label14: TLabel;
+    UsageLabel: TLabel;
+    DisplayPluginList: TComboBox;
+    ParametersEdit: TEdit;
+    ScreenTabsheet: TTabSheet;
+    Label3: TLabel;
+    LCDSizeComboBox: TComboBox;
+    GroupBox3: TGroupBox;
+    ContrastTrackBar: TTrackBar;
+    GroupBox1: TGroupBox;
+    BrightnessTrackBar: TTrackBar;
     procedure FormShow(Sender: TObject);
     procedure LCDSizeComboBoxChange(Sender: TObject);
     procedure ScreenSpinEditChange(Sender: TObject);
-    procedure HD44780RadioButtonClick(Sender: TObject);
-    procedure MatrixOrbitalRadioButtonClick(Sender: TObject);
     procedure WinampListBoxClick(Sender: TObject);
     procedure InsertButtonClick(Sender: TObject);
     procedure SysInfoListBoxClick(Sender: TObject);
@@ -215,8 +230,19 @@ type
     procedure MiscListBoxClick(Sender: TObject);
     procedure LeftPageControlChange(Sender: TObject);
     procedure GameServerEditExit(Sender: TObject);
+{
+    procedure HD66712RadioButtonClick(Sender: TObject);
+    procedure HD44780RadioButtonClick(Sender: TObject);
+    procedure MatrixOrbitalRadioButtonClick(Sender: TObject);
     procedure MatrixOrbitalConfigButtonClick(Sender: TObject);
     procedure CrystalFontzRadioButtonClick(Sender: TObject);
+    procedure CrystalFontzConfigButtonClick(Sender: TObject);
+    procedure HD44780ConfigButtonClick(Sender: TObject);
+    procedure IRTransRadioButtonClick(Sender: TObject);
+    procedure IRTransConfigButtonClick(Sender: TObject);
+    procedure DLLRadioButtonClick(Sender: TObject);
+    procedure DLLConfigButtonClick(Sender: TObject);
+}
     procedure SetiAtHomeListBoxClick(Sender: TObject);
     procedure DistributedNetBrowseButtonClick(Sender: TObject);
     procedure EmailListBoxClick(Sender: TObject);
@@ -225,14 +251,12 @@ type
     procedure ContinueLine2CheckBoxClick(Sender: TObject);
     procedure ContinueLine3CheckBoxClick(Sender: TObject);
     procedure WinampLocationBrowseButtonClick(Sender: TObject);
-    procedure CrystalFontzConfigButtonClick(Sender: TObject);
     procedure GamestatsListBoxClick(Sender: TObject);
     procedure Line1EditEnter(Sender: TObject);
     procedure Line2EditEnter(Sender: TObject);
     procedure Line3EditEnter(Sender: TObject);
     procedure Line4EditEnter(Sender: TObject);
     procedure NetworkStatsListBoxClick(Sender: TObject);
-    procedure HD44780ConfigButtonClick(Sender: TObject);
     procedure FoldingAtHomeListBoxClick(Sender: TObject);
     procedure ApplyButtonClick(Sender: TObject);
     procedure OKButtonClick(Sender: TObject);
@@ -243,7 +267,6 @@ type
     procedure ActionDeleteButtonClick(Sender: TObject);
     procedure ButtonsListBoxClick(Sender: TObject);
     procedure TransitionButtonClick(Sender: TObject);
-    procedure HD66712RadioButtonClick(Sender: TObject);
     procedure Line4EditKeyDown(Sender: TObject; var Key: Word; Shift:
       TShiftState);
     procedure Line1EditKeyDown(Sender: TObject; var Key: Word; Shift:
@@ -259,11 +282,11 @@ type
     procedure COMPortComboBoxChange(Sender: TObject);
     procedure BaudRateComboBoxChange(Sender: TObject);
     procedure ColorSchemeComboBoxChange(Sender: TObject);
-    procedure IRTransRadioButtonClick(Sender: TObject);
-    procedure IRTransConfigButtonClick(Sender: TObject);
-    procedure DLLRadioButtonClick(Sender: TObject);
-    procedure DLLConfigButtonClick(Sender: TObject);
+    procedure DisplayPluginListChange(Sender: TObject);
+    procedure ContrastTrackBarChange(Sender: TObject);
+    procedure BrightnessTrackBarChange(Sender: TObject);
   private
+    DLLPath : string;
     setupbutton: Integer;
     EMailAccountComboboxTemp: Integer;
     CurrentScreen: Integer;
@@ -271,6 +294,7 @@ type
     procedure SaveScreen(scr: Integer);
     procedure LoadScreen(scr: Integer);
     procedure DetectCommPorts;
+    procedure LoadHint(DisplayDLLName : string);
   end;
 
 function DoSetupForm : boolean;
@@ -280,8 +304,8 @@ function PerformingSetup : boolean;
 implementation
 
 uses
-  Windows, ShellApi, graphics, sysutils, Registry, UMain, UMOSetup,
-  UCFSetup, UPara, {UIRSetup, } UDLLSetup, UInteract, UConfig, ULCD_MO,
+  Windows, ShellApi, graphics, sysutils, Registry, UMain, { UMOSetup,
+  UCFSetup, UPara, UIRSetup,  UDLLSetup, } UInteract, UConfig, {ULCD_MO,}
   StrUtils;
 
 {$R *.DFM}
@@ -347,17 +371,45 @@ begin
   end;
 end;
 
+procedure TSetupForm.LoadHint(DisplayDLLName : string);
+type
+  TUsageFunc = function : pchar; stdcall;
+var
+  MyDLL : HMODULE;
+  UsageFunc : TUsageFunc;
+begin
+  UsageLabel.Caption := 'no parameters';
+  if FileExists(DisplayDLLName) then begin
+    try
+      MyDLL := LoadLibrary(pchar(DisplayDLLName));
+      if not (MyDll = 0) then begin
+        UsageFunc := GetProcAddress(MyDLL,pchar('DISPLAYDLL_Usage'));
+        if assigned(UsageFunc) then
+          UsageLabel.Caption := string(UsageFunc);
+        IDLabel.Caption := 'Warning: DLL may not be compatible!';
+        UsageFunc := GetProcAddress(MyDLL,pchar('DISPLAYDLL_DriverName'));
+        if assigned(UsageFunc) then
+          IDLabel.Caption := string(UsageFunc);
+        FreeLibrary(MyDLL);
+      end;
+    except
+    end;
+  end;
+end;
+
 procedure TSetupForm.FormShow(Sender: TObject);
 var
   i, blaat: Integer;
   iSelection: Integer;
   sLookFor: String;
+  SR : TSearchRec;
+  Loop,FindResult : integer;
 begin
   { Try to limit the displayed COM port to only those that are useable }
-
+{
   DetectCommPorts;
   COMPortComboBox.Items.Add(USBPALM);
-
+}
   MainPageControl.ActivePage := ScreensTabSheet;
   //if pagecontrol1.activepage = tabsheet13 then pagecontrol1.ActivePage :=
    // tabsheet1;
@@ -421,6 +473,7 @@ begin
   EmailLoginEdit.text := config.pop[1].user;
   EmailPasswordEdit.text := config.pop[1].pword;
 
+(*
   MatrixOrbitalConfigButton.enabled := false;
   CrystalFontzConfigButton.enabled := false;
   HD44780ConfigButton.enabled := false;
@@ -480,13 +533,34 @@ begin
   COMPortComboBox.ItemIndex := iSelection;
 
   BaudRateComboBox.ItemIndex := config.baudrate;
+*)
 
   LCDSizeComboBox.Items.Clear;
   for i := 1 to MaxScreenSizes do
     LCDSizeComboBox.Items.Add(ScreenSizes[i].SizeName);
   LCDSizeComboBox.itemindex := config.ScreenSize-1;
-
   LCDSizeComboBoxChange(Sender);
+
+
+  // put display plugin settings on screen
+  ContrastTrackBar.position := config.DLL_contrast;
+  BrightnessTrackBar.position := config.DLL_brightness;
+  ParametersEdit.Text := config.DisplayDLLParameters;
+  DisplayPluginList.Items.Clear;
+  DLLPath := extractfilepath(paramstr(0))+'displays\';
+  FindResult := findfirst(DLLPath+'*.dll',0,SR);
+  while (FindResult = 0) do begin
+    DisplayPluginList.Items.Add(extractfilename(SR.Name));
+    FindResult := FindNext(SR);
+  end;
+    DisplayPluginList.ItemIndex := 0;
+  for Loop := 0 to DisplayPluginList.Items.Count-1 do begin
+    if lowercase(config.DisplayDLLName) = lowercase(DisplayPluginList.Items[Loop]) then begin
+      DisplayPluginList.ItemIndex := Loop;
+      LoadHint(DLLPath+config.DisplayDLLName);
+    end;
+  end;
+  findclose(SR);
 
   InternetRefreshTimeSpinEdit.Value := config.newsRefresh;
   RandomizeScreensCheckBox.checked := config.randomScreens;
@@ -498,7 +572,7 @@ begin
 
 
   for i := 1 to 24 do ButtonsListBox.Items.Delete(1);
-  if (config.ScreenType = stMO) then
+//  if (config.ScreenType = stMO) then
   begin
     //LCDFeaturesTabSheet.Enabled := true;
     ButtonsListBox.Items.Add('FanSpeed(1,1) (nr,divider)');
@@ -545,6 +619,11 @@ begin
       if laatstepacket <> true then goto nextpacket;
     end;}
   end;
+end;
+
+procedure TSetupForm.DisplayPluginListChange(Sender: TObject);
+begin
+  LoadHint(DLLPath+DisplayPluginList.Text);
 end;
 
 procedure TSetupForm.LCDSizeComboBoxChange(Sender: TObject);
@@ -732,6 +811,7 @@ begin
   LCDSmartieDisplayForm.ChangeScreen(CurrentScreen);
 end;
 
+(*
 procedure TSetupForm.HD44780RadioButtonClick(Sender: TObject);
 begin
   //if pagecontrol1.ActivePage = LCDFeaturesTabSheet then pagecontrol1.ActivePage :=
@@ -804,7 +884,7 @@ begin
   IRTransConfigButton.Enabled := false;
   DLLConfigButton.Enabled := true;
 end;
-
+*)
 procedure TSetupForm.WinampListBoxClick(Sender: TObject);
 begin
   case WinampListBox.itemindex of
@@ -1196,21 +1276,6 @@ begin
   end;
 end;
 
-procedure TSetupForm.MatrixOrbitalConfigButtonClick(Sender: TObject);
-begin
-  if (not (config.ScreenType = stMO)) then
-  begin
-    if MessageDlg('The Matrix Orbital driver is not currently loaded.' + chr(13) +
-      'Should I apply your settings and load the driver?',
-      mtConfirmation, [mbYes, mbNo], 0) = mrYes then
-    begin
-      // press apply for them
-      ApplyButton.click();
-    end;
-  end;
-  DoMatrixOrbitalSetupForm;
-end;
-
 procedure TSetupForm.DistributedNetBrowseButtonClick(Sender: TObject);
 var
   line, line2: String;
@@ -1370,6 +1435,39 @@ begin
   opendialog1.Execute;
   if opendialog1.FileName <> '' then WinampLocationEdit.text := opendialog1.FileName;
 end;
+(*
+procedure TSetupForm.HD44780ConfigButtonClick(Sender: TObject);
+begin
+  if (not (config.ScreenType = stHD)) then
+  begin
+    if MessageDlg('The HD44780 driver is not currently loaded.' + chr(13) +
+      'Should I apply your settings and load the driver?',
+      mtConfirmation, [mbYes, mbNo], 0) = mrYes then
+    begin
+      // press apply for them
+      ApplyButton.click();
+    end;
+  end;
+  if DoHD44780SetupForm then begin
+    config.ScreenType := stNone; // force reload
+    ApplyButton.click();
+  end;
+end;
+
+procedure TSetupForm.MatrixOrbitalConfigButtonClick(Sender: TObject);
+begin
+  if (not (config.ScreenType = stMO)) then
+  begin
+    if MessageDlg('The Matrix Orbital driver is not currently loaded.' + chr(13) +
+      'Should I apply your settings and load the driver?',
+      mtConfirmation, [mbYes, mbNo], 0) = mrYes then
+    begin
+      // press apply for them
+      ApplyButton.click();
+    end;
+  end;
+  DoMatrixOrbitalSetupForm;
+end;
 
 procedure TSetupForm.CrystalFontzConfigButtonClick(Sender: TObject);
 begin
@@ -1423,7 +1521,7 @@ begin
     ApplyButton.click();
   end;
 end;
-
+*)
 procedure TSetupForm.GamestatsListBoxClick(Sender: TObject);
 var
   S : string;
@@ -1531,24 +1629,6 @@ begin
     FocusToInputField();
 end;
 
-procedure TSetupForm.HD44780ConfigButtonClick(Sender: TObject);
-begin
-  if (not (config.ScreenType = stHD)) then
-  begin
-    if MessageDlg('The HD44780 driver is not currently loaded.' + chr(13) +
-      'Should I apply your settings and load the driver?',
-      mtConfirmation, [mbYes, mbNo], 0) = mrYes then
-    begin
-      // press apply for them
-      ApplyButton.click();
-    end;
-  end;
-  if DoHD44780SetupForm then begin
-    config.ScreenType := stNone; // force reload
-    ApplyButton.click();
-  end;
-end;
-
 procedure TSetupForm.FoldingAtHomeListBoxClick(Sender: TObject);
 begin
   case FoldingAtHomeListBox.itemindex of
@@ -1577,12 +1657,14 @@ var
 begin
   relood := false;
 
+{
   if (COMPortComboBox.items[COMPortComboBox.itemIndex] = USBPALM)
     and (CrystalFontzRadioButton.checked) then
   begin
     showmessage('Matrix Orbital must be selected if USB Palm is selected.');
     Exit;
   end;
+}
 
   iMaxUsedRow := -1;
   for x := 0 to ActionsStringGrid.RowCount-1 do
@@ -1613,6 +1695,7 @@ begin
   config.totalactions := iMaxUsedRow + 1;
 
   // Check if Com settings have changed.
+{
   sComPort := COMPortComboBox.items[COMPortComboBox.itemIndex];
   if (config.isUsbPalm) <> (sComPort = USBPALM) then
   begin
@@ -1623,7 +1706,10 @@ begin
   begin
       relood := true;
   end;
-
+}
+  if (config.DisplayDLLParameters <> ParametersEdit.Text) then relood := true;
+  if (config.DisplayDLLName <> DisplayPluginList.Text) then relood := true;
+{
   if (config.baudrate <> BaudRateComboBox.itemindex) then relood := true;
   if (HD44780RadioButton.checked) and not (config.ScreenType = stHD) then relood := true;
   if (MatrixOrbitalRadioButton.checked) and not (config.ScreenType = stMO) then relood := true;
@@ -1631,7 +1717,7 @@ begin
   if (HD66712RadioButton.checked) and not (config.ScreenType = stHD2) then relood := true;
 //  if (IRTransRadioButton.checked) and not (config.ScreenType = stIR) then relood := true;
   if (DLLRadioButton.checked) and not (config.ScreenType = stDLL) then relood := true;
-
+}
 
   LCDSmartieDisplayForm.WinampCtrl1.WinampLocation := WinampLocationEdit.text;
   config.winampLocation := WinampLocationEdit.text;
@@ -1655,9 +1741,15 @@ begin
   config.bAutoStart := AutoStart.checked;
   config.bAutoStartHide := AutoStartHide.checked;
 
+  config.DLL_contrast := ContrastTrackBar.position;
+  config.DLL_brightness := BrightnessTrackBar.position;
+  config.DisplayDLLParameters := ParametersEdit.Text;
+  config.DisplayDLLName := DisplayPluginList.Text;
+
   LCDSmartieDisplayForm.SetupAutoStart();
 
   // Check if Com settings have changed.
+{
   sComPort := COMPortComboBox.items[COMPortComboBox.itemIndex];
   config.isUsbPalm := (sComPort = USBPALM);
   if (not config.isUsbPalm) then
@@ -1666,17 +1758,19 @@ begin
   end;
 
   config.baudrate := BaudRateComboBox.itemindex;
+}
   config.pop[(EmailAccountComboBox.itemindex + 1) mod 10].server := EmailServerEdit.text;
   config.pop[(EmailAccountComboBox.itemindex + 1) mod 10].user := EmailLoginEdit.text;
   config.pop[(EmailAccountComboBox.itemindex + 1) mod 10].pword := EmailPasswordEdit.text;
 
+{
   if HD44780RadioButton.checked then config.ScreenType := stHD
   else if MatrixOrbitalRadioButton.checked then config.ScreenType := stMO
   else if CrystalFontzRadioButton.checked then config.ScreenType := stCF
   else if HD66712RadioButton.checked then config.ScreenType := stHD2
 //  else if IRTransRadioButton.checked then config.ScreenType := stIR
   else if DLLRadioButton.checked then config.ScreenType := stDLL;
-
+}
   if (WebProxyPortEdit.text = '') then WebProxyPortEdit.text := '0';
   config.httpProxy := WebProxyServerEdit.text;
   config.httpProxyPort := StrToInt(WebProxyPortEdit.text);
@@ -1700,13 +1794,14 @@ end;
 // ok has been pressed.
 procedure TSetupForm.OKButtonClick(Sender: TObject);
 begin
+{
   if (COMPortComboBox.items[COMPortComboBox.itemIndex] = USBPALM)
     and (CrystalFontzRadioButton.checked) then
   begin
     showmessage('Matrix Orbital must be selected if USB Palm is selected.');
     Exit;
   end;
-
+}
   ApplyButtonClick(Sender);
 end;
 
@@ -1764,12 +1859,12 @@ begin
     while (OutputListBox.Items.Count > 24) do
       OutputListBox.Items.Delete(24);
 
-    if (MatrixOrbitalRadioButton.Checked) then
+//    if (MatrixOrbitalRadioButton.Checked) then
     begin
       OutputListBox.Items.Add('GPO(4-8,0/1) (0=off 1=on)');
       OutputListBox.Items.Add('GPOToggle(4-8)');
       OutputListBox.Items.Add('GPOFlash(4-8,2) (nr. of times)');
-      if (config.mx3Usb) then
+//      if (config.mx3Usb) then
       begin
         OutputListBox.Items.Add('Fan(1-3,0-255) (0-255=speed)');
       end;
@@ -1988,6 +2083,16 @@ end;
 function PerformingSetup : boolean;
 begin
   Result := assigned(SetupForm);
+end;
+
+procedure TSetupForm.ContrastTrackBarChange(Sender: TObject);
+begin
+  LCDSmartieDisplayForm.lcd.setContrast(ContrastTrackBar.position);
+end;
+
+procedure TSetupForm.BrightnessTrackBarChange(Sender: TObject);
+begin
+  LCDSmartieDisplayForm.lcd.setBrightness(BrightnessTrackBar.position);
 end;
 
 end.

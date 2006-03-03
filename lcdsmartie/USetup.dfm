@@ -6,7 +6,7 @@ object SetupForm: TSetupForm
   BorderIcons = []
   BorderStyle = bsToolWindow
   Caption = 'LCD Smartie 5.3 Setup'
-  ClientHeight = 410
+  ClientHeight = 412
   ClientWidth = 813
   Color = clBtnFace
   Font.Charset = ANSI_CHARSET
@@ -1532,7 +1532,7 @@ object SetupForm: TSetupForm
       object ProgramSettingsGroupBox: TGroupBox
         Left = 3
         Top = 0
-        Width = 270
+        Width = 226
         Height = 166
         Caption = 'Program settings'
         Font.Charset = ANSI_CHARSET
@@ -1543,7 +1543,7 @@ object SetupForm: TSetupForm
         ParentFont = False
         TabOrder = 1
         object Label1: TLabel
-          Left = 16
+          Left = 8
           Top = 48
           Width = 134
           Height = 13
@@ -1556,8 +1556,8 @@ object SetupForm: TSetupForm
           ParentFont = False
         end
         object Label7: TLabel
-          Left = 16
-          Top = 116
+          Left = 8
+          Top = 96
           Width = 91
           Height = 13
           Caption = 'Web proxy server:'
@@ -1569,7 +1569,7 @@ object SetupForm: TSetupForm
           ParentFont = False
         end
         object Label8: TLabel
-          Left = 16
+          Left = 8
           Top = 140
           Width = 80
           Height = 13
@@ -1582,8 +1582,8 @@ object SetupForm: TSetupForm
           ParentFont = False
         end
         object Label6: TLabel
-          Left = 16
-          Top = 88
+          Left = 8
+          Top = 76
           Width = 68
           Height = 13
           Caption = 'Color scheme:'
@@ -1595,7 +1595,7 @@ object SetupForm: TSetupForm
           ParentFont = False
         end
         object Label59: TLabel
-          Left = 16
+          Left = 8
           Top = 20
           Width = 147
           Height = 13
@@ -1608,9 +1608,9 @@ object SetupForm: TSetupForm
           ParentFont = False
         end
         object WebProxyServerEdit: TEdit
-          Left = 120
-          Top = 112
-          Width = 137
+          Left = 8
+          Top = 108
+          Width = 209
           Height = 21
           Hint = 'Web proxy for web access (such as for Rss feeds).'
           Font.Charset = ANSI_CHARSET
@@ -1624,7 +1624,7 @@ object SetupForm: TSetupForm
           TabOrder = 3
         end
         object WebProxyPortEdit: TEdit
-          Left = 168
+          Left = 128
           Top = 136
           Width = 89
           Height = 21
@@ -1642,9 +1642,9 @@ object SetupForm: TSetupForm
           Text = '0'
         end
         object ColorSchemeComboBox: TComboBox
-          Left = 120
-          Top = 83
-          Width = 137
+          Left = 112
+          Top = 71
+          Width = 105
           Height = 21
           Hint = 'The colors used in the virtual display.'
           Style = csDropDownList
@@ -1667,7 +1667,7 @@ object SetupForm: TSetupForm
             'Custom for this skin')
         end
         object ProgramRefreshIntervalSpinEdit: TSpinEdit
-          Left = 200
+          Left = 160
           Top = 17
           Width = 57
           Height = 22
@@ -1687,7 +1687,7 @@ object SetupForm: TSetupForm
           Value = 200
         end
         object ProgramScrollIntervalSpinEdit: TSpinEdit
-          Left = 200
+          Left = 160
           Top = 42
           Width = 57
           Height = 22
@@ -1710,8 +1710,8 @@ object SetupForm: TSetupForm
         end
       end
       object LCDSettingsGroupBox: TGroupBox
-        Left = 280
-        Top = 0
+        Left = 288
+        Top = 4
         Width = 285
         Height = 166
         Caption = 'LCD settings'
@@ -1722,6 +1722,7 @@ object SetupForm: TSetupForm
         Font.Style = [fsBold]
         ParentFont = False
         TabOrder = 2
+        Visible = False
         object Label9: TLabel
           Left = 4
           Top = 144
@@ -1779,7 +1780,6 @@ object SetupForm: TSetupForm
           ParentShowHint = False
           ShowHint = True
           TabOrder = 1
-          OnClick = HD44780RadioButtonClick
         end
         object MatrixOrbitalRadioButton: TRadioButton
           Left = 16
@@ -1797,7 +1797,6 @@ object SetupForm: TSetupForm
           ParentShowHint = False
           ShowHint = True
           TabOrder = 2
-          OnClick = MatrixOrbitalRadioButtonClick
         end
         object COMPortComboBox: TComboBox
           Left = 56
@@ -1873,7 +1872,6 @@ object SetupForm: TSetupForm
           ParentShowHint = False
           ShowHint = True
           TabOrder = 7
-          OnClick = MatrixOrbitalConfigButtonClick
         end
         object CrystalFontzRadioButton: TRadioButton
           Left = 16
@@ -1891,7 +1889,6 @@ object SetupForm: TSetupForm
           ParentShowHint = False
           ShowHint = True
           TabOrder = 3
-          OnClick = CrystalFontzRadioButtonClick
         end
         object CrystalFontzConfigButton: TButton
           Left = 152
@@ -1909,7 +1906,6 @@ object SetupForm: TSetupForm
           ParentShowHint = False
           ShowHint = True
           TabOrder = 8
-          OnClick = CrystalFontzConfigButtonClick
         end
         object HD44780ConfigButton: TButton
           Left = 152
@@ -1927,9 +1923,8 @@ object SetupForm: TSetupForm
           ParentShowHint = False
           ShowHint = True
           TabOrder = 6
-          OnClick = HD44780ConfigButtonClick
         end
-        object LCDSizeComboBox: TComboBox
+        object xLCDSizeComboBox: TComboBox
           Left = 133
           Top = 12
           Width = 77
@@ -1963,7 +1958,6 @@ object SetupForm: TSetupForm
           ParentFont = False
           TabOrder = 13
           Visible = False
-          OnClick = HD66712RadioButtonClick
         end
         object IRTransRadioButton: TRadioButton
           Left = 312
@@ -1982,7 +1976,6 @@ object SetupForm: TSetupForm
           ShowHint = True
           TabOrder = 4
           Visible = False
-          OnClick = IRTransRadioButtonClick
         end
         object IRTransConfigButton: TButton
           Left = 372
@@ -2001,7 +1994,6 @@ object SetupForm: TSetupForm
           ShowHint = True
           TabOrder = 9
           Visible = False
-          OnClick = IRTransConfigButtonClick
         end
         object DLLRadioButton: TRadioButton
           Left = 16
@@ -2019,7 +2011,6 @@ object SetupForm: TSetupForm
           ParentShowHint = False
           ShowHint = True
           TabOrder = 5
-          OnClick = DLLRadioButtonClick
         end
         object DLLConfigButton: TButton
           Left = 152
@@ -2037,7 +2028,222 @@ object SetupForm: TSetupForm
           ParentShowHint = False
           ShowHint = True
           TabOrder = 10
-          OnClick = DLLConfigButtonClick
+        end
+      end
+      object DisplayGroup2: TGroupBox
+        Left = 232
+        Top = 0
+        Width = 333
+        Height = 165
+        Caption = 'Display settings'
+        Font.Charset = ANSI_CHARSET
+        Font.Color = clBlack
+        Font.Height = -11
+        Font.Name = 'Tahoma'
+        Font.Style = [fsBold]
+        ParentFont = False
+        TabOrder = 3
+        object Panel1: TPanel
+          Left = 2
+          Top = 15
+          Width = 329
+          Height = 148
+          Align = alClient
+          BevelOuter = bvNone
+          BorderWidth = 3
+          TabOrder = 0
+          object DisplayPageControl: TPageControl
+            Left = 3
+            Top = 3
+            Width = 323
+            Height = 142
+            ActivePage = PluginTabsheet
+            Align = alClient
+            Font.Charset = ANSI_CHARSET
+            Font.Color = clBlack
+            Font.Height = -11
+            Font.Name = 'Tahoma'
+            Font.Style = []
+            MultiLine = True
+            ParentFont = False
+            TabHeight = 16
+            TabOrder = 0
+            TabPosition = tpLeft
+            object PluginTabsheet: TTabSheet
+              Caption = 'Plugin'
+              DesignSize = (
+                299
+                134)
+              object DisplayPluginsLabel: TLabel
+                Left = 8
+                Top = 8
+                Width = 81
+                Height = 13
+                Caption = 'Display Plugin:'
+                Font.Charset = ANSI_CHARSET
+                Font.Color = clBlack
+                Font.Height = -11
+                Font.Name = 'Tahoma'
+                Font.Style = [fsBold]
+                ParentFont = False
+              end
+              object IDLabel: TLabel
+                Left = 8
+                Top = 32
+                Width = 63
+                Height = 13
+                Caption = 'DLL Identifier'
+                Font.Charset = ANSI_CHARSET
+                Font.Color = clWindowText
+                Font.Height = -11
+                Font.Name = 'MS Sans Serif'
+                Font.Style = []
+                ParentFont = False
+              end
+              object Label14: TLabel
+                Left = 8
+                Top = 48
+                Width = 116
+                Height = 13
+                Caption = 'Startup Parameters:'
+                Font.Charset = ANSI_CHARSET
+                Font.Color = clBlack
+                Font.Height = -11
+                Font.Name = 'Tahoma'
+                Font.Style = [fsBold]
+                ParentFont = False
+              end
+              object UsageLabel: TLabel
+                Left = 8
+                Top = 83
+                Width = 30
+                Height = 13
+                Caption = 'Usage'
+              end
+              object DisplayPluginList: TComboBox
+                Left = 112
+                Top = 4
+                Width = 181
+                Height = 21
+                Style = csDropDownList
+                ItemHeight = 13
+                TabOrder = 0
+                OnChange = DisplayPluginListChange
+              end
+              object ParametersEdit: TEdit
+                Left = 8
+                Top = 60
+                Width = 285
+                Height = 21
+                Anchors = [akLeft, akTop, akRight]
+                TabOrder = 1
+                Text = 'ParametersEdit'
+              end
+            end
+            object ScreenTabsheet: TTabSheet
+              Caption = 'Screen'
+              ImageIndex = 1
+              DesignSize = (
+                299
+                134)
+              object Label3: TLabel
+                Left = 89
+                Top = 7
+                Width = 44
+                Height = 13
+                Caption = 'LCD size:'
+                Font.Charset = ANSI_CHARSET
+                Font.Color = clWindowText
+                Font.Height = -11
+                Font.Name = 'Tahoma'
+                Font.Style = []
+                ParentFont = False
+              end
+              object LCDSizeComboBox: TComboBox
+                Left = 134
+                Top = 4
+                Width = 77
+                Height = 21
+                Hint = 'The size of your display in characters (lines X width). '
+                Style = csDropDownList
+                Font.Charset = ANSI_CHARSET
+                Font.Color = clWindowText
+                Font.Height = -11
+                Font.Name = 'Tahoma'
+                Font.Style = []
+                ItemHeight = 13
+                ParentFont = False
+                ParentShowHint = False
+                ShowHint = True
+                TabOrder = 0
+                OnChange = LCDSizeComboBoxChange
+              end
+              object GroupBox3: TGroupBox
+                Left = 8
+                Top = 28
+                Width = 285
+                Height = 49
+                Anchors = [akLeft, akTop, akRight]
+                Caption = 'Contrast'
+                Font.Charset = ANSI_CHARSET
+                Font.Color = clWindowText
+                Font.Height = -11
+                Font.Name = 'Tahoma'
+                Font.Style = [fsBold]
+                ParentFont = False
+                TabOrder = 1
+                DesignSize = (
+                  285
+                  49)
+                object ContrastTrackBar: TTrackBar
+                  Left = 1
+                  Top = 15
+                  Width = 281
+                  Height = 25
+                  Anchors = [akLeft, akTop, akRight]
+                  Max = 254
+                  Min = 1
+                  Frequency = 10
+                  Position = 1
+                  TabOrder = 0
+                  ThumbLength = 15
+                  OnChange = ContrastTrackBarChange
+                end
+              end
+              object GroupBox1: TGroupBox
+                Left = 8
+                Top = 80
+                Width = 285
+                Height = 49
+                Anchors = [akLeft, akTop, akRight]
+                Caption = 'Brightness'
+                Font.Charset = ANSI_CHARSET
+                Font.Color = clWindowText
+                Font.Height = -11
+                Font.Name = 'Tahoma'
+                Font.Style = [fsBold]
+                ParentFont = False
+                TabOrder = 2
+                DesignSize = (
+                  285
+                  49)
+                object BrightnessTrackBar: TTrackBar
+                  Left = 1
+                  Top = 16
+                  Width = 281
+                  Height = 25
+                  Anchors = [akLeft, akTop, akRight]
+                  Max = 254
+                  Min = 1
+                  Frequency = 10
+                  Position = 1
+                  TabOrder = 0
+                  ThumbLength = 15
+                  OnChange = BrightnessTrackBarChange
+                end
+              end
+            end
+          end
         end
       end
     end

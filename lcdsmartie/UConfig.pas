@@ -19,12 +19,12 @@ unit UConfig;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UConfig.pas,v $
- *  $Revision: 1.42 $ $Date: 2006/03/03 15:57:38 $
+ *  $Revision: 1.43 $ $Date: 2006/03/03 20:59:00 $
  *****************************************************************************}
 
 interface
 
-Uses  SysUtils;
+Uses  Windows,SysUtils;
 
 const
   sMyConfigFileFormatVersion = '1.0';
@@ -60,10 +60,15 @@ const
     (SizeName : '4x40'; YSize : 4; XSize : 40));
 
 
+const
+  BaudRates: array [0..14] of Cardinal =(CBR_110, CBR_300, CBR_600, CBR_1200, CBR_2400,
+    CBR_4800, CBR_9600, CBR_14400, CBR_19200, CBR_38400, CBR_56000, CBR_57600,
+    CBR_115200, CBR_128000, CBR_256000);
+
 type
   TTransitionStyle = (tsNone,tsLeftRight,tsRightLeft,tsTopBottom,tsBottomTop,tsRandomChars,tsFade);
 
-  TScreenType = (stNone,stHD,stMO,stCF,stHD2,stTestDriver,xxIR,stDLL);
+  TScreenType = (xxNone,xxHD,xxMO,xxCF,xxHD2,xxTestDriver,xxIR,xxDLL);
 
   TScreenLine = Record
     text: String;
@@ -106,6 +111,7 @@ type
     function loadACFG: Boolean;
     procedure saveINI;
     procedure SetScreenSize(con: Integer);
+    procedure ConvertToDisplayDLL;
   public
     localeFormat: TFormatSettings;
     bHideOnStartup: Boolean;
@@ -138,24 +144,24 @@ type
     actionsArray: Array[1..MaxActions, 1..4] of String;
     totalactions: Integer;
     // screen settings
-    ScreenType : TScreenType;
-    iMinFadeContrast: Integer;
+    xScreenType : TScreenType;
+    xiMinFadeContrast: Integer;  // can only set this in config file?
     // these apply to LPT displays
-    parallelPort: Integer;
-    bHDAltAddressing: Boolean;
-    bHDKS0073Addressing: Boolean;
-    iHDTimingMultiplier: Integer;
+    xparallelPort: Integer;
+    xbHDAltAddressing: Boolean;
+    xbHDKS0073Addressing: Boolean;
+    xiHDTimingMultiplier: Integer;
     // these apply to Matrix displays
-    contrast: Integer;
-    brightness: Integer;
-    mx3Usb: Boolean;
+    xcontrast: Integer;
+    xbrightness: Integer;
+    xmx3Usb: Boolean;
     // these apply to Crystal Fontz displays
-    CF_contrast: Integer;
-    CF_brightness: Integer;
-    iCF_cgrom: Integer;
+    xCF_contrast: Integer;
+    xCF_brightness: Integer;
+    xiCF_cgrom: Integer;
     // these apply to IRTrans displays
-    IR_brightness: Integer;
-    remotehost : string;
+    xIR_brightness: Integer;
+    xremotehost : string;
     // these apply to DLL Plugin displays
     DisplayDLLName : string;
     DisplayDLLParameters : string;
@@ -175,12 +181,12 @@ var
 
 implementation
 
-uses Forms, INIFiles, StrUtils, Windows;
+uses Forms, INIFiles, StrUtils;
 
 constructor TConfig.Create(filename: String);
 begin
   sFileName := filename;
-  iMinFadeContrast := 0;
+  xiMinFadeContrast := 0;
   GetLocaleFormatSettings(LOCALE_SYSTEM_DEFAULT, localeFormat);
   inherited Create();
 end;
@@ -280,14 +286,14 @@ begin
   SetScreenSize(strtoInt(copy(configArray[3], 1, pos('¿1',
     configArray[3])-1)));
 
-  contrast := strtoint(copy(configArray[3], pos('¿1', configArray[3]) + 2,
+  xcontrast := strtoint(copy(configArray[3], pos('¿1', configArray[3]) + 2,
     pos('¿2', configArray[3])-pos('¿1', configArray[3])-2));
-  brightness := strtoint(copy(configArray[3], pos('¿2', configArray[3]) + 2,
+  xbrightness := strtoint(copy(configArray[3], pos('¿2', configArray[3]) + 2,
     pos('¿3', configArray[3])-pos('¿2', configArray[3])-2));
 
-  CF_contrast := strtoint(copy(configArray[3], pos('¿3', configArray[3]) + 2,
+  xCF_contrast := strtoint(copy(configArray[3], pos('¿3', configArray[3]) + 2,
     pos('¿4', configArray[3])-pos('¿3', configArray[3])-2));
-  CF_brightness := strtoint(copy(configArray[3], pos('¿4', configArray[3]) +
+  xCF_brightness := strtoint(copy(configArray[3], pos('¿4', configArray[3]) +
     2, 3));
 
 
@@ -343,10 +349,10 @@ begin
   scrollPeriod := StrToInt(copy(configArray[89], pos('¿¿', configArray[89]) +
     2, length(configArray[89])));
 
-  parallelPort := StrToInt(configArray[91]);
+  xparallelPort := StrToInt(configArray[91]);
 
-  if (copy(configArray[92], 2, 1)='1') then mx3Usb := true
-  else mx3Usb := false;
+  if (copy(configArray[92], 2, 1)='1') then xmx3Usb := true
+  else xmx3Usb := false;
 
   if (copy(configArray[92], 1, 1)='1') then alwaysOnTop := true
   else alwaysOnTop := false;
@@ -422,11 +428,45 @@ begin
   pop[0].pword := copy(configArray[97], pos('¿8', configArray[97]) + 2,
     pos('¿9', configArray[97])-pos('¿8', configArray[97])-2);
 
-  ScreenType := TScreenType(StrToInt(configArray[98]));
+  xScreenType := TScreenType(StrToInt(configArray[98]));
   comPort := StrToInt(configArray[99]);
   baudrate := StrToInt(configArray[100]);
 
   result := true;
+end;
+
+const
+  BoolStr : array[false..true] of string = ('0','1');
+
+procedure TConfig.ConvertToDisplayDLL;
+begin
+  DisplayDLLParameters := 'COM'+IntToStr(COMPort)+','+IntToStr(BaudRates[BAUDRate]);
+  case xScreenType of
+    xxHD2,
+    xxHD : begin
+      DisplayDLLName := 'HD44780.dll';
+      DisplayDLLParameters := '$'+IntToHex(xParallelPort,3) + ',' +
+                              IntToStr(xiHDTimingMultiplier)+ ',' +
+                              BoolStr[xbHDAltAddressing]+ ',' +
+                              BoolStr[xbHDKS0073Addressing];
+    end;
+    xxMO : begin
+      DisplayDLLName := 'matrix.dll';
+      DLL_Contrast := xcontrast;
+      DLL_Brightness := xbrightness;
+    end;
+    xxCF : begin
+      DisplayDLLName := 'crystal.dll';
+      DLL_Contrast := xCF_contrast*255 div 100;
+      DLL_Brightness := xCF_brightness*255 div 100;
+    end;
+    xxIR : begin
+      DisplayDLLName := 'irtrans.dll';
+      DisplayDLLParameters := xremotehost;
+      DLL_Brightness := xIR_brightness * 64;
+    end;
+  end;
+  xScreenType := xxDLL;
 end;
 
 function TConfig.load: Boolean;
@@ -446,6 +486,8 @@ begin
     bResult2 := loadACFG
   else
     bResult2 := true;
+
+  ConvertToDisplayDLL;
 
   result := bResult1 and bResult2;
 end;
@@ -499,16 +541,16 @@ begin
       (initfile.ReadString('Communication Settings', 'USBPalmDevice', '') <> '');
   end;
 
-  parallelPort := initfile.ReadInteger('Communication Settings',
+  xparallelPort := initfile.ReadInteger('Communication Settings',
     'ParallelPort', 888);
 
-  mx3Usb := initFile.ReadBool('Communication Settings', 'MX3USB', false);
+  xmx3Usb := initFile.ReadBool('Communication Settings', 'MX3USB', false);
 
-  bHDAltAddressing := initFile.ReadBool('Communication Settings',
+  xbHDAltAddressing := initFile.ReadBool('Communication Settings',
    'HDAlternativeAddressing', false);
-  bHDKS0073Addressing := initFile.ReadBool('Communication Settings',
+  xbHDKS0073Addressing := initFile.ReadBool('Communication Settings',
    'HDKS0073Addressing', false);
-  iHDTimingMultiplier := initFile.ReadInteger('Communication Settings',
+  xiHDTimingMultiplier := initFile.ReadInteger('Communication Settings',
    'HDTimingMultiplier', 1);
 
   refreshRate := initfile.ReadInteger('General Settings', 'RefreshRate', 75);
@@ -569,14 +611,15 @@ begin
   httpProxy := initFile.ReadString('Communication Settings', 'HTTPProxy', '');
   httpProxyPort := initFile.ReadInteger('Communication Settings',
     'HTTPProxyPort', 0);
-  remotehost := initFile.ReadString('Communication Settings', 'RemoteHost', 'localhost');
+  xremotehost := initFile.ReadString('Communication Settings', 'RemoteHost', 'localhost');
   DisplayDLLName := initFile.ReadString('Communication Settings', 'DisplayDLLName', 'matrix.dll');
   DisplayDLLParameters := initFile.ReadString('Communication Settings', 'DisplayDLLParameters', 'COM1,9600,8,N,1');
 
 
-  ScreenType := TScreenType(initFile.ReadInteger('General Settings', 'LCDType', 0));
+  xScreenType := TScreenType(initFile.ReadInteger('General Settings', 'LCDType', 0));
 
   // Readonly settings - not set at all.
+{
   if (ScreenType = stTestDriver) then
   begin
     testDriver.iStopBits := initFile.ReadInteger('Test Driver', 'StopBits', 1);
@@ -589,22 +632,21 @@ begin
     testDriver.sGotoLine4 := initFile.ReadString('Test Driver', 'GotoLine4', '');
     testDriver.sCharMap := initFile.ReadString('Test Driver', 'CharMap', '');
   end;
-
-
+}
 
   SetScreenSize(initFile.ReadInteger('General Settings', 'Size', 11));
 
-  contrast := initFile.ReadInteger('General Settings', 'Contrast', 88);
-  brightness := initFile.ReadInteger('General Settings', 'Brightness', 26);
+  xcontrast := initFile.ReadInteger('General Settings', 'Contrast', 88);
+  xbrightness := initFile.ReadInteger('General Settings', 'Brightness', 26);
 
-  CF_contrast := initFile.ReadInteger('General Settings', 'CFContrast', 66);
-  CF_brightness := initFile.ReadInteger('General Settings', 'CFBrightness',
+  xCF_contrast := initFile.ReadInteger('General Settings', 'CFContrast', 66);
+  xCF_brightness := initFile.ReadInteger('General Settings', 'CFBrightness',
     61);
-  iCF_cgrom := initFile.ReadInteger('General Settings', 'CFCGRomVersion', 2);
-  iMinFadeContrast := initFile.ReadInteger('General Settings', 'MinFadeContrast',
+  xiCF_cgrom := initFile.ReadInteger('General Settings', 'CFCGRomVersion', 2);
+  xiMinFadeContrast := initFile.ReadInteger('General Settings', 'MinFadeContrast',
     0);
 
-  IR_brightness := initFile.ReadInteger('General Settings', 'IRBrightness', 3);
+  xIR_brightness := initFile.ReadInteger('General Settings', 'IRBrightness', 3);
 
   DLL_contrast := initFile.ReadInteger('General Settings', 'DLLContrast', 127);
   DLL_brightness := initFile.ReadInteger('General Settings', 'DLLBrightness',127);
@@ -694,16 +736,16 @@ begin
   else initfile.WriteInteger('Communication Settings', 'USBPalm', 0);
 
   initfile.WriteInteger('Communication Settings', 'ParallelPort',
-    parallelPort);
+    xparallelPort);
 
   initFile.WriteBool('Communication Settings', 'HDAlternativeAddressing',
-    bHDAltAddressing);
+    xbHDAltAddressing);
   initFile.WriteBool('Communication Settings', 'HDKS0073Addressing',
-    bHDKS0073Addressing);
+    xbHDKS0073Addressing);
   initfile.WriteInteger('Communication Settings', 'HDTimingMultiplier',
-    iHDTimingMultiplier);
+    xiHDTimingMultiplier);
 
-  initFile.WriteBool('Communication Settings', 'MX3USB', mx3Usb);
+  initFile.WriteBool('Communication Settings', 'MX3USB', xmx3Usb);
 
   initfile.WriteInteger('General Settings', 'RefreshRate', refreshRate);
   initfile.WriteString('General Settings', 'WinAmpLocation', winampLocation);
@@ -763,21 +805,21 @@ begin
   initFile.WriteString('Communication Settings', 'HTTPProxy', httpProxy);
   initFile.WriteInteger('Communication Settings', 'HTTPProxyPort',
     httpProxyPort);
-  initFile.WriteString('Communication Settings', 'RemoteHost', remotehost);
+  initFile.WriteString('Communication Settings', 'RemoteHost', xremotehost);
   initFile.WriteString('Communication Settings', 'DisplayDLLName', DisplayDLLName);
   initFile.WriteString('Communication Settings', 'DisplayDLLParameters', DisplayDLLParameters);
 
-  initFile.WriteInteger('General Settings', 'LCDType', ord(ScreenType));
+  initFile.WriteInteger('General Settings', 'LCDType', ord(xScreenType));
   initFile.WriteInteger('General Settings', 'Size', ScreenSize);
-  initFile.WriteInteger('General Settings', 'Contrast', contrast);
-  initFile.WriteInteger('General Settings', 'Brightness', brightness);
+  initFile.WriteInteger('General Settings', 'Contrast', xcontrast);
+  initFile.WriteInteger('General Settings', 'Brightness', xbrightness);
 
-  initFile.WriteInteger('General Settings', 'CFContrast', CF_contrast);
-  initFile.WriteInteger('General Settings', 'CFBrightness', CF_brightness);
-  initFile.WriteInteger('General Settings', 'CFCGRomVersion', iCF_cgrom);
-  initFile.WriteInteger('General Settings', 'MinFadeContrast', iMinFadeContrast);
+  initFile.WriteInteger('General Settings', 'CFContrast', xCF_contrast);
+  initFile.WriteInteger('General Settings', 'CFBrightness', xCF_brightness);
+  initFile.WriteInteger('General Settings', 'CFCGRomVersion', xiCF_cgrom);
+  initFile.WriteInteger('General Settings', 'MinFadeContrast', xiMinFadeContrast);
 
-  initFile.WriteInteger('General Settings', 'IRBrightness', IR_brightness);
+  initFile.WriteInteger('General Settings', 'IRBrightness', xIR_brightness);
 
   initFile.WriteInteger('General Settings', 'DLLContrast', DLL_contrast);
   initFile.WriteInteger('General Settings', 'DLLBrightness', DLL_brightness);
