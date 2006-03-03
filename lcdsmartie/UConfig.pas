@@ -19,7 +19,7 @@ unit UConfig;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UConfig.pas,v $
- *  $Revision: 1.38 $ $Date: 2006/03/02 21:45:09 $
+ *  $Revision: 1.39 $ $Date: 2006/03/03 00:53:16 $
  *****************************************************************************}
 
 interface
@@ -33,7 +33,7 @@ const
 type
   TTransitionStyle = (tsNone,tsLeftRight,tsRightLeft,tsTopBottom,tsBottomTop,tsRandomChars,tsFade);
 
-  TScreenType = (stNone,stHD,stMO,stCF,stHD2,stTestDriver,stIR,stDLL);
+  TScreenType = (stNone,stHD,stMO,stCF,stHD2,stTestDriver,xxIR,stDLL);
 
   TScreenLine = Record
     text: String;

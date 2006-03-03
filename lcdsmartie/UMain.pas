@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.70 $ $Date: 2006/03/02 21:45:09 $
+ *  $Revision: 1.71 $ $Date: 2006/03/03 00:53:16 $
  *****************************************************************************}
 
 interface
@@ -251,7 +251,7 @@ implementation
 
 uses
   Windows, SysUtils, Graphics, Dialogs, ShellAPI, mmsystem, StrUtils,
-  USetup, UCredits, ULCD_MO, ULCD_CF, ULCD_HD, ULCD_Test, ULCD_IR, ULCD_DLL,
+  USetup, UCredits, ULCD_MO, ULCD_CF, ULCD_HD, ULCD_Test, {ULCD_IR, }ULCD_DLL,
   ExtActns, UUtils;
 
 
@@ -1488,7 +1488,7 @@ begin
       end;
       stCF : Lcd := TLCD_CF.CreateSerial(config.comPort, baudRates[config.baudrate]);
       stTestDriver : Lcd := TLCD_Test.CreateSerial(config.comPort, baudRates[config.baudrate]);
-      stIR : Lcd := TLCD_IR.CreateSocket(config.RemoteHost);
+//      stIR : Lcd := TLCD_IR.CreateSocket(config.RemoteHost);
       stDLL : Lcd := TLCD_DLL.CreateDLL(config.DisplayDLLName,config.DisplayDLLParameters);
       stHD,stHD2 : begin
         Lcd := TLCD.Create(); // use a dummy LCD until the boot time has passed.
@@ -1509,7 +1509,7 @@ begin
   end;
 
   // load custom characters if the display supports it
-  if (config.ScreenType in [stMO,stCF,stIR,stDLL]) then
+  if (config.ScreenType in [stMO,stCF,{stIR,}stDLL]) then
   begin
     customchar('1, 12, 18, 18, 12, 0, 0, 0, 0');
     customchar('2, 31, 31, 31, 31, 31, 31, 31, 31');
@@ -1527,7 +1527,7 @@ begin
       Lcd.setBrightness(config.CF_brightness);
       Lcd.setContrast(config.CF_contrast);
     end;
-    stIR : Lcd.setBrightness(config.IR_brightness);
+//    stIR : Lcd.setBrightness(config.IR_brightness);
     stDLL : begin
       Lcd.setContrast(config.DLL_contrast);
       Lcd.setBrightness(config.DLL_brightness);

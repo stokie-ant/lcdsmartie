@@ -7,7 +7,7 @@ object SetupForm: TSetupForm
   BorderStyle = bsToolWindow
   Caption = 'LCD Smartie 5.3 Setup'
   ClientHeight = 410
-  ClientWidth = 812
+  ClientWidth = 813
   Color = clBtnFace
   Font.Charset = ANSI_CHARSET
   Font.Color = clBlack
@@ -1724,7 +1724,7 @@ object SetupForm: TSetupForm
       object LCDSettingsGroupBox: TGroupBox
         Left = 280
         Top = 0
-        Width = 284
+        Width = 285
         Height = 166
         Caption = 'LCD settings'
         Font.Charset = ANSI_CHARSET
@@ -1775,7 +1775,7 @@ object SetupForm: TSetupForm
         end
         object HD44780RadioButton: TRadioButton
           Left = 16
-          Top = 36
+          Top = 40
           Width = 113
           Height = 17
           Hint = 
@@ -1795,7 +1795,7 @@ object SetupForm: TSetupForm
         end
         object MatrixOrbitalRadioButton: TRadioButton
           Left = 16
-          Top = 56
+          Top = 64
           Width = 145
           Height = 17
           Hint = 'Select if your display is a serial/Usb Matrix Orbital display.'
@@ -1871,7 +1871,7 @@ object SetupForm: TSetupForm
         end
         object MatrixOrbitalConfigButton: TButton
           Left = 152
-          Top = 56
+          Top = 64
           Width = 113
           Height = 17
           Hint = 'Set Matrix Orbital display specific settings.'
@@ -1889,7 +1889,7 @@ object SetupForm: TSetupForm
         end
         object CrystalFontzRadioButton: TRadioButton
           Left = 16
-          Top = 76
+          Top = 88
           Width = 121
           Height = 17
           Hint = 'Select if your display is a serial/usb Crystalfontz display.'
@@ -1907,7 +1907,7 @@ object SetupForm: TSetupForm
         end
         object CrystalFontzConfigButton: TButton
           Left = 152
-          Top = 76
+          Top = 88
           Width = 113
           Height = 17
           Hint = 'Set Crystalfontz display specific settings.'
@@ -1925,7 +1925,7 @@ object SetupForm: TSetupForm
         end
         object HD44780ConfigButton: TButton
           Left = 152
-          Top = 36
+          Top = 40
           Width = 113
           Height = 17
           Hint = 'Set HD44780 compatible display specific settings.'
@@ -1974,7 +1974,7 @@ object SetupForm: TSetupForm
             '4 x 40')
         end
         object HD66712RadioButton: TRadioButton
-          Left = 219
+          Left = 315
           Top = 13
           Width = 113
           Height = 17
@@ -1991,8 +1991,8 @@ object SetupForm: TSetupForm
           OnClick = HD66712RadioButtonClick
         end
         object IRTransRadioButton: TRadioButton
-          Left = 16
-          Top = 96
+          Left = 312
+          Top = 28
           Width = 121
           Height = 17
           Hint = 'Select if your display is controlled by IRTrans'
@@ -2006,11 +2006,12 @@ object SetupForm: TSetupForm
           ParentShowHint = False
           ShowHint = True
           TabOrder = 4
+          Visible = False
           OnClick = IRTransRadioButtonClick
         end
         object IRTransConfigButton: TButton
-          Left = 152
-          Top = 96
+          Left = 372
+          Top = 28
           Width = 113
           Height = 17
           Hint = 'Set IRTrans display specific settings.'
@@ -2024,11 +2025,12 @@ object SetupForm: TSetupForm
           ParentShowHint = False
           ShowHint = True
           TabOrder = 9
+          Visible = False
           OnClick = IRTransConfigButtonClick
         end
         object DLLRadioButton: TRadioButton
           Left = 16
-          Top = 116
+          Top = 112
           Width = 121
           Height = 17
           Hint = 'Select if your display is controlled by IRTrans'
@@ -2046,7 +2048,7 @@ object SetupForm: TSetupForm
         end
         object DLLConfigButton: TButton
           Left = 152
-          Top = 116
+          Top = 112
           Width = 113
           Height = 17
           Hint = 'Set IRTrans display specific settings.'

@@ -19,7 +19,7 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.43 $ $Date: 2006/03/02 21:45:09 $
+ *  $Revision: 1.44 $ $Date: 2006/03/03 00:53:16 $
  *****************************************************************************}
 
 interface
@@ -280,7 +280,7 @@ implementation
 
 uses
   Windows, ShellApi, graphics, sysutils, Registry, UMain, UMOSetup,
-  UCFSetup, UPara, UIRSetup, UDLLSetup, UInteract, UConfig, ULCD_MO,
+  UCFSetup, UPara, {UIRSetup, } UDLLSetup, UInteract, UConfig, ULCD_MO,
   StrUtils;
 
 {$R *.DFM}
@@ -445,10 +445,12 @@ begin
       COMPortComboBox.enabled := true;
       BaudRateComboBox.enabled := true;
     end;
+{
     stIR : begin
       IRTransRadioButton.Checked := true;
       IRTransConfigButton.Enabled := true;
     end;
+}
     stDLL : begin
       DLLRadioButton.Checked := true;
       DLLConfigButton.Enabled := true;
@@ -1380,6 +1382,7 @@ end;
 
 procedure TSetupForm.IRTransConfigButtonClick(Sender: TObject);
 begin
+{
   if (not (config.ScreenType = stIR)) then
   begin
     if MessageDlg('The IRTrans driver is not currently loaded.' + chr(13) +
@@ -1394,6 +1397,7 @@ begin
     config.ScreenType := stNone;
     ApplyButton.click();
   end;
+}
 end;
 
 procedure TSetupForm.DLLConfigButtonClick(Sender: TObject);
@@ -1619,7 +1623,7 @@ begin
   if (MatrixOrbitalRadioButton.checked) and not (config.ScreenType = stMO) then relood := true;
   if (CrystalFontzRadioButton.checked) and not (config.ScreenType = stCF) then relood := true;
   if (HD66712RadioButton.checked) and not (config.ScreenType = stHD2) then relood := true;
-  if (IRTransRadioButton.checked) and not (config.ScreenType = stIR) then relood := true;
+//  if (IRTransRadioButton.checked) and not (config.ScreenType = stIR) then relood := true;
   if (DLLRadioButton.checked) and not (config.ScreenType = stDLL) then relood := true;
 
 
@@ -1664,7 +1668,7 @@ begin
   else if MatrixOrbitalRadioButton.checked then config.ScreenType := stMO
   else if CrystalFontzRadioButton.checked then config.ScreenType := stCF
   else if HD66712RadioButton.checked then config.ScreenType := stHD2
-  else if IRTransRadioButton.checked then config.ScreenType := stIR
+//  else if IRTransRadioButton.checked then config.ScreenType := stIR
   else if DLLRadioButton.checked then config.ScreenType := stDLL;
 
   if (WebProxyPortEdit.text = '') then WebProxyPortEdit.text := '0';
