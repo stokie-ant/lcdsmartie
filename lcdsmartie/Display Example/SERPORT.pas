@@ -38,8 +38,8 @@ type
     procedure OpenSerialPort(S : string);
     function  WriteByte(B : byte) : boolean;
     function  ReadByte(var B : byte) : boolean;
-    function  Write(Buf : pointer; Len : longint) : boolean;
-    function  Read(Buf : pointer; Len : longint) : dword;
+    function  Write(Buf : pbyte; Len : longint) : boolean;
+    function  Read(Buf : pbyte; Len : longint) : dword;
   end;
 
 function SubString(var S : string) : string;
@@ -200,19 +200,19 @@ begin
   WriteByte := WriteFile(fCommHandle,B,1,Bytes,nil) and (Bytes = 1);
 end;
 
-function TSerialPort.Write(Buf : pointer; Len : longint) : boolean;
+function TSerialPort.Write(Buf : pbyte; Len : longint) : boolean;
 var
   Bytes : DWORD;
 begin
-  Write := WriteFile(fCommHandle,Buf,Len,Bytes,nil) and (Bytes = Len);
+  Write := WriteFile(fCommHandle,Buf^,Len,Bytes,nil) and (Bytes = Len);
 end;
 
-function TSerialPort.Read(Buf : pointer; Len : longint) : dword;
+function TSerialPort.Read(Buf : pbyte; Len : longint) : dword;
 var
   Bytes : DWORD;
 begin
   Read := 0;
-  if ReadFile(fCommHandle,Buf,Len,Bytes,nil) then
+  if ReadFile(fCommHandle,Buf^,Len,Bytes,nil) then
     Read := Bytes;
 end;
 
