@@ -9,7 +9,7 @@ type
   pboolean = ^boolean;
   TCustomArray = array[0..7] of byte;
 
-  TInitFunc = function(StartupParameters : pchar; OK : pboolean) : pchar; stdcall;
+  TInitFunc = function(SizeX,SizeY : byte; StartupParameters : pchar; OK : pboolean) : pchar; stdcall;
   TDoneProc = procedure; stdcall;
   TSetPositionProc = procedure(X, Y: byte); stdcall;
   TWriteProc = procedure(Str : pchar); stdcall;
@@ -34,7 +34,7 @@ type
     procedure SetContrast(Level: integer); override;
     procedure SetBrightness(Level: integer); override;
     procedure PowerResume; override;
-    constructor CreateDLL(DLLName,StartupParameters : string);
+    constructor CreateDLL(SizeX,SizeY : byte; DLLName,StartupParameters : string);
     destructor Destroy; override;
   private
     { Private declarations }
@@ -59,7 +59,7 @@ implementation
 uses
   Windows,SysUtils;
 
-constructor TLCD_DLL.CreateDLL(DLLName,StartupParameters : string);
+constructor TLCD_DLL.CreateDLL(SizeX,SizeY : byte; DLLName,StartupParameters : string);
 var
   S : string;
 begin
@@ -109,7 +109,7 @@ begin
   if OK then begin
     if assigned(InitFunc) then begin
       OK := false;
-      S := string(InitFunc(pchar(StartupParameters),@OK));
+      S := string(InitFunc(SizeX,SizeY,pchar(StartupParameters),@OK));
       if not OK then
         raise EInOutError.Create('DLL Initialize error: '+S);
     end;

@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.72 $ $Date: 2006/03/03 01:32:58 $
+ *  $Revision: 1.73 $ $Date: 2006/03/03 15:57:22 $
  *****************************************************************************}
 
 interface
@@ -1489,7 +1489,7 @@ begin
       stCF : Lcd := TLCD_CF.CreateSerial(config.comPort, baudRates[config.baudrate]);
       stTestDriver : Lcd := TLCD_Test.CreateSerial(config.comPort, baudRates[config.baudrate]);
 //      stIR : Lcd := TLCD_IR.CreateSocket(config.RemoteHost);
-      stDLL : Lcd := TLCD_DLL.CreateDLL(config.DisplayDLLName,config.DisplayDLLParameters);
+      stDLL : Lcd := TLCD_DLL.CreateDLL(config.width,config.height,config.DisplayDLLName,config.DisplayDLLParameters);
       stHD,stHD2 : begin
         Lcd := TLCD.Create(); // use a dummy LCD until the boot time has passed.
         // HD/HD2 have a delay start - they will setup the above timers later.
