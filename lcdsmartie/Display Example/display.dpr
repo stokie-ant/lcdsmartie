@@ -11,7 +11,7 @@ type
 var
   COMPort : TSerialPort = nil;
 
-function DISPLAYDLL_Init(StartupParameters : pchar; OK : pboolean) : pchar; stdcall;
+function DISPLAYDLL_Init(SizeX,SizeY : byte; StartupParameters : pchar; OK : pboolean) : pchar; stdcall;
 // return startup error
 // open port
 begin
