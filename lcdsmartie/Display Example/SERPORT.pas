@@ -38,6 +38,7 @@ type
     procedure OpenSerialPort(S : string);
     function  WriteByte(B : byte) : boolean;
     function  ReadByte(var B : byte) : boolean;
+    function  Write(S : pchar; Len : longint) : boolean;
   end;
 
 
@@ -195,6 +196,16 @@ var
   Bytes : DWORD;
 begin
   WriteByte := WriteFile(fCommHandle,B,1,Bytes,nil) and (Bytes = 1);
+end;
+
+function TSerialPort.Write(S : pchar; Len : longint) : boolean;
+var
+  Loop : longint;
+begin
+  Result := true;
+  for Loop := 0 to Len-1 do begin
+    Result := Result and WriteByte(ord(S[Loop]));
+  end;
 end;
 
 end.
