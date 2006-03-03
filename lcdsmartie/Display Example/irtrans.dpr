@@ -102,11 +102,6 @@ var
 //  procedure ClientSocketConnect(Sender: TObject);
 
 
-function DISPLAYDLL_Usage : pchar; stdcall;
-begin
-  DISPLAYDLL_Usage := pchar('Usage: servername');
-end;
-
 procedure DISPLAYDLL_SetPosition(X, Y: byte); stdcall;
 // set cursor position
 begin
@@ -283,6 +278,16 @@ begin
 end;
 
 
+function DISPLAYDLL_Usage : pchar; stdcall;
+begin
+  DISPLAYDLL_Usage := pchar('Usage: serverhost'+#13#10+'usually 127.0.0.1 or localhost');
+end;
+
+function DISPLAYDLL_DriverName : pchar; stdcall;
+begin
+  Result := PChar(DLLProjectName + ' ' + Version);
+end;
+
 // don't forget to export the funtions, else nothing works :)
 exports
   DISPLAYDLL_SetBrightness,
@@ -290,6 +295,7 @@ exports
   DISPLAYDLL_Write,
   DISPLAYDLL_SetPosition,
   DISPLAYDLL_Usage,
+  DISPLAYDLL_DriverName,
   DISPLAYDLL_Done,
   DISPLAYDLL_Init;
 begin

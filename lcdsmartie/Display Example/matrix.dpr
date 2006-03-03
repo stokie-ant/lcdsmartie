@@ -911,6 +911,11 @@ begin
   Result := pchar('Usage: COM1,9600 or USB');
 end;
 
+function DISPLAYDLL_DriverName : pchar; stdcall;
+begin
+  Result := PChar(DLLProjectName + ' ' + Version);
+end;
+
 // don't forget to export the funtions, else nothing works :)
 exports
   DISPLAYDLL_SetFan,
@@ -923,6 +928,7 @@ exports
   DISPLAYDLL_Write,
   DISPLAYDLL_SetPosition,
   DISPLAYDLL_Usage,
+  DISPLAYDLL_DriverName,
   DISPLAYDLL_Done,
   DISPLAYDLL_Init;
 begin

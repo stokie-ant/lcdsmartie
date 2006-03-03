@@ -747,6 +747,11 @@ begin
   Result := pchar('Usage: COM1,9600,v'+#13#10+'v = CGROM version (1 or 2)');
 end;
 
+function DISPLAYDLL_DriverName : pchar; stdcall;
+begin
+  Result := PChar(DLLProjectName + ' ' + Version);
+end;
+
 // don't forget to export the funtions, else nothing works :)
 exports
   DISPLAYDLL_SetBrightness,
@@ -757,6 +762,7 @@ exports
   DISPLAYDLL_Write,
   DISPLAYDLL_SetPosition,
   DISPLAYDLL_Usage,
+  DISPLAYDLL_DriverName,
   DISPLAYDLL_Done,
   DISPLAYDLL_Init;
 begin

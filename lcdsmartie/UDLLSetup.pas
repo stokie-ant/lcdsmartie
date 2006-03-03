@@ -19,7 +19,7 @@ unit UDLLSetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/Attic/UDLLSetup.pas,v $
- *  $Revision: 1.1 $ $Date: 2006/03/02 21:44:20 $
+ *  $Revision: 1.2 $ $Date: 2006/03/03 18:01:38 $
  *****************************************************************************}
 
 
@@ -39,7 +39,8 @@ type
     ParametersEdit: TEdit;
     DisplayPluginsLabel: TLabel;
     DisplayPluginList: TComboBox;
-    HintLabel: TLabel;
+    UsageLabel: TLabel;
+    IDLabel: TLabel;
     procedure ContrastTrackBarChange(Sender: TObject);
     procedure BrightnessTrackBarChange(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -105,14 +106,18 @@ var
   MyDLL : HMODULE;
   UsageFunc : TUsageFunc;
 begin
-  HintLabel.Caption := '';
+  UsageLabel.Caption := 'no parameters';
   if FileExists(DisplayDLLName) then begin
     try
       MyDLL := LoadLibrary(pchar(DisplayDLLName));
       if not (MyDll = 0) then begin
         UsageFunc := GetProcAddress(MyDLL,pchar('DISPLAYDLL_Usage'));
         if assigned(UsageFunc) then
-          HintLabel.Caption := 'Hint: '+ string(UsageFunc);
+          UsageLabel.Caption := string(UsageFunc);
+        IDLabel.Caption := 'Warning: DLL may not be compatible!';
+        UsageFunc := GetProcAddress(MyDLL,pchar('DISPLAYDLL_DriverName'));
+        if assigned(UsageFunc) then
+          IDLabel.Caption := string(UsageFunc);
         FreeLibrary(MyDLL);
       end;
     except

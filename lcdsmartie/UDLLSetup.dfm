@@ -4,7 +4,7 @@ object DisplayPluginSetupForm: TDisplayPluginSetupForm
   BorderIcons = []
   BorderStyle = bsToolWindow
   Caption = 'Display Plugin settings'
-  ClientHeight = 254
+  ClientHeight = 274
   ClientWidth = 229
   Color = clBtnFace
   Font.Charset = ANSI_CHARSET
@@ -17,12 +17,12 @@ object DisplayPluginSetupForm: TDisplayPluginSetupForm
   OnShow = FormShow
   DesignSize = (
     229
-    254)
+    274)
   PixelsPerInch = 96
   TextHeight = 13
   object Label1: TLabel
     Left = 8
-    Top = 172
+    Top = 168
     Width = 116
     Height = 13
     Caption = 'Startup Parameters:'
@@ -40,12 +40,25 @@ object DisplayPluginSetupForm: TDisplayPluginSetupForm
     Height = 13
     Caption = 'Display Plugin:'
   end
-  object HintLabel: TLabel
+  object UsageLabel: TLabel
     Left = 8
-    Top = 152
-    Width = 22
+    Top = 208
+    Width = 31
     Height = 13
-    Caption = 'Hint:'
+    Caption = 'Usage'
+    Font.Charset = ANSI_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'MS Sans Serif'
+    Font.Style = []
+    ParentFont = False
+  end
+  object IDLabel: TLabel
+    Left = 8
+    Top = 144
+    Width = 63
+    Height = 13
+    Caption = 'DLL Identifier'
     Font.Charset = ANSI_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
@@ -87,7 +100,7 @@ object DisplayPluginSetupForm: TDisplayPluginSetupForm
   end
   object OKButton: TButton
     Left = 36
-    Top = 226
+    Top = 246
     Width = 75
     Height = 25
     Anchors = [akLeft, akBottom]
@@ -104,7 +117,7 @@ object DisplayPluginSetupForm: TDisplayPluginSetupForm
   end
   object CancelButton: TButton
     Left = 120
-    Top = 226
+    Top = 246
     Width = 75
     Height = 25
     Anchors = [akLeft, akBottom]
@@ -153,7 +166,7 @@ object DisplayPluginSetupForm: TDisplayPluginSetupForm
   end
   object ParametersEdit: TEdit
     Left = 8
-    Top = 188
+    Top = 184
     Width = 209
     Height = 21
     Anchors = [akLeft, akTop, akRight]
