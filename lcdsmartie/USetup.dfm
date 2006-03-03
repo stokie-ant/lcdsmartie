@@ -1532,7 +1532,7 @@ object SetupForm: TSetupForm
       object ProgramSettingsGroupBox: TGroupBox
         Left = 3
         Top = 0
-        Width = 226
+        Width = 270
         Height = 166
         Caption = 'Program settings'
         Font.Charset = ANSI_CHARSET
@@ -1542,9 +1542,12 @@ object SetupForm: TSetupForm
         Font.Style = [fsBold]
         ParentFont = False
         TabOrder = 1
+        DesignSize = (
+          270
+          166)
         object Label1: TLabel
           Left = 8
-          Top = 48
+          Top = 52
           Width = 134
           Height = 13
           Caption = 'Scroll interval (milliseconds):'
@@ -1557,7 +1560,7 @@ object SetupForm: TSetupForm
         end
         object Label7: TLabel
           Left = 8
-          Top = 96
+          Top = 112
           Width = 91
           Height = 13
           Caption = 'Web proxy server:'
@@ -1583,7 +1586,7 @@ object SetupForm: TSetupForm
         end
         object Label6: TLabel
           Left = 8
-          Top = 76
+          Top = 84
           Width = 68
           Height = 13
           Caption = 'Color scheme:'
@@ -1608,11 +1611,12 @@ object SetupForm: TSetupForm
           ParentFont = False
         end
         object WebProxyServerEdit: TEdit
-          Left = 8
+          Left = 104
           Top = 108
-          Width = 209
+          Width = 157
           Height = 21
           Hint = 'Web proxy for web access (such as for Rss feeds).'
+          Anchors = [akLeft, akTop, akRight]
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
           Font.Height = -11
@@ -1624,11 +1628,12 @@ object SetupForm: TSetupForm
           TabOrder = 3
         end
         object WebProxyPortEdit: TEdit
-          Left = 128
+          Left = 180
           Top = 136
-          Width = 89
+          Width = 81
           Height = 21
           Hint = 'Web proxy port for web access (such as for Rss feeds).'
+          Anchors = [akTop, akRight]
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
           Font.Height = -11
@@ -1642,12 +1647,13 @@ object SetupForm: TSetupForm
           Text = '0'
         end
         object ColorSchemeComboBox: TComboBox
-          Left = 112
-          Top = 71
-          Width = 105
+          Left = 84
+          Top = 79
+          Width = 177
           Height = 21
           Hint = 'The colors used in the virtual display.'
           Style = csDropDownList
+          Anchors = [akLeft, akTop, akRight]
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
           Font.Height = -11
@@ -1667,11 +1673,12 @@ object SetupForm: TSetupForm
             'Custom for this skin')
         end
         object ProgramRefreshIntervalSpinEdit: TSpinEdit
-          Left = 160
+          Left = 192
           Top = 17
-          Width = 57
+          Width = 69
           Height = 22
           Hint = 'How often screen text is sent to display (in mSec).'
+          Anchors = [akTop, akRight]
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
           Font.Height = -11
@@ -1687,13 +1694,14 @@ object SetupForm: TSetupForm
           Value = 200
         end
         object ProgramScrollIntervalSpinEdit: TSpinEdit
-          Left = 160
-          Top = 42
-          Width = 57
+          Left = 192
+          Top = 46
+          Width = 69
           Height = 22
           Hint = 
             'How fast to scroll (in mSec). Should be greater than refresh int' +
             'erval.'
+          Anchors = [akTop, akRight]
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
           Font.Height = -11
@@ -2031,9 +2039,9 @@ object SetupForm: TSetupForm
         end
       end
       object DisplayGroup2: TGroupBox
-        Left = 232
+        Left = 280
         Top = 0
-        Width = 333
+        Width = 285
         Height = 165
         Caption = 'Display settings'
         Font.Charset = ANSI_CHARSET
@@ -2046,7 +2054,7 @@ object SetupForm: TSetupForm
         object Panel1: TPanel
           Left = 2
           Top = 15
-          Width = 329
+          Width = 281
           Height = 148
           Align = alClient
           BevelOuter = bvNone
@@ -2055,7 +2063,7 @@ object SetupForm: TSetupForm
           object DisplayPageControl: TPageControl
             Left = 3
             Top = 3
-            Width = 323
+            Width = 275
             Height = 142
             ActivePage = PluginTabsheet
             Align = alClient
@@ -2072,7 +2080,7 @@ object SetupForm: TSetupForm
             object PluginTabsheet: TTabSheet
               Caption = 'Plugin'
               DesignSize = (
-                299
+                251
                 134)
               object DisplayPluginsLabel: TLabel
                 Left = 8
@@ -2121,11 +2129,12 @@ object SetupForm: TSetupForm
                 Caption = 'Usage'
               end
               object DisplayPluginList: TComboBox
-                Left = 112
+                Left = 92
                 Top = 4
-                Width = 181
+                Width = 153
                 Height = 21
                 Style = csDropDownList
+                Anchors = [akLeft, akTop, akRight]
                 ItemHeight = 13
                 TabOrder = 0
                 OnChange = DisplayPluginListChange
@@ -2133,7 +2142,7 @@ object SetupForm: TSetupForm
               object ParametersEdit: TEdit
                 Left = 8
                 Top = 60
-                Width = 285
+                Width = 237
                 Height = 21
                 Anchors = [akLeft, akTop, akRight]
                 TabOrder = 1
@@ -2144,7 +2153,7 @@ object SetupForm: TSetupForm
               Caption = 'Screen'
               ImageIndex = 1
               DesignSize = (
-                299
+                251
                 134)
               object Label3: TLabel
                 Left = 89
@@ -2181,7 +2190,7 @@ object SetupForm: TSetupForm
               object GroupBox3: TGroupBox
                 Left = 8
                 Top = 28
-                Width = 285
+                Width = 237
                 Height = 49
                 Anchors = [akLeft, akTop, akRight]
                 Caption = 'Contrast'
@@ -2193,12 +2202,12 @@ object SetupForm: TSetupForm
                 ParentFont = False
                 TabOrder = 1
                 DesignSize = (
-                  285
+                  237
                   49)
                 object ContrastTrackBar: TTrackBar
-                  Left = 1
+                  Left = 3
                   Top = 15
-                  Width = 281
+                  Width = 230
                   Height = 25
                   Anchors = [akLeft, akTop, akRight]
                   Max = 254
@@ -2213,7 +2222,7 @@ object SetupForm: TSetupForm
               object GroupBox1: TGroupBox
                 Left = 8
                 Top = 80
-                Width = 285
+                Width = 237
                 Height = 49
                 Anchors = [akLeft, akTop, akRight]
                 Caption = 'Brightness'
@@ -2225,12 +2234,12 @@ object SetupForm: TSetupForm
                 ParentFont = False
                 TabOrder = 2
                 DesignSize = (
-                  285
+                  237
                   49)
                 object BrightnessTrackBar: TTrackBar
-                  Left = 1
+                  Left = 3
                   Top = 16
-                  Width = 281
+                  Width = 230
                   Height = 25
                   Anchors = [akLeft, akTop, akRight]
                   Max = 254
