@@ -19,7 +19,7 @@ unit UConfig;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UConfig.pas,v $
- *  $Revision: 1.41 $ $Date: 2006/03/03 04:03:41 $
+ *  $Revision: 1.42 $ $Date: 2006/03/03 15:57:38 $
  *****************************************************************************}
 
 interface
@@ -35,6 +35,30 @@ const
   MaxCols = 40;
   MaxThemes = 10;
   MaxActions = 99;
+  MaxScreenSizes = 12;
+
+type
+  TScreenSize = record
+    SizeName : string[6];
+    YSize : byte;
+    XSize : byte;
+  end;
+
+const
+  ScreenSizes : array[1..MaxScreenSizes] of TScreenSize = (
+    (SizeName : '1x10'; YSize : 1; XSize : 10),
+    (SizeName : '1x16'; YSize : 1; XSize : 16),
+    (SizeName : '1x20'; YSize : 1; XSize : 20),
+    (SizeName : '1x24'; YSize : 1; XSize : 24),
+    (SizeName : '1x40'; YSize : 1; XSize : 40),
+    (SizeName : '2x16'; YSize : 2; XSize : 16),
+    (SizeName : '2x20'; YSize : 2; XSize : 20),
+    (SizeName : '2x24'; YSize : 2; XSize : 24),
+    (SizeName : '2x40'; YSize : 2; XSize : 40),
+    (SizeName : '4x16'; YSize : 4; XSize : 16),
+    (SizeName : '4x20'; YSize : 4; XSize : 20),
+    (SizeName : '4x40'; YSize : 4; XSize : 40));
+
 
 type
   TTransitionStyle = (tsNone,tsLeftRight,tsRightLeft,tsTopBottom,tsBottomTop,tsRandomChars,tsFade);
@@ -72,7 +96,7 @@ type
 
   TConfig = class(TObject)
   private
-    P_sizeOption: Integer;
+    fScreenSize: Integer;
     P_width: Integer;
     P_height: Integer;
     uiActionsLoaded: Cardinal;
@@ -81,7 +105,7 @@ type
     function loadCCFG: Boolean;
     function loadACFG: Boolean;
     procedure saveINI;
-    procedure setSizeOption(con: Integer);
+    procedure SetScreenSize(con: Integer);
   public
     localeFormat: TFormatSettings;
     bHideOnStartup: Boolean;
@@ -97,43 +121,49 @@ type
     emailPeriod: Integer;
     dllPeriod: Integer;
     scrollPeriod: Integer;
-    parallelPort: Integer;
     colorOption: Integer;
     alwaysOnTop: Boolean;
-    mx3Usb: Boolean;
     httpProxy: String;
     httpProxyPort: Integer;
-    brightness: Integer;
-    CF_contrast: Integer;
-    CF_brightness: Integer;
-    iCF_cgrom: Integer;
-    IR_brightness: Integer;
     newsRefresh: Integer;
     randomScreens: Boolean;
     gameRefresh: Integer;
     mbmRefresh: Integer;
     foldUsername: String;
-    ScreenType : TScreenType;
     checkUpdates: Boolean;
     distLog: String;
     screen: Array[1..MaxScreens] of Array[1..MaxLines] of TScreenLine;
     winampLocation: String;
     setiEmail: String;
-    contrast: Integer;
     actionsArray: Array[1..MaxActions, 1..4] of String;
     totalactions: Integer;
+    // screen settings
+    ScreenType : TScreenType;
     iMinFadeContrast: Integer;
+    // these apply to LPT displays
+    parallelPort: Integer;
     bHDAltAddressing: Boolean;
     bHDKS0073Addressing: Boolean;
     iHDTimingMultiplier: Integer;
+    // these apply to Matrix displays
+    contrast: Integer;
+    brightness: Integer;
+    mx3Usb: Boolean;
+    // these apply to Crystal Fontz displays
+    CF_contrast: Integer;
+    CF_brightness: Integer;
+    iCF_cgrom: Integer;
+    // these apply to IRTrans displays
+    IR_brightness: Integer;
     remotehost : string;
+    // these apply to DLL Plugin displays
     DisplayDLLName : string;
     DisplayDLLParameters : string;
     DLL_Contrast: integer;
     DLL_Brightness: integer;
     function load: Boolean;
     procedure save;
-    property sizeOption: Integer read P_sizeOption write setSizeOption;
+    property ScreenSize: Integer read fScreenSize write SetScreenSize;
     property width: Integer read P_width;
     property height: Integer read P_height;
     property filename: String read sFileName;
@@ -155,70 +185,11 @@ begin
   inherited Create();
 end;
 
-
-procedure TConfig.setSizeOption(con: Integer);
+procedure TConfig.SetScreenSize(con: Integer);
 begin
-  P_sizeOption := con;
-  if P_sizeOption = 1 then
-  begin
-    P_height := 1;
-    P_width := 10;
-  end;
-  if P_sizeOption = 2 then
-  begin
-    P_height := 1;
-    P_width := 16;
-  end;
-  if P_sizeOption = 3 then
-  begin
-    P_height := 1;
-    P_width := 20;
-  end;
-  if P_sizeOption = 4 then
-  begin
-    P_height := 1;
-    P_width := 24;
-  end;
-  if P_sizeOption = 5 then
-  begin
-    P_height := 1;
-    P_width := 40;
-  end;
-  if P_sizeOption = 6 then
-  begin
-    P_height := 2;
-    P_width := 16;
-  end;
-  if P_sizeOption = 7 then
-  begin
-    P_height := 2;
-    P_width := 20;
-  end;
-  if P_sizeOption = 8 then
-  begin
-    P_height := 2;
-    P_width := 24;
-  end;
-  if P_sizeOption = 9 then
-  begin
-    P_height := 2;
-    P_width := 40;
-  end;
-  if P_sizeOption = 10 then
-  begin
-    P_height := 4;
-    P_width := 16;
-  end;
-  if P_sizeOption = 11 then
-  begin
-    P_height := 4;
-    P_width := 20;
-  end;
-  if P_sizeOption = 12 then
-  begin
-    P_height := 4;
-    P_width := 40;
-  end;
+  fScreenSize := con;
+  P_width := ScreenSizes[fScreenSize].XSize;
+  P_height := ScreenSizes[fScreenSize].YSize;
 end;
 
 function TConfig.loadACFG: Boolean;
@@ -306,7 +277,7 @@ begin
   setiEmail := copy(configArray[2], pos('¿', configArray[2]) + 1,
     length(configArray[2]));
 
-  setSizeOption(strtoInt(copy(configArray[3], 1, pos('¿1',
+  SetScreenSize(strtoInt(copy(configArray[3], 1, pos('¿1',
     configArray[3])-1)));
 
   contrast := strtoint(copy(configArray[3], pos('¿1', configArray[3]) + 2,
@@ -621,7 +592,7 @@ begin
 
 
 
-  setSizeOption(initFile.ReadInteger('General Settings', 'Size', 11));
+  SetScreenSize(initFile.ReadInteger('General Settings', 'Size', 11));
 
   contrast := initFile.ReadInteger('General Settings', 'Contrast', 88);
   brightness := initFile.ReadInteger('General Settings', 'Brightness', 26);
@@ -797,7 +768,7 @@ begin
   initFile.WriteString('Communication Settings', 'DisplayDLLParameters', DisplayDLLParameters);
 
   initFile.WriteInteger('General Settings', 'LCDType', ord(ScreenType));
-  initFile.WriteInteger('General Settings', 'Size', sizeOption);
+  initFile.WriteInteger('General Settings', 'Size', ScreenSize);
   initFile.WriteInteger('General Settings', 'Contrast', contrast);
   initFile.WriteInteger('General Settings', 'Brightness', brightness);
 
