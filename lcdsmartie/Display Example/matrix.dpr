@@ -7,7 +7,7 @@ uses
 
 const
   DLLProjectName = 'Matrix Orbital Display DLL';
-  Version = 'v1.0';
+  Version = 'v1.01';
 type
   pboolean = ^boolean;
   TCustomArray = array[0..7] of byte;
@@ -17,7 +17,7 @@ var
 
 function DISPLAYDLL_Usage : pchar; stdcall;
 begin
-  Result := pchar('Usage: COM1,9600,8,N,1');
+  Result := pchar('Usage: COM1,9600');
 end;
 
 procedure DISPLAYDLL_SetPosition(X, Y: byte); stdcall;
@@ -177,13 +177,17 @@ function DISPLAYDLL_Init(StartupParameters : pchar; OK : pboolean) : pchar; stdc
 // return startup error
 // open port
 var
-   GPO : byte;
+  GPO : byte;
+  S : string;
 begin
   COMPort := TSerialPort.Create;
   OK^ := true;
   Result := PChar(DLLProjectName + ' ' + Version);
   try
-    COMPort.OpenSerialPort(string(StartupParameters));
+    S := string(StartupParameters);
+    S := S + ',8,N,1,$';
+    S := S + IntToHex(SetRTSFlag+SetDTRFlag,8);
+    COMPort.OpenSerialPort(S);
   except
     on E: Exception do begin
       result := PChar('MATRIX.DLL Exception: ' + E.Message);

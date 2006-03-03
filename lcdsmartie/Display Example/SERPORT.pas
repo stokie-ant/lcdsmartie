@@ -5,6 +5,27 @@ interface
 uses
   Windows;
 
+const
+  { communications mode flag bitmask constants }
+  BinaryModeFlag = $00000001;
+  ParityEnableFlag = $00000002;
+  CTSOutputControlFlag = $00000004;
+  DSROutputControlFlag = $00000008;
+  DTRFlowControlTypeMask = $00000030;
+  SetDTRFlag = $00000010;
+  DTRHandshakingFlag = $00000020;
+  DSRSensitivityFlag = $00000040;
+  TXContinueOnXOffFlag = $00000080;
+  XonXoffOutputFlowControlFlag = $00000100;
+  XonXoffInputFlowControlFlag = $00000200;
+  ErrorReplacementEnableFlag = $00000400;
+  NullStrippingEnableFlag = $00000800;
+  RTSFlowControlMask = $00003000;
+  SetRTSFlag = $00001000;
+  RTSHandshakingFlag = $00002000;
+  AbortOnErrorEnableFlag = $00004000;
+  ReservedFlagBitsMask = $FFFF8000;
+
 type
   TSerialPort = class
   private
@@ -39,27 +60,6 @@ procedure TSerialPort.CloseSerialPort;
 begin
   if (fCommHandle > 0) then CloseHandle(fCommHandle);
 end;
-
-const
-  { communications mode flag bitmask constants }
-  BinaryModeFlag = $00000001;
-  ParityEnableFlag = $00000002;
-  CTSOutputControlFlag = $00000004;
-  DSROutputControlFlag = $00000008;
-  DTRFlowControlTypeMask = $00000030;
-  SetDTRFlag = $00000010;
-  DTRHandshakingFlag = $00000020;
-  DSRSensitivityFlag = $00000040;
-  TXContinueOnXOffFlag = $00000080;
-  XonXoffOutputFlowControlFlag = $00000100;
-  XonXoffInputFlowControlFlag = $00000200;
-  ErrorReplacementEnableFlag = $00000400;
-  NullStrippingEnableFlag = $00000800;
-  RTSFlowControlMask = $00003000;
-  SetRTSFlag = $00001000;
-  RTSHandshakingFlag = $00002000;
-  AbortOnErrorEnableFlag = $00004000;
-  ReservedFlagBitsMask = $FFFF8000;
 
 function TSerialPort.InitComPort(FComPortName : string; FComPortBaud : longint; Bits,bParity,Stop : byte; COMFlags : word) : boolean;
       // 0-4=no,odd,even,mark,space
@@ -129,7 +129,7 @@ begin
 end;
 
 procedure TSerialPort.OpenSerialPort(S : string);
-// COM1,9600,8,N,1,0  // flags in DECIMAL format
+// COM1,9600,8,N,1,0  // flags in DECIMAL or HEX format
 var
   S2,PortName : string;
   ComPortBaud : longint;
