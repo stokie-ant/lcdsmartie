@@ -19,7 +19,7 @@ unit UConfig;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UConfig.pas,v $
- *  $Revision: 1.43 $ $Date: 2006/03/03 20:59:00 $
+ *  $Revision: 1.44 $ $Date: 2006/03/03 21:43:34 $
  *****************************************************************************}
 
 interface
@@ -440,7 +440,6 @@ const
 
 procedure TConfig.ConvertToDisplayDLL;
 begin
-  DisplayDLLParameters := 'COM'+IntToStr(COMPort)+','+IntToStr(BaudRates[BAUDRate]);
   case xScreenType of
     xxHD2,
     xxHD : begin
@@ -452,11 +451,13 @@ begin
     end;
     xxMO : begin
       DisplayDLLName := 'matrix.dll';
+      DisplayDLLParameters := 'COM'+IntToStr(COMPort)+','+IntToStr(BaudRates[BAUDRate]);
       DLL_Contrast := xcontrast;
       DLL_Brightness := xbrightness;
     end;
     xxCF : begin
       DisplayDLLName := 'crystal.dll';
+      DisplayDLLParameters := 'COM'+IntToStr(COMPort)+','+IntToStr(BaudRates[BAUDRate]);
       DLL_Contrast := xCF_contrast*255 div 100;
       DLL_Brightness := xCF_brightness*255 div 100;
     end;
