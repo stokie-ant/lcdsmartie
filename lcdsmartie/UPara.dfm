@@ -4,7 +4,7 @@ object HD44780SetupForm: THD44780SetupForm
   BorderIcons = []
   BorderStyle = bsToolWindow
   Caption = 'HD44780 Settings'
-  ClientHeight = 195
+  ClientHeight = 201
   ClientWidth = 176
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -62,7 +62,7 @@ object HD44780SetupForm: THD44780SetupForm
   end
   object OKButton: TButton
     Left = 8
-    Top = 160
+    Top = 168
     Width = 75
     Height = 25
     Caption = '&OK'
@@ -100,7 +100,7 @@ object HD44780SetupForm: THD44780SetupForm
   end
   object CancelButton: TButton
     Left = 92
-    Top = 160
+    Top = 168
     Width = 75
     Height = 25
     Cancel = True
@@ -108,12 +108,15 @@ object HD44780SetupForm: THD44780SetupForm
     ModalResult = 2
     TabOrder = 5
   end
-  object KS0073Checkbox: TCheckBox
+  object KS0073AddressingCheckbox: TCheckBox
     Left = 8
     Top = 136
-    Width = 161
-    Height = 17
+    Width = 153
+    Height = 25
+    Hint = 'Some displays (esp the 1x16s) are addressed differently.'
     Caption = 'Use &KS0073 addressing'
+    ParentShowHint = False
+    ShowHint = True
     TabOrder = 6
   end
 end

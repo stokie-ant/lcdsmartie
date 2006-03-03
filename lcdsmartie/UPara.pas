@@ -19,7 +19,7 @@ unit UPara;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/Attic/UPara.pas,v $
- *  $Revision: 1.7 $ $Date: 2006/02/27 22:45:38 $
+ *  $Revision: 1.8 $ $Date: 2006/03/03 04:03:41 $
  *****************************************************************************}
 
 interface
@@ -37,6 +37,7 @@ type
     TimingMultiplierSpinEdit: TSpinEdit;
     Label3: TLabel;
     CancelButton: TButton;
+    KS0073AddressingCheckbox: TCheckBox;
   private
     { Private declarations }
   public
@@ -63,6 +64,7 @@ begin
     BootDelaySpinEdit.Value := config.bootDriverDelay;
     TimingMultiplierSpinEdit.value := config.iHDTimingMultiplier;
     AltAddressingCheckbox.checked := config.bHDAltAddressing;
+    KS0073AddressingCheckbox.checked := config.bHDKS0073Addressing;
     ShowModal;
     Result := (ModalResult = mrOK);
     if Result then begin
@@ -74,6 +76,7 @@ begin
       config.bootDriverDelay := BootDelaySpinEdit.Value;
       config.iHDTimingMultiplier := TimingMultiplierSpinEdit.value;
       config.bHDAltAddressing := AltAddressingCheckbox.checked;
+      config.bHDKS0073Addressing := KS0073AddressingCheckbox.checked;
     end;
     Free;
   end;
