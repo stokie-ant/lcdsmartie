@@ -19,7 +19,7 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.47 $ $Date: 2006/03/03 20:59:00 $
+ *  $Revision: 1.48 $ $Date: 2006/03/04 11:41:33 $
  *****************************************************************************}
 
 interface
@@ -390,6 +390,9 @@ begin
         UsageFunc := GetProcAddress(MyDLL,pchar('DISPLAYDLL_DriverName'));
         if assigned(UsageFunc) then
           IDLabel.Caption := string(UsageFunc);
+        UsageFunc := GetProcAddress(MyDLL,pchar('DISPLAYDLL_DefaultParameters'));
+        if assigned(UsageFunc) then
+          ParametersEdit.Text := string(UsageFunc);
         FreeLibrary(MyDLL);
       end;
     except
@@ -545,7 +548,6 @@ begin
   // put display plugin settings on screen
   ContrastTrackBar.position := config.DLL_contrast;
   BrightnessTrackBar.position := config.DLL_brightness;
-  ParametersEdit.Text := config.DisplayDLLParameters;
   DisplayPluginList.Items.Clear;
   DLLPath := extractfilepath(paramstr(0))+'displays\';
   FindResult := findfirst(DLLPath+'*.dll',0,SR);
@@ -553,14 +555,15 @@ begin
     DisplayPluginList.Items.Add(extractfilename(SR.Name));
     FindResult := FindNext(SR);
   end;
-    DisplayPluginList.ItemIndex := 0;
+  findclose(SR);
+  DisplayPluginList.ItemIndex := 0;
   for Loop := 0 to DisplayPluginList.Items.Count-1 do begin
     if lowercase(config.DisplayDLLName) = lowercase(DisplayPluginList.Items[Loop]) then begin
       DisplayPluginList.ItemIndex := Loop;
-      LoadHint(DLLPath+config.DisplayDLLName);
+      DisplayPluginListChange(Sender);
+      ParametersEdit.Text := config.DisplayDLLParameters; // set our original parameters back
     end;
   end;
-  findclose(SR);
 
   InternetRefreshTimeSpinEdit.Value := config.newsRefresh;
   RandomizeScreensCheckBox.checked := config.randomScreens;
