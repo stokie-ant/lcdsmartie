@@ -128,6 +128,7 @@ begin
     delete(S,1,P);
   end else begin
     SubString := uppercase(trim(S));
+    S := '';
   end;
 end;
 
