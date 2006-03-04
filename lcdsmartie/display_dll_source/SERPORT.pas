@@ -38,8 +38,8 @@ type
     procedure OpenSerialPort(S : string);
     function  WriteByte(B : byte) : boolean;
     function  ReadByte(var B : byte) : boolean;
-    function  Write(Buf : pbyte; Len : longint) : boolean;
-    function  Read(Buf : pbyte; Len : longint) : dword;
+    function  Write(Buf : pbyte; Len : DWORD) : boolean;
+    function  Read(Buf : pbyte; Len : DWORD) : dword;
   end;
 
 function SubString(var S : string) : string;
@@ -73,7 +73,7 @@ var
   CommDCB : TDCB;
   PortName,TempError : string;
 begin
-  InitComPort := false;
+  Result := false;
   if (FComPortName = '') then begin
     raise EInOutError.Create('Illegal com port name!');
   end else begin
@@ -201,14 +201,14 @@ begin
   WriteByte := WriteFile(fCommHandle,B,1,Bytes,nil) and (Bytes = 1);
 end;
 
-function TSerialPort.Write(Buf : pbyte; Len : longint) : boolean;
+function TSerialPort.Write(Buf : pbyte; Len : DWORD) : boolean;
 var
   Bytes : DWORD;
 begin
   Write := WriteFile(fCommHandle,Buf^,Len,Bytes,nil) and (Bytes = Len);
 end;
 
-function TSerialPort.Read(Buf : pbyte; Len : longint) : dword;
+function TSerialPort.Read(Buf : pbyte; Len : DWORD) : dword;
 var
   Bytes : DWORD;
 begin

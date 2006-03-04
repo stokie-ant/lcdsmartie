@@ -178,7 +178,7 @@ type
   TLCD_IR = class
   public
     constructor Create;
-    destructor Destroy;
+    destructor Destroy; override;
   private
     procedure ClientSocketError(Sender: TObject; SocketError: Integer);
     procedure ClientSocketConnect(Sender: TObject);
@@ -277,6 +277,10 @@ begin
   SocketHandler.Free;
 end;
 
+function DISPLAYDLL_DefaultParameters : pchar; stdcall;
+begin
+  DISPLAYDLL_DefaultParameters := pchar('localhost');
+end;
 
 function DISPLAYDLL_Usage : pchar; stdcall;
 begin
@@ -294,6 +298,7 @@ exports
   DISPLAYDLL_CustomChar,
   DISPLAYDLL_Write,
   DISPLAYDLL_SetPosition,
+  DISPLAYDLL_DefaultParameters,
   DISPLAYDLL_Usage,
   DISPLAYDLL_DriverName,
   DISPLAYDLL_Done,

@@ -6,13 +6,6 @@ uses
   SysUtils,
   Windows;
 
-{
-uses
-  Windows,StrUtils,SyncObjs;
-uses UConfig, SysUtils, Windows;
-
-}
-
 const
   DLLProjectName = 'HD44780 Parallel Display DLL';
   Version = 'v1.0';
@@ -746,6 +739,11 @@ begin
   end;
 end;
 
+function DISPLAYDLL_DefaultParameters : pchar; stdcall;
+begin
+  DISPLAYDLL_DefaultParameters := pchar('LPT1');
+end;
+
 function DISPLAYDLL_Usage : pchar; stdcall;
 begin
   Result := pchar('Usage: PORT[,m,a1,a2]'+#13#10+
@@ -764,6 +762,7 @@ exports
   DISPLAYDLL_CustomChar,
   DISPLAYDLL_Write,
   DISPLAYDLL_SetPosition,
+  DISPLAYDLL_DefaultParameters,
   DISPLAYDLL_Usage,
   DISPLAYDLL_DriverName,
   DISPLAYDLL_Done,

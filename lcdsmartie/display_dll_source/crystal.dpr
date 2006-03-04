@@ -742,6 +742,11 @@ begin
   end;
 end;
 
+function DISPLAYDLL_DefaultParameters : pchar; stdcall;
+begin
+  DISPLAYDLL_DefaultParameters := pchar('COM1,9600,2');
+end;
+
 function DISPLAYDLL_Usage : pchar; stdcall;
 begin
   Result := pchar('Usage: COM1,9600,v'+#13#10+'v = CGROM version (1 or 2)');
@@ -761,6 +766,7 @@ exports
   DISPLAYDLL_CustomChar,
   DISPLAYDLL_Write,
   DISPLAYDLL_SetPosition,
+  DISPLAYDLL_DefaultParameters,
   DISPLAYDLL_Usage,
   DISPLAYDLL_DriverName,
   DISPLAYDLL_Done,

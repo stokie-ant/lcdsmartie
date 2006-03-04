@@ -906,6 +906,11 @@ begin
   end;
 end;
 
+function DISPLAYDLL_DefaultParameters : pchar; stdcall;
+begin
+  DISPLAYDLL_DefaultParameters := pchar('COM1,9600');
+end;
+
 function DISPLAYDLL_Usage : pchar; stdcall;
 begin
   Result := pchar('Usage: COM1,9600 or USB');
@@ -927,6 +932,7 @@ exports
   DISPLAYDLL_CustomChar,
   DISPLAYDLL_Write,
   DISPLAYDLL_SetPosition,
+  DISPLAYDLL_DefaultParameters,
   DISPLAYDLL_Usage,
   DISPLAYDLL_DriverName,
   DISPLAYDLL_Done,
