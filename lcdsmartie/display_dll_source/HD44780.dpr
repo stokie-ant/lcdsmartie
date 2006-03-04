@@ -3,7 +3,9 @@ library HD44780;
 {$R *.res}
 
 uses
-  SysUtils,Windows;
+  SysUtils,
+  Windows;
+
 {
 uses
   Windows,StrUtils,SyncObjs;
@@ -609,6 +611,7 @@ begin
     delete(S,1,P);
   end else begin
     SubString := uppercase(trim(S));
+    S := '';
   end;
 end;
 
@@ -643,7 +646,7 @@ function DISPLAYDLL_Init(SizeX,SizeY : byte; StartupParameters : pchar; OK : pbo
 // return startup error
 // open port
 var
-  Addr,S : string;
+  Addr,S,Params : string;
   PortAddr : word;
   Mult : integer;
   b1x16,bKS0073 : boolean;
@@ -651,8 +654,8 @@ begin
   OK^ := true;
   Result := PChar(DLLProjectName + ' ' + Version);
   try
-    S := string(StartupParameters);
-    Addr := uppercase(SubString(S));
+    Params := string(StartupParameters);
+    Addr := uppercase(SubString(Params));
     PortAddr := $378;
     Mult := 1;
     b1x16 := false;
@@ -662,13 +665,13 @@ begin
       else if (Addr = 'LPT2') then PortAddr := $3BC
       else if (Addr = 'LPT3') then PortAddr := $278
       else PortAddr := StrToInt(Addr);
-      S := SubString(S);
+      S := SubString(Params);
       if (S <> '') then
         Mult := StrToInt(S);
-      S := SubString(S);
+      S := SubString(Params);
       if (S <> '') then
         b1x16 := StrToBool(S);
-      S := SubString(S);
+      S := SubString(Params);
       if (S <> '') then
         bKS0073 := StrToBool(S);
     except

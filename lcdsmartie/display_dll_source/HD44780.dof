@@ -84,7 +84,7 @@ MapFile=0
 OutputObjs=0
 ConsoleApp=1
 DebugInfo=0
-RemoteSymbols=0
+RemoteSymbols=1
 MinStackSize=16384
 MaxStackSize=1048576
 ImageBase=4194304
@@ -101,14 +101,14 @@ DebugSourceDirs=
 UsePackages=0
 [Parameters]
 RunParams=
-HostApplication=C:\Documents and Settings\Administrator\Desktop\5.3 development\lcdsmartie\LCDSmartie.exe
+HostApplication=C:\Documents and Settings\James\My Documents\Designs\lcdsmartie\LCDSmartie.exe
 Launcher=
 UseLauncher=0
 DebugCWD=
 [Language]
 ActiveLang=
 ProjectLang=$00000409
-RootDir=
+RootDir=C:\Documents and Settings\James\My Documents\Designs\lcdsmartie\Display Example\
 [Version Info]
 IncludeVerInfo=1
 AutoIncBuild=0
@@ -132,5 +132,5 @@ LegalCopyright=
 LegalTrademarks=
 OriginalFilename=CRYSTAL.DLL
 ProductName=LCD Smartie
-ProductVersion=
+ProductVersion=1.0.0.0
 Comments=
