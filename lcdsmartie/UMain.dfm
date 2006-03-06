@@ -4,8 +4,8 @@ object LCDSmartieDisplayForm: TLCDSmartieDisplayForm
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsToolWindow
   Caption = 'LCD Smartie 5.3'
-  ClientHeight = 92
-  ClientWidth = 224
+  ClientHeight = 91
+  ClientWidth = 228
   Color = clBtnFace
   TransparentColorValue = clBtnFace
   Font.Charset = ANSI_CHARSET
@@ -521,13 +521,6 @@ object LCDSmartieDisplayForm: TLCDSmartieDisplayForm
     Enabled = False
     OnTimer = EMailTimerTimer
     Left = 100
-    Top = 144
-  end
-  object LPTStartupTimer: TTimer
-    Enabled = False
-    Interval = 5000
-    OnTimer = LPTStartupTimerTimer
-    Left = 164
     Top = 144
   end
   object TransitionTimer: TTimer

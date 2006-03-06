@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.74 $ $Date: 2006/03/03 20:59:00 $
+ *  $Revision: 1.75 $ $Date: 2006/03/06 20:08:35 $
  *****************************************************************************}
 
 interface
@@ -87,7 +87,6 @@ type
     ActionsTimer: TTimer;
     LeftManualScrollTimer: TTimer;
     RightManualScrollTimer: TTimer;
-    LPTStartupTimer: TTimer;
     TimerRefresh: TTimer;
     PreviousButton: TButton;
     NextButton: TButton;
@@ -108,7 +107,6 @@ type
     procedure NextScreenTimerTimer(Sender: TObject);
     procedure GameUpdateTimerTimer(Sender: TObject);
     procedure EMailTimerTimer(Sender: TObject);
-    procedure LPTStartupTimerTimer(Sender: TObject);
     procedure Credits1Click(Sender: TObject);
     procedure NextTheme1Click(Sender: TObject);
     procedure LastTheme1Click(Sender: TObject);
@@ -251,8 +249,7 @@ implementation
 
 uses
   Windows, SysUtils, Graphics, Dialogs, ShellAPI, mmsystem, StrUtils,
-  USetup, UCredits, {ULCD_MO, ULCD_CF, ULCD_HD, ULCD_Test, ULCD_IR, }ULCD_DLL,
-  ExtActns, UUtils;
+  USetup, UCredits, ULCD_DLL, ExtActns, UUtils;
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -278,9 +275,6 @@ begin
   ScreenLCD[3] := @Line3Panel;
   ScreenLCD[4] := @Line4Panel;
 
-
-//SetWindowLong(Application.Handle, GWL_EXSTYLE, GetWindowLong(Application.Handle, GWL_EXSTYLE) or WS_EX_TOOLWINDOW and not W
-//S_EX_APPWINDOW );
   LoadSkin;
   LCDSmartieDisplayForm.color := $00BFBFBF;
   NumberOfScreensToShift := 1;
@@ -409,13 +403,6 @@ procedure TLCDSmartieDisplayForm.FormClose(Sender: TObject; var Action: TCloseAc
 begin
   bTerminating := true;
 
-  //application.minimize;
-  //CoolTrayIcon1.HideMainForm;
-  //CoolTrayIcon1.HideTaskbarIcon;
-  //CoolTrayIcon1.enabled := False;
-  //CoolTrayIcon1.IconVisible := False;
-  //CoolTrayIcon1.Refresh;
-
   while timerRefresh.enabled = true do timerRefresh.enabled := false;
   while HTTPUpdateTimer.enabled = true do HTTPUpdateTimer.enabled := false;
   while ActionsTimer.enabled = true do ActionsTimer.enabled := false;
@@ -425,7 +412,6 @@ begin
   while NextScreenTimer.enabled = true do NextScreenTimer.enabled := false;
   while GameUpdateTimer.enabled = true do GameUpdateTimer.enabled := false;
   while EMailTimer.enabled = true do EMailTimer.enabled := false;
-  while LPTStartupTimer.enabled = true do LPTStartupTimer.enabled := false;
   while ScrollFlashTimer.enabled = true do ScrollFlashTimer.enabled := false;
   while TransitionTimer.enabled = true do TransitionTimer.enabled := false;
 
@@ -689,36 +675,6 @@ begin
     flashdelay := 0;
     canflash := true;
   end;
-end;
-
-procedure TLCDSmartieDisplayForm.LPTStartupTimerTimer(Sender: TObject);
-begin
-  LPTStartupTimer.Enabled := false;
-
-  // check just in case they've changed they mind in the mean time.
-(*
-  if (config.ScreenType in [stHD,stHD2]) then
-  begin
-
-    FiniLCD(); // get rid of the dummy one.
-    try
-      Lcd := TLCD_HD.CreateParallel($ + config.parallelPort, config.width, config.height);
-    except
-      on E: Exception do
-      begin
-        showmessage('Failed to open device: ' + E.Message);
-        Lcd := TLCD.Create();
-      end;
-    end;
-    Lcd.setbacklight(true);
-
-    customchar('1, 12, 18, 18, 12, 0, 0, 0, 0');
-    customchar('2, 31, 31, 31, 31, 31, 31, 31, 31');
-    customchar('3, 16, 16, 16, 16, 16, 16, 31, 16');
-    customchar('4, 28, 28, 28, 28, 28, 28, 31, 28');
-  end;
-*)
-  UpdateTimersState(PerformingSetup);
 end;
 
 procedure TLCDSmartieDisplayForm.ActionsTimerTimer(Sender: TObject);
@@ -1038,13 +994,6 @@ begin
       // just in case we failed to get the expected number of cycles (due to
       // high cpu loads etc).
       ResetContrast := False;
-{
-      case (config.ScreenType) of
-        stMO : Lcd.setContrast(config.contrast);
-        stCF : Lcd.setContrast(config.CF_contrast);
-        stDLL : Lcd.setContrast(config.DLL_contrast);
-      end; // case
-}
       Lcd.setContrast(config.DLL_contrast);
     end;
 
@@ -1104,12 +1053,9 @@ begin
   if not InSetupState then
   begin    // We're not in setup
     // don't change timer states if we're waiting for a HD44780 to start.
-    if (not LPTStartupTimer.enabled) then
+    if not frozen then
     begin
-      if not frozen then
-      begin
-        NextScreenTimer.enabled := true; // next screen
-      end;
+      NextScreenTimer.enabled := true; // next screen
     end;
   end
   else
@@ -1127,9 +1073,7 @@ begin
   GameUpdateTimer.enabled := true;  // game update
   EMailTimer.enabled := true;  // email update
   ScrollFlashTimer.enabled := true; // scroll/flash
-
-  if (not LPTStartupTimer.enabled) then
-    timerRefresh.enabled := true;  // update lcd and data
+  timerRefresh.enabled := true;  // update lcd and data
 end;
 
 
@@ -1165,13 +1109,11 @@ end;
 
 procedure TLCDSmartieDisplayForm.SetupButtonClick(Sender: TObject);
 begin
-  if not (LPTStartupTimer.enabled) then begin
-    UpdateTimersState(true); // turns off required timers as form2 is visible.
-    if not Visible then
-      CoolTrayIcon1.ShowMainForm;
-    DoSetupForm;
-    UpdateTimersState(false);
-  end;
+  UpdateTimersState(true); // turns off required timers as form2 is visible.
+  if not Visible then
+    CoolTrayIcon1.ShowMainForm;
+  DoSetupForm;
+  UpdateTimersState(false);
 end;
 
 procedure TLCDSmartieDisplayForm.HideButtonClick(Sender: TObject);
@@ -1471,37 +1413,12 @@ procedure TLCDSmartieDisplayForm.InitLCD();
 var
   i: Integer;
 begin
-  LPTStartupTimer.enabled := false; // stop any startup of the HD44780 driver
-
   // Sync the display to our current view of the custom chars.
   for i:= 1 to 8 do
     customCharsChanged[i] := true;
 
   // start connectivity
   try
-(*
-    case config.ScreenType of
-      stMO : begin
-        if config.isUsbPalm then
-          Lcd := TLCD_MO.CreateUsb
-        else
-          Lcd := TLCD_MO.CreateSerial(config.comPort, baudRates[config.baudrate]);
-      end;
-      stCF : Lcd := TLCD_CF.CreateSerial(config.comPort, baudRates[config.baudrate]);
-      stTestDriver : Lcd := TLCD_Test.CreateSerial(config.comPort, baudRates[config.baudrate]);
-//      stIR : Lcd := TLCD_IR.CreateSocket(config.RemoteHost);
-      stDLL : Lcd := TLCD_DLL.CreateDLL(config.width,config.height,config.DisplayDLLName,config.DisplayDLLParameters);
-      stHD,stHD2 : begin
-        Lcd := TLCD.Create(); // use a dummy LCD until the boot time has passed.
-        // HD/HD2 have a delay start - they will setup the above timers later.
-        LPTStartupTimer.interval := 0;
-        if config.bootDriverDelay = 0 then LPTStartupTimer.interval := 10
-        else LPTStartupTimer.interval := config.bootDriverDelay*1000;
-        LPTStartupTimer.enabled := true;
-      end;
-      else Lcd := TLCD.Create(); // catchall case
-    end; // case
-*)
     Lcd := TLCD_DLL.CreateDLL(config.width,config.height,config.DisplayDLLName,config.DisplayDLLParameters);
   except
     on E: Exception do
@@ -1511,33 +1428,11 @@ begin
     end;
   end;
 
-  // load custom characters if the display supports it
-//  if (config.ScreenType in [stMO,stCF,{stIR,}stDLL]) then
-  begin
-    customchar('1, 12, 18, 18, 12, 0, 0, 0, 0');
-    customchar('2, 31, 31, 31, 31, 31, 31, 31, 31');
-    customchar('3, 16, 16, 16, 16, 16, 16, 31, 16');
-    customchar('4, 28, 28, 28, 28, 28, 28, 31, 28');
-  end;
+  customchar('1, 12, 18, 18, 12, 0, 0, 0, 0');
+  customchar('2, 31, 31, 31, 31, 31, 31, 31, 31');
+  customchar('3, 16, 16, 16, 16, 16, 16, 31, 16');
+  customchar('4, 28, 28, 28, 28, 28, 28, 31, 28');
 
-  // set brightness and contrast if the display supports it
-(*
-  case config.ScreenType of
-    stMO : begin
-      Lcd.setContrast(config.contrast);
-      Lcd.setBrightness(config.brightness);
-    end;
-    stCF : begin
-      Lcd.setBrightness(config.CF_brightness);
-      Lcd.setContrast(config.CF_contrast);
-    end;
-//    stIR : Lcd.setBrightness(config.IR_brightness);
-    stDLL : begin
-      Lcd.setContrast(config.DLL_contrast);
-      Lcd.setBrightness(config.DLL_brightness);
-    end;
-  end; // case
-*)
   Lcd.setContrast(config.DLL_contrast);
   Lcd.setBrightness(config.DLL_brightness);
 
@@ -1548,7 +1443,6 @@ end;
 
 procedure TLCDSmartieDisplayForm.FiniLCD();
 begin
-  LPTStartupTimer.enabled := false; // stop any startup of the HD44780 driver
   timerRefresh.enabled := false;  // stop updates to lcd
   try
     if (Lcd <> nil) Then Lcd.Destroy();
@@ -1677,7 +1571,7 @@ begin
     end;
   end;
 
-  if (pos('GPO(', sAction) <> 0) {and (config.ScreenType in [stMO,stDLL])} then
+  if (pos('GPO(', sAction) <> 0) then
   begin
     temp1 := copy(sAction, pos('(', sAction) + 1,
       pos(',', sAction)-pos('(', sAction)-1);
@@ -1895,7 +1789,7 @@ begin
       end;
     end;
 
-    if (pos('GPOFlash(', sAction) <> 0) {and (config.ScreenType in [stMO,stDLL])} then
+    if (pos('GPOFlash(', sAction) <> 0) then
     begin
       try
         whatGPO := StrToInt(copy(sAction, pos('(', sAction) + 1,
@@ -2347,13 +2241,6 @@ begin
         if (TransCycle < maxTransCycles/2) then
         begin
 
-{
-          case (config.ScreenType) of
-            stCF : x := config.CF_contrast;
-            stDLL : x := config.DLL_contrast;
-            else x := config.contrast;
-          end;
-}
           x := config.DLL_contrast;
 
           iContrast := round(x-(TransCycle*(x-config.xiMinFadeContrast)
@@ -2375,13 +2262,6 @@ begin
             ScreenLCD[x].Caption := EscapeAmp(newline[x]);
           end;
 
-{
-          case (config.ScreenType) of
-            stCF : x := config.CF_contrast;
-            stDLL : x := config.DLL_contrast;
-            else x := config.contrast;
-          end;
-}
           x := config.DLL_contrast;
 
           iContrast := round((TransCycle-(MaxTransCycles/2))
