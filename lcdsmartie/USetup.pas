@@ -19,7 +19,7 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.48 $ $Date: 2006/03/04 11:41:33 $
+ *  $Revision: 1.49 $ $Date: 2006/03/06 13:40:31 $
  *****************************************************************************}
 
 interface
@@ -379,6 +379,8 @@ var
   UsageFunc : TUsageFunc;
 begin
   UsageLabel.Caption := 'no parameters';
+  IDLabel.Caption := 'Warning: DLL may not be compatible!';
+  ParametersEdit.Text := '';
   if FileExists(DisplayDLLName) then begin
     try
       MyDLL := LoadLibrary(pchar(DisplayDLLName));
@@ -386,7 +388,6 @@ begin
         UsageFunc := GetProcAddress(MyDLL,pchar('DISPLAYDLL_Usage'));
         if assigned(UsageFunc) then
           UsageLabel.Caption := string(UsageFunc);
-        IDLabel.Caption := 'Warning: DLL may not be compatible!';
         UsageFunc := GetProcAddress(MyDLL,pchar('DISPLAYDLL_DriverName'));
         if assigned(UsageFunc) then
           IDLabel.Caption := string(UsageFunc);
@@ -560,10 +561,10 @@ begin
   for Loop := 0 to DisplayPluginList.Items.Count-1 do begin
     if lowercase(config.DisplayDLLName) = lowercase(DisplayPluginList.Items[Loop]) then begin
       DisplayPluginList.ItemIndex := Loop;
-      DisplayPluginListChange(Sender);
-      ParametersEdit.Text := config.DisplayDLLParameters; // set our original parameters back
     end;
   end;
+  DisplayPluginListChange(Sender);
+  ParametersEdit.Text := config.DisplayDLLParameters; // set our original parameters back
 
   InternetRefreshTimeSpinEdit.Value := config.newsRefresh;
   RandomizeScreensCheckBox.checked := config.randomScreens;
