@@ -19,7 +19,7 @@ unit UConfig;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UConfig.pas,v $
- *  $Revision: 1.44 $ $Date: 2006/03/03 21:43:34 $
+ *  $Revision: 1.45 $ $Date: 2006/03/06 21:18:52 $
  *****************************************************************************}
 
 interface
@@ -36,6 +36,7 @@ const
   MaxThemes = 10;
   MaxActions = 99;
   MaxScreenSizes = 12;
+  MaxEmailAccounts = 10;
 
 type
   TScreenSize = record

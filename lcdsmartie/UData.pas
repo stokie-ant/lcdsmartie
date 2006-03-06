@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.57 $ $Date: 2006/02/27 22:45:38 $
+ *  $Revision: 1.58 $ $Date: 2006/03/06 21:18:52 $
  *****************************************************************************}
 
 
@@ -46,9 +46,12 @@ type
 
   TBusType = (btISA, btSMBus, btVIA686ABus, btDirectIO);
   TSMBType = (smtSMBIntel, smtSMBAMD, smtSMBALi, smtSMBNForce, smtSMBSIS);
-  TSensorType = (stUnknown, stTemperature, stVoltage, stFan, stMhz,
-    stPercentage);
-
+  TSensorType = (stUnknown, stTemperature, stVoltage, stFan, stMhz, stPercentage);
+  THTTPUpdateType = (huRSS,huLCDSmartie,huSETI,huFolding);
+const
+  FirstHTTPUpdate = huRSS;
+  LastHTTPUpdate = huFolding;
+type
   TSharedIndex = Record
     iType : TSensorType;                          // type of sensor
     Count : Integer;                              // number of sensor for that type
@@ -205,8 +208,10 @@ type
     qstatreg3: Array[1..20, 1..4] of String;  //Guarded by dataCs,  data+main thread
     qstatreg4: Array[1..20, 1..4] of String;  //Guarded by dataCs,  data+main thread
     System1: Tsystem;
-    DoNewsUpdate: Array [1..9] of Boolean;  // data thread only
-    newsAttempts: Array [1..9] of Byte;
+
+
+    DoNewsUpdate: Array [THTTPUpdateType] of Boolean;  // data thread only
+
     mailCs: TCriticalSection;  // Protects mail, data + main thread
     mail: Array [0..9] of TEmail; // Guarded by mailCs, data+main thread
     setiNumResults, setiCpuTime, setiAvgCpu, setiLastResult, setiUserTime,
@@ -227,9 +232,10 @@ type
     bDoNet: Boolean; // cpu + main threads;
     procedure diskUpdate;
     procedure updateNetworkStats;
+
     procedure emailUpdate;
-    procedure fetchHTTPUpdates;
-    procedure httpUpdate;
+    procedure ResolveEmailVariables(var Line : string);
+
     procedure gameUpdate;
     procedure cpuUpdate;
     procedure doDataThread;
@@ -239,7 +245,14 @@ type
       Cardinal; maxfreq: Cardinal = 0): Cardinal;
     function changeWinamp(line: String): String;
     function changeNet(line: String): String;
-    procedure doSeti;
+
+    procedure DoRSSHTTPUpdate;
+    procedure DoLCDSmartieHTTPUpdate;
+    procedure DoSETIHTTPUpdate;
+    procedure FetchHTTPUpdates;
+    procedure HTTPUpdate;
+
+    procedure DoFoldingHTTPUpdate;
     function getUrl(Url: String; maxfreq: Cardinal = 0): String;
     function FileToString(sFilename: String): String;
     function CleanString(str: String): String;
@@ -1652,23 +1665,7 @@ begin
       end;
     end;
 
-    if (pos('$Email', line) <> 0) then
-    begin
-      mailCs.Enter();
-      try
-        for x := 0 to 9 do
-        begin
-          line := StringReplace(line, '$Email' + IntToStr(x),
-            IntToStr(mail[x].messages), [rfReplaceAll]);
-          line := StringReplace(line, '$EmailSub' + IntToStr(x),
-            mail[x].lastSubject, [rfReplaceAll]);
-          line := StringReplace(line, '$EmailFrom' + IntToStr(x),
-            mail[x].lastFrom, [rfReplaceAll]);
-        end;
-      finally
-        mailCs.Leave();
-      end;
-    end;
+    ResolveEmailVariables(Line);
 
     iPos1 :=  pos('$CustomChar(', line);
     while (iPos1 <> 0) do
@@ -2917,83 +2914,6 @@ begin
   end;
 end;
 
-procedure TData.doSeti;
-var
-  StartItemNode : IXMLNode;
-  ANode : IXMLNode;
-  XMLDoc : IXMLDocument;
-  Filename: String;
-
-begin
-
-  // Fetch the Rss data  (but not more oftern than 24 hours)
-  try
-    FileName := getUrl(
-      'http://setiathome2.ssl.berkeley.edu/fcgi-bin/fcgi?cmd=user_xml&email='
-      + config.setiEmail, 12*60);
-    if (dataThread.Terminated) then raise EExiting.Create('');
-
-    // Parse the Xml data
-    if FileExists(Filename) then
-    begin
-      XMLDoc := LoadXMLDocument(Filename);
-
-      StartItemNode := XMLDoc.DocumentElement.ChildNodes.FindNode('userinfo');
-      ANode := StartItemNode;
-
-      dataCs.Enter();
-      try
-        setiNumResults := ANode.ChildNodes['numresults'].Text;
-        setiCpuTime := ANode.ChildNodes['cputime'].Text;
-        setiAvgCpu := ANode.ChildNodes['avecpu'].Text;
-        setiLastResult := ANode.ChildNodes['lastresulttime'].Text;
-        setiUserTime := ANode.ChildNodes['usertime'].Text;
-      finally
-        dataCs.Leave();
-      end;
-      // not used: 'regdate'
-
-      // not used: group info.
-
-      StartItemNode := XMLDoc.DocumentElement.ChildNodes.FindNode('rankinfo');
-      ANode := StartItemNode;
-
-      dataCs.Enter();
-      try
-        setiTotalUsers := ANode.ChildNodes['ranktotalusers'].Text;
-        setiRank := ANode.ChildNodes['rank'].Text;
-        setiShareRank := ANode.ChildNodes['num_samerank'].Text;
-        // SETI provides floats not dependent on user's locale, but always in US format
-        setiMoreWU := FloatToStr(
-          100-StrToFloat(ANode.ChildNodes['top_rankpct'].Text, usFormat),
-          localeFormat);
-      finally
-        dataCs.Leave();
-      end;
-    end;
-  except
-    on EExiting do raise;
-    on E: Exception do
-    begin
-      dataCs.Enter();
-      try
-        setiNumResults := '[Seti: ' + E.Message + ']';
-        setiCpuTime := '[Seti: ' + E.Message + ']';
-        setiAvgCpu := '[Seti: ' + E.Message + ']';
-        setiLastResult := '[Seti: ' + E.Message + ']';
-        setiUserTime := '[Seti: ' + E.Message + ']';
-        setiTotalUsers := '[Seti: ' + E.Message + ']';
-        setiRank := '[Seti: ' + E.Message + ']';
-        setiShareRank := '[Seti: ' + E.Message + ']';
-        setiMoreWU := '[Seti: ' + E.Message + ']';
-      finally
-        dataCs.Leave();
-      end;
-    end;
-  end;
-end;
-
-
 function TData.stripspaces(FString: String): String;
 begin
   FString := StringReplace(FString, chr(10), '', [rfReplaceAll]);
@@ -3011,9 +2931,6 @@ begin
 
   result := fString;
 end;
-
-
-
 
 procedure TData.UpdateHTTP;
 begin
@@ -3039,7 +2956,7 @@ begin
     try
       while (not dataThread.Terminated) do
       begin
-        if (not dataThread.Terminated) and (doHTTPUpdate) then httpUpdate;
+        if (not dataThread.Terminated) and (doHTTPUpdate) then HTTPUpdate;
         if (not dataThread.Terminated) and (doEmailUpdate) then emailUpdate;
         if (not dataThread.Terminated) and (doGameUpdate) then gameUpdate;
         if (not dataThread.Terminated) then sleep(1000);
@@ -3192,13 +3109,358 @@ begin
   end;
 end;
 
+
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+////                                                                       ////
+////      H T T P         U P D A T E        P R O C E D U R E S           ////
+////                                                                       ////
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+
+procedure TData.DoRSSHTTPUpdate;
+var
+  counter, counter2: Integer;
+  versionline: String;
+  sAllTitles, sAllDescs, sWhole: String;
+  items: Cardinal;
+  titles: Array[0..maxRssItems] of String;
+  descs: Array[0..maxRssItems] of String;
+begin
+  for counter := 0 to rssEntries-1 do
+  begin
+    if (rss[counter].url <> '') then
+    begin
+      if (dataThread.Terminated) then raise EExiting.Create('');
+
+      try
+        items := getRss(rss[counter].url, titles,
+          descs, maxRssItems, rss[counter].maxfreq);
+
+        rssCs.Enter();
+        try
+          rss[counter].items := items;
+
+          sAllTitles := '';
+          sAllDescs := '';
+          sWhole := '';
+          for counter2 := 1 to items do
+          begin
+            rss[counter].title[counter2] := titles[counter2];
+            rss[counter].desc[counter2] := descs[counter2];
+
+            sAllTitles := sAllTitles + titles[counter2] + ' | ';
+            sAllDescs := sAllDescs + descs[counter2] + ' | ';
+            sWhole := sWhole + titles[counter2] + ':' +
+              descs[counter2] + ' | ';
+
+            if (dataThread.Terminated) then raise EExiting.Create('');
+          end;
+          rss[counter].whole := sWhole;
+          rss[counter].title[0] := sAllTitles;
+          rss[counter].desc[0] := sAllDescs;
+        finally
+          rssCs.Leave();
+        end;
+      except
+        on EExiting do raise;
+        on E: Exception do
+        begin
+          rssCs.Enter();
+          try
+            rss[counter].items := 0;
+            rss[counter].title[0] := '[Rss: ' + E.Message + ']';
+            rss[counter].desc[0] := '[Rss: ' + E.Message + ']';
+            rss[counter].whole := '[Rss: ' + E.Message + ']';
+          finally
+            rssCs.Leave();
+          end;
+        end;
+      end;
+    end;
+  end;
+end;
+
+procedure TData.DoLCDSmartieHTTPUpdate;
+var
+  iPos1, iPosPoint1, iPosPoint2, iPosPoint3: Integer;
+  iVersMaj, iVersMin, iVersRel, iVersBuild: Integer;
+  bUpgrade: Boolean;
+  versionline : string;
+  sFilename: String;
+begin
+  try
+    sFilename := getUrl('http://lcdsmartie.sourceforge.net/version2.txt',96*60);
+    versionline := FileToString(sFilename);
+  except
+    on E: EExiting do raise;
+    else versionline := '';
+  end;
+  versionline := StringReplace(versionline, chr(10), '', [rfReplaceAll]);
+  versionline := StringReplace(versionline, chr(13), '', [rfReplaceAll]);
+
+  if (Length(versionline) > 1) and (versionline[1]=':') then
+  begin
+    isconnected := true;
+
+    iPos1 := PosEx(':', versionline, 2);
+
+    if (iPos1 <> 0) then
+    begin
+      iPosPoint1 := PosEx('.', versionline, 2);
+      iPosPoint2 := PosEx('.', versionline, iPosPoint1 + 1);
+      iPosPoint3 := PosEx('.', versionline, iPosPoint2 + 1);
+
+      if (iPosPoint1 <> 0) and (iPosPoint2 <> 0) and (iPosPoint3 <> 0)
+        and (iPosPoint3 < iPos1) then
+      begin
+        try
+          iVersMaj := StrToInt(MidStr(versionline, 2, iPosPoint1-2));
+          iVersMin := StrToInt(MidStr(versionline, iPosPoint1+1, iPosPoint2-(iPosPoint1+1)));
+          iVersRel := StrToInt(MidStr(versionline, iPosPoint2+1, iPosPoint3-(iPosPoint2+1)));
+          iVersBuild:= StrToInt(MidStr(versionline, iPosPoint3+1, iPos1-(iPosPoint3+1)));
+        except
+          iVersMaj := 0;
+          iVersMin := 0;
+          iVersRel := 0;
+          iVersBuild := 0;
+        end;
+
+        bUpgrade := false;
+        if (iVersMaj > OurVersMaj) then bUpgrade := true;
+
+        if (iVersMaj = OurVersMaj) then
+        begin
+          if (iVersMin > OurVersMin) then bUpgrade := true;
+
+          if (iVersMin = OurVersMin) then
+          begin
+            if (iVersRel > OurVersRel) then bUpgrade := true;
+
+            if (iVersRel = OurVersRel) then
+            begin
+              if (iVersBuild > OurVersBuild) then bUpgrade := true;
+            end;
+          end;
+        end;
+
+        if (bUpgrade) then
+        begin
+          if (lcdSmartieUpdateText <> MidStr(versionline, iPos1+1, 62)) then
+          begin
+            lcdSmartieUpdateText := MidStr(versionline, iPos1+1, 62);
+            lcdSmartieUpdate := True;
+          end;
+        end;
+      end;
+    end;
+  end;
+end;
+
+procedure TData.DoSETIHTTPUpdate;
+var
+  StartItemNode : IXMLNode;
+  ANode : IXMLNode;
+  XMLDoc : IXMLDocument;
+  Filename: String;
+
+begin
+
+  // Fetch the Rss data  (but not more oftern than 24 hours)
+  try
+    FileName := getUrl(
+      'http://setiathome2.ssl.berkeley.edu/fcgi-bin/fcgi?cmd=user_xml&email='
+      + config.setiEmail, 12*60);
+    if (dataThread.Terminated) then raise EExiting.Create('');
+
+    // Parse the Xml data
+    if FileExists(Filename) then
+    begin
+      XMLDoc := LoadXMLDocument(Filename);
+
+      StartItemNode := XMLDoc.DocumentElement.ChildNodes.FindNode('userinfo');
+      ANode := StartItemNode;
+
+      dataCs.Enter();
+      try
+        setiNumResults := ANode.ChildNodes['numresults'].Text;
+        setiCpuTime := ANode.ChildNodes['cputime'].Text;
+        setiAvgCpu := ANode.ChildNodes['avecpu'].Text;
+        setiLastResult := ANode.ChildNodes['lastresulttime'].Text;
+        setiUserTime := ANode.ChildNodes['usertime'].Text;
+      finally
+        dataCs.Leave();
+      end;
+      // not used: 'regdate'
+
+      // not used: group info.
+
+      StartItemNode := XMLDoc.DocumentElement.ChildNodes.FindNode('rankinfo');
+      ANode := StartItemNode;
+
+      dataCs.Enter();
+      try
+        setiTotalUsers := ANode.ChildNodes['ranktotalusers'].Text;
+        setiRank := ANode.ChildNodes['rank'].Text;
+        setiShareRank := ANode.ChildNodes['num_samerank'].Text;
+        // SETI provides floats not dependent on user's locale, but always in US format
+        setiMoreWU := FloatToStr(
+          100-StrToFloat(ANode.ChildNodes['top_rankpct'].Text, usFormat),
+          localeFormat);
+      finally
+        dataCs.Leave();
+      end;
+    end;
+  except
+    on EExiting do raise;
+    on E: Exception do
+    begin
+      dataCs.Enter();
+      try
+        setiNumResults := '[Seti: ' + E.Message + ']';
+        setiCpuTime := '[Seti: ' + E.Message + ']';
+        setiAvgCpu := '[Seti: ' + E.Message + ']';
+        setiLastResult := '[Seti: ' + E.Message + ']';
+        setiUserTime := '[Seti: ' + E.Message + ']';
+        setiTotalUsers := '[Seti: ' + E.Message + ']';
+        setiRank := '[Seti: ' + E.Message + ']';
+        setiShareRank := '[Seti: ' + E.Message + ']';
+        setiMoreWU := '[Seti: ' + E.Message + ']';
+      finally
+        dataCs.Leave();
+      end;
+    end;
+  end;
+end;
+
+procedure TData.DoFoldingHTTPUpdate;
+var
+  tempstr,tempstr2 : string;
+  sFilename: String;
+begin
+  try
+    sFilename := getUrl(
+      'http://vspx27.stanford.edu/cgi-bin/main.py?qtype=userpage&username='
+      + config.foldUsername, config.newsRefresh);
+    tempstr := FileToString(sFilename);
+
+    tempstr := StringReplace(tempstr,'&deg;',#176{'°'},[rfIgnoreCase,rfReplaceAll]);//LMB
+    tempstr := StringReplace(tempstr, '&amp;', '&', [rfReplaceAll]);
+    tempstr := StringReplace(tempstr, chr(10), '', [rfReplaceAll]);
+    tempstr := StringReplace(tempstr, chr(13), '', [rfReplaceAll]);
+
+    dataCs.Enter();
+    foldMemSince := '[FOLDmemsince: not supported]';
+    dataCs.Leave();
+
+    tempstr2 := copy(tempstr, pos('Date of last work unit', tempstr) + 22,
+      500);
+    tempstr2 := copy(tempstr2, 1, pos('</TR>', tempstr2)-1);
+    tempstr2 := stripspaces(stripHtml(tempstr2));
+    dataCs.Enter();
+    foldLastWU := tempstr2;
+    dataCs.Leave();
+
+    tempstr2 := copy(tempstr, pos('Total score', tempstr) + 11, 100);
+    tempstr2 := copy(tempstr2, 1, pos('</TR>', tempstr2)-1);
+    tempstr2 := stripspaces(stripHtml(tempstr2));
+    dataCs.Enter();
+    foldScore := tempstr2;
+    dataCs.Leave();
+
+    tempstr2 := copy(tempstr, pos('Overall rank (if points are combined)',
+      tempstr) + 37, 100);
+    tempstr2 := copy(tempstr2, 1, pos('of', tempstr2)-1);
+    tempstr2 := stripspaces(stripHtml(tempstr2));
+    dataCs.Enter();
+    foldRank := tempstr2;
+    dataCs.Leave();
+
+    tempstr2 := copy(tempstr, pos('Active processors (within 7 days)',
+      tempstr) + 33, 100);
+    tempstr2 := copy(tempstr2, 1, pos('</TR>', tempstr2)-1);
+    tempstr2 := stripspaces(stripHtml(tempstr2));
+    dataCs.Enter();
+    foldActProcsWeek := tempstr2;
+    dataCs.Leave();
+
+    tempstr2 := copy(tempstr, pos('Team', tempstr) + 4, 500);
+    tempstr2 := copy(tempstr2, 1, pos('</TR>', tempstr2)-1);
+    tempstr2 := stripspaces(stripHtml(tempstr2));
+    dataCs.Enter();
+    foldTeam := tempstr2;
+    dataCs.Leave();
+
+    tempstr2 := copy(tempstr, pos('WU', tempstr) + 2, 500);
+    tempstr2 := copy(tempstr2, 1, pos('</TR>', tempstr2)-1);
+    if (pos('(', tempstr2) <> 0) then tempstr2 := copy(tempstr2, 1, pos('(',
+      tempstr2)-1);
+    tempstr2 := stripspaces(stripHtml(tempstr2));
+    dataCs.Enter();
+    foldWU := tempstr2;
+    dataCs.Leave();
+
+  except
+    on EExiting do raise;
+    on E: Exception do
+    begin
+      dataCs.Enter();
+      try
+        foldMemSince := '[fold: ' + E.Message + ']';
+        foldLastWU := '[fold: ' + E.Message + ']';
+        foldActProcsWeek := '[fold: ' + E.Message + ']';
+        foldTeam := '[fold: ' + E.Message + ']';
+        foldScore := '[fold: ' + E.Message + ']';
+        foldRank := '[fold: ' + E.Message + ']';
+        foldWU := '[fold: ' + E.Message + ']';
+      finally
+        dataCs.Leave();
+      end;
+    end;
+  end;
+end;
+
 // Runs in data thread
-procedure TData.httpUpdate;
+procedure TData.FetchHTTPUpdates;
+begin
+  if DoNewsUpdate[huRSS] then
+  begin
+    DoNewsUpdate[huRSS] := False;
+    DoRSSHTTPUpdate();
+  end;
+
+  if (DoNewsUpdate[huLCDSmartie]) then
+  begin
+    DoNewsUpdate[huLCDSmartie] := False;
+    if (dataThread.Terminated) then raise EExiting.Create('');
+    DoLCDSmartieHTTPUpdate();
+  end;
+
+  if DoNewsUpdate[huSETI] then
+  begin
+    DoNewsUpdate[huSETI] := False;
+    if (dataThread.Terminated) then raise EExiting.Create('');
+    DoSETIHTTPUpdate();
+  end;
+
+  if DoNewsUpdate[huFolding] then
+  begin
+    DoNewsUpdate[huFolding] := False;
+    if (dataThread.Terminated) then raise EExiting.Create('');
+    DoFoldingHTTPUpdate();
+  end;
+end;
+
+// Runs in data thread
+procedure TData.HTTPUpdate;
 const
   maxArgs = 10;
 var
+  UpdateTypeLoop : tHTTPUpdateType;
   screenline: String;
-  z, y, x: Integer;
+  RSSLoop,ScreenCount,LineCount : integer;
   args: Array [1..maxArgs] of String;
   prefix: String;
   postfix: String;
@@ -3210,24 +3472,22 @@ var
 begin
   doHTTPUpdate := False;
 
-  for y := 1 to 9 do newsAttempts[y] := 0;
-
   // TODO: this should only be done when the config changes...
   myRssCount := 0;
-  DoNewsUpdate[6] := config.checkUpdates;
+  DoNewsUpdate[huLCDSmartie] := config.checkUpdates;
 
-  for z := 1 to 20 do
+  for ScreenCount := 1 to MaxScreens do
   begin
-    for y := 1 to config.height do
+    for LineCount := 1 to config.height do
     begin
-        screenline := config.screen[z][y].text;
+        screenline := config.screen[ScreenCount][LineCount].text;
         while decodeArgs(screenline, '$Rss', maxArgs, args, prefix, postfix,
           numargs) do
         begin
           // check if we have already seen this url:
           iFound := -1;
-          for x := 0 to myRssCount-1 do
-            if (rss[x].url = args[1]) then iFound := x;
+          for RSSLoop := 0 to myRssCount-1 do
+            if (rss[RSSLoop].url = args[1]) then iFound := RSSLoop;
 
           iMaxFreq := 0;
           if (numargs >= 4) then
@@ -3286,8 +3546,8 @@ begin
           // remove this Rss, and continue to parse the rest
           screenline := prefix + postfix;
         end;
-        if (pos('$SETI', screenline) <> 0) then DoNewsUpdate[7] := true;
-        if (pos('$FOLD', screenline) <> 0) then DoNewsUpdate[9] := true;
+        if (pos('$SETI', screenline) <> 0) then DoNewsUpdate[huSETI] := true;
+        if (pos('$FOLD', screenline) <> 0) then DoNewsUpdate[huFolding] := true;
     end;
   end;
 
@@ -3297,274 +3557,31 @@ begin
   finally
     rssCs.Leave();
   end;
-  if (myRssCount > 0) then DoNewsUpdate[1] := true;
+  if (myRssCount > 0) then DoNewsUpdate[huRSS] := true;
 
   updateNeeded := False;
-  for y := 1 to 9 do
+  for UpdateTypeLoop := FirstHTTPUpdate to LastHTTPUpdate do
   begin
-    if (donewsupdate[y]) then updateNeeded := true;
+    if (donewsupdate[UpdateTypeLoop]) then updateNeeded := true;
   end;
-  if (updateNeeded) then fetchHTTPUpdates;
+  if (updateNeeded) then FetchHTTPUpdates;
 end;
 
-// Runs in data thread
-procedure TData.fetchHTTPUpdates;
-var
-  counter, counter2: Integer;
-  versionline: String;
-  sAllTitles, sAllDescs, sWhole: String;
-  sFilename: String;
-  tempstr, tempstr2: String;
-  iPos1, iPosPoint1, iPosPoint2, iPosPoint3: Integer;
-  iVersMaj, iVersMin, iVersRel, iVersBuild: Integer;
-  bUpgrade: Boolean;
-  items: Cardinal;
-  titles: Array[0..maxRssItems] of String;
-  descs: Array[0..maxRssItems] of String;
 
-begin
-  if DoNewsUpdate[1] then
-  begin
-    DoNewsUpdate[1] := False;
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+////                                                                       ////
+////      E - M A I L    C H E C K I N G    P R O  C E D U R E S           ////
+////                                                                       ////
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 
-    for counter := 0 to rssEntries-1 do
-    begin
-      if (rss[counter].url <> '') then
-      begin
-        if (dataThread.Terminated) then raise EExiting.Create('');
-
-        try
-          items := getRss(rss[counter].url, titles,
-            descs, maxRssItems, rss[counter].maxfreq);
-
-          rssCs.Enter();
-          try
-            rss[counter].items := items;
-
-            sAllTitles := '';
-            sAllDescs := '';
-            sWhole := '';
-            for counter2 := 1 to items do
-            begin
-              rss[counter].title[counter2] := titles[counter2];
-              rss[counter].desc[counter2] := descs[counter2];
-
-              sAllTitles := sAllTitles + titles[counter2] + ' | ';
-              sAllDescs := sAllDescs + descs[counter2] + ' | ';
-              sWhole := sWhole + titles[counter2] + ':' +
-                descs[counter2] + ' | ';
-
-              if (dataThread.Terminated) then raise EExiting.Create('');
-            end;
-            rss[counter].whole := sWhole;
-            rss[counter].title[0] := sAllTitles;
-            rss[counter].desc[0] := sAllDescs;
-          finally
-            rssCs.Leave();
-          end;
-        except
-          on EExiting do raise;
-          on E: Exception do
-          begin
-            rssCs.Enter();
-            try
-              rss[counter].items := 0;
-              rss[counter].title[0] := '[Rss: ' + E.Message + ']';
-              rss[counter].desc[0] := '[Rss: ' + E.Message + ']';
-              rss[counter].whole := '[Rss: ' + E.Message + ']';
-            finally
-              rssCs.Leave();
-            end;
-          end;
-        end;
-      end;
-    end;
-  end;
-
-  if (DoNewsUpdate[6]) then
-  begin
-    DoNewsUpdate[6] := False;
-    if (config.checkUpdates) then
-    begin
-      if (dataThread.Terminated) then raise EExiting.Create('');
-      try
-        sFilename := getUrl('http://lcdsmartie.sourceforge.net/version2.txt',
-          96*60);
-        versionline := FileToString(sFilename);
-      except
-        on E: EExiting do raise;
-        else versionline := '';
-      end;
-      versionline := StringReplace(versionline, chr(10), '', [rfReplaceAll]);
-      versionline := StringReplace(versionline, chr(13), '', [rfReplaceAll]);
-
-      if (Length(versionline) > 1) and (versionline[1]=':') then
-      begin
-        isconnected := true;
-
-        iPos1 := PosEx(':', versionline, 2);
-
-        if (iPos1 <> 0) then
-        begin
-          iPosPoint1 := PosEx('.', versionline, 2);
-          iPosPoint2 := PosEx('.', versionline, iPosPoint1 + 1);
-          iPosPoint3 := PosEx('.', versionline, iPosPoint2 + 1);
-
-          if (iPosPoint1 <> 0) and (iPosPoint2 <> 0) and (iPosPoint3 <> 0)
-            and (iPosPoint3 < iPos1) then
-          begin
-            try
-              iVersMaj := StrToInt(MidStr(versionline, 2, iPosPoint1-2));
-              iVersMin := StrToInt(MidStr(versionline, iPosPoint1+1, iPosPoint2-(iPosPoint1+1)));
-              iVersRel := StrToInt(MidStr(versionline, iPosPoint2+1, iPosPoint3-(iPosPoint2+1)));
-              iVersBuild:= StrToInt(MidStr(versionline, iPosPoint3+1, iPos1-(iPosPoint3+1)));
-            except
-              iVersMaj := 0;
-              iVersMin := 0;
-              iVersRel := 0;
-              iVersBuild := 0;
-            end;
-
-            bUpgrade := false;
-            if (iVersMaj > OurVersMaj) then bUpgrade := true;
-
-            if (iVersMaj = OurVersMaj) then
-            begin
-              if (iVersMin > OurVersMin) then bUpgrade := true;
-
-              if (iVersMin = OurVersMin) then
-              begin
-                if (iVersRel > OurVersRel) then bUpgrade := true;
-
-                if (iVersRel = OurVersRel) then
-                begin
-                  if (iVersBuild > OurVersBuild) then bUpgrade := true;
-                end;
-              end;
-            end;
-
-            if (bUpgrade) then
-            begin
-              if (lcdSmartieUpdateText <> MidStr(versionline, iPos1+1, 62)) then
-              begin
-                lcdSmartieUpdateText := MidStr(versionline, iPos1+1, 62);
-                lcdSmartieUpdate := True;
-              end;
-            end;
-          end;
-        end;
-      end;
-    end;
-  end;
-
-  if DoNewsUpdate[7] then
-  begin
-    DoNewsUpdate[7] := False;
-    if (dataThread.Terminated) then raise EExiting.Create('');
-    doSeti();
-  end;
-
-  if DoNewsUpdate[9] then
-  begin
-    DoNewsUpdate[9] := False;
-    if (dataThread.Terminated) then raise EExiting.Create('');
-
-    try
-      sFilename := getUrl(
-        'http://vspx27.stanford.edu/cgi-bin/main.py?qtype=userpage&username='
-        + config.foldUsername, config.newsRefresh);
-      tempstr := FileToString(sFilename);
-
-      tempstr := StringReplace(tempstr,'&deg;',#176{'°'},[rfIgnoreCase,rfReplaceAll]);//LMB
-      tempstr := StringReplace(tempstr, '&amp;', '&', [rfReplaceAll]);
-      tempstr := StringReplace(tempstr, chr(10), '', [rfReplaceAll]);
-      tempstr := StringReplace(tempstr, chr(13), '', [rfReplaceAll]);
-
-      dataCs.Enter();
-      foldMemSince := '[FOLDmemsince: not supported]';
-      dataCs.Leave();
-
-      tempstr2 := copy(tempstr, pos('Date of last work unit', tempstr) + 22,
-        500);
-      tempstr2 := copy(tempstr2, 1, pos('</TR>', tempstr2)-1);
-      tempstr2 := stripspaces(stripHtml(tempstr2));
-      dataCs.Enter();
-      foldLastWU := tempstr2;
-      dataCs.Leave();
-
-      tempstr2 := copy(tempstr, pos('Total score', tempstr) + 11, 100);
-      tempstr2 := copy(tempstr2, 1, pos('</TR>', tempstr2)-1);
-      tempstr2 := stripspaces(stripHtml(tempstr2));
-      dataCs.Enter();
-      foldScore := tempstr2;
-      dataCs.Leave();
-
-      tempstr2 := copy(tempstr, pos('Overall rank (if points are combined)',
-        tempstr) + 37, 100);
-      tempstr2 := copy(tempstr2, 1, pos('of', tempstr2)-1);
-      tempstr2 := stripspaces(stripHtml(tempstr2));
-      dataCs.Enter();
-      foldRank := tempstr2;
-      dataCs.Leave();
-
-      tempstr2 := copy(tempstr, pos('Active processors (within 7 days)',
-        tempstr) + 33, 100);
-      tempstr2 := copy(tempstr2, 1, pos('</TR>', tempstr2)-1);
-      tempstr2 := stripspaces(stripHtml(tempstr2));
-      dataCs.Enter();
-      foldActProcsWeek := tempstr2;
-      dataCs.Leave();
-
-      tempstr2 := copy(tempstr, pos('Team', tempstr) + 4, 500);
-      tempstr2 := copy(tempstr2, 1, pos('</TR>', tempstr2)-1);
-      tempstr2 := stripspaces(stripHtml(tempstr2));
-      dataCs.Enter();
-      foldTeam := tempstr2;
-      dataCs.Leave();
-
-      tempstr2 := copy(tempstr, pos('WU', tempstr) + 2, 500);
-      tempstr2 := copy(tempstr2, 1, pos('</TR>', tempstr2)-1);
-      if (pos('(', tempstr2) <> 0) then tempstr2 := copy(tempstr2, 1, pos('(',
-        tempstr2)-1);
-      tempstr2 := stripspaces(stripHtml(tempstr2));
-      dataCs.Enter();
-      foldWU := tempstr2;
-      dataCs.Leave();
-
-    except
-      on EExiting do raise;
-      on E: Exception do
-      begin
-        if newsAttempts[9]<4 then
-        begin
-          newsAttempts[9] := newsAttempts[9] + 1;
-          DoNewsUpdate[9] := True;
-        end
-        else
-        begin
-          dataCs.Enter();
-          try
-            foldMemSince := '[fold: ' + E.Message + ']';
-            foldLastWU := '[fold: ' + E.Message + ']';
-            foldActProcsWeek := '[fold: ' + E.Message + ']';
-            foldTeam := '[fold: ' + E.Message + ']';
-            foldScore := '[fold: ' + E.Message + ']';
-            foldRank := '[fold: ' + E.Message + ']';
-            foldWU := '[fold: ' + E.Message + ']';
-          finally
-            dataCs.Leave();
-          end;
-        end;
-      end;
-    end;
-  end;
-end;
 
 // Runs in data thread
 procedure TData.emailUpdate;
 var
-  mailz: Array[0..9] of Integer;
-  z, y, x: Integer;
+  CheckForMail: array[0..9] of boolean;
+  AccountLoop,ScreenLoop,LineLoop : integer;
   screenline: String;
   pop3: TIdPOP3;
   msg: TIdMessage;
@@ -3574,42 +3591,44 @@ var
 begin
   doEmailUpdate := False;
 
-  for y := 0 to 9 do mailz[y] := 0;
+  // figure out which accounts we have to check
+  for AccountLoop := 0 to MaxEmailAccounts-1 do
+    CheckForMail[AccountLoop] := false;
 
-  for z := 1 to 20 do
+  for ScreenLoop := 1 to MaxScreens do
   begin
-    for y := 1 to config.height do
+    for LineLoop := 1 to config.height do
     begin
-        screenline := config.screen[z][y].text;
-        for x := 0 to 9 do
+        screenline := config.screen[ScreenLoop][LineLoop].text;
+        for AccountLoop := 0 to MaxEmailAccounts-1 do
         begin
-          if (pos('$Email' + IntToStr(x), screenline) <> 0)
-            or (pos('$EmailSub' + IntToStr(x), screenline) <> 0)
-            or (pos('$EmailFrom' + IntToStr(x), screenline) <> 0) then
+          if (pos('$Email' + IntToStr(AccountLoop), screenline) <> 0)
+            or (pos('$EmailSub' + IntToStr(AccountLoop), screenline) <> 0)
+            or (pos('$EmailFrom' + IntToStr(AccountLoop), screenline) <> 0) then
           begin
-            mailz[x] := 1;
+            CheckForMail[AccountLoop] := true;
           end;
         end;
     end;
   end;
 
   myGotEmail := False;
-
-  for y := 0 to 9 do
+  // now go check the active accounts
+  for AccountLoop := 0 to MaxEmailAccounts-1 do
   begin
-    if mailz[y] = 1 then
+    if CheckForMail[AccountLoop] then
     begin
       if (dataThread.Terminated) then raise EExiting.Create('');
       try
-        if config.pop[y].server <> '' then
+        if config.pop[AccountLoop].server <> '' then
         begin
           pop3 := TIdPOP3.Create(nil);
           msg := TIdMessage.Create(nil);
-          pop3.host := config.pop[y].server;
+          pop3.host := config.pop[AccountLoop].server;
           pop3.MaxLineAction := maSplit;
           pop3.ReadTimeout := 15000;   //15 seconds
-          pop3.username := config.pop[y].user;
-          pop3.Password := config.pop[y].pword;
+          pop3.username := config.pop[AccountLoop].user;
+          pop3.Password := config.pop[AccountLoop].pword;
 
           try
             httpCs.Enter();
@@ -3622,17 +3641,17 @@ begin
             messages := pop3.CheckMessages;
             mailCs.Enter();
             try
-              mail[y].messages := messages;
-              if (mail[y].messages > 0) and
-                (pop3.RetrieveHeader(mail[y].messages, msg)) then
+              mail[AccountLoop].messages := messages;
+              if (mail[AccountLoop].messages > 0) and
+                (pop3.RetrieveHeader(mail[AccountLoop].messages, msg)) then
               begin
-                mail[y].lastSubject := msg.Subject;
-                mail[y].lastFrom := msg.From.Name;
+                mail[AccountLoop].lastSubject := msg.Subject;
+                mail[AccountLoop].lastFrom := msg.From.Name;
               end
               else
               begin
-                mail[y].lastSubject := '[none]';
-                mail[y].lastFrom := '[none]';
+                mail[AccountLoop].lastSubject := '[none]';
+                mail[AccountLoop].lastFrom := '[none]';
               end;
             finally
               mailCs.Leave();
@@ -3647,7 +3666,7 @@ begin
             msg.Free;
           end;
 
-          if (mail[y].messages > 0) then myGotEmail := true;
+          if (mail[AccountLoop].messages > 0) then myGotEmail := true;
 
         end;
 
@@ -3657,9 +3676,9 @@ begin
         begin
           mailCs.Enter();
           try
-            mail[y].messages := 0;
-            mail[y].lastSubject := '[email: ' + E.Message + ']';
-            mail[y].lastFrom := '[email: ' + E.Message + ']';
+            mail[AccountLoop].messages := 0;
+            mail[AccountLoop].lastSubject := '[email: ' + E.Message + ']';
+            mail[AccountLoop].lastFrom := '[email: ' + E.Message + ']';
           finally
             mailCs.Leave();
           end;
@@ -3671,5 +3690,27 @@ begin
   gotEmail := myGotEmail;
 end;
 
+procedure TData.ResolveEmailVariables(var Line : string);
+var
+  AccountLoop : integer;
+begin
+  if (pos('$Email', line) <> 0) then
+  begin
+    mailCs.Enter();
+    try
+      for AccountLoop := 0 to MaxEmailAccounts-1 do
+      begin
+        line := StringReplace(line, '$Email' + IntToStr(AccountLoop),
+          IntToStr(mail[AccountLoop].messages), [rfReplaceAll]);
+        line := StringReplace(line, '$EmailSub' + IntToStr(AccountLoop),
+          mail[AccountLoop].lastSubject, [rfReplaceAll]);
+        line := StringReplace(line, '$EmailFrom' + IntToStr(AccountLoop),
+          mail[AccountLoop].lastFrom, [rfReplaceAll]);
+      end;
+    finally
+      mailCs.Leave();
+    end;
+  end;
+end;
 
 end.

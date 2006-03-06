@@ -19,7 +19,7 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.50 $ $Date: 2006/03/06 20:08:35 $
+ *  $Revision: 1.51 $ $Date: 2006/03/06 21:18:53 $
  *****************************************************************************}
 
 interface
@@ -254,7 +254,7 @@ type
   private
     DLLPath : string;
     setupbutton: Integer;
-    EMailAccountComboboxTemp: Integer;
+    CurrentlyShownEmailAccount: Integer;
     CurrentScreen: Integer;
     Procedure FocusToInputField;
     procedure SaveScreen(scr: Integer);
@@ -386,6 +386,15 @@ begin
 
   WebProxyServerEdit.text := config.httpProxy;
   WebProxyPortEdit.text := IntToStr(config.httpProxyPort);
+
+  EmailListBox.Clear;
+  EmailAccountComboBox.Clear;
+  for i := 1 to MaxEmailAccounts do begin
+    EmailListBox.Items.Add('Email '+IntToStr(i)+': Message Count');
+    EmailListBox.Items.Add('Email '+IntToStr(i)+': Last Subject');
+    EmailListBox.Items.Add('Email '+IntToStr(i)+': Last From');
+    EmailAccountComboBox.Items.Add(IntToStr(i));
+  end;
   EmailAccountComboBox.itemindex := 0;
   EmailServerEdit.text := config.pop[1].server;
   EmailLoginEdit.text := config.pop[1].user;
@@ -472,6 +481,7 @@ nextpacket:
     end;
     if laatstepacket <> true then goto nextpacket;
   end;}
+
 end;
 
 procedure TSetupForm.DisplayPluginListChange(Sender: TObject);
@@ -1075,39 +1085,14 @@ end;
 
 procedure TSetupForm.EmailListBoxClick(Sender: TObject);
 begin
-  case EmailListBox.itemindex of
-    0: VariableEdit.Text := '$Email1';
-    1: VariableEdit.Text := '$EmailSub1';
-    2: VariableEdit.Text := '$EmailFrom1';
-    3: VariableEdit.Text := '$Email2';
-    4: VariableEdit.Text := '$EmailSub2';
-    5: VariableEdit.Text := '$EmailFrom2';
-    6: VariableEdit.Text := '$Email3';
-    7: VariableEdit.Text := '$EmailSub3';
-    8: VariableEdit.Text := '$EmailFrom3';
-    9: VariableEdit.Text := '$Email4';
-    10: VariableEdit.Text := '$EmailSub4';
-    11: VariableEdit.Text := '$EmailFrom4';
-    12: VariableEdit.Text := '$Email5';
-    13: VariableEdit.Text := '$EmailSub5';
-    14: VariableEdit.Text := '$EmailFrom5';
-    15: VariableEdit.Text := '$Email6';
-    16: VariableEdit.Text := '$EmailSub6';
-    17: VariableEdit.Text := '$EmailFrom6';
-    18: VariableEdit.Text := '$Email7';
-    19: VariableEdit.Text := '$EmailSub7';
-    20: VariableEdit.Text := '$EmailFrom7';
-    21: VariableEdit.Text := '$Email8';
-    22: VariableEdit.Text := '$EmailSub8';
-    23: VariableEdit.Text := '$EmailFrom8';
-    24: VariableEdit.Text := '$Email9';
-    25: VariableEdit.Text := '$EmailSub9';
-    26: VariableEdit.Text := '$EmailFrom9';
-    27: VariableEdit.Text := '$Email0';
-    28: VariableEdit.Text := '$EmailSub0';
-    29: VariableEdit.Text := '$EmailFrom0';
-    else VariableEdit.Text := NoVariable;
-  end; // case
+  if (EmailListBox.itemindex >= 0) and (EmailListBox.itemindex < MaxEmailAccounts*3) then begin
+    case EmailListBox.itemindex mod 3 of
+      0: VariableEdit.Text := '$Email'+IntToStr((EmailListBox.itemindex div 3 + 1) mod MaxEmailAccounts);
+      1: VariableEdit.Text := '$EmailSub'+IntToStr((EmailListBox.itemindex div 3 + 1) mod MaxEmailAccounts);
+      2: VariableEdit.Text := '$EmailFrom'+IntToStr((EmailListBox.itemindex div 3 + 1) mod MaxEmailAccounts);
+    end;
+  end else
+    VariableEdit.Text := NoVariable;
 
   if not (VariableEdit.Text = NoVariable) then
     FocusToInputField();
@@ -1116,16 +1101,16 @@ end;
 procedure TSetupForm.EmailAccountComboBoxChange(Sender: TObject);
 
 begin
-  config.pop[(EMailAccountComboboxTemp + 1) mod 10].server := EmailServerEdit.text;
-  config.pop[(EMailAccountComboboxTemp + 1) mod 10].user := EmailLoginEdit.text;
-  config.pop[(EMailAccountComboboxTemp + 1) mod 10].pword := EmailPasswordEdit.text;
+  config.pop[(CurrentlyShownEmailAccount + 1) mod MaxEmailAccounts].server := EmailServerEdit.text;
+  config.pop[(CurrentlyShownEmailAccount + 1) mod MaxEmailAccounts].user := EmailLoginEdit.text;
+  config.pop[(CurrentlyShownEmailAccount + 1) mod MaxEmailAccounts].pword := EmailPasswordEdit.text;
 
   if EmailAccountComboBox.itemIndex < 0 then EmailAccountComboBox.itemindex := 0;
 
-  EMailAccountComboboxTemp := EmailAccountComboBox.itemindex;
-  EmailServerEdit.text := config.pop[(EMailAccountComboboxTemp + 1) mod 10].server;
-  EmailLoginEdit.text := config.pop[(EMailAccountComboboxTemp + 1) mod 10].user;
-  EmailPasswordEdit.text := config.pop[(EMailAccountComboboxTemp + 1) mod 10].pword;
+  CurrentlyShownEmailAccount := EmailAccountComboBox.itemindex;
+  EmailServerEdit.text := config.pop[(CurrentlyShownEmailAccount + 1) mod MaxEmailAccounts].server;
+  EmailLoginEdit.text := config.pop[(CurrentlyShownEmailAccount + 1) mod MaxEmailAccounts].user;
+  EmailPasswordEdit.text := config.pop[(CurrentlyShownEmailAccount + 1) mod MaxEmailAccounts].pword;
 end;
 
 procedure TSetupForm.ContinueLine1CheckBoxClick(Sender: TObject);
@@ -1411,9 +1396,9 @@ begin
   LCDSmartieDisplayForm.SetupAutoStart();
 
   // Check if Com settings have changed.
-  config.pop[(EmailAccountComboBox.itemindex + 1) mod 10].server := EmailServerEdit.text;
-  config.pop[(EmailAccountComboBox.itemindex + 1) mod 10].user := EmailLoginEdit.text;
-  config.pop[(EmailAccountComboBox.itemindex + 1) mod 10].pword := EmailPasswordEdit.text;
+  config.pop[(EmailAccountComboBox.itemindex + 1) mod MaxEmailAccounts].server := EmailServerEdit.text;
+  config.pop[(EmailAccountComboBox.itemindex + 1) mod MaxEmailAccounts].user := EmailLoginEdit.text;
+  config.pop[(EmailAccountComboBox.itemindex + 1) mod MaxEmailAccounts].pword := EmailPasswordEdit.text;
 
   if (WebProxyPortEdit.text = '') then WebProxyPortEdit.text := '0';
   config.httpProxy := WebProxyServerEdit.text;

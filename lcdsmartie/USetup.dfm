@@ -27,7 +27,7 @@ object SetupForm: TSetupForm
     Top = 0
     Width = 233
     Height = 409
-    ActivePage = WinampTabSheet
+    ActivePage = InternetTabSheet
     Font.Charset = ANSI_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
@@ -622,37 +622,6 @@ object SetupForm: TSetupForm
         Width = 185
         Height = 177
         ItemHeight = 13
-        Items.Strings = (
-          'Email 1: Message Count'
-          'Email 1: Last Subject'
-          'Email 1: Last From'
-          'Email 2: Message Count'
-          'Email 2: Last Subject'
-          'Email 2: Last From'
-          'Email 3: Message Count'
-          'Email 3: Last Subject'
-          'Email 3: Last From'
-          'Email 4: Message Count'
-          'Email 4: Last Subject'
-          'Email 4: Last From'
-          'Email 5: Message Count'
-          'Email 5: Last Subject'
-          'Email 5: Last From'
-          'Email 6: Message Count'
-          'Email 6: Last Subject'
-          'Email 6: Last From'
-          'Email 7: Message Count'
-          'Email 7: Last Subject'
-          'Email 7: Last From'
-          'Email 8: Message Count'
-          'Email 8: Last Subject'
-          'Email 8: Last From'
-          'Email 9: Message Count'
-          'Email 9: Last Subject'
-          'Email 9: Last From'
-          'Email 10: Message Count'
-          'Email 10: Last Subject'
-          'Email 10: Last From')
         TabOrder = 0
         OnClick = EmailListBoxClick
         OnDblClick = InsertButtonClick
@@ -667,17 +636,6 @@ object SetupForm: TSetupForm
         ItemHeight = 13
         TabOrder = 1
         OnChange = EmailAccountComboBoxChange
-        Items.Strings = (
-          '1'
-          '2'
-          '3'
-          '4'
-          '5'
-          '6'
-          '7'
-          '8'
-          '9'
-          '10')
       end
     end
     object NetworkStatsTabSheet: TTabSheet
@@ -1859,7 +1817,7 @@ object SetupForm: TSetupForm
                 Font.Height = -11
                 Font.Name = 'Tahoma'
                 Font.Style = []
-                ItemHeight = 0
+                ItemHeight = 13
                 ParentFont = False
                 ParentShowHint = False
                 ShowHint = True

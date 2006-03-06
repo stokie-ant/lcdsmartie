@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.75 $ $Date: 2006/03/06 20:08:35 $
+ *  $Revision: 1.76 $ $Date: 2006/03/06 21:18:52 $
  *****************************************************************************}
 
 interface
@@ -1419,7 +1419,10 @@ begin
 
   // start connectivity
   try
-    Lcd := TLCD_DLL.CreateDLL(config.width,config.height,config.DisplayDLLName,config.DisplayDLLParameters);
+    if not (config.DisplayDLLName = '') then
+      Lcd := TLCD_DLL.CreateDLL(config.width,config.height,config.DisplayDLLName,config.DisplayDLLParameters)
+    else
+      Lcd := TLCD.Create();
   except
     on E: Exception do
     begin
