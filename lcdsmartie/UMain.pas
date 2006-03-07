@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.76 $ $Date: 2006/03/06 21:18:52 $
+ *  $Revision: 1.77 $ $Date: 2006/03/07 06:06:41 $
  *****************************************************************************}
 
 interface
@@ -275,11 +275,6 @@ begin
   ScreenLCD[3] := @Line3Panel;
   ScreenLCD[4] := @Line4Panel;
 
-  LoadSkin;
-  LCDSmartieDisplayForm.color := $00BFBFBF;
-  NumberOfScreensToShift := 1;
-  LoadColors;
-
   ConfigFileName := 'config.ini';
   ProcessCommandLineParams;  // can change config file name
   config := TConfig.Create(ConfigFileName);
@@ -289,6 +284,13 @@ begin
     showmessage('Fatal Error:  Failed to load configuration');
     application.Terminate;
   end;
+
+//SetWindowLong(Application.Handle, GWL_EXSTYLE, GetWindowLong(Application.Handle, GWL_EXSTYLE) or WS_EX_TOOLWINDOW and not W
+//S_EX_APPWINDOW );
+  LoadSkin;
+  LCDSmartieDisplayForm.color := $00BFBFBF;
+  NumberOfScreensToShift := 1;
+  LoadColors;
 
   if (config.bHideOnStartup) then
     InitialWindowState := HideMainForm;
@@ -311,34 +313,34 @@ end;
 
 procedure TLCDSmartieDisplayForm.LoadSkin;
 var
-  OurPath: String;
+  sSkinPath: String;
 begin
   try
-    OurPath := extractfilepath(application.exename);
-    LogoImage.picture.LoadFromFile(OurPath + 'images\logo.bmp');
-    Line1RightScrollImage.picture.LoadFromFile(OurPath + 'images\small_arrow_left_up1.bmp');
-    Line2RightScrollImage.picture.LoadFromFile(OurPath + 'images\small_arrow_left_up2.bmp');
-    Line3RightScrollImage.picture.LoadFromFile(OurPath + 'images\small_arrow_left_up3.bmp');
-    Line4RightScrollImage.picture.LoadFromFile(OurPath + 'images\small_arrow_left_up4.bmp');
-    Line1LeftScrollImage.picture.LoadFromFile(OurPath + 'images\small_arrow_right_up1.bmp');
-    Line2LeftScrollImage.picture.LoadFromFile(OurPath + 'images\small_arrow_right_up2.bmp');
-    Line3LeftScrollImage.picture.LoadFromFile(OurPath + 'images\small_arrow_right_up3.bmp');
-    Line4LeftScrollImage.picture.LoadFromFile(OurPath + 'images\small_arrow_right_up4.bmp');
-    NextScreenImage.picture.LoadFromFile(OurPath + 'images\big_arrow_right_up.bmp');
-    PreviousImage.picture.LoadFromFile(OurPath + 'images\big_arrow_left_up.bmp');
-    BarLeftImage.picture.LoadFromFile(OurPath + 'images\bar_left.bmp');
-    BarRightImage.picture.LoadFromFile(OurPath + 'images\bar_right.bmp');
-    BarMiddleImage.picture.LoadFromFile(OurPath + 'images\bar_middle.bmp');
-    SetupImage.picture.LoadFromFile(OurPath + 'images\setup_up.bmp');
-    HideImage.picture.LoadFromFile(OurPath + 'images\hide_up.bmp');
-    CoolTrayIcon1.Icon.LoadFromFile(OurPath + 'images\smartie.ico');
-    application.Icon.LoadFromFile(OurPath + 'images\smartie.ico');
+    sSkinPath := extractfilepath(application.exename) + config.sSkinPath;
+    LogoImage.picture.LoadFromFile(sSkinPath + 'logo.bmp');
+    Line1RightScrollImage.picture.LoadFromFile(sSkinPath + 'small_arrow_left_up1.bmp');
+    Line2RightScrollImage.picture.LoadFromFile(sSkinPath + 'small_arrow_left_up2.bmp');
+    Line3RightScrollImage.picture.LoadFromFile(sSkinPath + 'small_arrow_left_up3.bmp');
+    Line4RightScrollImage.picture.LoadFromFile(sSkinPath + 'small_arrow_left_up4.bmp');
+    Line1LeftScrollImage.picture.LoadFromFile(sSkinPath + 'small_arrow_right_up1.bmp');
+    Line2LeftScrollImage.picture.LoadFromFile(sSkinPath + 'small_arrow_right_up2.bmp');
+    Line3LeftScrollImage.picture.LoadFromFile(sSkinPath + 'small_arrow_right_up3.bmp');
+    Line4LeftScrollImage.picture.LoadFromFile(sSkinPath + 'small_arrow_right_up4.bmp');
+    NextScreenImage.picture.LoadFromFile(sSkinPath + 'big_arrow_right_up.bmp');
+    PreviousImage.picture.LoadFromFile(sSkinPath + 'big_arrow_left_up.bmp');
+    BarLeftImage.picture.LoadFromFile(sSkinPath + 'bar_left.bmp');
+    BarRightImage.picture.LoadFromFile(sSkinPath + 'bar_right.bmp');
+    BarMiddleImage.picture.LoadFromFile(sSkinPath + 'bar_middle.bmp');
+    SetupImage.picture.LoadFromFile(sSkinPath + 'setup_up.bmp');
+    HideImage.picture.LoadFromFile(sSkinPath + 'hide_up.bmp');
+    CoolTrayIcon1.Icon.LoadFromFile(sSkinPath + 'smartie.ico');
+    application.Icon.LoadFromFile(sSkinPath + 'smartie.ico');
     CoolTrayIcon1.Refresh;
   except
     on E: Exception do
     begin
-      showmessage('Error: unable to access images subdirectory: ' +
-        E.Message);
+      showmessage('Error: unable to load skin from sSkinPath, ' +
+        sSkinPath + ': ' + E.Message);
       application.terminate;
     end;
   end;
@@ -351,7 +353,7 @@ var
 begin
 //register
   try
-    assignfile(initfile, extractfilepath(application.exename) +'images\colors.cfg');
+    assignfile(initfile, extractfilepath(application.exename) +config.sSkinPath + 'colors.cfg');
     reset(initfile);
     readln(initfile, line);
     ScreenNumberPanel.Color := StrToInt('$00' + copy(line, 1, 6));
@@ -1194,7 +1196,7 @@ procedure TLCDSmartieDisplayForm.Line1RightScrollImageMouseDown(Sender: TObject;
   TShiftState; X, Y: Integer);
 begin
   Line1RightScrollImage.picture.LoadFromFile(extractfilepath(application.exename) +
-    'images\small_arrow_left_down1.bmp');
+    config.sSkinPath + 'small_arrow_left_down1.bmp');
   line2scroll := 1;
   RightManualScrollTimer.enabled := true;
   timerRefresh.enabled := false;
@@ -1204,7 +1206,7 @@ procedure TLCDSmartieDisplayForm.Line1RightScrollImageMouseUp(Sender: TObject; B
   TShiftState; X, Y: Integer);
 begin
   Line1RightScrollImage.picture.LoadFromFile(extractfilepath(application.exename) +
-    'images\small_arrow_left_up1.bmp');
+    config.sSkinPath + 'small_arrow_left_up1.bmp');
   RightManualScrollTimer.enabled := false;
   timerRefresh.enabled := true;
 end;
@@ -1213,7 +1215,7 @@ procedure TLCDSmartieDisplayForm.Line1LeftScrollImageMouseDown(Sender: TObject; 
   TShiftState; X, Y: Integer);
 begin
   Line1LeftScrollImage.picture.LoadFromFile(extractfilepath(application.exename) +
-    'images\small_arrow_right_down1.bmp');
+    config.sSkinPath + 'small_arrow_right_down1.bmp');
   line2scroll := 1;
   LeftManualScrollTimer.enabled := true;
   timerRefresh.enabled := false;
@@ -1223,7 +1225,7 @@ procedure TLCDSmartieDisplayForm.Line1LeftScrollImageMouseUp(Sender: TObject; Bu
   TShiftState; X, Y: Integer);
 begin
   Line1LeftScrollImage.picture.LoadFromFile(extractfilepath(application.exename) +
-    'images\small_arrow_right_up1.bmp');
+    config.sSkinPath + 'small_arrow_right_up1.bmp');
   LeftManualScrollTimer.enabled := false;
   timerRefresh.enabled := true;
 end;
@@ -1232,7 +1234,7 @@ procedure TLCDSmartieDisplayForm.Line2RightScrollImageMouseDown(Sender: TObject;
   TShiftState; X, Y: Integer);
 begin
   Line2RightScrollImage.picture.LoadFromFile(extractfilepath(application.exename) +
-    'images\small_arrow_left_down2.bmp');
+    config.sSkinPath + 'small_arrow_left_down2.bmp');
   line2scroll := 2;
   RightManualScrollTimer.enabled := true;
   timerRefresh.enabled := false;
@@ -1242,7 +1244,7 @@ procedure TLCDSmartieDisplayForm.Line2RightScrollImageMouseUp(Sender: TObject; B
   TShiftState; X, Y: Integer);
 begin
   Line2RightScrollImage.picture.LoadFromFile(extractfilepath(application.exename) +
-    'images\small_arrow_left_up2.bmp');
+    config.sSkinPath + 'small_arrow_left_up2.bmp');
   RightManualScrollTimer.enabled := false;
   timerRefresh.enabled := true;
 end;
@@ -1251,7 +1253,7 @@ procedure TLCDSmartieDisplayForm.Line2LeftScrollImageMouseDown(Sender: TObject; 
   TShiftState; X, Y: Integer);
 begin
   Line2LeftScrollImage.picture.LoadFromFile(extractfilepath(application.exename) +
-    'images\small_arrow_right_down2.bmp');
+    config.sSkinPath + 'small_arrow_right_down2.bmp');
   line2scroll := 2;
   LeftManualScrollTimer.enabled := true;
   timerRefresh.enabled := false;
@@ -1261,7 +1263,7 @@ procedure TLCDSmartieDisplayForm.Line2LeftScrollImageMouseUp(Sender: TObject; Bu
   TShiftState; X, Y: Integer);
 begin
   Line2LeftScrollImage.picture.LoadFromFile(extractfilepath(application.exename) +
-    'images\small_arrow_right_up2.bmp');
+    config.sSkinPath + 'small_arrow_right_up2.bmp');
   LeftManualScrollTimer.enabled := false;
   timerRefresh.enabled := true;
 end;
@@ -1270,7 +1272,7 @@ procedure TLCDSmartieDisplayForm.Line3RightScrollImageMouseDown(Sender: TObject;
   TShiftState; X, Y: Integer);
 begin
   Line3RightScrollImage.picture.LoadFromFile(extractfilepath(application.exename) +
-    'images\small_arrow_left_down3.bmp');
+    config.sSkinPath + 'small_arrow_left_down3.bmp');
   line2scroll := 3;
   RightManualScrollTimer.enabled := true;
   timerRefresh.enabled := false;
@@ -1280,7 +1282,7 @@ procedure TLCDSmartieDisplayForm.Line3RightScrollImageMouseUp(Sender: TObject; B
   TShiftState; X, Y: Integer);
 begin
   Line3RightScrollImage.picture.LoadFromFile(extractfilepath(application.exename) +
-    'images\small_arrow_left_up3.bmp');
+    config.sSkinPath + 'small_arrow_left_up3.bmp');
   RightManualScrollTimer.enabled := false;
   timerRefresh.enabled := true;
 end;
@@ -1289,7 +1291,7 @@ procedure TLCDSmartieDisplayForm.Line3LeftScrollImageMouseDown(Sender: TObject; 
   TShiftState; X, Y: Integer);
 begin
   Line3LeftScrollImage.picture.LoadFromFile(extractfilepath(application.exename) +
-    'images\small_arrow_right_down3.bmp');
+    config.sSkinPath + 'small_arrow_right_down3.bmp');
   line2scroll := 3;
   LeftManualScrollTimer.enabled := true;
   timerRefresh.enabled := false;
@@ -1299,7 +1301,7 @@ procedure TLCDSmartieDisplayForm.Line3LeftScrollImageMouseUp(Sender: TObject; Bu
   TShiftState; X, Y: Integer);
 begin
   Line3LeftScrollImage.picture.LoadFromFile(extractfilepath(application.exename) +
-    'images\small_arrow_right_up3.bmp');
+    config.sSkinPath + 'small_arrow_right_up3.bmp');
   LeftManualScrollTimer.enabled := false;
   timerRefresh.enabled := true;
 end;
@@ -1308,7 +1310,7 @@ procedure TLCDSmartieDisplayForm.Line4RightScrollImageMouseDown(Sender: TObject;
   TShiftState; X, Y: Integer);
 begin
   Line4RightScrollImage.picture.LoadFromFile(extractfilepath(application.exename) +
-    'images\small_arrow_left_down4.bmp');
+    config.sSkinPath + 'small_arrow_left_down4.bmp');
   line2scroll := 4;
   RightManualScrollTimer.enabled := true;
   timerRefresh.enabled := false;
@@ -1318,7 +1320,7 @@ procedure TLCDSmartieDisplayForm.Line4RightScrollImageMouseUp(Sender: TObject; B
   TShiftState; X, Y: Integer);
 begin
   Line4RightScrollImage.picture.LoadFromFile(extractfilepath(application.exename) +
-    'images\small_arrow_left_up4.bmp');
+    config.sSkinPath + 'small_arrow_left_up4.bmp');
   RightManualScrollTimer.enabled := false;
   timerRefresh.enabled := true;
 end;
@@ -1327,7 +1329,7 @@ procedure TLCDSmartieDisplayForm.Line4LeftScrollImageMouseDown(Sender: TObject; 
   Shift: TShiftState; X, Y: Integer);
 begin
   Line4LeftScrollImage.picture.LoadFromFile(extractfilepath(application.exename) +
-    'images\small_arrow_right_down4.bmp');
+    config.sSkinPath + 'small_arrow_right_down4.bmp');
   line2scroll := 4;
   LeftManualScrollTimer.enabled := true;
   timerRefresh.enabled := false;
@@ -1337,7 +1339,7 @@ procedure TLCDSmartieDisplayForm.Line4LeftScrollImageMouseUp(Sender: TObject; Bu
   TShiftState; X, Y: Integer);
 begin
   Line4LeftScrollImage.picture.LoadFromFile(extractfilepath(application.exename) +
-    'images\small_arrow_right_up4.bmp');
+    config.sSkinPath + 'small_arrow_right_up4.bmp');
   LeftManualScrollTimer.enabled := false;
   timerRefresh.enabled := true;
 end;
@@ -1346,56 +1348,56 @@ procedure TLCDSmartieDisplayForm.PreviousImageMouseDown(Sender: TObject; Button:
   Shift: TShiftState; X, Y: Integer);
 begin
   PreviousImage.picture.LoadFromFile(extractfilepath(application.exename) +
-    'images\big_arrow_left_down.bmp');
+    config.sSkinPath + 'big_arrow_left_down.bmp');
 end;
 
 procedure TLCDSmartieDisplayForm.PreviousImageMouseUp(Sender: TObject; Button: TMouseButton; Shift:
   TShiftState; X, Y: Integer);
 begin
   PreviousImage.picture.LoadFromFile(extractfilepath(application.exename) +
-    'images\big_arrow_left_up.bmp');
+    config.sSkinPath + 'big_arrow_left_up.bmp');
 end;
 
 procedure TLCDSmartieDisplayForm.SetupImageMouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
 begin
   SetupImage.picture.LoadFromFile(extractfilepath(application.exename) +
-    'images\setup_down.bmp');
+    config.sSkinPath + 'setup_down.bmp');
 end;
 
 procedure TLCDSmartieDisplayForm.SetupImageMouseUp(Sender: TObject; Button: TMouseButton; Shift:
   TShiftState; X, Y: Integer);
 begin
   SetupImage.picture.LoadFromFile(extractfilepath(application.exename) +
-    'images\setup_up.bmp');
+    config.sSkinPath + 'setup_up.bmp');
 end;
 
 procedure TLCDSmartieDisplayForm.HideImageMouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
 begin
   HideImage.picture.LoadFromFile(extractfilepath(application.exename) +
-    'images\hide_down.bmp');
+    config.sSkinPath + 'hide_down.bmp');
 end;
 
 procedure TLCDSmartieDisplayForm.HideImageMouseUp(Sender: TObject; Button: TMouseButton; Shift:
   TShiftState; X, Y: Integer);
 begin
   HideImage.picture.LoadFromFile(extractfilepath(application.exename) +
-    'images\hide_up.bmp');
+    config.sSkinPath + 'hide_up.bmp');
 end;
 
 procedure TLCDSmartieDisplayForm.NextScreenImageMouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
 begin
   NextScreenImage.picture.LoadFromFile(extractfilepath(application.exename) +
-    'images\big_arrow_right_down.bmp');
+    config.sSkinPath + 'big_arrow_right_down.bmp');
 end;
 
 procedure TLCDSmartieDisplayForm.NextScreenImageMouseUp(Sender: TObject; Button: TMouseButton; Shift:
   TShiftState; X, Y: Integer);
 begin
   NextScreenImage.picture.LoadFromFile(extractfilepath(application.exename) +
-    'images\big_arrow_right_up.bmp');
+    config.sSkinPath + 'big_arrow_right_up.bmp');
 end;
 
 

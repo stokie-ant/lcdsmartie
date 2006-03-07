@@ -19,7 +19,7 @@ unit UConfig;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UConfig.pas,v $
- *  $Revision: 1.45 $ $Date: 2006/03/06 21:18:52 $
+ *  $Revision: 1.46 $ $Date: 2006/03/07 06:06:40 $
  *****************************************************************************}
 
 interface
@@ -114,6 +114,7 @@ type
     procedure SetScreenSize(con: Integer);
     procedure ConvertToDisplayDLL;
   public
+    sSkinPath: String;
     localeFormat: TFormatSettings;
     bHideOnStartup: Boolean;
     bAutoStart, bAutoStartHide: Boolean;
@@ -528,6 +529,11 @@ begin
   sScreenTextSyntaxVersion := initfile.ReadString('Versions',
     'ScreenTextSyntax', '1.0');
 
+  sSkinPath := initfile.ReadString('General Settings', 'SkinPath', 'images\');
+  // Add trailing slash if none present in config.ini
+  if sSkinPath[Length(sSkinPath) - 1] <> '\'
+  then
+    sSkinPath := sSkinPath + '\';
   baudrate := initfile.ReadInteger('Communication Settings', 'Baudrate', 8);
   comPort := initfile.ReadInteger('Communication Settings', 'COMPort', 1);
 
@@ -731,6 +737,7 @@ begin
   initfile.WriteString('Versions', 'ScreenTextSyntax',
     sMyScreenTextSyntaxVersion);
 
+  initfile.WriteString('General Settings', 'SkinPath', sSkinPath);
   initfile.WriteInteger('Communication Settings', 'Baudrate', baudrate);
   initfile.WriteInteger('Communication Settings', 'COMPort', comPort);
   if (isUsbPalm) then initfile.WriteInteger('Communication Settings',
