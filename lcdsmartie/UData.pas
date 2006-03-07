@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.60 $ $Date: 2006/03/07 01:45:33 $
+ *  $Revision: 1.61 $ $Date: 2006/03/07 16:17:43 $
  *****************************************************************************}
 
 
@@ -644,7 +644,7 @@ end;
 
 procedure TData.ResolveOtherVariables(var line: String);
 var
-  args: Array [0..maxArgs-1] of String;
+  args: Array [1..maxArgs] of String;
   prefix, postfix: String;
   numArgs: Cardinal;
   spacecount : Integer;
@@ -770,7 +770,7 @@ end;
 
 procedure TData.ResolveStringFunctionVariables(var line: String);
 var
-  args: Array [0..maxArgs-1] of String;
+  args: Array [1..maxArgs] of String;
   prefix, postfix: String;
   numArgs: Cardinal;
   h, x, iPos1, iPos2, iPos3: Integer;
@@ -778,6 +778,7 @@ var
   spaceline : string;
   STHDBar: String;
 begin
+
   iPos1 := pos('$Right(', line);
   while iPos1 <> 0 do
   begin
@@ -887,7 +888,7 @@ end;
 procedure TData.ResolveFileVariables(var line: String);
 var
   hdcounter: Integer;
-  args: Array [0..maxArgs-1] of String;
+  args: Array [1..maxArgs] of String;
   prefix, postfix: String;
   numArgs: Cardinal;
   spaceline, sFileloc : string;
@@ -983,7 +984,7 @@ end;
 procedure TData.ResolvePluginVariables(var line: String; qstattemp: Integer;
   bCacheResults: Boolean);
 var
-  args: Array [0..maxArgs-1] of String;
+  args: Array [1..maxArgs] of String;
   prefix, postfix: String;
   numArgs: Cardinal;
   sParam1, sParam2: String;
@@ -997,7 +998,7 @@ begin
     try
       RequiredParameters(numargs, 4, 4);
 
-      uiPlugin := FindPlugin(args[0]);
+      uiPlugin := FindPlugin(args[1]);
       if (bCacheResults) and (not bForceRefresh) then
       begin
         if (dlls[uiPlugin].uiMinRefreshInterval < Cardinal(config.dllPeriod)) then
@@ -1020,10 +1021,10 @@ begin
 
       if (bCallPlugin) then
       begin
-        sParam1 := change(args[2], qstattemp);
-        sParam2 := change(args[3], qstattemp);
+        sParam1 := change(args[3], qstattemp);
+        sParam2 := change(args[4], qstattemp);
         try
-          sAnswer := CallPlugin(uiPlugin, StrToInt(args[1]), sParam1, sParam2);
+          sAnswer := CallPlugin(uiPlugin, StrToInt(args[2]), sParam1, sParam2);
         except
           on E: Exception do
             sAnswer := '[Dll: ' + CleanString(E.Message) + ']';
@@ -2994,7 +2995,7 @@ end;
 
 procedure TData.ResolveRSSVariables(var line: String);
 var
-  args: Array [0..maxArgs-1] of String;
+  args: Array [1..maxArgs] of String;
   prefix, postfix: String;
   numArgs: Cardinal;
   jj: Cardinal;
