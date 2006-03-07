@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.59 $ $Date: 2006/03/07 01:04:42 $
+ *  $Revision: 1.60 $ $Date: 2006/03/07 01:45:33 $
  *****************************************************************************}
 
 
@@ -172,20 +172,21 @@ type
     uiScreenStartTime: Cardinal; // time that new start refresh started (used by plugin cache code)
     bNewScreenEvent: Boolean;
     bForceRefresh: Boolean;
+    dataCs: TCriticalSection;  // data + main thread
+    dataThread, cpuThread: TMyThread;
+    replline2, replline1: String;
+    System1: Tsystem;
+
+    // DLL plugins
     dlls: Array of TDll;
     uiTotalDlls: Cardinal;
     sDllResults: array of string;
     iDllResults: Integer;
-    STHDFree, STHDTotal: Array[65..90] of Int64; // cpu + main thread.
-    dataCs: TCriticalSection;  // data + main thread
-    uptimereg, uptimeregs: String;        // Guarded by dataCs, cpu + main thread
-    dataThread, cpuThread: TMyThread;
 
-    replline2, replline1: String;
-    System1: Tsystem;
-
+    // disk space
     bDoDisks: Boolean; // cpu + main threads;
     bDoDisk: Array[65..90] of Boolean; // cpu + main threads
+    STHDFree, STHDTotal: Array[65..90] of Int64; // cpu + main thread.
 
     //cpu usage
     CPUUsage: Array [1..5] of Cardinal;   //cpu thread only
@@ -196,6 +197,7 @@ type
     iLastUptime: Cardinal;                //cpu thread only
     STPageFree, STPageTotal: Int64;
     STMemFree, STMemTotal: Int64;         // cpu + main thread.
+    uptimereg, uptimeregs: String;        // Guarded by dataCs, cpu + main thread
 
     // network stats
     bDoNet: Boolean; // cpu + main threads;
@@ -252,16 +254,19 @@ type
     function stripspaces(FString: String): String;
     function stripHtml(str: String): String;
     procedure RequiredParameters(uiArgs: Cardinal; uiMinArgs: Cardinal; uiMaxArgs: Cardinal = 0);
-
-
-
-
+    // data thread
     procedure doDataThread;
-    procedure ProcessPlugin(var line: String; qstattemp: Integer;
-      bCacheResults: Boolean);
+    // other variables
+    procedure ResolveOtherVariables(var line: String);
+    procedure ResolveTimeVariable(var line: String);
+    procedure ResolveStringFunctionVariables(var line: String);
+    procedure ResolveLCDFunctionVariables(var line: String);
+    // file data
+    procedure ResolveFileVariables(var line: String);
+    // dll plugins
     procedure LoadPlugin(sDllName: String; bDotNet: Boolean = false);
-
-
+    procedure ResolvePluginVariables(var line: String; qstattemp: Integer;
+      bCacheResults: Boolean);
     // winamp
     procedure ResolveWinampVariables(var Line: string);
     // disk space
@@ -285,6 +290,7 @@ type
     function getRss(Url: String;var titles, descs: Array of String; maxitems:
       Cardinal; maxfreq: Cardinal = 0): Cardinal;
     procedure DoRSSHTTPUpdate;
+    procedure ResolveRSSVariables(var line: String);
     procedure DoLCDSmartieHTTPUpdate;
     procedure DoSETIHTTPUpdate;
     procedure ResolveSETIVariables(var Line : string);
@@ -396,35 +402,14 @@ end;
 
 
 
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+////                                                                       ////
+////      M A I N   D A T A    F U N C T I O N S                           ////
+////                                                                       ////
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 
-procedure TData.NewScreen(bYes: Boolean);
-begin
-  bNewScreenEvent := bYes;
-  if (bYes) then
-  begin
-    LCDSmartieDisplayForm.MBMUpdateTimer.Interval := 0;
-    LCDSmartieDisplayForm.MBMUpdateTimer.Interval := 250; // force an update of Mbm, etc data in 0.25 seconds
-    bForceRefresh := true;
-    bDoCpuUsage := false;
-    bDoCpuSpeed := false;
-    CPUUsagePos := 1;
-    CPUUsageCount := 0;
-    bDoScreenRes := false;
-    bDoDisks := false;
-    bDoNet := false;
-  end;
-end;
-
-procedure TData.ScreenStart;
-begin
-  iDllResults := 0;
-  uiScreenStartTime := GetTickCount();
-end;
-
-procedure TData.ScreenEnd;
-begin
-  bForceRefresh := false;
-end;
 
 constructor TData.Create;
 var
@@ -559,6 +544,583 @@ begin
 end;
 
 
+procedure TData.NewScreen(bYes: Boolean);
+begin
+  bNewScreenEvent := bYes;
+  if (bYes) then
+  begin
+    LCDSmartieDisplayForm.MBMUpdateTimer.Interval := 0;
+    LCDSmartieDisplayForm.MBMUpdateTimer.Interval := 250; // force an update of Mbm, etc data in 0.25 seconds
+    bForceRefresh := true;
+    bDoCpuUsage := false;
+    bDoCpuSpeed := false;
+    CPUUsagePos := 1;
+    CPUUsageCount := 0;
+    bDoScreenRes := false;
+    bDoDisks := false;
+    bDoNet := false;
+  end;
+end;
+
+procedure TData.ScreenStart;
+begin
+  iDllResults := 0;
+  uiScreenStartTime := GetTickCount();
+end;
+
+procedure TData.ScreenEnd;
+begin
+  bForceRefresh := false;
+end;
+
+function TData.change(line: String; qstattemp: Integer = 1;
+   bCacheResults: Boolean = false): String;
+label
+  endChange;
+begin
+  try
+    ResolvePluginVariables(line, qstattemp, bCacheResults);
+    if (Pos('$', line) = 0) then goto endChange;
+    ResolveOtherVariables(Line);
+    ResolveCPUVariables(Line);
+    ResolveDiskSpaceVariables(Line);
+    ResolveEmailVariables(Line);
+    ResolveFileVariables(Line);
+    ResolveLCDFunctionVariables(Line);
+    if (Pos('$', line) = 0) then goto endChange;
+    ResolveWinampVariables(line);
+    ResolveMBMVariables(Line);
+    ResolveGameVariables(Line,qstattemp);
+    ResolveSETIVariables(Line);
+    ResolveFoldingVariables(Line);
+    if (Pos('$', line) = 0) then goto endChange;
+    ResolveTimeVariable(Line);
+    ResolveNetworkVariables(line);
+    ResolveRSSVariables(Line);
+    ResolveStringFunctionVariables(Line);
+endChange:
+  except
+    on E: Exception do line := '[Unhandled Exception: '
+      + CleanString(E.Message) + ']';
+  end;
+
+  line := StringReplace(line, Chr($A), '', [rfReplaceAll]);
+  line := StringReplace(line, Chr($D), '', [rfReplaceAll]);
+  result := line;
+end;
+
+// Runs in data thread
+procedure TData.doDataThread;
+begin
+  coinitialize(nil);
+
+  try
+    try
+      while (not dataThread.Terminated) do
+      begin
+        if (not dataThread.Terminated) and (doHTTPUpdate) then HTTPUpdate;
+        if (not dataThread.Terminated) and (doEmailUpdate) then emailUpdate;
+        if (not dataThread.Terminated) and (doGameUpdate) then GameUpdate;
+        if (not dataThread.Terminated) then sleep(1000);
+      end;
+    finally
+      CoUninitialize;
+    end;
+  except
+    on E: EExiting do Exit;
+    else raise;
+  end;
+end;
+
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+////                                                                       ////
+////      R E S O L V E    O T H E R    V A R I A B L E S                  ////
+////                                                                       ////
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+
+procedure TData.ResolveOtherVariables(var line: String);
+var
+  args: Array [0..maxArgs-1] of String;
+  prefix, postfix: String;
+  numArgs: Cardinal;
+  spacecount : Integer;
+  ccount: double;
+  tempst : String;
+  iPos1, iPos2 : Integer;
+begin
+
+  if decodeArgs(line, '$MObutton', maxArgs, args, prefix, postfix, numargs)
+    then
+  begin
+    spacecount := 0;
+    if (numargs = 1) and (cLastKeyPressed = args[1]) then spacecount := 1;
+
+    line := prefix + intToStr(spacecount) + postfix;
+  end;
+
+  if pos('$ScreenChanged', line) <> 0 then
+  begin
+    spacecount := 0;
+    if (bNewScreenEvent) then
+      spacecount := 1;
+
+    line := StringReplace(line, '$ScreenChanged', IntToStr(spacecount), [rfReplaceAll]);
+  end;
+
+  while decodeArgs(line, '$Count', maxArgs, args, prefix, postfix, numargs)
+    do
+  begin
+    ccount := 0;
+    try
+      RequiredParameters(numargs, 1, 1);
+      tempst := args[1];
+      iPos1 := 1;
+      iPos2 := pos('#', tempst);
+
+      repeat
+        if (iPos2 = 0) then
+          ccount := ccount + StrToFloatN(tempst, iPos1, length(tempst)-iPos1+1)
+        else
+          ccount := ccount + StrToFloatN(tempst, iPos1, iPos2-iPos1);
+        iPos1 := iPos2 + 1;
+        iPos2 := PosEx('#', tempst, iPos1);
+      until (iPos1 = 1);
+
+      line := prefix + FloatToStr(ccount, localeFormat) + postfix;
+    except
+      on E: Exception do line := prefix + '[Count: '
+        + CleanString(E.Message) + ']' + postfix;
+    end;
+  end;
+
+
+end;
+
+procedure TData.ResolveTimeVariable(var line: String);
+var
+  tempst, line2 : String;
+begin
+  while pos('$Time(', line) <> 0 do
+  begin
+    try
+      line2 := copy(line, pos('$Time(', line) + 6, length(line));
+      if (pos(')', line2) = 0) then
+        raise Exception.Create('No ending bracket');
+      line2 := copy(line2, 1, pos(')', line2)-1);
+      tempst := formatdatetime(line2, now, localeFormat);
+      line := StringReplace(line, '$Time(' + line2 + ')', tempst, []);
+    except
+      on E: Exception do line := StringReplace(line, '$Time(', '[Time: '
+        + CleanString(E.Message) + ']', []);
+    end;
+  end;
+end;
+
+procedure TData.ResolveLCDFunctionVariables(var line: String);
+var
+  spaceline, line2 : String;
+  h, iPos1, iPos2 : Integer;
+begin
+  iPos1 :=  pos('$CustomChar(', line);
+  while (iPos1 <> 0) do
+  begin
+    try
+      iPos2 := PosEx(')', line, iPos1+12);
+      if (iPos2 = 0) then
+        raise Exception.Create('No ending bracket');
+      LCDSmartieDisplayForm.customchar(AnsiMidStr(line, iPos1+12, iPos2-(iPos1+12)));
+      Delete(line, iPos1, iPos2-iPos1+1);
+    except
+      on E: Exception do line := StringReplace(line, '$CustomChar(',
+        '[CustomChar: ' + CleanString(E.Message) + ']', []);
+    end;
+    iPos1 :=  PosEx('$CustomChar(', line, iPos1);
+  end;
+
+  while (pos('$Flash(', line) <> 0) do
+  begin
+    try
+      line2 := copy(line, pos('$Flash(', line) + 7, (pos('$)$',
+        line))-(pos('$Flash(', line) + 7));
+      if (LCDSmartieDisplayForm.doesflash) then
+      begin
+        spaceline := '';
+        for h := 1 to length(line2) do
+        begin
+          spaceline := spaceline + ' ';
+        end;
+      end
+      else
+      begin
+        spaceline := line2;
+      end;
+      if pos('$)$', line) <> 0 then line := StringReplace(line, '$Flash('
+        + line2 + '$)$', spaceline, [])
+      else line := StringReplace(line, '$Flash(', 'ERROR', []);
+    except
+      on E: Exception do line := StringReplace(line, '$Flash(', '[Flash: '
+        + CleanString(E.Message) + ']', []);
+    end;
+  end;
+end;
+
+procedure TData.ResolveStringFunctionVariables(var line: String);
+var
+  args: Array [0..maxArgs-1] of String;
+  prefix, postfix: String;
+  numArgs: Cardinal;
+  h, x, iPos1, iPos2, iPos3: Integer;
+  spacecount : Integer;
+  spaceline : string;
+  STHDBar: String;
+begin
+  iPos1 := pos('$Right(', line);
+  while iPos1 <> 0 do
+  begin
+    try
+      iPos2 := PosEx(',$', line, iPos1+1);
+      if (iPos2 = 0) then
+        raise Exception.Create('Missing ",$"');
+
+      iPos3 := PosEx('%)', line, iPos2+2);
+      if (iPos3 = 0) then
+        raise Exception.Create('Missing "%)"');
+
+      spacecount := StrToIntN(line, iPos2 + 2, iPos3-(iPos2+2));
+      Delete(line, iPos2, (iPos3+2)-iPos2);
+      Delete(line, iPos1, 7);
+      if (spacecount >  iPos2-(iPos1+7)) then
+        Insert(DupeString(' ', spacecount-(iPos2-(iPos1+7))), line, iPos1);
+    except
+      on E: Exception do line := StringReplace(line, '$Right(', '[Right: '
+        + CleanString(E.Message) + ']', []);
+    end;
+
+    iPos1 := PosEx('$Right(',line,iPos1);
+  end;
+
+  while decodeArgs(line, '$Center', maxArgs, args, prefix, postfix, numargs)
+    do
+  begin
+    try
+      RequiredParameters(numargs, 1, 2);
+      if (numargs = 1) then spacecount := config.width
+      else spacecount := StrToInt(args[2]);
+
+      line := prefix + CenterText(args[1], spacecount) + postfix;
+    except
+      on E: Exception do line := prefix + '[Center: '
+        + CleanString(E.Message) + ']' + postfix;
+    end;
+  end;
+
+  while decodeArgs(line, '$Chr', maxArgs, args, prefix, postfix, numargs) do
+  begin
+    try
+      RequiredParameters(numargs, 1, 1);
+      line := prefix + Chr(StrToInt(args[1])) + postfix;
+    except
+      on E: Exception do line := prefix + '[Chr: '
+        + CleanString(E.Message) + ']' + postfix;
+    end;
+  end;
+
+  while decodeArgs(line, '$Fill', maxArgs, args, prefix, postfix, numargs) do
+  begin
+    try
+      RequiredParameters(numargs, 1, 1);
+      spacecount := StrToInt(args[1]);
+      spaceline := '';
+
+      if spacecount > length(prefix) then
+        spaceline := DupeString(' ', spacecount - length(prefix));
+
+      line := prefix + spaceline + postfix;
+    except
+      on E: Exception do line := prefix + '[Fill: ' + E.Message + ']' +
+        postfix;
+    end;
+  end;
+
+  while decodeArgs(line, '$Bar', maxArgs, args, prefix, postfix, numargs)
+    do
+  begin
+    try
+      RequiredParameters(numargs, 3, 3);
+      spacecount := strtoint(args[3])*3;
+
+      if (StrToFloat(args[2], localeFormat) <> 0) then
+        x := round(StrToFloat(args[1], localeFormat)
+                  * spacecount / StrToFloat(args[2], localeFormat))
+      else x := 0;
+
+      if x > spacecount then x := spacecount;
+      STHDBar := '';
+      for h := 1 to (x div 3) do STHDBar := STHDBar + 'ž';
+      if (x mod 3 = 1) then STHDBar := STHDBar + chr(131);
+      if (x mod 3 = 2) then STHDBar := STHDBar + chr(132);
+      for h := 1 to round(spacecount/3)-length(STHDBar) do STHDBar :=
+        STHDBar + '_';
+
+      line := prefix + STHDBar + postfix;
+    except
+      on E: Exception do line := prefix + '[Bar: '
+        + CleanString(E.Message) + ']' + postfix;
+    end;
+  end;
+
+end;
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+////                                                                       ////
+////      L O A D   F R O M    F I L E    P R O C E D U R E S              ////
+////                                                                       ////
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+
+procedure TData.ResolveFileVariables(var line: String);
+var
+  hdcounter: Integer;
+  args: Array [0..maxArgs-1] of String;
+  prefix, postfix: String;
+  numArgs: Cardinal;
+  spaceline, sFileloc : string;
+  i,iFileline: Integer;
+  FileStream: TFileStream;
+  Lines: TStringList;
+  fFile3: textfile;
+  line3 : string;
+  iBytesToRead: Integer;
+  counter3: Integer;
+begin
+  hdcounter := 0;
+  while decodeArgs(line, '$LogFile', maxArgs, args, prefix, postfix,
+    numargs) do
+  begin
+    try
+      hdcounter := hdcounter + 1;
+      if hdcounter > 4 then line := StringReplace(line, '$LogFile(',
+        'error', []);
+
+      sFileloc := args[1];
+      if (sFileloc[1] = '"') and (sFileloc[Length(sFileLoc)] = '"') then
+        sFileloc := copy(sFileloc, 2, Length(sFileloc)-2);
+
+      if (not FileExists(sFileloc)) then
+        raise Exception.Create('No such file');
+
+      RequiredParameters(numargs, 2, 2);
+      iFileline := StrToInt(args[2]);
+
+      if iFileline > 3 then iFileline := 3;
+      if iFileline < 0 then iFileline := 0;
+
+      FileStream := TFileStream.Create(sFileloc, fmOpenRead or fmShareDenyNone);
+      iBytesToRead := 1024;
+      if (FileStream.Size < iBytesToRead) then
+        iBytesToRead := FileStream.Size;
+      SetLength(spaceline, iBytesToRead);
+
+      FileStream.Seek(-1 * iBytesToRead, soFromEnd);
+      FileStream.ReadBuffer(spaceline[1], iBytesToRead);
+      FileStream.Free;
+
+      Lines := TStringList.Create;
+      Lines.Text := spaceline;
+      spaceline := stripspaces(lines[lines.count - iFileline]);
+      if (pos('] ', spaceline) <> 0) then
+        spaceline := copy(spaceline, pos('] ', spaceline) + 2, length(spaceline));
+
+      for i := 0 to 7 do spaceline := StringReplace(spaceline, chr(i), '',
+        [rfReplaceAll]);
+      Lines.Free;
+      line := prefix + spaceline + postfix;
+    except
+      on E: Exception do line := prefix + '[LogFile: '
+        + CleanString(E.message) + ']' + postfix;
+    end;
+  end;
+
+  while decodeArgs(line, '$File', maxArgs, args, prefix, postfix, numargs) do
+  begin
+    sFileloc := args[1];
+    if (sFileloc[1] = '"') and (sFileloc[Length(sFileLoc)] = '"') then
+      sFileloc := copy(sFileloc, 2, Length(sFileloc)-2);
+
+    try
+      RequiredParameters(numargs, 2, 2);
+      iFileline := StrToInt(args[2]);
+      if (not FileExists(sFileloc)) then
+        raise Exception.Create('No such file');
+      assignfile(fFile3, sFileloc);
+      reset(fFile3);
+      for counter3 := 1 to iFileline do readln(fFile3, line3);
+      closefile(fFile3);
+      line := prefix + line3 + postfix;
+    except
+      on E: Exception do line := prefix + '[File: '
+        + CleanString(E.Message) + ']' + postfix;
+    end;
+  end;
+end;
+
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+////                                                                       ////
+////      D L L    P L U G I N        P R O C E D U R E S                  ////
+////                                                                       ////
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+
+procedure TData.ResolvePluginVariables(var line: String; qstattemp: Integer;
+  bCacheResults: Boolean);
+var
+  args: Array [0..maxArgs-1] of String;
+  prefix, postfix: String;
+  numArgs: Cardinal;
+  sParam1, sParam2: String;
+  sAnswer: String;
+  uiPlugin: Cardinal;
+  uiMinRefresh: Cardinal;
+  bCallPlugin: Boolean;
+begin
+  while decodeArgs(line, '$dll', maxArgs, args, prefix, postfix, numargs) do
+  begin
+    try
+      RequiredParameters(numargs, 4, 4);
+
+      uiPlugin := FindPlugin(args[0]);
+      if (bCacheResults) and (not bForceRefresh) then
+      begin
+        if (dlls[uiPlugin].uiMinRefreshInterval < Cardinal(config.dllPeriod)) then
+          uiMinRefresh := config.dllPeriod
+        else
+          uiMinRefresh := dlls[uiPlugin].uiMinRefreshInterval;
+
+        if (uiScreenStartTime <= dlls[uiPlugin].uiLastRefreshed)
+          or (uiScreenStartTime - dlls[uiPlugin].uiLastRefreshed > uiMinRefresh) then
+        begin
+          dlls[uiPlugin].uiLastRefreshed := uiScreenStartTime;
+
+          bCallPlugin := True;
+        end
+        else
+          bCallPlugin := False;
+      end
+      else
+        bCallPlugin := True; // always call, if new screen or not to be cached.
+
+      if (bCallPlugin) then
+      begin
+        sParam1 := change(args[2], qstattemp);
+        sParam2 := change(args[3], qstattemp);
+        try
+          sAnswer := CallPlugin(uiPlugin, StrToInt(args[1]), sParam1, sParam2);
+        except
+          on E: Exception do
+            sAnswer := '[Dll: ' + CleanString(E.Message) + ']';
+        end;
+      end;
+
+      if (bCacheResults) then
+      begin
+        Inc(iDllResults);
+        if (iDllResults >= Length(sDllResults)) then
+           SetLength(sDllResults, iDllResults + 5);
+
+        if (bCallPlugin) then
+          sDllResults[iDllResults] := sAnswer // save result
+        else
+          sAnswer := sDllResults[iDllResults]; // get cached result
+      end;
+
+      sAnswer := change(sAnswer, qstattemp);
+
+      line := prefix +  sAnswer + postfix;
+    except
+      on E: Exception do
+        line := prefix + '[Dll: ' + CleanString(E.Message) + ']' + postfix;
+    end;
+  end;
+end;
+
+function TData.FindPlugin(const sDllName: String): Cardinal;
+var
+  uiDll: Cardinal;
+  sLoadDllName: String;
+begin
+  // for speed reason - check if this is the same plugin as the last one:
+  if (sDllName = cache_lastFindPlugin) then
+    Result := cacheresult_lastFindPlugin
+  else
+  begin
+
+    // check if we have seen this dll before
+    sLoadDllName := sDllName;
+    if (Pos('.DLL', UpperCase(sLoadDllName)) = 0) then
+      sLoadDllName := sLoadDllName + '.dll';
+    uiDll:=1;
+    while (uiDll<=uiTotalDlls) and (dlls[uiDll-1].sName <> sLoadDllName) do
+      Inc(uiDll);
+    Dec(uiDll);
+
+    if (uiDll >= uiTotalDlls) then
+    begin // we havent seen this one before - load it
+      try
+        LoadPlugin(sLoadDllName);
+      except
+        on E: Exception do
+          showmessage('Load of plugin failed: ' + e.Message)
+      end;
+    end;
+
+    cacheresult_lastFindPlugin := uiDll;
+    cache_lastFindPlugin := sDllName;
+
+    Result := uiDll;
+  end;
+end;
+
+function TData.CallPlugin(uiDll: Integer; iFunc: Integer;
+                    const sParam1: String; const sParam2:String) : String;
+begin
+  if (dlls[uiDll].hDll <> 0) then
+  begin
+    if (iFunc >= 0) and (iFunc <= iMaxPluginFuncs) then
+    begin
+      if (iFunc = 0) then iFunc := 10;
+      try
+        if (dlls[uiDll].bBridge) then
+        begin
+          if (@dlls[uiDll].bridgeFunc = nil) then
+            raise Exception.Create('No Bridge Func');
+          Result := dlls[uiDll].bridgeFunc( dlls[uiDll].iBridgeId, iFunc,
+             pchar(sParam1), pchar(sParam2) );
+        end
+        else if @dlls[uiDll].functions[iFunc] <> nil then
+          Result := dlls[uiDll].functions[iFunc]( pchar(sParam1), pchar(sParam2) )
+        else
+          Result := '[Dll: Function not found]';
+      except
+        on E: Exception do
+          Result := '[Dll: ' + CleanString(E.Message) + ']';
+      end;
+    end
+    else
+      Result := '[Dll: function number out of range]';
+  end
+  else
+    Result := '[Dll: Can not load plugin]';
+end;
+
 procedure TData.LoadPlugin(sDllName: String; bDotNet: Boolean = false);
 type
   TBridgeInit = function(dll: PChar; var id: Integer; var refresh: Integer): PChar; stdcall;
@@ -685,605 +1247,6 @@ begin
     raise Exception.Create('LoadLibrary failed with ' + ErrMsg(GetLastError));
   end;
 end;
-
-
-function TData.FindPlugin(const sDllName: String): Cardinal;
-var
-  uiDll: Cardinal;
-  sLoadDllName: String;
-begin
-  // for speed reason - check if this is the same plugin as the last one:
-  if (sDllName = cache_lastFindPlugin) then
-    Result := cacheresult_lastFindPlugin
-  else
-  begin
-
-    // check if we have seen this dll before
-    sLoadDllName := sDllName;
-    if (Pos('.DLL', UpperCase(sLoadDllName)) = 0) then
-      sLoadDllName := sLoadDllName + '.dll';
-    uiDll:=1;
-    while (uiDll<=uiTotalDlls) and (dlls[uiDll-1].sName <> sLoadDllName) do
-      Inc(uiDll);
-    Dec(uiDll);
-
-    if (uiDll >= uiTotalDlls) then
-    begin // we havent seen this one before - load it
-      try
-        LoadPlugin(sLoadDllName);
-      except
-        on E: Exception do
-          showmessage('Load of plugin failed: ' + e.Message)
-      end;
-    end;
-
-    cacheresult_lastFindPlugin := uiDll;
-    cache_lastFindPlugin := sDllName;
-
-    Result := uiDll;
-  end;
-end;
-
-function TData.CallPlugin(uiDll: Integer; iFunc: Integer;
-                    const sParam1: String; const sParam2:String) : String;
-begin
-  if (dlls[uiDll].hDll <> 0) then
-  begin
-    if (iFunc >= 0) and (iFunc <= iMaxPluginFuncs) then
-    begin
-      if (iFunc = 0) then iFunc := 10;
-      try
-        if (dlls[uiDll].bBridge) then
-        begin
-          if (@dlls[uiDll].bridgeFunc = nil) then
-            raise Exception.Create('No Bridge Func');
-          Result := dlls[uiDll].bridgeFunc( dlls[uiDll].iBridgeId, iFunc,
-             pchar(sParam1), pchar(sParam2) );
-        end
-        else if @dlls[uiDll].functions[iFunc] <> nil then
-          Result := dlls[uiDll].functions[iFunc]( pchar(sParam1), pchar(sParam2) )
-        else
-          Result := '[Dll: Function not found]';
-      except
-        on E: Exception do
-          Result := '[Dll: ' + CleanString(E.Message) + ']';
-      end;
-    end
-    else
-      Result := '[Dll: function number out of range]';
-  end
-  else
-    Result := '[Dll: Can not load plugin]';
-end;
-
-
-procedure TData.ProcessPlugin(var line: String; qstattemp: Integer;
-  bCacheResults: Boolean);
-var
-  args: Array [0..maxArgs-1] of String;
-  prefix, postfix: String;
-  numArgs: Cardinal;
-  sParam1, sParam2: String;
-  sAnswer: String;
-  uiPlugin: Cardinal;
-  uiMinRefresh: Cardinal;
-  bCallPlugin: Boolean;
-begin
-  while decodeArgs(line, '$dll', maxArgs, args, prefix, postfix, numargs) do
-  begin
-    try
-      RequiredParameters(numargs, 4, 4);
-
-      uiPlugin := FindPlugin(args[0]);
-      if (bCacheResults) and (not bForceRefresh) then
-      begin
-        if (dlls[uiPlugin].uiMinRefreshInterval < Cardinal(config.dllPeriod)) then
-          uiMinRefresh := config.dllPeriod
-        else
-          uiMinRefresh := dlls[uiPlugin].uiMinRefreshInterval;
-
-        if (uiScreenStartTime <= dlls[uiPlugin].uiLastRefreshed)
-          or (uiScreenStartTime - dlls[uiPlugin].uiLastRefreshed > uiMinRefresh) then
-        begin
-          dlls[uiPlugin].uiLastRefreshed := uiScreenStartTime;
-
-          bCallPlugin := True;
-        end
-        else
-          bCallPlugin := False;
-      end
-      else
-        bCallPlugin := True; // always call, if new screen or not to be cached.
-
-      if (bCallPlugin) then
-      begin
-        sParam1 := change(args[2], qstattemp);
-        sParam2 := change(args[3], qstattemp);
-        try
-          sAnswer := CallPlugin(uiPlugin, StrToInt(args[1]), sParam1, sParam2);
-        except
-          on E: Exception do
-            sAnswer := '[Dll: ' + CleanString(E.Message) + ']';
-        end;
-      end;
-
-      if (bCacheResults) then
-      begin
-        Inc(iDllResults);
-        if (iDllResults >= Length(sDllResults)) then
-           SetLength(sDllResults, iDllResults + 5);
-
-        if (bCallPlugin) then
-          sDllResults[iDllResults] := sAnswer // save result
-        else
-          sAnswer := sDllResults[iDllResults]; // get cached result
-      end;
-
-      sAnswer := change(sAnswer, qstattemp);
-
-      line := prefix +  sAnswer + postfix;
-    except
-      on E: Exception do
-        line := prefix + '[Dll: ' + CleanString(E.Message) + ']' + postfix;
-    end;
-  end;
-end;
-
-
-function TData.change(line: String; qstattemp: Integer = 1;
-   bCacheResults: Boolean = false): String;
-var
-  FileStream: TFileStream;
-  Lines: TStringList;
-  spacecount : Integer;
-  i, h : Integer;
-  x: Integer;
-  counter3: Integer;
-  tempst, sFileloc, spaceline, line2, line3: String;
-  iFileline: Integer;
-  fFile3: textfile;
-  ccount: double;
-  hdcounter: Integer;
-  prefix, postfix: String;
-  jj: Cardinal;
-  found: Boolean;
-  iBytesToRead: Integer;
-  iPos1, iPos2, iPos3: Integer;
-  STHDBar: String;
-  args: Array [1..maxArgs] of String;
-  numArgs: Cardinal;
-label
-  endChange;
-begin
-  try
-    ProcessPlugin(line, qstattemp, bCacheResults);
-
-    if (Pos('$', line) = 0) then goto endChange;
-
-    if decodeArgs(line, '$MObutton', maxArgs, args, prefix, postfix, numargs)
-      then
-    begin
-      spacecount := 0;
-      if (numargs = 1) and (cLastKeyPressed = args[1]) then spacecount := 1;
-
-      line := prefix + intToStr(spacecount) + postfix;
-    end;
-
-    if pos('$ScreenChanged', line) <> 0 then
-    begin
-      spacecount := 0;
-      if (bNewScreenEvent) then
-        spacecount := 1;
-
-      line := StringReplace(line, '$ScreenChanged', IntToStr(spacecount), [rfReplaceAll]);
-    end;
-
-
-    ResolveCPUVariables(Line);
-
-
-    ResolveDiskSpaceVariables(Line);
-
-    ResolveEmailVariables(Line);
-
-    iPos1 :=  pos('$CustomChar(', line);
-    while (iPos1 <> 0) do
-    begin
-      try
-        iPos2 := PosEx(')', line, iPos1+12);
-        if (iPos2 = 0) then
-          raise Exception.Create('No ending bracket');
-        LCDSmartieDisplayForm.customchar(AnsiMidStr(line, iPos1+12, iPos2-(iPos1+12)));
-        Delete(line, iPos1, iPos2-iPos1+1);
-      except
-        on E: Exception do line := StringReplace(line, '$CustomChar(',
-          '[CustomChar: ' + CleanString(E.Message) + ']', []);
-      end;
-
-      iPos1 :=  PosEx('$CustomChar(', line, iPos1);
-    end;
-
-    if (Pos('$', line) = 0) then goto endChange;
-
-    hdcounter := 0;
-    while decodeArgs(line, '$LogFile', maxArgs, args, prefix, postfix,
-      numargs) do
-    begin
-      try
-        hdcounter := hdcounter + 1;
-        if hdcounter > 4 then line := StringReplace(line, '$LogFile(',
-          'error', []);
-
-        sFileloc := args[1];
-        if (sFileloc[1] = '"') and (sFileloc[Length(sFileLoc)] = '"') then
-          sFileloc := copy(sFileloc, 2, Length(sFileloc)-2);
-
-        if (not FileExists(sFileloc)) then
-          raise Exception.Create('No such file');
-
-        RequiredParameters(numargs, 2, 2);
-        iFileline := StrToInt(args[2]);
-
-        if iFileline > 3 then iFileline := 3;
-        if iFileline < 0 then iFileline := 0;
-
-        FileStream := TFileStream.Create(sFileloc, fmOpenRead or fmShareDenyNone);
-        iBytesToRead := 1024;
-        if (FileStream.Size < iBytesToRead) then
-          iBytesToRead := FileStream.Size;
-        SetLength(spaceline, iBytesToRead);
-
-        FileStream.Seek(-1 * iBytesToRead, soFromEnd);
-        FileStream.ReadBuffer(spaceline[1], iBytesToRead);
-        FileStream.Free;
-
-        Lines := TStringList.Create;
-        Lines.Text := spaceline;
-        spaceline := stripspaces(lines[lines.count - iFileline]);
-        if (pos('] ', spaceline) <> 0) then
-          spaceline := copy(spaceline, pos('] ', spaceline) + 2, length(spaceline));
-
-        for i := 0 to 7 do spaceline := StringReplace(spaceline, chr(i), '',
-          [rfReplaceAll]);
-        Lines.Free;
-        line := prefix + spaceline + postfix;
-      except
-        on E: Exception do line := prefix + '[LogFile: '
-          + CleanString(E.message) + ']' + postfix;
-      end;
-    end;
-
-    while decodeArgs(line, '$File', maxArgs, args, prefix, postfix, numargs) do
-    begin
-      sFileloc := args[1];
-      if (sFileloc[1] = '"') and (sFileloc[Length(sFileLoc)] = '"') then
-        sFileloc := copy(sFileloc, 2, Length(sFileloc)-2);
-
-      try
-        RequiredParameters(numargs, 2, 2);
-        iFileline := StrToInt(args[2]);
-        if (not FileExists(sFileloc)) then
-          raise Exception.Create('No such file');
-        assignfile(fFile3, sFileloc);
-        reset(fFile3);
-        for counter3 := 1 to iFileline do readln(fFile3, line3);
-        closefile(fFile3);
-        line := prefix + line3 + postfix;
-      except
-        on E: Exception do line := prefix + '[File: '
-          + CleanString(E.Message) + ']' + postfix;
-      end;
-    end;
-
-    ResolveWinampVariables(line);
-
-    if (pos('$UpTim', line) <> 0) then
-    begin
-      dataCs.Enter();
-      try
-        line := StringReplace(line, '$UpTime', uptimereg, [rfReplaceAll]);
-        line := StringReplace(line, '$UpTims', uptimeregs, [rfReplaceAll]);
-      finally
-        dataCs.Leave();
-      end;
-    end;
-
-
-
-
-
-    ResolveMBMVariables(Line);
-    ResolveGameVariables(Line,qstattemp);
-    ResolveSETIVariables(Line);
-    ResolveFoldingVariables(Line);
-
-
-    while pos('$Time(', line) <> 0 do
-    begin
-      try
-        line2 := copy(line, pos('$Time(', line) + 6, length(line));
-        if (pos(')', line2) = 0) then
-          raise Exception.Create('No ending bracket');
-        line2 := copy(line2, 1, pos(')', line2)-1);
-        tempst := formatdatetime(line2, now, localeFormat);
-        line := StringReplace(line, '$Time(' + line2 + ')', tempst, []);
-      except
-        on E: Exception do line := StringReplace(line, '$Time(', '[Time: '
-          + CleanString(E.Message) + ']', []);
-      end;
-    end;
-
-    ResolveNetworkVariables(line);
-
-
-
-    while decodeArgs(line, '$Chr', maxArgs, args, prefix, postfix, numargs) do
-    begin
-      try
-        RequiredParameters(numargs, 1, 1);
-        line := prefix + Chr(StrToInt(args[1])) + postfix;
-      except
-        on E: Exception do line := prefix + '[Chr: '
-          + CleanString(E.Message) + ']' + postfix;
-      end;
-    end;
-
-    while decodeArgs(line, '$Count', maxArgs, args, prefix, postfix, numargs)
-      do
-    begin
-      ccount := 0;
-      try
-        RequiredParameters(numargs, 1, 1);
-        tempst := args[1];
-        iPos1 := 1;
-        iPos2 := pos('#', tempst);
-
-        repeat
-          if (iPos2 = 0) then
-            ccount := ccount + StrToFloatN(tempst, iPos1, length(tempst)-iPos1+1)
-          else
-            ccount := ccount + StrToFloatN(tempst, iPos1, iPos2-iPos1);
-          iPos1 := iPos2 + 1;
-          iPos2 := PosEx('#', tempst, iPos1);
-        until (iPos1 = 1);
-
-        line := prefix + FloatToStr(ccount, localeFormat) + postfix;
-      except
-        on E: Exception do line := prefix + '[Count: '
-          + CleanString(E.Message) + ']' + postfix;
-      end;
-    end;
-
-
-    // $Rss(URL, TYPE [, NUM [, FREQ]])
-    //   TYPE is t=title, d=desc, b=both
-    //   NUM is 1 for item 1, etc. 0 means all (default). [when TYPR is b, then 0 is used]
-    //   FREQ is the number of hours that must past before checking stream again.
-    while decodeArgs(line, '$Rss', maxArgs, args, prefix, postfix, numargs)
-      do
-    begin
-      RequiredParameters(numargs, 2, 4);
-      if (numargs < 3) then
-      begin
-        args[3] := '0';
-      end;
-
-      // locate entry
-      jj := 0;
-      found := false;
-      rssCs.Enter();
-      try
-        while (jj < rssEntries) and (not found) do
-        begin
-          if (rss[jj].url = args[1]) then found := true
-          else Inc(jj);
-        end;
-
-        try
-          if (found) and (rss[jj].items > 0)
-            and (Cardinal(StrToInt(args[3])) <= rss[jj].items) then
-          begin
-
-            // What Rss data do they want: t=title, d=description, b=both
-            if (args[2]='t') then
-            begin
-              line := prefix + rss[jj].title[StrToInt(args[3])] + postfix;
-            end
-            else
-            begin
-              if (args[2]='d') then
-              begin
-                line := prefix + rss[jj].desc[StrToInt(args[3])] + postfix;
-              end
-              else
-              begin
-                if (args[2]='b') then
-                begin
-                  line := prefix + rss[jj].whole + postfix;
-                end
-                else line := prefix + '[Error: Rss: bad arg #2]' + postfix;
-              end;
-            end;
-
-          end
-          else
-          begin
-            if (found) then
-            begin
-
-              // We know about the Rss entry but have no data...
-              if (copy(rss[jj].whole, 1, 6) = '[Rss: ') then
-              begin
-                // Assume an error message is in whole
-                line := prefix + rss[jj].whole + postfix;
-              end
-              else
-              begin
-                line := prefix + '[Rss: No Data]' + postfix;
-              end;
-
-            end
-            else
-            begin
-
-              // Nothing known yet - waiting for data thread...
-              line := prefix + '[Rss: Waiting for data]' + postfix;
-
-            end;
-          end;
-        except
-          on E: Exception do line := prefix + '[Rss: '
-            + CleanString(E.Message) + ']' + postfix;
-        end;
-      finally
-        rssCs.Leave();
-      end;
-
-    end;
-
-    while decodeArgs(line, '$Bar', maxArgs, args, prefix, postfix, numargs)
-      do
-    begin
-      try
-        RequiredParameters(numargs, 3, 3);
-        spacecount := strtoint(args[3])*3;
-
-        if (StrToFloat(args[2], localeFormat) <> 0) then
-          x := round(StrToFloat(args[1], localeFormat)
-                    * spacecount / StrToFloat(args[2], localeFormat))
-        else x := 0;
-
-        if x > spacecount then x := spacecount;
-        STHDBar := '';
-        for h := 1 to (x div 3) do STHDBar := STHDBar + 'ž';
-        if (x mod 3 = 1) then STHDBar := STHDBar + chr(131);
-        if (x mod 3 = 2) then STHDBar := STHDBar + chr(132);
-        for h := 1 to round(spacecount/3)-length(STHDBar) do STHDBar :=
-          STHDBar + '_';
-
-        line := prefix + STHDBar + postfix;
-      except
-        on E: Exception do line := prefix + '[Bar: '
-          + CleanString(E.Message) + ']' + postfix;
-      end;
-    end;
-
-    while (pos('$Flash(', line) <> 0) do
-    begin
-      try
-        line2 := copy(line, pos('$Flash(', line) + 7, (pos('$)$',
-          line))-(pos('$Flash(', line) + 7));
-        if (LCDSmartieDisplayForm.doesflash) then
-        begin
-          spaceline := '';
-          for h := 1 to length(line2) do
-          begin
-            spaceline := spaceline + ' ';
-          end;
-        end
-        else
-        begin
-          spaceline := line2;
-        end;
-        if pos('$)$', line) <> 0 then line := StringReplace(line, '$Flash('
-          + line2 + '$)$', spaceline, [])
-        else line := StringReplace(line, '$Flash(', 'ERROR', []);
-      except
-        on E: Exception do line := StringReplace(line, '$Flash(', '[Flash: '
-          + CleanString(E.Message) + ']', []);
-      end;
-    end;
-
-    while decodeArgs(line, '$Center', maxArgs, args, prefix, postfix, numargs)
-      do
-    begin
-      try
-        RequiredParameters(numargs, 1, 2);
-        if (numargs = 1) then spacecount := config.width
-        else spacecount := StrToInt(args[2]);
-
-        line := prefix + CenterText(args[1], spacecount) + postfix;
-      except
-        on E: Exception do line := prefix + '[Center: '
-          + CleanString(E.Message) + ']' + postfix;
-      end;
-    end;
-
-    iPos1 := pos('$Right(', line);
-    while iPos1 <> 0 do
-    begin
-      try
-        iPos2 := PosEx(',$', line, iPos1+1);
-        if (iPos2 = 0) then
-          raise Exception.Create('Missing ",$"');
-
-        iPos3 := PosEx('%)', line, iPos2+2);
-        if (iPos3 = 0) then
-          raise Exception.Create('Missing "%)"');
-
-        spacecount := StrToIntN(line, iPos2 + 2, iPos3-(iPos2+2));
-        Delete(line, iPos2, (iPos3+2)-iPos2);
-        Delete(line, iPos1, 7);
-        if (spacecount >  iPos2-(iPos1+7)) then
-          Insert(DupeString(' ', spacecount-(iPos2-(iPos1+7))), line, iPos1);
-      except
-        on E: Exception do line := StringReplace(line, '$Right(', '[Right: '
-          + CleanString(E.Message) + ']', []);
-      end;
-
-      iPos1 := PosEx('$Right(',line,iPos1); 
-    end;
-
-    while decodeArgs(line, '$Fill', maxArgs, args, prefix, postfix, numargs) do
-    begin
-      try
-        RequiredParameters(numargs, 1, 1);
-        spacecount := StrToInt(args[1]);
-        spaceline := '';
-
-        if spacecount > length(prefix) then
-          spaceline := DupeString(' ', spacecount - length(prefix));
-
-        line := prefix + spaceline + postfix;
-      except
-        on E: Exception do line := prefix + '[Fill: ' + E.Message + ']' +
-          postfix;
-      end;
-    end;
-endChange:
-  except
-    on E: Exception do line := '[Unhandled Exception: '
-      + CleanString(E.Message) + ']';
-  end;
-
-  line := StringReplace(line, Chr($A), '', [rfReplaceAll]);
-  line := StringReplace(line, Chr($D), '', [rfReplaceAll]);
-  result := line;
-end;
-
-// Runs in data thread
-procedure TData.doDataThread;
-begin
-  coinitialize(nil);
-
-  try
-    try
-      while (not dataThread.Terminated) do
-      begin
-        if (not dataThread.Terminated) and (doHTTPUpdate) then HTTPUpdate;
-        if (not dataThread.Terminated) and (doEmailUpdate) then emailUpdate;
-        if (not dataThread.Terminated) and (doGameUpdate) then GameUpdate;
-        if (not dataThread.Terminated) then sleep(1000);
-      end;
-    finally
-      CoUninitialize;
-    end;
-  except
-    on E: EExiting do Exit;
-    else raise;
-  end;
-end;
-
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1594,8 +1557,6 @@ begin
     line := StringReplace(line, '$WinampTotalTracks',
       IntToStr(LCDSmartieDisplayForm.winampctrl1.GetListCount), [rfReplaceAll]);
   end;
-
-  Result := line;
 end;
 
 
@@ -1818,6 +1779,17 @@ begin
     if (STPageTotal > 0) then mem := round(100/STPageTotal*(STPageTotal-STPagefree))
     else mem := 0;
     line := StringReplace(line, '$PageU%', IntToStr(mem), [rfReplaceAll]);
+  end;
+
+  if (pos('$UpTim', line) <> 0) then
+  begin
+    dataCs.Enter();
+    try
+      line := StringReplace(line, '$UpTime', uptimereg, [rfReplaceAll]);
+      line := StringReplace(line, '$UpTims', uptimeregs, [rfReplaceAll]);
+    finally
+      dataCs.Leave();
+    end;
   end;
 end;
 
@@ -3017,6 +2989,103 @@ end;
 ////                                                                       ////
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
+
+
+
+procedure TData.ResolveRSSVariables(var line: String);
+var
+  args: Array [0..maxArgs-1] of String;
+  prefix, postfix: String;
+  numArgs: Cardinal;
+  jj: Cardinal;
+  found: Boolean;
+begin
+  // $Rss(URL, TYPE [, NUM [, FREQ]])
+  //   TYPE is t=title, d=desc, b=both
+  //   NUM is 1 for item 1, etc. 0 means all (default). [when TYPR is b, then 0 is used]
+  //   FREQ is the number of hours that must past before checking stream again.
+  while decodeArgs(line, '$Rss', maxArgs, args, prefix, postfix, numargs)
+    do
+  begin
+    RequiredParameters(numargs, 2, 4);
+    if (numargs < 3) then
+    begin
+      args[3] := '0';
+    end;
+
+    // locate entry
+    jj := 0;
+    found := false;
+    rssCs.Enter();
+    try
+      while (jj < rssEntries) and (not found) do
+      begin
+        if (rss[jj].url = args[1]) then found := true
+        else Inc(jj);
+      end;
+
+      try
+        if (found) and (rss[jj].items > 0)
+          and (Cardinal(StrToInt(args[3])) <= rss[jj].items) then
+        begin
+
+          // What Rss data do they want: t=title, d=description, b=both
+          if (args[2]='t') then
+          begin
+            line := prefix + rss[jj].title[StrToInt(args[3])] + postfix;
+          end
+          else
+          begin
+            if (args[2]='d') then
+            begin
+              line := prefix + rss[jj].desc[StrToInt(args[3])] + postfix;
+            end
+            else
+            begin
+              if (args[2]='b') then
+              begin
+                line := prefix + rss[jj].whole + postfix;
+              end
+              else line := prefix + '[Error: Rss: bad arg #2]' + postfix;
+            end;
+          end;
+
+        end
+        else
+        begin
+          if (found) then
+          begin
+
+            // We know about the Rss entry but have no data...
+            if (copy(rss[jj].whole, 1, 6) = '[Rss: ') then
+            begin
+              // Assume an error message is in whole
+              line := prefix + rss[jj].whole + postfix;
+            end
+            else
+            begin
+              line := prefix + '[Rss: No Data]' + postfix;
+            end;
+
+          end
+          else
+          begin
+
+            // Nothing known yet - waiting for data thread...
+            line := prefix + '[Rss: Waiting for data]' + postfix;
+
+          end;
+        end;
+      except
+        on E: Exception do line := prefix + '[Rss: '
+          + CleanString(E.Message) + ']' + postfix;
+      end;
+    finally
+      rssCs.Leave();
+    end;
+  end;
+
+end;
 
 // Download URL and return file location.
 // Just return cached file if newer than maxfreq minutes.
