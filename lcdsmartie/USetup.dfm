@@ -27,7 +27,7 @@ object SetupForm: TSetupForm
     Top = 0
     Width = 233
     Height = 409
-    ActivePage = InternetTabSheet
+    ActivePage = NetworkStatsTabSheet
     Font.Charset = ANSI_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
@@ -633,7 +633,7 @@ object SetupForm: TSetupForm
         Height = 21
         Style = csDropDownList
         DropDownCount = 10
-        ItemHeight = 13
+        ItemHeight = 0
         TabOrder = 1
         OnChange = EmailAccountComboBoxChange
       end
@@ -1817,7 +1817,7 @@ object SetupForm: TSetupForm
                 Font.Height = -11
                 Font.Name = 'Tahoma'
                 Font.Style = []
-                ItemHeight = 13
+                ItemHeight = 0
                 ParentFont = False
                 ParentShowHint = False
                 ShowHint = True

@@ -19,7 +19,7 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.51 $ $Date: 2006/03/06 21:18:53 $
+ *  $Revision: 1.52 $ $Date: 2006/03/07 01:04:44 $
  *****************************************************************************}
 
 interface
@@ -1329,9 +1329,7 @@ procedure TSetupForm.ApplyButtonClick(Sender: TObject);
 var
   relood: Boolean;
   x: Integer;
-  sComPort: String;
   iMaxUsedRow: Integer;
-
 begin
   relood := false;
   iMaxUsedRow := -1;
