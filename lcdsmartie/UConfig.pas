@@ -19,7 +19,7 @@ unit UConfig;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UConfig.pas,v $
- *  $Revision: 1.47 $ $Date: 2006/03/07 12:25:08 $
+ *  $Revision: 1.48 $ $Date: 2006/03/07 16:18:55 $
  *****************************************************************************}
 
 interface
@@ -530,7 +530,7 @@ begin
     'ScreenTextSyntax', '1.0');
 
   sSkinPath := initfile.ReadString('General Settings', 'SkinPath', 'images\');
-  sSkinPath := includetrailingbackslash(sSkinPath);
+  sSkinPath := IncludeTrailingPathDelimiter(sSkinPath);
   baudrate := initfile.ReadInteger('Communication Settings', 'Baudrate', 8);
   comPort := initfile.ReadInteger('Communication Settings', 'COMPort', 1);
 
