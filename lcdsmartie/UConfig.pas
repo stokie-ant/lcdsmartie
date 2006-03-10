@@ -19,7 +19,7 @@ unit UConfig;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UConfig.pas,v $
- *  $Revision: 1.49 $ $Date: 2006/03/10 14:29:21 $
+ *  $Revision: 1.50 $ $Date: 2006/03/10 14:35:36 $
  *****************************************************************************}
 
 interface
@@ -241,7 +241,7 @@ end;
 function TConfig.loadCCFG: Boolean;
 var
   initfile: textfile;
-  x, y: Integer;
+  ConfigLineCount, ScreenCount, LineCount: Integer;
   configline: String;
   configArray: Array[1..100] of String;
 begin
@@ -251,8 +251,8 @@ begin
       'servers.cfg');
     try
       reset(initfile);
-      for x := 1 to MaxScreens do
-        for y := 1 to MaxLines do readln(initfile, gameServer[x, y]);
+      for ScreenCount := 1 to MaxScreens do
+        for LineCount := 1 to MaxLines do readln(initfile, gameServer[ScreenCount, LineCount]);
     finally
       closefile (initfile);
     end;
@@ -269,7 +269,7 @@ begin
     Exit;
   end;
 
-  for x := 1 to 100 do readln(initfile, configArray[x]);
+  for ConfigLineCount := 1 to 100 do readln(initfile, configArray[ConfigLineCount]);
 
   closefile(initfile);
 
@@ -300,31 +300,31 @@ begin
 
 
   // Lines 4..83
-  for x := 1 to MaxScreens do
+  for ScreenCount := 1 to MaxScreens do
   begin
-    for y := 1 to MaxLines do
+    for LineCount := 1 to MaxLines do
     begin
-      configline := configArray[x*4 + (y-1)];
-      screen[x][y].enabled := copy(configline, pos('¿', configline) + 1,
+      configline := configArray[ScreenCount*4 + (LineCount-1)];
+      screen[ScreenCount][LineCount].enabled := copy(configline, pos('¿', configline) + 1,
         1)='1';
-      screen[x][y].theme := StrToInt(copy(configline, pos('¿', configline) +
+      screen[ScreenCount][LineCount].theme := StrToInt(copy(configline, pos('¿', configline) +
         5, 1));
-      screen[x][y].showTime := StrToInt(copy(configline, pos('¿', configline)
+      screen[ScreenCount][LineCount].showTime := StrToInt(copy(configline, pos('¿', configline)
         + 9, length(configline)));
-      screen[x][y].skip := StrToInt(copy(configline, pos('¿', configline) + 2,
+      screen[ScreenCount][LineCount].skip := StrToInt(copy(configline, pos('¿', configline) + 2,
         1));
-      screen[x][y].TransitionTime := StrToInt(copy(configline, pos('¿',
+      screen[ScreenCount][LineCount].TransitionTime := StrToInt(copy(configline, pos('¿',
         configline) + 7, 2));
-      screen[x][y].TransitionStyle := TTransitionStyle(StrToInt(copy(configline, pos('¿',
+      screen[ScreenCount][LineCount].TransitionStyle := TTransitionStyle(StrToInt(copy(configline, pos('¿',
         configline) + 6, 1)));
-      screen[x][y].noscroll := copy(configline, pos('¿', configline) + 3,
+      screen[ScreenCount][LineCount].noscroll := copy(configline, pos('¿', configline) + 3,
         1)='1';
-      screen[x][y].contNextLine := copy(configline, pos('¿', configline) + 4,
+      screen[ScreenCount][LineCount].contNextLine := copy(configline, pos('¿', configline) + 4,
         1)='1';
-      screen[x][y].center := copy(configline, 1, 3)='%c%';
-      if (screen[x][y].center) then screen[x][y].text := copy(configline, 4,
+      screen[ScreenCount][LineCount].center := copy(configline, 1, 3)='%c%';
+      if (screen[ScreenCount][LineCount].center) then screen[ScreenCount][LineCount].text := copy(configline, 4,
         pos('¿', configline)-4)
-      else screen[x][y].text := copy(configline, 1, pos('¿', configline)-1);
+      else screen[ScreenCount][LineCount].text := copy(configline, 1, pos('¿', configline)-1);
 
     end;
   end;
@@ -508,7 +508,7 @@ end;
 function TConfig.loadINI: Boolean;
 var
   initfile: TINIFile;
-  x, y: Integer;
+  ActionsCount, MailCount, ScreenCount, LineCount: Integer;
   sConfigFileFormatVersion, sScreenTextSyntaxVersion: String;
   sScreen, sLine, sPOPAccount, sGameLine: String;
   iTemp: Integer;
@@ -567,40 +567,40 @@ begin
   setiEmail := initfile.ReadString('General Settings', 'SETIEmail',
     'test@test.com');
 
-  for x := 1 to MaxScreens do
+  for ScreenCount := 1 to MaxScreens do
   begin
-    sScreen := 'Screen ' + Format('%.2u', [x], localeFormat);
-    screen[x][1].enabled := initFile.ReadBool(sScreen, 'Enabled', false);
-    screen[x][1].theme := initFile.ReadInteger(sScreen, 'Theme', 1)-1;
-    screen[x][1].showTime := initFile.ReadInteger(sScreen, 'ShowTime', 10);
-    screen[x][1].bSticky := initFile.ReadBool(sScreen, 'Sticky', false);
-    screen[x][1].skip := initFile.ReadInteger(sScreen, 'Skip', 0);
-    screen[x][1].TransitionTime := initFile.ReadInteger(sScreen,
+    sScreen := 'Screen ' + Format('%.2u', [ScreenCount], localeFormat);
+    screen[ScreenCount][1].enabled := initFile.ReadBool(sScreen, 'Enabled', false);
+    screen[ScreenCount][1].theme := initFile.ReadInteger(sScreen, 'Theme', 1)-1;
+    screen[ScreenCount][1].showTime := initFile.ReadInteger(sScreen, 'ShowTime', 10);
+    screen[ScreenCount][1].bSticky := initFile.ReadBool(sScreen, 'Sticky', false);
+    screen[ScreenCount][1].skip := initFile.ReadInteger(sScreen, 'Skip', 0);
+    screen[ScreenCount][1].TransitionTime := initFile.ReadInteger(sScreen,
       'InteractionTime', 7);
-    screen[x][1].TransitionStyle := TTransitionStyle(initFile.ReadInteger(sScreen, 'Interaction',1));
+    screen[ScreenCount][1].TransitionStyle := TTransitionStyle(initFile.ReadInteger(sScreen, 'Interaction',1));
 
-    for y := 1 to MaxLines do
+    for LineCount := 1 to MaxLines do
     begin
-      sLine := Format('%.2u', [y], localeFormat);
-      screen[x][y].text := initFile.ReadString(sScreen, 'Text' + sLine, '');
-      screen[x][y].noscroll := initFile.ReadBool(sScreen, 'NoScroll' + sLine,
+      sLine := Format('%.2u', [LineCount], localeFormat);
+      screen[ScreenCount][LineCount].text := initFile.ReadString(sScreen, 'Text' + sLine, '');
+      screen[ScreenCount][LineCount].noscroll := initFile.ReadBool(sScreen, 'NoScroll' + sLine,
         true);
-      screen[x][y].contNextLine := initFile.ReadBool(sScreen,
+      screen[ScreenCount][LineCount].contNextLine := initFile.ReadBool(sScreen,
         'ContinueNextLine' + sLine, false);
-      screen[x][y].center := initFile.ReadBool(sScreen, 'Center' + sLine,
+      screen[ScreenCount][LineCount].center := initFile.ReadBool(sScreen, 'Center' + sLine,
         false);
     end;
 
     // BUGBUG: Remove me - once the data organisation is corrected.
     // Currently these values are stored per line rather than per screen.
-    for y := 2 to MaxLines do
+    for LineCount := 2 to MaxLines do
     begin
-      screen[x][y].enabled := screen[x][1].enabled;
-      screen[x][y].theme := screen[x][1].theme;
-      screen[x][y].showTime := screen[x][1].showTime;
-      screen[x][y].skip := screen[x][1].skip;
-      screen[x][y].TransitionTime := screen[x][1].TransitionTime;
-      screen[x][y].TransitionStyle := screen[x][1].TransitionStyle
+      screen[ScreenCount][LineCount].enabled := screen[ScreenCount][1].enabled;
+      screen[ScreenCount][LineCount].theme := screen[ScreenCount][1].theme;
+      screen[ScreenCount][LineCount].showTime := screen[ScreenCount][1].showTime;
+      screen[ScreenCount][LineCount].skip := screen[ScreenCount][1].skip;
+      screen[ScreenCount][LineCount].TransitionTime := screen[ScreenCount][1].TransitionTime;
+      screen[ScreenCount][LineCount].TransitionStyle := screen[ScreenCount][1].TransitionStyle
     end;
   end;
 
@@ -674,43 +674,43 @@ begin
 
 
   // Pop accounts
-  for x := 0 to MaxEmailAccounts-1 do
+  for MailCount := 0 to MaxEmailAccounts-1 do
   begin
-    sPOPAccount := Format('%.2u', [x], localeFormat);
-    pop[x].server := initFile.ReadString('POP Accounts', 'Server' +
+    sPOPAccount := Format('%.2u', [MailCount], localeFormat);
+    pop[MailCount].server := initFile.ReadString('POP Accounts', 'Server' +
       sPOPAccount, '');
-    pop[x].user := initFile.ReadString('POP Accounts', 'User' + sPOPAccount,
+    pop[MailCount].user := initFile.ReadString('POP Accounts', 'User' + sPOPAccount,
       '');
-    pop[x].pword := initFile.ReadString('POP Accounts', 'Password' +
+    pop[MailCount].pword := initFile.ReadString('POP Accounts', 'Password' +
       sPOPAccount, '');
   end;
 
 
   // Load Game server list.
-  for x := 1 to MaxScreens do
+  for ScreenCount := 1 to MaxScreens do
   begin
-    for y := 1 to MaxLines do
+    for LineCount := 1 to MaxLines do
     begin
-      sGameLine := 'GameServer' + Format('%.2u', [x], localeFormat) + '-'
-        + Format('%.2u', [y], localeFormat);
-      gameServer[x, y] := initfile.ReadString('Game Servers', sGameLine, '');
+      sGameLine := 'GameServer' + Format('%.2u', [ScreenCount], localeFormat) + '-'
+        + Format('%.2u', [LineCount], localeFormat);
+      gameServer[ScreenCount, LineCount] := initfile.ReadString('Game Servers', sGameLine, '');
     end;
   end;
 
   // Load Actions
-  x := 0;
+  ActionsCount := 0;
   repeat
-    x := x + 1;
-    actionsArray[x, 1] := initfile.ReadString('Actions', 'Action' +
-      Format('%.2u', [x], localeFormat) + 'Variable', '');
-    actionsArray[x, 2] := initfile.ReadString('Actions', 'Action' +
-      Format('%.2u', [x], localeFormat) + 'Condition', '0');
-    actionsArray[x, 3] := initfile.ReadString('Actions', 'Action' +
-      Format('%.2u', [x], localeFormat) + 'ConditionValue', '');
-    actionsArray[x, 4] := initfile.ReadString('Actions', 'Action' +
-      Format('%.2u', [x], localeFormat) + 'Action', '')
-  until (actionsArray[x, 1] = '') or (x = MaxActions);
-  totalactions := x - 1;
+    ActionsCount := ActionsCount + 1;
+    actionsArray[ActionsCount, 1] := initfile.ReadString('Actions', 'Action' +
+      Format('%.2u', [ActionsCount], localeFormat) + 'Variable', '');
+    actionsArray[ActionsCount, 2] := initfile.ReadString('Actions', 'Action' +
+      Format('%.2u', [ActionsCount], localeFormat) + 'Condition', '0');
+    actionsArray[ActionsCount, 3] := initfile.ReadString('Actions', 'Action' +
+      Format('%.2u', [ActionsCount], localeFormat) + 'ConditionValue', '');
+    actionsArray[ActionsCount, 4] := initfile.ReadString('Actions', 'Action' +
+      Format('%.2u', [ActionsCount], localeFormat) + 'Action', '')
+  until (actionsArray[ActionsCount, 1] = '') or (ActionsCount = MaxActions);
+  totalactions := ActionsCount - 1;
   uiActionsLoaded := totalactions;
 
   result := true;
@@ -723,7 +723,7 @@ procedure TConfig.saveINI;
 var
   initfile : TMemINIFile;
   sScreen, sLine, sPOPAccount, sGameLine: String;
-  x, y: Integer;
+  ActionsCount, MailCount, ScreenCount, LineCount: Integer;
   sPrefix: String;
 begin
   initfile := TMemINIFile.Create(ExtractFilePath(Application.EXEName) +
@@ -761,32 +761,32 @@ begin
 
   initfile.WriteString('General Settings', 'SETIEmail', setiEmail);
 
-  for x := 1 to MaxScreens do
+  for ScreenCount := 1 to MaxScreens do
   begin
-    sScreen := 'Screen ' + Format('%.2u', [x], localeFormat);
-    initfile.WriteBool(sScreen, 'Enabled', screen[x][1].enabled);
-    initFile.WriteInteger(sScreen, 'Theme', screen[x][1].theme + 1);
-    initFile.WriteInteger(sScreen, 'ShowTime', screen[x][1].showTime);
-    initfile.WriteBool(sScreen, 'Sticky', screen[x][1].bSticky);
-    initFile.WriteInteger(sScreen, 'Skip', screen[x][1].skip);
+    sScreen := 'Screen ' + Format('%.2u', [ScreenCount], localeFormat);
+    initfile.WriteBool(sScreen, 'Enabled', screen[ScreenCount][1].enabled);
+    initFile.WriteInteger(sScreen, 'Theme', screen[ScreenCount][1].theme + 1);
+    initFile.WriteInteger(sScreen, 'ShowTime', screen[ScreenCount][1].showTime);
+    initfile.WriteBool(sScreen, 'Sticky', screen[ScreenCount][1].bSticky);
+    initFile.WriteInteger(sScreen, 'Skip', screen[ScreenCount][1].skip);
     initFile.WriteInteger(sScreen, 'InteractionTime',
-      screen[x][1].TransitionTime);
-    initFile.WriteInteger(sScreen, 'Interaction', ord(screen[x][1].TransitionStyle));
+      screen[ScreenCount][1].TransitionTime);
+    initFile.WriteInteger(sScreen, 'Interaction', ord(screen[ScreenCount][1].TransitionStyle));
 
-    for y := 1 to MaxLines do
+    for LineCount := 1 to MaxLines do
     begin
-      sLine := Format('%.2u', [y], localeFormat);
-      initFile.WriteString(sScreen, 'Text' + sLine, '"' + screen[x][y].text + '"');
+      sLine := Format('%.2u', [LineCount], localeFormat);
+      initFile.WriteString(sScreen, 'Text' + sLine, '"' + screen[ScreenCount][LineCount].text + '"');
 
-      sLine := Format('%.2u', [y], localeFormat);
-      initFile.WriteBool(sScreen, 'NoScroll' + sLine, screen[x][y].noscroll);
+      sLine := Format('%.2u', [LineCount], localeFormat);
+      initFile.WriteBool(sScreen, 'NoScroll' + sLine, screen[ScreenCount][LineCount].noscroll);
 
-      sLine := Format('%.2u', [y], localeFormat);
+      sLine := Format('%.2u', [LineCount], localeFormat);
       initFile.WriteBool(sScreen, 'ContinueNextLine' + sLine,
-        screen[x][y].contNextLine);
+        screen[ScreenCount][LineCount].contNextLine);
 
-      sLine := Format('%.2u', [y], localeFormat);
-      initFile.WriteBool(sScreen, 'Center' + sLine, screen[x][y].center);
+      sLine := Format('%.2u', [LineCount], localeFormat);
+      initFile.WriteBool(sScreen, 'Center' + sLine, screen[ScreenCount][LineCount].center);
     end;
 
   end;
@@ -835,24 +835,24 @@ begin
   initFile.WriteBool('General Settings', 'AutoStartHidden', bAutoStartHide);
 
   // Pop accounts
-  for x := 0 to MaxEmailAccounts-1 do
+  for MailCount := 0 to MaxEmailAccounts-1 do
   begin
-    sPOPAccount := Format('%.2u', [x], localeFormat);
+    sPOPAccount := Format('%.2u', [MailCount], localeFormat);
     initFile.WriteString('POP Accounts', 'Server' + sPOPAccount,
-      pop[x].server);
+      pop[MailCount].server);
     initFile.WriteString('POP Accounts', 'User' + sPOPAccount, '"' +
-      pop[x].user + '"');
+      pop[MailCount].user + '"');
     initFile.WriteString('POP Accounts', 'Password' + sPOPAccount, '"' +
-      pop[x].pword + '"');
+      pop[MailCount].pword + '"');
   end;
 
-  for x := 1 to MaxScreens do
+  for ScreenCount := 1 to MaxScreens do
   begin
-    for y := 1 to MaxLines do
+    for LineCount := 1 to MaxLines do
     begin
-      sGameLine := 'GameServer' + Format('%.2u', [x], localeFormat) + '-'
-        + Format('%.2u', [y], localeFormat);
-      initfile.WriteString('Game Servers', sGameLine, gameServer[x, y]);
+      sGameLine := 'GameServer' + Format('%.2u', [ScreenCount], localeFormat) + '-'
+        + Format('%.2u', [LineCount], localeFormat);
+      initfile.WriteString('Game Servers', sGameLine, gameServer[ScreenCount, LineCount]);
     end;
   end;
 
@@ -860,16 +860,16 @@ begin
   // and delete those we loaded but aren't now used.
   // [ and delete two further sets of keys - to clean up from older builds which
   // stored unused actions ]
-  for x := 1 to uiActionsLoaded + 2 do
+  for ActionsCount := 1 to uiActionsLoaded + 2 do
   begin
-    sPrefix := 'Action' + Format('%.2u', [x], localeFormat);
-    if (x <= totalactions) then
+    sPrefix := 'Action' + Format('%.2u', [ActionsCount], localeFormat);
+    if (ActionsCount <= totalactions) then
     begin
-      initfile.WriteString('Actions', sPrefix + 'Variable', actionsArray[x, 1]);
-      initfile.WriteString('Actions', sPrefix + 'Condition', actionsArray[x, 2]);
+      initfile.WriteString('Actions', sPrefix + 'Variable', actionsArray[ActionsCount, 1]);
+      initfile.WriteString('Actions', sPrefix + 'Condition', actionsArray[ActionsCount, 2]);
       initfile.WriteString('Actions', sPrefix + 'ConditionValue',
-        actionsArray[x, 3]);
-      initfile.WriteString('Actions', sPrefix + 'Action', actionsArray[x, 4]);
+        actionsArray[ActionsCount, 3]);
+      initfile.WriteString('Actions', sPrefix + 'Action', actionsArray[ActionsCount, 4]);
     end
     else
     begin
