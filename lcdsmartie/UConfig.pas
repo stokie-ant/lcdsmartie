@@ -19,7 +19,7 @@ unit UConfig;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UConfig.pas,v $
- *  $Revision: 1.48 $ $Date: 2006/03/07 16:18:55 $
+ *  $Revision: 1.49 $ $Date: 2006/03/10 14:29:21 $
  *****************************************************************************}
 
 interface
@@ -120,8 +120,8 @@ type
     bAutoStart, bAutoStartHide: Boolean;
     testDriver: TTestDriverSettings;
     isUsbPalm: Boolean;
-    gameServer: Array[1..20, 1..4] of String;
-    pop: Array [0..9] of TPopAccount;
+    gameServer: Array[1..MaxScreens, 1..MaxLines] of String;
+    pop: Array [0..MaxEmailAccounts-1] of TPopAccount;
     comPort: Integer;
     baudrate: Integer;
     refreshRate: Integer;
@@ -251,8 +251,8 @@ begin
       'servers.cfg');
     try
       reset(initfile);
-      for x := 1 to 20 do
-        for y := 1 to 4 do readln(initfile, gameServer[x, y]);
+      for x := 1 to MaxScreens do
+        for y := 1 to MaxLines do readln(initfile, gameServer[x, y]);
     finally
       closefile (initfile);
     end;
@@ -300,9 +300,9 @@ begin
 
 
   // Lines 4..83
-  for x := 1 to 20 do
+  for x := 1 to MaxScreens do
   begin
-    for y := 1 to 4 do
+    for y := 1 to MaxLines do
     begin
       configline := configArray[x*4 + (y-1)];
       screen[x][y].enabled := copy(configline, pos('¿', configline) + 1,
@@ -567,7 +567,7 @@ begin
   setiEmail := initfile.ReadString('General Settings', 'SETIEmail',
     'test@test.com');
 
-  for x := 1 to 20 do
+  for x := 1 to MaxScreens do
   begin
     sScreen := 'Screen ' + Format('%.2u', [x], localeFormat);
     screen[x][1].enabled := initFile.ReadBool(sScreen, 'Enabled', false);
@@ -579,7 +579,7 @@ begin
       'InteractionTime', 7);
     screen[x][1].TransitionStyle := TTransitionStyle(initFile.ReadInteger(sScreen, 'Interaction',1));
 
-    for y := 1 to 4 do
+    for y := 1 to MaxLines do
     begin
       sLine := Format('%.2u', [y], localeFormat);
       screen[x][y].text := initFile.ReadString(sScreen, 'Text' + sLine, '');
@@ -593,7 +593,7 @@ begin
 
     // BUGBUG: Remove me - once the data organisation is corrected.
     // Currently these values are stored per line rather than per screen.
-    for y := 2 to 4 do
+    for y := 2 to MaxLines do
     begin
       screen[x][y].enabled := screen[x][1].enabled;
       screen[x][y].theme := screen[x][1].theme;
@@ -674,7 +674,7 @@ begin
 
 
   // Pop accounts
-  for x := 0 to 9 do
+  for x := 0 to MaxEmailAccounts-1 do
   begin
     sPOPAccount := Format('%.2u', [x], localeFormat);
     pop[x].server := initFile.ReadString('POP Accounts', 'Server' +
@@ -687,9 +687,9 @@ begin
 
 
   // Load Game server list.
-  for x := 1 to 20 do
+  for x := 1 to MaxScreens do
   begin
-    for y := 1 to 4 do
+    for y := 1 to MaxLines do
     begin
       sGameLine := 'GameServer' + Format('%.2u', [x], localeFormat) + '-'
         + Format('%.2u', [y], localeFormat);
@@ -761,7 +761,7 @@ begin
 
   initfile.WriteString('General Settings', 'SETIEmail', setiEmail);
 
-  for x := 1 to 20 do
+  for x := 1 to MaxScreens do
   begin
     sScreen := 'Screen ' + Format('%.2u', [x], localeFormat);
     initfile.WriteBool(sScreen, 'Enabled', screen[x][1].enabled);
@@ -773,28 +773,18 @@ begin
       screen[x][1].TransitionTime);
     initFile.WriteInteger(sScreen, 'Interaction', ord(screen[x][1].TransitionStyle));
 
-    for y := 1 to 4 do
+    for y := 1 to MaxLines do
     begin
       sLine := Format('%.2u', [y], localeFormat);
-      initFile.WriteString(sScreen, 'Text' + sLine, '"' + screen[x][y].text +
-        '"');
-    end;
+      initFile.WriteString(sScreen, 'Text' + sLine, '"' + screen[x][y].text + '"');
 
-    for y := 1 to 4 do
-    begin
       sLine := Format('%.2u', [y], localeFormat);
       initFile.WriteBool(sScreen, 'NoScroll' + sLine, screen[x][y].noscroll);
-    end;
 
-    for y := 1 to 4 do
-    begin
       sLine := Format('%.2u', [y], localeFormat);
       initFile.WriteBool(sScreen, 'ContinueNextLine' + sLine,
         screen[x][y].contNextLine);
-    end;
 
-    for y := 1 to 4 do
-    begin
       sLine := Format('%.2u', [y], localeFormat);
       initFile.WriteBool(sScreen, 'Center' + sLine, screen[x][y].center);
     end;
@@ -845,7 +835,7 @@ begin
   initFile.WriteBool('General Settings', 'AutoStartHidden', bAutoStartHide);
 
   // Pop accounts
-  for x := 0 to 9 do
+  for x := 0 to MaxEmailAccounts-1 do
   begin
     sPOPAccount := Format('%.2u', [x], localeFormat);
     initFile.WriteString('POP Accounts', 'Server' + sPOPAccount,
@@ -856,9 +846,9 @@ begin
       pop[x].pword + '"');
   end;
 
-  for x := 1 to 20 do
+  for x := 1 to MaxScreens do
   begin
-    for y := 1 to 4 do
+    for y := 1 to MaxLines do
     begin
       sGameLine := 'GameServer' + Format('%.2u', [x], localeFormat) + '-'
         + Format('%.2u', [y], localeFormat);
