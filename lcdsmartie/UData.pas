@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.65 $ $Date: 2006/03/13 16:35:09 $
+ *  $Revision: 1.66 $ $Date: 2006/03/13 16:58:01 $
  *****************************************************************************}
 
 
@@ -315,7 +315,7 @@ uses cxCpu40, adCpuUsage, UMain, Windows, Forms, IpHlpApi,
   IdTCPConnection, IdTCPClient, IdMessageClient, IdMessage, Menus,
   ExtCtrls, Controls, StdCtrls, StrUtils, ActiveX, IdUri, DateUtils, IdGlobal,
 
-  UDataEmail;
+  UDataEmail, UDataGame;
 
 
 
@@ -2391,63 +2391,24 @@ end;
 
 
 procedure TData.ResolveGameVariables(var Line : string; qstattemp: Integer = 1);
+var
+  GameCount : TGameType;
 begin
-  if (pos('$Half-life', line) <> 0) then
-  begin
-    dataCs.Enter();
-    try
-      line := StringReplace(line, '$Half-life1', qstatreg1[activeScreen,
-        qstattemp], [rfReplaceAll]);
-      line := StringReplace(line, '$Half-life2', qstatreg2[activeScreen,
-        qstattemp], [rfReplaceAll]);
-      line := StringReplace(line, '$Half-life3', qstatreg3[activeScreen,
-        qstattemp], [rfReplaceAll]);
-      line := StringReplace(line, '$Half-life4', qstatreg4[activeScreen,
-        qstattemp], [rfReplaceAll]);
-    finally
-      dataCs.Leave();
-    end;
-  end;
-
-  if (pos('$Quake', line) <> 0) then
-  begin
-    dataCs.Enter();
-    try
-      line := StringReplace(line, '$QuakeII1', qstatreg1[activeScreen,
-        qstattemp], [rfReplaceAll]);
-      line := StringReplace(line, '$QuakeIII1', qstatreg1[activeScreen,
-        qstattemp], [rfReplaceAll]);
-      line := StringReplace(line, '$QuakeII2', qstatreg2[activeScreen,
-        qstattemp], [rfReplaceAll]);
-      line := StringReplace(line, '$QuakeIII2', qstatreg2[activeScreen,
-        qstattemp], [rfReplaceAll]);
-      line := StringReplace(line, '$QuakeII3', qstatreg3[activeScreen,
-        qstattemp], [rfReplaceAll]);
-      line := StringReplace(line, '$QuakeIII3', qstatreg3[activeScreen,
-        qstattemp], [rfReplaceAll]);
-      line := StringReplace(line, '$QuakeII4', qstatreg4[activeScreen,
-        qstattemp], [rfReplaceAll]);
-      line := StringReplace(line, '$QuakeIII4', qstatreg4[activeScreen,
-        qstattemp], [rfReplaceAll]);
-    finally
-      dataCs.Leave();
-    end;
-  end;
-
-  if (Pos('$Unreal', line) <> 0) then
-  begin
-    dataCs.Enter();
-    try
-      line := StringReplace(line, '$Unreal1', qstatreg1[activeScreen,
-        qstattemp], [rfReplaceAll]);
-      line := StringReplace(line, '$Unreal2', qstatreg2[activeScreen,
-        qstattemp], [rfReplaceAll]);
-      line := StringReplace(line, '$Unreal3', qstatreg3[activeScreen,
-        qstattemp], [rfReplaceAll]);
-      line := StringReplace(line, '$Unreal4', qstatreg4[activeScreen,
-        qstattemp], [rfReplaceAll]);
-    finally
-      dataCs.Leave();
+  for GameCount := MinGame to MaxGame do begin
+    if (pos(GameKeys[GameCount], line) <> 0) then begin
+      dataCs.Enter();
+      try
+        line := StringReplace(line, GameKeys[GameCount]+'1', qstatreg1[activeScreen,
+          qstattemp], [rfReplaceAll]);
+        line := StringReplace(line, GameKeys[GameCount]+'2', qstatreg2[activeScreen,
+          qstattemp], [rfReplaceAll]);
+        line := StringReplace(line, GameKeys[GameCount]+'3', qstatreg3[activeScreen,
+          qstattemp], [rfReplaceAll]);
+        line := StringReplace(line, GameKeys[GameCount]+'4', qstatreg4[activeScreen,
+          qstattemp], [rfReplaceAll]);
+      finally
+        dataCs.Leave();
+      end;
     end;
   end;
 end;
@@ -2461,6 +2422,7 @@ var
   counter, counter2: Integer;
   fFile2: textfile;
   ScreenCount, LineCount: Integer;
+  GameCount : TGameType;
   screenline: String;
   srvr: String;
   sTemp: String;
@@ -2473,104 +2435,85 @@ begin
     begin
       try
         screenline := config.screen[ScreenCount][LineCount].text;
-        if ((pos('$Unreal', screenline) <> 0)
-          or (pos('$QuakeIII', screenline) <> 0)
-          or (pos('$QuakeII', screenline) <> 0)
-          or (pos('$Half-life', screenline) <> 0)) then
-        begin
+        for GameCount := MinGame to MaxGame do begin
+          if (pos(GameKeys[GameCount], screenline) <> 0) then begin
+            if (dataThread.Terminated) then raise EExiting.Create('');
+            srvr := GameCommandLineParams[GameCount];
+            winexec(PChar(extractfilepath(application.exename) +
+              'qstat.exe -P -of txt'
+              + intToStr(ScreenCount) + '-' + intToStr(LineCount) +
+              '.txt -sort F ' + srvr + ' ' + config.gameServer[ScreenCount, LineCount]), sw_hide);
 
-          if (dataThread.Terminated) then raise EExiting.Create('');
+            templine := '';
+            sleep(1000);
 
-          if pos('$Half-life', screenline) <> 0 then srvr := '-hls';
-          if pos('$QuakeII', screenline) <> 0 then srvr := '-q2s';
-          if pos('$QuakeIII', screenline) <> 0 then srvr := '-q3s';
-          if pos('$Unreal', screenline) <> 0 then srvr := '-uns';
-          winexec(PChar(extractfilepath(application.exename) +
-            'qstat.exe -P -of txt'
-            + intToStr(ScreenCount) + '-' + intToStr(LineCount) +
-            '.txt -sort F ' + srvr + ' ' + config.gameServer[ScreenCount, LineCount]), sw_hide);
-
-          templine := '';
-          sleep(1000);
-
-          assignfile (fFile2, extractfilepath(application.exename) + 'txt' +
-            IntToStr(ScreenCount) + '-' + IntToStr(LineCount) + '.txt');
-          try
-            reset (fFile2);
-            counter := 1;
-            while (not eof(fFile2)) and (counter < 80) do
-            begin
-              readln (fFile2, templine1[counter]);
-              counter := counter + 1;
+            assignfile (fFile2, extractfilepath(application.exename) + 'txt' +
+              IntToStr(ScreenCount) + '-' + IntToStr(LineCount) + '.txt');
+            try
+              reset (fFile2);
+              counter := 1;
+              while (not eof(fFile2)) and (counter < 80) do
+              begin
+                readln (fFile2, templine1[counter]);
+                counter := counter + 1;
+              end;
+            finally
+              closefile(fFile2);
             end;
-          finally
-            closefile(fFile2);
-          end;
 
-          if (pos('$Unreal1', screenline) <> 0)
-            or (pos('$QuakeIII1', screenline) <> 0)
-            or (pos('$QuakeII1', screenline) <> 0)
-            or (pos('$Half-life1', screenline) <> 0) then
-          begin
-            sTemp := copy(templine1[2], pos(' / ', templine1[2]) +
-              3, length(templine1[2]));
-            sTemp := stripspaces(copy(sTemp, pos(' ', sTemp) + 1, length(sTemp)));
-
-            dataCs.Enter();
-            qstatreg1[ScreenCount, LineCount] := sTemp;
-            dataCs.Leave();
-          end;
-
-          if (pos('$Unreal2', screenline) <> 0)
-            or (pos('$QuakeIII2', screenline) <> 0)
-            or (pos('$QuakeII2', screenline) <> 0)
-            or (pos('$Half-life2', screenline) <> 0) then
-          begin
-            sTemp := copy(templine1[2], pos(':', templine1[2]), length(templine1[2]));
-            sTemp := copy(sTemp, pos('/', sTemp) + 4, length(sTemp));
-            sTemp := copy(sTemp, 1, pos('/', sTemp)-5);
-            sTemp := stripspaces(copy(sTemp, pos(' ', sTemp) + 1, length(sTemp)));
-
-            dataCs.Enter();
-            qstatreg2[ScreenCount, LineCount] := sTemp;
-            dataCs.Leave();
-          end;
-
-          if (pos('$Unreal3', screenline) <> 0)
-            or (pos('$QuakeIII3', screenline) <> 0)
-            or (pos('$QuakeII3', screenline) <> 0)
-            or (pos('$Half-life3', screenline) <> 0) then
-          begin
-            sTemp := stripspaces(copy(templine1[2], pos(' ', templine1[2]),
-                 length(templine1[2])));
-            sTemp := stripspaces(copy(sTemp, 1, pos('/', sTemp) + 3));
-
-            dataCs.Enter();
-            qstatreg3[ScreenCount, LineCount] := sTemp;
-            dataCs.Leave();
-          end;
-
-          if (pos('$Unreal4', screenline) <> 0)
-            or (pos('$QuakeIII4', screenline) <> 0)
-            or (pos('$QuakeII4', screenline) <> 0)
-            or (pos('$Half-life4', screenline) <> 0) then
-          begin
-            sTemp := '';
-            for counter2 := 1 to counter-3 do
+            if (pos(GameKeys[GameCount]+'1', screenline) <> 0) then
             begin
-              line := stripspaces(templine1[counter2 + 2]);
-              templine2 := stripspaces(copy(copy(line, pos('s ', line) + 1,
-                length(line)), pos('s ', line) + 2, length(line)));
-              templine4 := stripspaces(copy(line, 2, pos(' frags ',
-                line)-1));
-              line := templine2 + ':' + templine4 + ',';
-              sTemp := sTemp + line;
+              sTemp := copy(templine1[2], pos(' / ', templine1[2]) +
+                3, length(templine1[2]));
+              sTemp := stripspaces(copy(sTemp, pos(' ', sTemp) + 1, length(sTemp)));
+
+              dataCs.Enter();
+              qstatreg1[ScreenCount, LineCount] := sTemp;
+              dataCs.Leave();
             end;
-            dataCs.Enter();
-            qstatreg4[ScreenCount, LineCount] := sTemp;
-            dataCs.Leave();
+
+            if (pos(GameKeys[GameCount]+'2', screenline) <> 0) then
+            begin
+              sTemp := copy(templine1[2], pos(':', templine1[2]), length(templine1[2]));
+              sTemp := copy(sTemp, pos('/', sTemp) + 4, length(sTemp));
+              sTemp := copy(sTemp, 1, pos('/', sTemp)-5);
+              sTemp := stripspaces(copy(sTemp, pos(' ', sTemp) + 1, length(sTemp)));
+
+              dataCs.Enter();
+              qstatreg2[ScreenCount, LineCount] := sTemp;
+              dataCs.Leave();
+            end;
+
+            if (pos(GameKeys[GameCount]+'3', screenline) <> 0) then
+            begin
+              sTemp := stripspaces(copy(templine1[2], pos(' ', templine1[2]),
+                   length(templine1[2])));
+              sTemp := stripspaces(copy(sTemp, 1, pos('/', sTemp) + 3));
+
+              dataCs.Enter();
+              qstatreg3[ScreenCount, LineCount] := sTemp;
+              dataCs.Leave();
+            end;
+
+            if (pos(GameKeys[GameCount]+'4', screenline) <> 0) then
+            begin
+              sTemp := '';
+              for counter2 := 1 to counter-3 do
+              begin
+                line := stripspaces(templine1[counter2 + 2]);
+                templine2 := stripspaces(copy(copy(line, pos('s ', line) + 1,
+                  length(line)), pos('s ', line) + 2, length(line)));
+                templine4 := stripspaces(copy(line, 2, pos(' frags ',
+                  line)-1));
+                line := templine2 + ':' + templine4 + ',';
+                sTemp := sTemp + line;
+              end;
+              dataCs.Enter();
+              qstatreg4[ScreenCount, LineCount] := sTemp;
+              dataCs.Leave();
+            end;
           end;
-        end;
+        end;  // gamecount
       except
         on EExiting do raise;
         on E: Exception do
@@ -2584,10 +2527,10 @@ begin
           finally
             dataCs.Leave();
           end;
-        end
-      end;
-    end;
-  end;
+        end;
+      end;  // try/except
+    end;  // linecount
+  end;  // screencount
 end;
 
 procedure TData.UpdateGameStats;
