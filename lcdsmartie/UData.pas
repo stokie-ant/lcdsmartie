@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.62 $ $Date: 2006/03/13 15:10:43 $
+ *  $Revision: 1.63 $ $Date: 2006/03/13 16:09:33 $
  *****************************************************************************}
 
 
@@ -2696,6 +2696,7 @@ var
   numArgs: Cardinal;
   jj: Cardinal;
   found: Boolean;
+  Index : Cardinal;
 begin
   // $Rss(URL, TYPE [, NUM [, FREQ]])
   //   TYPE is t=title, d=desc, b=both
@@ -2726,22 +2727,28 @@ begin
           and (Cardinal(StrToInt(args[3])) <= rss[jj].items) then
         begin
 
+          Index := StrToInt(args[3]);
+
           // What Rss data do they want: t=title, d=description, b=both
           if (args[2]='t') then
           begin
-            line := prefix + rss[jj].title[StrToInt(args[3])] + postfix;
+            line := prefix + rss[jj].title[Index] + postfix;
           end
           else
           begin
             if (args[2]='d') then
             begin
-              line := prefix + rss[jj].desc[StrToInt(args[3])] + postfix;
+              line := prefix + rss[jj].desc[Index] + postfix;
             end
             else
             begin
               if (args[2]='b') then
               begin
-                line := prefix + rss[jj].whole + postfix;
+                if (Index > 0) then
+                  line := prefix + rss[jj].title[Index] + ':' +
+                          rss[jj].desc[Index] + postfix
+                else
+                  line := prefix + rss[jj].whole + postfix;
               end
               else line := prefix + '[Error: Rss: bad arg #2]' + postfix;
             end;
