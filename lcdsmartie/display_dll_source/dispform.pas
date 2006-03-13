@@ -201,9 +201,9 @@ begin
     for X := 0 to CharWidth-1 do begin
       for Y := 0 to CharHeight do begin
         if ((Bytes[Y] and (1 shl X)) > 0) then
-          Pixels[X,Y] := clBlack
+          Pixels[CharWidth-1-X,Y] := clBlack
         else
-          Pixels[X,Y] := clWhite;
+          Pixels[CharWidth-1-X,Y] := clWhite;
       end;
     end;
   end;
