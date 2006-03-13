@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.63 $ $Date: 2006/03/13 16:09:33 $
+ *  $Revision: 1.64 $ $Date: 2006/03/13 16:20:25 $
  *****************************************************************************}
 
 
@@ -2694,9 +2694,9 @@ var
   args: Array [1..maxArgs] of String;
   prefix, postfix: String;
   numArgs: Cardinal;
-  jj: Cardinal;
+  RSSFeedIndex: Cardinal;
   found: Boolean;
-  Index : Cardinal;
+  ItemIndex : Cardinal;
 begin
   // $Rss(URL, TYPE [, NUM [, FREQ]])
   //   TYPE is t=title, d=desc, b=both
@@ -2712,47 +2712,34 @@ begin
     end;
 
     // locate entry
-    jj := 0;
+    RSSFeedIndex := 0;
     found := false;
     rssCs.Enter();
     try
-      while (jj < rssEntries) and (not found) do
+      while (RSSFeedIndex < rssEntries) and (not found) do
       begin
-        if (rss[jj].url = args[1]) then found := true
-        else Inc(jj);
+        if (rss[RSSFeedIndex].url = args[1]) then found := true
+        else Inc(RSSFeedIndex);
       end;
 
       try
-        if (found) and (rss[jj].items > 0)
-          and (Cardinal(StrToInt(args[3])) <= rss[jj].items) then
+        if (found) and (rss[RSSFeedIndex].items > 0)
+          and (Cardinal(StrToInt(args[3])) <= rss[RSSFeedIndex].items) then
         begin
 
-          Index := StrToInt(args[3]);
-
-          // What Rss data do they want: t=title, d=description, b=both
-          if (args[2]='t') then
-          begin
-            line := prefix + rss[jj].title[Index] + postfix;
-          end
-          else
-          begin
-            if (args[2]='d') then
-            begin
-              line := prefix + rss[jj].desc[Index] + postfix;
-            end
-            else
-            begin
-              if (args[2]='b') then
-              begin
-                if (Index > 0) then
-                  line := prefix + rss[jj].title[Index] + ':' +
-                          rss[jj].desc[Index] + postfix
-                else
-                  line := prefix + rss[jj].whole + postfix;
-              end
-              else line := prefix + '[Error: Rss: bad arg #2]' + postfix;
+          ItemIndex := StrToInt(args[3]);
+          case (args[2][1]) of
+            't' : line := prefix + rss[RSSFeedIndex].title[ItemIndex] + postfix;  // title
+            'd' : line := prefix + rss[RSSFeedIndex].desc[ItemIndex] + postfix; // description
+            'b' : begin
+              if (ItemIndex > 0) then  // both
+                line := prefix + rss[RSSFeedIndex].title[ItemIndex] + ':' +
+                        rss[RSSFeedIndex].desc[ItemIndex] + postfix
+              else
+                line := prefix + rss[RSSFeedIndex].whole + postfix;
             end;
-          end;
+            else line := prefix + '[Error: Rss: bad arg #2]' + postfix;
+          end; // case
 
         end
         else
@@ -2761,10 +2748,10 @@ begin
           begin
 
             // We know about the Rss entry but have no data...
-            if (copy(rss[jj].whole, 1, 6) = '[Rss: ') then
+            if (copy(rss[RSSFeedIndex].whole, 1, 6) = '[Rss: ') then
             begin
               // Assume an error message is in whole
-              line := prefix + rss[jj].whole + postfix;
+              line := prefix + rss[RSSFeedIndex].whole + postfix;
             end
             else
             begin
