@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.64 $ $Date: 2006/03/13 16:20:25 $
+ *  $Revision: 1.65 $ $Date: 2006/03/13 16:35:09 $
  *****************************************************************************}
 
 
@@ -27,7 +27,7 @@ interface
 
 uses Classes, System2, xmldom, XMLIntf, SysUtils, xercesxmldom, XMLDoc,
   msxmldom, ComCtrls, ComObj, UUtils, IdHTTP, SyncObjs, IdPOP3, UConfig,
-  UDataNetwork;
+  UDataNetwork, UDataDisk;
 
 const
   ticksperseconde = 1000;
@@ -38,7 +38,6 @@ const
   tickspermonth: Int64 = Int64(ticksperdag) * 30;
   ticksperyear: Int64 = Int64(ticksperdag) * 30 * 12;
   maxRssItems = 20;
-  MAXNETSTATS = 10;
   maxArgs = 10;
   iMaxPluginFuncs = 20;
 
@@ -186,8 +185,8 @@ type
 
     // disk space
     bDoDisks: Boolean; // cpu + main threads;
-    bDoDisk: Array[65..90] of Boolean; // cpu + main threads
-    STHDFree, STHDTotal: Array[65..90] of Int64; // cpu + main thread.
+    bDoDisk: Array[FirstDrive..LastDrive] of Boolean; // cpu + main threads
+    STHDFree, STHDTotal: Array[FirstDrive..LastDrive] of Int64; // cpu + main thread.
 
     //cpu usage
     CPUUsage: Array [1..5] of Cardinal;   //cpu thread only
@@ -271,6 +270,7 @@ type
     // winamp
     procedure ResolveWinampVariables(var Line: string);
     // disk space
+    procedure ResolveDiskSpaceVariable(HDStat : THardDriveStats; var Line : string);
     procedure ResolveDiskSpaceVariables(var Line : string);
     procedure DiskUpdate;
     // cpu stats
@@ -1574,143 +1574,61 @@ end;
 ///////////////////////////////////////////////////////////////////////////////
 
 
-procedure TData.ResolveDiskSpaceVariables(var Line : string);
+procedure TData.ResolveDiskSpaceVariable(HDStat : THardDriveStats; var Line : string);
 var
   prefix, postfix: String;
   args: Array [1..maxArgs] of String;
   numArgs: Cardinal;
   letter : Cardinal;
-  line2 : String;
+  MyKey : string;
 begin
-  if (pos('$HD', line) = 0) then exit;
-  while decodeArgs(line, '$HDFreg', maxArgs, args, prefix, postfix,
-    numargs) do
-  begin
-    bDoDisks := true;
+  MyKey := HDKeys[HDStat];
+  while decodeArgs(Line, MyKey, maxArgs, args, prefix, postfix, numargs) do begin
     try
       RequiredParameters(numargs, 1, 1);
       letter := ord(upcase(args[1][1]));
+      Line := prefix;
+//    MyDataLock.Enter();
       bDoDisk[letter] := true;
-      line := prefix + IntToStr(round(STHDFree[letter]/1024)) + postfix;
+      try
+        case HDStat of
+          dsHDFree : Line := Line + IntToStr(STHDFree[letter]);
+          dsHDUsed : Line := Line + IntToStr(STHDTotal[letter]-STHDFree[letter]);
+          dsHDTotal : Line := Line + IntToStr(STHDTotal[letter]);
+          dsHDFreePercent : begin
+            if (STHDTotal[letter]*STHDFree[letter] <> 0) then
+              Line := Line + intToStr(round(100/STHDTotal[letter]*STHDFree[letter]))
+            else
+              Line := Line + '0';
+          end;
+          dsHDUsedPercent : begin
+            if (STHDTotal[letter]*(STHDTotal[letter]-STHDFree[letter]) <> 0) then
+              Line := Line + intToStr(round(100/STHDTotal[letter]*(STHDTotal[letter]-STHDFree[letter])))
+            else
+              Line := Line + '0';
+          end;
+          dsHDFreeGigaBytes : Line := Line + IntToStr(round((STHDFree[letter])/1024));
+          dsHDUsedGigaBytes : Line := Line + IntToStr(round((STHDTotal[letter]-STHDFree[letter])/1024));
+          dsHDTotalGigaBytes : Line := Line + IntToStr(round(STHDTotal[letter]/1024));
+        end; // case
+      finally
+//      MyDataLock.Leave();
+      end;
+      Line := Line + postfix;
     except
-      on E: Exception do line := prefix + '[HDFreg: '
-        + CleanString(E.Message) + ']' + postfix;
+      on E: Exception do Line := prefix + '['+ CleanString(MyKey + ': ' + E.Message) + ']' + postfix;
     end;
   end;
+end;
 
-  while decodeArgs(line, '$HDFree', maxArgs, args, prefix, postfix,
-    numargs) do
-  begin
+procedure TData.ResolveDiskSpaceVariables(var Line : string);
+var
+  HDStats : THardDriveStats;
+begin
+  if (pos(HDKey, Line) > 0) then begin
     bDoDisks := true;
-    try
-      RequiredParameters(numargs, 1, 1);
-      letter := ord(upcase(args[1][1]));
-      bDoDisk[letter] := true;
-      line := prefix + IntToStr(STHDFree[letter]) + postfix;
-    except
-      on E: Exception do line := prefix + '[HDFree: '
-        + CleanString(E.Message) + ']' + postfix;
-    end;
-  end;
-
-
-  while decodeArgs(line, '$HDUseg', maxArgs, args, prefix, postfix,
-    numargs) do
-  begin
-    bDoDisks := true;
-    try
-      RequiredParameters(numargs, 1, 1);
-      letter := ord(upcase(args[1][1]));
-      bDoDisk[letter] := true;
-      line2 := IntToStr(round((STHDTotal[letter]-STHDFree[letter])/1024));
-      line := prefix + line2 + postfix;
-    except
-      on E: Exception do line := prefix + '[HDUseg: '
-        + CleanString(E.Message) + ']' + postfix;
-    end;
-  end;
-
-  while decodeArgs(line, '$HDUsed', maxArgs, args, prefix, postfix,
-    numargs) do
-  begin
-    bDoDisks := true;
-    try
-      RequiredParameters(numargs, 1, 1);
-      letter := ord(upcase(args[1][1]));
-      bDoDisk[letter] := true;
-      line2 := IntToStr(STHDTotal[letter]-STHDFree[letter]);
-      line := prefix + line2 + postfix;
-    except
-      on E: Exception do line := prefix + '[HDUsed: '
-        + CleanString(E.Message) + ']' + postfix;
-    end;
-  end;
-
-  while decodeArgs(line, '$HDF%', maxArgs, args, prefix, postfix, numargs) do
-  begin
-    bDoDisks := true;
-    try
-      RequiredParameters(numargs, 1, 1);
-      letter := ord(upcase(args[1][1]));
-      bDoDisk[letter] := true;
-      if (STHDTotal[letter]*STHDFree[letter] <> 0) then
-        line2 := intToStr(round(100/STHDTotal[letter]*STHDFree[letter]))
-      else
-        line2 := '0';
-      line := prefix + line2 + postfix;
-    except
-      on E: Exception do line := prefix + '[HDF%: '
-        + CleanString(E.Message) + ']' + postfix;
-    end;
-  end;
-
-  while decodeArgs(line, '$HDU%', maxArgs, args, prefix, postfix, numargs) do
-  begin
-    bDoDisks := true;
-    try
-      RequiredParameters(numargs, 1, 1);
-      letter := ord(upcase(args[1][1]));
-      if (STHDTotal[letter]*(STHDTotal[letter]-STHDFree[letter]) <> 0) then
-        line2 :=
-          intToStr(round(100/STHDTotal[letter]*(STHDTotal[letter]-STHDFree[
-          letter])))
-      else
-        line2 := '0';
-
-      line := prefix + line2 + postfix;
-    except
-      on E: Exception do line := prefix + '[HDU%: '
-        + CleanString(E.Message) + ']' + postfix;
-    end;
-  end;
-
-  while decodeArgs(line, '$HDTotag', maxArgs, args, prefix, postfix,
-    numargs) do
-  begin
-    bDoDisks := true;
-    try
-      RequiredParameters(numargs, 1, 1);
-      letter := ord(upcase(args[1][1]));
-      bDoDisk[letter] := true;
-      line := prefix + IntToStr(round(STHDTotal[letter]/1024)) + postfix;
-    except
-      on E: Exception do line := prefix + '[HDTotag: '
-        + CleanString(E.Message) + ']' + postfix;
-    end;
-  end;
-
-  while decodeArgs(line, '$HDTotal', maxArgs, args, prefix, postfix,
-    numargs) do
-  begin
-    bDoDisks := true;
-    try
-      RequiredParameters(numargs, 1, 1);
-      letter := ord(upcase(args[1][1]));
-      bDoDisk[letter] := true;
-      line := prefix + IntToStr(STHDTotal[letter]) + postfix;
-    except
-      on E: Exception do line := prefix + '[HDTotal: '
-        + CleanString(E.Message) + ']' + postfix;
+    for HDStats := FirstHDStat to LastHDStat do begin
+      ResolveDiskSpaceVariable(HDStats,Line);
     end;
   end;
 end;
@@ -1722,7 +1640,7 @@ begin
 // HD space!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   if bDoDisks then
   begin
-    for letter := 65 to 90 do
+    for letter := FirstDrive to LastDrive do
     begin
       try
         if (bDoDisk[letter]) then
