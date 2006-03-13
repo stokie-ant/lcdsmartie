@@ -27,7 +27,7 @@ object SetupForm: TSetupForm
     Top = 0
     Width = 233
     Height = 409
-    ActivePage = NetworkStatsTabSheet
+    ActivePage = WinampTabSheet
     Font.Charset = ANSI_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
@@ -633,7 +633,7 @@ object SetupForm: TSetupForm
         Height = 21
         Style = csDropDownList
         DropDownCount = 10
-        ItemHeight = 0
+        ItemHeight = 13
         TabOrder = 1
         OnChange = EmailAccountComboBoxChange
       end
@@ -647,32 +647,6 @@ object SetupForm: TSetupForm
         Width = 180
         Height = 353
         ItemHeight = 13
-        Items.Strings = (
-          'Adapter name (adapterNr)'
-          'Total Down (adapterNr)  (KB)'
-          'Total up (adapterNr)  (KB)'
-          'Total Down (adapterNr)  (MB)'
-          'Total up (adapterNr)  (MB)'
-          'Total Down (adapterNr)  (GB)'
-          'Total up (adapterNr)  (GB)'
-          'Speed Down (adapterNr)  (KB)'
-          'Speed Up (adapterNr)  (KB)'
-          'Speed Down (adapterNr)  (MB)'
-          'Speed Up (adapterNr)  (MB)'
-          'Errors down (adapterNr)'
-          'Errors up (adapterNr)'
-          'Total Errors (adapterNr)'
-          'Unicast Packets down (adapterNr)'
-          'Unicast Packets up (adapterNr)'
-          'Total Uni. Packets (adapterNr)'
-          'Non-Uni. Packets down (adapterNr)'
-          'Non-Uni. Packets up (adapterNr)'
-          'Total Non-Uni. Packets (adapterNr)'
-          'Total nr of Packets (adapterNr)'
-          'Discards down (adapterNr)'
-          'Discards up (adapterNr)'
-          'Total Discards (adapterNr)'
-          'IP address')
         TabOrder = 0
         OnClick = NetworkStatsListBoxClick
         OnDblClick = InsertButtonClick
@@ -1817,7 +1791,7 @@ object SetupForm: TSetupForm
                 Font.Height = -11
                 Font.Name = 'Tahoma'
                 Font.Style = []
-                ItemHeight = 0
+                ItemHeight = 13
                 ParentFont = False
                 ParentShowHint = False
                 ShowHint = True

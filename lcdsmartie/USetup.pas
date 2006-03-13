@@ -19,7 +19,7 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.52 $ $Date: 2006/03/07 01:04:44 $
+ *  $Revision: 1.53 $ $Date: 2006/03/13 15:10:43 $
  *****************************************************************************}
 
 interface
@@ -270,7 +270,7 @@ implementation
 
 uses
   Windows, ShellApi, graphics, sysutils, Registry, StrUtils,
-  UMain, UInteract, UConfig;
+  UMain, UInteract, UConfig, UDataEmail, UDataNetwork;
 
 {$R *.DFM}
 
@@ -327,6 +327,7 @@ var
   i, blaat: Integer;
   SR : TSearchRec;
   Loop,FindResult : integer;
+  NetStat : TNetworkStatistics;
 begin
   MainPageControl.ActivePage := ScreensTabSheet;
   //if pagecontrol1.activepage = tabsheet13 then pagecontrol1.ActivePage :=
@@ -399,6 +400,11 @@ begin
   EmailServerEdit.text := config.pop[1].server;
   EmailLoginEdit.text := config.pop[1].user;
   EmailPasswordEdit.text := config.pop[1].pword;
+
+  NetworkStatsListBox.Clear;
+  for NetStat := FirstNetworkStat to LastNetworkStat do begin
+    NetworkStatsListBox.Items.Add(NetworkUserHints[NetStat]);
+  end;
 
   LCDSizeComboBox.Items.Clear;
   for i := 1 to MaxScreenSizes do
@@ -1087,9 +1093,9 @@ procedure TSetupForm.EmailListBoxClick(Sender: TObject);
 begin
   if (EmailListBox.itemindex >= 0) and (EmailListBox.itemindex < MaxEmailAccounts*3) then begin
     case EmailListBox.itemindex mod 3 of
-      0: VariableEdit.Text := '$Email'+IntToStr((EmailListBox.itemindex div 3 + 1) mod MaxEmailAccounts);
-      1: VariableEdit.Text := '$EmailSub'+IntToStr((EmailListBox.itemindex div 3 + 1) mod MaxEmailAccounts);
-      2: VariableEdit.Text := '$EmailFrom'+IntToStr((EmailListBox.itemindex div 3 + 1) mod MaxEmailAccounts);
+      0: VariableEdit.Text := EmailCountKey+IntToStr((EmailListBox.itemindex div 3 + 1) mod MaxEmailAccounts);
+      1: VariableEdit.Text := EmailSubjectKey+IntToStr((EmailListBox.itemindex div 3 + 1) mod MaxEmailAccounts);
+      2: VariableEdit.Text := EmailFromKey+IntToStr((EmailListBox.itemindex div 3 + 1) mod MaxEmailAccounts);
     end;
   end else
     VariableEdit.Text := NoVariable;
@@ -1273,35 +1279,16 @@ begin
 end;
 
 procedure TSetupForm.NetworkStatsListBoxClick(Sender: TObject);
+var
+  NetStat : TNetworkStatistics;
 begin
-  case NetworkStatsListBox.itemindex of
-    0 : VariableEdit.Text := '$NetAdapter(1)';
-    1 : VariableEdit.Text := '$NetDownK(1)';
-    2 : VariableEdit.Text := '$NetUpK(1)';
-    3 : VariableEdit.Text := '$NetDownM(1)';
-    4 : VariableEdit.Text := '$NetUpM(1)';
-    5 : VariableEdit.Text := '$NetDownG(1)';
-    6 : VariableEdit.Text := '$NetUpG(1)';
-    7 : VariableEdit.Text := '$NetSpDownK(1)';
-    8 : VariableEdit.Text := '$NetSpUpK(1)';
-    9 : VariableEdit.Text := '$NetSpDownM(1)';
-    10 : VariableEdit.Text := '$NetSpUpM(1)';
-    11 : VariableEdit.Text := '$NetErrDown(1)';
-    12 : VariableEdit.Text := '$NetErrUp(1)';
-    13 : VariableEdit.Text := '$NetErrTot(1)';
-    14 : VariableEdit.Text := '$NetUniDown(1)';
-    15 : VariableEdit.Text := '$NetUniUp(1)';
-    16 : VariableEdit.Text := '$NetUniTot(1)';
-    17 : VariableEdit.Text := '$NetNuniDown(1)';
-    18 : VariableEdit.Text := '$NetNuniUp(1)';
-    19 : VariableEdit.Text := '$NetNuniTot(1)';
-    20 : VariableEdit.Text := '$NetPackTot(1)';
-    21 : VariableEdit.Text := '$NetDiscDown(1)';
-    22 : VariableEdit.Text := '$NetDiscUp(1)';
-    23 : VariableEdit.Text := '$NetDiscTot(1)';
-    24 : VariableEdit.Text := '$NetIPaddress';
-    else VariableEdit.Text := NoVariable;
-  end; // case
+  NetStat := TNetworkStatistics(NetworkStatsListBox.itemindex);
+  if (NetStat >= FirstNetworkStat) and (NetStat <= LastNetworkStat) then begin
+    VariableEdit.Text := NetworkStatisticsKeys[NetStat];
+    if not (NetStat = nsNetIPAddress) then  // special case, should be resolved elsewhere
+      VariableEdit.Text := VariableEdit.Text + '(1)';
+  end else
+    VariableEdit.Text := NoVariable;
 
   if not (VariableEdit.Text = NoVariable) then
     FocusToInputField();

@@ -19,14 +19,15 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.61 $ $Date: 2006/03/07 16:17:43 $
+ *  $Revision: 1.62 $ $Date: 2006/03/13 15:10:43 $
  *****************************************************************************}
 
 
 interface
 
 uses Classes, System2, xmldom, XMLIntf, SysUtils, xercesxmldom, XMLDoc,
-  msxmldom, ComCtrls, ComObj, UUtils, IdHTTP, SyncObjs, IdPOP3, UConfig;
+  msxmldom, ComCtrls, ComObj, UUtils, IdHTTP, SyncObjs, IdPOP3, UConfig,
+  UDataNetwork;
 
 const
   ticksperseconde = 1000;
@@ -277,6 +278,7 @@ type
     procedure cpuUpdate;
     procedure doCpuThread;
     // network stats
+    procedure ResolveNetVariable(Variable : TNetworkStatistics; var Line : string);
     procedure ResolveNetworkVariables(var Line: string);
     procedure updateNetworkStats;
     // MBM stats
@@ -311,7 +313,9 @@ uses cxCpu40, adCpuUsage, UMain, Windows, Forms, IpHlpApi,
   IpIfConst, IpRtrMib, WinSock, Dialogs, Buttons, Graphics, ShellAPI,
   mmsystem, ExtActns, Messages, IdBaseComponent, IdComponent,
   IdTCPConnection, IdTCPClient, IdMessageClient, IdMessage, Menus,
-  ExtCtrls, Controls, StdCtrls, StrUtils, ActiveX, IdUri, DateUtils, IdGlobal;
+  ExtCtrls, Controls, StdCtrls, StrUtils, ActiveX, IdUri, DateUtils, IdGlobal,
+
+  UDataEmail;
 
 
 
@@ -1986,386 +1990,78 @@ end;
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-procedure TData.ResolveNetworkVariables(var Line: string);
+procedure TData.ResolveNetVariable(Variable : TNetworkStatistics; var Line : string);
 var
+  VarKey : string;
   args: Array [1..maxArgs] of String;
   prefix, postfix: String;
   numArgs: Cardinal;
   adapterNum: Cardinal;
 begin
-  if (pos('$Net', line) = 0) then exit;
+  VarKey := NetworkStatisticsKeys[Variable];
+  while decodeArgs(Line, VarKey, maxArgs, args, prefix, postfix, numargs) do begin
+    try
+      RequiredParameters(numargs, 1, 1);
+      adapterNum := StrToInt(args[1]);
+      Line := prefix;
+      dataCs.Enter();
+      with NetworkAdapterStats[adapterNum] do begin
+        try
+          case Variable of
+            nsNetAdapter : Line := Line + netadaptername;
+            nsNetDownK : Line := Line + FloatToStrF(Round(iNetTotalDown/1024*10)/10,ffFixed, 18, 1, localeFormat);
+            nsNetUpK : Line := Line + FloatToStrF(Round(iNetTotalUp/1024*10)/10,ffFixed, 18, 1, localeFormat);
+            nsNetDownM : Line := Line + FloatToStrF(Round((iNetTotalDown div 1024)/1024*10)/10,ffFixed, 18, 1, localeFormat);
+            nsNetUpM : Line := Line + FloatToStrF(Round((iNetTotalUp div 1024)/1024*10)/10,ffFixed, 18, 1, localeFormat);
+            nsNetDownG : Line := Line + FloatToStrF(Round((iNetTotalDown div (1024*1024))/1024*10)/10,ffFixed, 18, 1, localeFormat);
+            nsNetUpG : Line := Line + FloatToStrF(Round((iNetTotalUp div (1024*1024))/1024*10)/10,ffFixed, 18, 1, localeFormat);
+            nsNetErrDown : Line := Line + IntToStr(uiNetErrorsDown);
+            nsNetErrUp : Line := Line + IntToStr(uiNetErrorsUp);
+            nsNetErrTot : Line := Line + IntToStr(uiNetErrorsDown + uiNetErrorsUp);
+            nsNetUniDown : Line := Line + IntToStr(uiNetUnicastDown);
+            nsNetUniUp : Line := Line + IntToStr(uiNetUnicastUp);
+            nsNetUniTot : Line := Line + IntToStr(uiNetUnicastUp + uiNetUnicastDown);
+            nsNetNuniDown : Line := Line + IntToStr(uiNetNonUnicastDown);
+            nsNetNuniUp : Line := Line + IntToStr(uiNetNonUnicastUp);
+            nsNetNuniTot : Line := Line + IntToStr(uiNetNonUnicastUp + uiNetNonUnicastDown);
+            nsNetPackTot : Line := Line + IntToStr(Int64(uiNetNonUnicastUp) + uiNetNonUnicastDown + uiNetUnicastDown + uiNetUnicastUp);
+            nsNetDiscDown : Line := Line + IntToStr(uiNetDiscardsDown);
+            nsNetDiscUp : Line := Line + IntToStr(uiNetDiscardsUp);
+            nsNetDiscTot : Line := Line + IntToStr(uiNetDiscardsUp + uiNetDiscardsDown);
+            nsNetSpDownK : Line := Line + FloatToStrF(dNetSpeedDownK, ffFixed, 18, 1, localeFormat);
+            nsNetSpUpK : Line := Line + FloatToStrF(dNetSpeedUpK, ffFixed, 18, 1, localeFormat);
+            nsNetSpDownM : Line := Line + FloatToStrF(dNetSpeedDownM, ffFixed, 18, 1, localeFormat);
+            nsNetSpUpM : Line := Line + FloatToStrF(dNetSpeedUpM, ffFixed, 18, 1, localeFormat);
+          end;
+        finally
+          dataCs.Leave();
+        end;
+      end;
+      Line := Line + postfix;
+    except
+      on E: Exception do Line := prefix + '[' + CleanString(VarKey + ': ' + E.Message) + ']' + postfix;
+    end;
+  end;
+end;
 
-  if (pos('$NetIPaddress', line) <> 0) then
-  begin
-    bDoNet := true;
+procedure TData.ResolveNetworkVariables(var Line: string);
+var
+  NetStatLoop : TNetworkStatistics;
+begin
+  if (pos(NetKeyPrefix, Line) = 0) then exit;
+
+  bDoNet := true;
+  if (pos(NetIPAddressKey, Line) <> 0) then begin
     dataCs.Enter();
     try
-      line := StringReplace(line, '$NetIPaddress', ipaddress, [rfReplaceAll]);
+      Line := StringReplace(Line, NetIPAddressKey, IPAddress, [rfReplaceAll]);
     finally
       dataCs.Leave();
     end;
   end;
 
-  while decodeArgs(line, '$NetAdapter', maxArgs, args, prefix, postfix,
-    numargs) do
-  begin
-    bDoNet := true;
-    try
-      RequiredParameters(numargs, 1, 1);
-      adapterNum := StrToInt(args[1]);
-      dataCs.Enter();
-      try
-        line := prefix + NetworkAdapterStats[adapterNum].netadaptername + postfix;
-      finally
-        dataCs.Leave();
-      end;
-    except
-      on E: Exception do line := prefix + '[NetAdapter: '
-        + CleanString(E.Message) + ']' + postfix;
-    end;
-  end;
-
-  while decodeArgs(line, '$NetDownK', maxArgs, args, prefix, postfix,
-    numargs) do
-  begin
-    bDoNet := true;
-    try
-      RequiredParameters(numargs, 1, 1);
-      adapterNum := StrToInt(args[1]);
-      line := prefix + FloatToStrF(Round(NetworkAdapterStats[adapterNum].iNetTotalDown/1024*10)/10,
-        ffFixed, 18, 1, localeFormat) + postfix;
-    except
-      on E: Exception do line := prefix + '[NetDownK: '
-        + CleanString(E.Message) + ']' + postfix;
-    end;
-  end;
-
-  while decodeArgs(line, '$NetUpK', maxArgs, args, prefix, postfix, numargs)
-    do
-  begin
-    bDoNet := true;
-    try
-      RequiredParameters(numargs, 1, 1);
-      adapterNum := StrToInt(args[1]);
-      line := prefix + FloatToStrF(Round(NetworkAdapterStats[adapterNum].iNetTotalUp/1024*10)/10,
-        ffFixed, 18, 1, localeFormat) + postfix;
-    except
-      on E: Exception do line := prefix + '[NetUpK: ' + CleanString(E.Message)
-        + ']' + postfix;
-    end;
-  end;
-
-  while decodeArgs(line, '$NetDownM', maxArgs, args, prefix, postfix,
-    numargs) do
-  begin
-    bDoNet := true;
-    try
-      RequiredParameters(numargs, 1, 1);
-      adapterNum := StrToInt(args[1]);
-      line := prefix +
-         FloatToStrF(Round((NetworkAdapterStats[adapterNum].iNetTotalDown div 1024)/1024*10)/10,
-         ffFixed, 18, 1, localeFormat) + postfix;
-    except
-      on E: Exception do line := prefix + '[NetDownM: '
-        + CleanString(E.Message) + ']' + postfix;
-    end;
-  end;
-
-  while decodeArgs(line, '$NetUpM', maxArgs, args, prefix, postfix, numargs)
-    do
-  begin
-    bDoNet := true;
-    try
-      RequiredParameters(numargs, 1, 1);
-      adapterNum := StrToInt(args[1]);
-      line := prefix +
-        FloatToStrF(Round((NetworkAdapterStats[adapterNum].iNetTotalUp div 1024)/1024*10)/10,
-        ffFixed, 18, 1, localeFormat) + postfix;
-    except
-      on E: Exception do line := prefix + '[NetUpM: '
-        + CleanString(E.Message) + ']' + postfix;
-    end;
-  end;
-
-  while decodeArgs(line, '$NetDownG', maxArgs, args, prefix, postfix,
-    numargs) do
-  begin
-    bDoNet := true;
-    try
-      RequiredParameters(numargs, 1, 1);
-      adapterNum := StrToInt(args[1]);
-      line := prefix +
-        FloatToStrF(Round((NetworkAdapterStats[adapterNum].iNetTotalDown div (1024*1024))/1024*10)/10,
-        ffFixed, 18, 1, localeFormat) +
-        postfix;
-    except
-      on E: Exception do line := prefix + '[NetDownG: '
-        + CleanString(E.Message) + ']' + postfix;
-    end;
-  end;
-
-  while decodeArgs(line, '$NetUpG', maxArgs, args, prefix, postfix, numargs)
-    do
-  begin
-    bDoNet := true;
-    try
-      RequiredParameters(numargs, 1, 1);
-      adapterNum := StrToInt(args[1]);
-      line := prefix +
-        FloatToStrF(Round((NetworkAdapterStats[adapterNum].iNetTotalUp div (1024*1024))/1024*10)/10,
-        ffFixed, 18, 1, localeFormat) + postfix;
-    except
-      on E: Exception do line := prefix + '[NetUpG: ' +
-        CleanString(E.Message) + ']' + postfix;
-    end;
-  end;
-
-  while decodeArgs(line, '$NetErrDown', maxArgs, args, prefix, postfix,
-    numargs) do
-  begin
-    bDoNet := true;
-    try
-      RequiredParameters(numargs, 1, 1);
-      adapterNum := StrToInt(args[1]);
-      line := prefix + IntToStr(NetworkAdapterStats[adapterNum].uiNetErrorsDown) + postfix;
-    except
-      on E: Exception do line := prefix + '[NetErrDown: '
-        + CleanString(E.Message) + ']' + postfix;
-    end;
-  end;
-
-  while decodeArgs(line, '$NetErrUp', maxArgs, args, prefix, postfix,
-    numargs) do
-  begin
-    bDoNet := true;
-    try
-      RequiredParameters(numargs, 1, 1);
-      adapterNum := StrToInt(args[1]);
-      line := prefix + IntToStr(NetworkAdapterStats[adapterNum].uiNetErrorsUp) + postfix;
-    except
-      on E: Exception do line := prefix + '[NetErrUp: '
-        + CleanString(E.Message) + ']' + postfix;
-    end;
-  end;
-
-  while decodeArgs(line, '$NetErrTot', maxArgs, args, prefix, postfix,
-    numargs) do
-  begin
-    bDoNet := true;
-    try
-      RequiredParameters(numargs, 1, 1);
-      adapterNum := StrToInt(args[1]);
-      with NetworkAdapterStats[adapterNum] do
-        line := prefix + IntToStr(uiNetErrorsDown + uiNetErrorsUp) + postfix;
-    except
-      on E: Exception do line := prefix + '[NetErrTot: '
-        + CleanString(E.Message) + ']' + postfix;
-    end;
-  end;
-
-  while decodeArgs(line, '$NetUniDown', maxArgs, args, prefix, postfix,
-    numargs) do
-  begin
-    bDoNet := true;
-    try
-      RequiredParameters(numargs, 1, 1);
-      adapterNum := StrToInt(args[1]);
-      line := prefix + IntToStr(NetworkAdapterStats[adapterNum].uiNetUnicastDown) + postfix;
-    except
-      on E: Exception do line := prefix + '[NetUniDown: '
-        + CleanString(E.Message) + ']' + postfix;
-    end;
-  end;
-
-  while decodeArgs(line, '$NetUniUp', maxArgs, args, prefix, postfix,
-    numargs) do
-  begin
-    bDoNet := true;
-    try
-      RequiredParameters(numargs, 1, 1);
-      adapterNum := StrToInt(args[1]);
-      line := prefix + IntToStr(NetworkAdapterStats[adapterNum].uiNetUnicastUp) + postfix;
-    except
-      on E: Exception do line := prefix + '[NetUniUp: '
-        + CleanString(E.Message) + ']' + postfix;
-    end;
-  end;
-
-  while decodeArgs(line, '$NetUniTot', maxArgs, args, prefix, postfix,
-    numargs) do
-  begin
-    bDoNet := true;
-    try
-      RequiredParameters(numargs, 1, 1);
-      adapterNum := StrToInt(args[1]);
-      with NetworkAdapterStats[adapterNum] do
-        line := prefix + IntToStr(uiNetUnicastUp + uiNetUnicastDown) + postfix;
-    except
-      on E: Exception do line := prefix + '[NetUniTot: '
-        + CleanString(E.Message) + ']' + postfix;
-    end;
-  end;
-
-  while decodeArgs(line, '$NetNuniDown', maxArgs, args, prefix, postfix,
-    numargs) do
-  begin
-    bDoNet := true;
-    try
-      RequiredParameters(numargs, 1, 1);
-      adapterNum := StrToInt(args[1]);
-      line := prefix + IntToStr(NetworkAdapterStats[adapterNum].uiNetNonUnicastDown) + postfix;
-    except
-      on E: Exception do line := prefix + '[NetNuniDown: '
-        + CleanString(E.Message) + ']' + postfix;
-    end;
-  end;
-
-  while decodeArgs(line, '$NetNuniUp', maxArgs, args, prefix, postfix,
-    numargs) do
-  begin
-    bDoNet := true;
-    try
-      RequiredParameters(numargs, 1, 1);
-      adapterNum := StrToInt(args[1]);
-      line := prefix + IntToStr(NetworkAdapterStats[adapterNum].uiNetNonUnicastUp) + postfix;
-    except
-      on E: Exception do line := prefix + '[NetNuniUp: '
-        + CleanString(E.Message) + ']' + postfix;
-    end;
-  end;
-
-  while decodeArgs(line, '$NetNuniTot', maxArgs, args, prefix, postfix,
-    numargs) do
-  begin
-    bDoNet := true;
-    try
-      RequiredParameters(numargs, 1, 1);
-      adapterNum := StrToInt(args[1]);
-      with NetworkAdapterStats[adapterNum] do
-        line := prefix + IntToStr(uiNetNonUnicastUp + uiNetNonUnicastDown) + postfix;
-    except
-      on E: Exception do line := prefix + '[NetNuniTot: ' + E.Message + ']' +
-        postfix;
-    end;
-  end;
-
-  while decodeArgs(line, '$NetPackTot', maxArgs, args, prefix, postfix,
-    numargs) do
-  begin
-    bDoNet := true;
-    try
-      RequiredParameters(numargs, 1, 1);
-      adapterNum := StrToInt(args[1]);
-      with NetworkAdapterStats[adapterNum] do
-        line := prefix + IntToStr(Int64(uiNetNonUnicastUp) + uiNetNonUnicastDown +
-                         uiNetUnicastDown + uiNetUnicastUp) + postfix;
-    except
-      on E: Exception do line := prefix + '[NetPackTot: '
-        + CleanString(E.Message) + ']' + postfix;
-    end;
-  end;
-
-  while decodeArgs(line, '$NetDiscDown', maxArgs, args, prefix, postfix,
-    numargs) do
-  begin
-    bDoNet := true;
-    try
-      RequiredParameters(numargs, 1, 1);
-      adapterNum := StrToInt(args[1]);
-      line := prefix + IntToStr(NetworkAdapterStats[adapterNum].uiNetDiscardsDown) + postfix;
-    except
-      on E: Exception do line := prefix + '[NetDiscDown: '
-        + CleanString(E.Message) + ']' + postfix;
-    end;
-  end;
-
-  while decodeArgs(line, '$NetDiscUp', maxArgs, args, prefix, postfix,
-    numargs) do
-  begin
-    bDoNet := true;
-    try
-      RequiredParameters(numargs, 1, 1);
-      adapterNum := StrToInt(args[1]);
-      line := prefix + IntToStr(NetworkAdapterStats[adapterNum].uiNetDiscardsUp) + postfix;
-    except
-      on E: Exception do line := prefix + '[NetDiscUp: '
-        + CleanString(E.Message) + ']' + postfix;
-    end;
-  end;
-
-  while decodeArgs(line, '$NetDiscTot', maxArgs, args, prefix, postfix,
-    numargs) do
-  begin
-    bDoNet := true;
-    try
-      RequiredParameters(numargs, 1, 1);
-      adapterNum := StrToInt(args[1]);
-      with NetworkAdapterStats[adapterNum] do
-        line := prefix + IntToStr(uiNetDiscardsUp + uiNetDiscardsDown) + postfix;
-    except
-      on E: Exception do line := prefix + '[NetDiscTot: '
-        + CleanString(E.Message) + ']' + postfix;
-    end;
-  end;
-
-  while decodeArgs(line, '$NetSpDownK', maxArgs, args, prefix, postfix,
-    numargs) do
-  begin
-    bDoNet := true;
-    try
-      RequiredParameters(numargs, 1, 1);
-      adapterNum := StrToInt(args[1]);
-      line := prefix + FloatToStrF(NetworkAdapterStats[adapterNum].dNetSpeedDownK,
-        ffFixed, 18, 1, localeFormat) + postfix;
-    except
-      on E: Exception do line := prefix + '[NetSpDownK: '
-        + CleanString(E.Message) + ']' + postfix;
-    end;
-  end;
-
-  while decodeArgs(line, '$NetSpUpK', maxArgs, args, prefix, postfix,
-    numargs) do
-  begin
-    bDoNet := true;
-    try
-      RequiredParameters(numargs, 1, 1);
-      adapterNum := StrToInt(args[1]);
-      line := prefix + FloatToStrF(NetworkAdapterStats[adapterNum].dNetSpeedUpK,
-        ffFixed, 18, 1, localeFormat) + postfix;
-    except
-      on E: Exception do line := prefix + '[NetSpUpK: '
-        + CleanString(E.Message) + ']' + postfix;
-    end;
-  end;
-
-  while decodeArgs(line, '$NetSpDownM', maxArgs, args, prefix, postfix,
-    numargs) do
-  begin
-    bDoNet := true;
-    try
-      RequiredParameters(numargs, 1, 1);
-      adapterNum := StrToInt(args[1]);
-      line := prefix + FloatToStrF(NetworkAdapterStats[adapterNum].dNetSpeedDownM,
-        ffFixed, 18, 1, localeFormat) + postfix;
-    except
-      on E: Exception do line := prefix + '[NetSpDownM: '
-        + CleanString(E.Message) + ']' + postfix;
-    end;
-  end;
-
-  while decodeArgs(line, '$NetSpUpM', maxArgs, args, prefix, postfix,
-    numargs) do
-  begin
-    bDoNet := true;
-    try
-      RequiredParameters(numargs, 1, 1);
-      adapterNum := StrToInt(args[1]);
-      line := prefix + FloatToStrF(NetworkAdapterStats[adapterNum].dNetSpeedUpM,
-        ffFixed, 18, 1, localeFormat) + postfix;
-    except
-      on E: Exception do line := prefix + '[NetSpUpM: '
-        + CleanString(E.Message) + ']' + postfix;
-    end;
+  for NetStatLoop := FirstNetworkStat to LastNetworkStat do begin
+    ResolveNetVariable(NetStatLoop,Line);
   end;
 end;
 
@@ -3783,9 +3479,9 @@ begin
         screenline := config.screen[ScreenLoop][LineLoop].text;
         for AccountLoop := 0 to MaxEmailAccounts-1 do
         begin
-          if (pos('$Email' + IntToStr(AccountLoop), screenline) <> 0)
-            or (pos('$EmailSub' + IntToStr(AccountLoop), screenline) <> 0)
-            or (pos('$EmailFrom' + IntToStr(AccountLoop), screenline) <> 0) then
+          if (pos(EmailCountKey + IntToStr(AccountLoop), screenline) <> 0)
+            or (pos(EmailSubjectKey + IntToStr(AccountLoop), screenline) <> 0)
+            or (pos(EmailFromKey + IntToStr(AccountLoop), screenline) <> 0) then
           begin
             CheckForMail[AccountLoop] := true;
           end;
@@ -3875,17 +3571,17 @@ procedure TData.ResolveEmailVariables(var Line : string);
 var
   AccountLoop : integer;
 begin
-  if (pos('$Email', line) <> 0) then
+  if (pos(EmailKeyPrefix, line) <> 0) then
   begin
     mailCs.Enter();
     try
       for AccountLoop := 0 to MaxEmailAccounts-1 do
       begin
-        line := StringReplace(line, '$Email' + IntToStr(AccountLoop),
+        line := StringReplace(line, EmailCountKey + IntToStr(AccountLoop),
           IntToStr(mail[AccountLoop].messages), [rfReplaceAll]);
-        line := StringReplace(line, '$EmailSub' + IntToStr(AccountLoop),
+        line := StringReplace(line, EmailSubjectKey + IntToStr(AccountLoop),
           mail[AccountLoop].lastSubject, [rfReplaceAll]);
-        line := StringReplace(line, '$EmailFrom' + IntToStr(AccountLoop),
+        line := StringReplace(line, EmailFromKey + IntToStr(AccountLoop),
           mail[AccountLoop].lastFrom, [rfReplaceAll]);
       end;
     finally
