@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/_SSL/Attic/UData.pas,v $
- *  $Revision: 1.1 $ $Date: 2006/03/13 14:10:15 $
+ *  $Revision: 1.2 $ $Date: 2006/03/13 22:39:50 $
  *****************************************************************************}
 
 
@@ -3808,17 +3808,10 @@ begin
         if config.pop[AccountLoop].server <> '' then
         begin
           pop3 := TIdPOP3.Create(nil);
+          msg := TIdMessage.Create(nil);
           // ssl 13/03/2006 added by vcorp INDY v10.1.5
           SSLHandler := TIdSSLIOHandlerSocketOpenSSL.Create(nil);
-          SSLHandler.MaxLineAction := maException;
-          SSLHandler.Host := config.pop[AccountLoop].server;
-          SSLHandler.ConnectTimeout := 30000;
-          SSLHandler.SSLOptions.Method := sslvSSLv2;
-          SSLHandler.SSLOptions.Mode := sslmUnassigned;
-          SSLHandler.SSLOptions.VerifyMode := [];
-          SSLHandler.SSLOptions.VerifyDepth := 0;
 
-          msg := TIdMessage.Create(nil);
           pop3.host := config.pop[AccountLoop].server;
           pop3.ReadTimeout := 15000;   //15 seconds
           pop3.username := config.pop[AccountLoop].user;
@@ -3827,12 +3820,17 @@ begin
           // ssl 13/03/2006 added by vcorp INDY v10.1.5
           if config.pop[AccountLoop].port_ssl <> ''
           then begin
+          SSLHandler.MaxLineAction := maException;
+          SSLHandler.ConnectTimeout := 30000;
+          SSLHandler.SSLOptions.Method := sslvSSLv2;
+          SSLHandler.SSLOptions.Mode := sslmUnassigned;
+          SSLHandler.SSLOptions.VerifyMode := [];
+          SSLHandler.SSLOptions.VerifyDepth := 0;
           pop3.IOHandler := SSLHandler;
           pop3.UseTLS := utUseImplicitTLS;
           pop3.Port := StrToInt(config.pop[AccountLoop].port_ssl);
           SSLHandler.Port := StrToInt(config.pop[AccountLoop].port_ssl);
           SSLHandler.Host := config.pop[AccountLoop].server;
-          SSLHandler.Destination := SSLHandler.Host+':'+IntToStr(SSLHandler.Port);
           end else
           begin
           pop3.IOHandler := nil;

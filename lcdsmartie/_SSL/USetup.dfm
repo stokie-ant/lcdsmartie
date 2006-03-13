@@ -592,6 +592,7 @@ object SetupForm: TSetupForm
         Top = 296
         Width = 113
         Height = 21
+        Color = 16708585
         PasswordChar = '*'
         TabOrder = 5
         Text = 'Ur passw'
@@ -1843,7 +1844,7 @@ object SetupForm: TSetupForm
                 Font.Height = -11
                 Font.Name = 'Tahoma'
                 Font.Style = []
-                ItemHeight = 13
+                ItemHeight = 0
                 ParentFont = False
                 ParentShowHint = False
                 ShowHint = True
