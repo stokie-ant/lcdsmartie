@@ -14,13 +14,14 @@ type
   protected
     fDataLock : TCriticalSection;  // Protects mail, data + main thread
     procedure  DoUpdate; virtual;
+    procedure SetActive(Value : boolean); virtual;
   public
     constructor Create(AInterval : longint);
     destructor Destroy; override;
     procedure  Execute; override;
     procedure  Refresh;
     procedure  ResolveVariables(var Line : string); virtual;
-    property Active : boolean read fActive write fActive;
+    property Active : boolean read fActive write SetActive;
   end;
 
 implementation
@@ -40,6 +41,11 @@ destructor TDataThread.Destroy;
 begin
   inherited;
   fDataLock.Free;
+end;
+
+procedure TDataThread.SetActive(Value : boolean);
+begin
+  fActive := Value;
 end;
 
 procedure TDataThread.Refresh;

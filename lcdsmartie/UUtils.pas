@@ -7,6 +7,14 @@ uses
 
 const
   maxArgs = 10;
+  ticksperseconde = 1000;
+  ticksperminute = ticksperseconde * 60;
+  ticksperhour = ticksperminute * 60;
+  ticksperdag = ticksperhour * 24;
+  ticksperweek = ticksperdag * 7;
+  tickspermonth: Int64 = Int64(ticksperdag) * 30;
+  ticksperyear: Int64 = Int64(ticksperdag) * 30 * 12;
+
 
 type
   EExiting = Class(Exception);

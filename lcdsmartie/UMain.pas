@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.78 $ $Date: 2006/03/14 19:47:26 $
+ *  $Revision: 1.79 $ $Date: 2006/03/14 21:20:56 $
  *****************************************************************************}
 
 interface
@@ -632,7 +632,7 @@ end;
 
 procedure TLCDSmartieDisplayForm.MBMUpdateTimerTimer(Sender: TObject);
 begin
-  Data.updateMBMStats(Sender);
+  Data.UpdateDNetStats(Sender);
   MBMUpdateTimer.Interval := 0;
   MBMUpdateTimer.Interval := config.mbmRefresh*1000;
 end;

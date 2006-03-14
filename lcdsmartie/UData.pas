@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.67 $ $Date: 2006/03/14 19:47:25 $
+ *  $Revision: 1.68 $ $Date: 2006/03/14 21:20:56 $
  *****************************************************************************}
 
 
@@ -27,70 +27,18 @@ interface
 
 uses Classes, xmldom, XMLIntf, SysUtils, xercesxmldom, XMLDoc,
   msxmldom, ComCtrls, ComObj, UUtils, IdHTTP, SyncObjs, UConfig,
-  UDataEmail;
+  UDataEmail, UDataMBM;
 
 const
-  ticksperseconde = 1000;
-  ticksperminute = ticksperseconde * 60;
-  ticksperhour = ticksperminute * 60;
-  ticksperdag = ticksperhour * 24;
-  ticksperweek = ticksperdag * 7;
-  tickspermonth: Int64 = Int64(ticksperdag) * 30;
-  ticksperyear: Int64 = Int64(ticksperdag) * 30 * 12;
   maxRssItems = 20;
   iMaxPluginFuncs = 20;
 
 type
-  TBusType = (btISA, btSMBus, btVIA686ABus, btDirectIO);
-  TSMBType = (smtSMBIntel, smtSMBAMD, smtSMBALi, smtSMBNForce, smtSMBSIS);
-  TSensorType = (stUnknown, stTemperature, stVoltage, stFan, stMhz, stPercentage);
   THTTPUpdateType = (huRSS,huLCDSmartie,huSETI,huFolding);
 const
   FirstHTTPUpdate = huRSS;
   LastHTTPUpdate = huFolding;
 type
-  TSharedIndex = Record
-    iType : TSensorType;                          // type of sensor
-    Count : Integer;                              // number of sensor for that type
-  end;
-
-  TSharedSensor = Record
-    ssType : TSensorType;                         // type of sensor
-    ssName : Array [0..11] of AnsiChar;           // name of sensor
-    sspadding1: Array [0..2] of Char;             // padding of 3 byte
-    ssCurrent : Double;                           // current value
-    ssLow : Double;                               // lowest readout
-    ssHigh : Double;                              // highest readout
-    ssCount : LongInt;                            // total number of readout
-    sspadding2: Array [0..3] of Char;             // padding of 4 byte
-    ssTotal : Extended;                           // total amout of all readouts
-    sspadding3: Array [0..5] of Char;             // padding of 6 byte
-    ssAlarm1 : Double;                            // temp & fan: high alarm; voltage: % off;
-    ssAlarm2 : Double;                            // temp: low alarm
-  end;
-
-  TSharedInfo = Record
-    siSMB_Base : Word;                            // SMBus base address
-    siSMB_Type : TBusType;                        // SMBus/Isa bus used to access chip
-    siSMB_Code : TSMBType;                        // SMBus sub type, Intel, AMD or ALi
-    siSMB_Addr : Byte;                            // Address of sensor chip on SMBus
-    siSMB_Name : Array [0..40] of AnsiChar;       // Nice name for SMBus
-    siISA_Base : Word;                            // ISA base address of sensor chip on ISA
-    siChipType : Integer;                         // Chip nr, connects with Chipinfo.ini
-    siVoltageSubType : Byte;                      // Subvoltage option selected
-  end;
-
-  TSharedData = Record
-    sdVersion : Double;                           // version number (example: 51090)
-    sdIndex : Array [0..9] of TSharedIndex;       // Sensor index
-    sdSensor : Array [0..99] of TSharedSensor;    // sensor info
-    sdInfo : TSharedInfo;                         // misc. info
-    sdStart : Array [0..40] of AnsiChar;          // start time
-    sdCurrent : Array [0..40] of AnsiChar;        // current time
-    sdPath : Array [0..255] of AnsiChar;          // MBM path
-  end;
-
-  PSharedData = ^TSharedData;
 
   TRss = Record
     url: String;
@@ -129,7 +77,7 @@ type
     bNewScreenEvent: Boolean;
     bForceRefresh: Boolean;
     dataCs: TCriticalSection;  // data + main thread
-    fdataThread, cpuThread: TMyThread;
+    fdataThread : TMyThread;
     replline2, replline1: String;
 
     // DLL plugins
@@ -137,32 +85,6 @@ type
     uiTotalDlls: Cardinal;
     sDllResults: array of string;
     iDllResults: Integer;
-
-    //cpu usage
-    CPUUsage: Array [1..5] of Cardinal;   //cpu thread only
-    CPUUsageCount: Cardinal;              //cpu thread only
-    CPUUsagePos: Cardinal;                //cpu thread only
-    lastSpdUpdate: LongWord;              //cpu thread only
-    iUptime: Int64;                       //cpu thread only
-    iLastUptime: Cardinal;                //cpu thread only
-    uptimereg, uptimeregs: String;        // Guarded by dataCs, cpu + main thread
-
-    // Begin MBM Stats - main thread only
-    bDoScreenRes: Boolean;
-    screenResolution: String;
-    STCPUType : string;
-    bDoCpuSpeed: Boolean; // cpu + main threads.
-    STCPUSpeed: String;                   // Guarded by dataCs, cpu + main thread
-    bDoCpuUsage: Boolean; // cpu + main threads.
-    STCPUUsage: Cardinal;                 //cpu + main thread
-    CPU: Array [1..5] of double;
-    dMbmCpuUsage: double;
-    Temperature: Array [1..11] of double;
-    Voltage: Array [1..11] of double;
-    Fan: Array [1..11] of double;
-    TempName: Array[1..11] of String;
-    VoltName: Array[1..11] of String;
-    FanName: Array[1..11] of String;
 
     // http
     doHTTPUpdate : boolean;
@@ -179,6 +101,7 @@ type
 
     // email thread
     EmailThread : TEmailDataThread;  // keep a copy for mainline "GotMail"
+    MBMThread : TMBMDataThread;  // for finding MBM cpu speed
     DataThreads : TList;  // of TDataThread
 
     // data thread
@@ -196,13 +119,10 @@ type
       bCacheResults: Boolean);
     // winamp
     procedure ResolveWinampVariables(var Line: string);
-    // cpu stats
-    procedure ResolveCPUVariables(var Line : string);
-    procedure cpuUpdate;
-    procedure doCpuThread;
+    // dist.net
+    procedure ResolveDNetVariables(var Line : string);
     // MBM stats
-    function ReadMBM5Data : Boolean;
-    procedure ResolveMBMVariables(var Line : string);
+    function  GetMBMActive : boolean;
     // HTTP stuff
     function getUrl(Url: String; maxfreq: Cardinal = 0): String;
     function getRss(Url: String;var titles, descs: Array of String; maxitems:
@@ -221,7 +141,6 @@ type
   public
     lcdSmartieUpdate: Boolean;    // data+main threads
     lcdSmartieUpdateText: String; // data+main threads
-    mbmactive: Boolean;
     isconnected: Boolean;         // data+main threads
     cLastKeyPressed: Char;
     procedure ScreenStart;
@@ -232,7 +151,7 @@ type
     function CallPlugin(uiDll: Integer; iFunc: Integer;
                     const sParam1: String; const sParam2:String) : String;
     function FindPlugin(const sDllName: String): Cardinal;
-    procedure UpdateMBMStats(Sender: TObject);
+    procedure UpdateDNetStats(Sender: TObject);
     procedure UpdateHTTP;
     constructor Create;
     destructor Destroy; override;
@@ -240,6 +159,7 @@ type
     procedure RefreshDataThreads;
     //
     property GotEmail : boolean read GetGotEmail;
+    property MBMActive : boolean read GetMBMActive;
   end;
 
 
@@ -247,13 +167,14 @@ type
 implementation
 
 uses
-  Winsock, cxCpu40, adCpuUsage, UMain, Windows, Forms,
+  Winsock, UMain, Windows, Forms,
   IpIfConst, Dialogs, Buttons, Graphics, ShellAPI,
   mmsystem, ExtActns, Messages, IdBaseComponent, IdComponent,
   IdTCPConnection, IdTCPClient, IdMessageClient, Menus,
   ExtCtrls, Controls, StdCtrls, StrUtils, ActiveX, IdUri, DateUtils, IdGlobal,
 
-  DataThread, UDataNetwork, UDataDisk, UDataGame, UDataMemory;
+  DataThread, UDataNetwork, UDataDisk, UDataGame, UDataMemory,
+  UDataCPU;
 
 
 
@@ -282,24 +203,19 @@ begin
   if status <> 0 then
      raise Exception.Create('WSAStartup failed');
 
-  CPUUsagePos := 1;
   isconnected := false;
   uiTotalDlls := 0;
   lcdSmartieUpdate := False;
-
-  // Get CPU speed first time:
-  try
-    STCPUSpeed := IntToStr(cxCpu[0].Speed.RawSpeed.AsNumber);
-  except
-    // BUGBUG: This has been reported as failing when with Range check error,
-    // they reported that it only occured when they ran a slow 16 bit app
-  end;
 
   DataThreads := TList.Create;
 
   EmailThread := TEmailDataThread.Create;  // keep a copy for mainline GotEmail call
   EmailThread.Resume;
   DataThreads.Add(EmailThread);
+
+  MBMThread :=  TMBMDataThread.Create;  // keep a copy for finding MBM cpu speed
+  MBMThread.Resume;
+  DataThreads.Add(MBMThread);
 
   DataThread := TGameDataThread.Create;
   DataThread.Resume;
@@ -317,6 +233,10 @@ begin
   DataThread.Resume;
   DataThreads.Add(DataThread);
 
+  DataThread := TCPUDataThread.Create(MBMThread);
+  DataThread.Resume;
+  DataThreads.Add(DataThread);
+
   doHTTPUpdate := True;
 
   httpCs := TCriticalSection.Create();
@@ -326,9 +246,6 @@ begin
   // Start data collection thread
   fdataThread := TMyThread.Create(self.doDataThread);
   fdataThread.Resume;
-
-  cpuThread := TMyThread.Create(self.doCpuThread);
-  cpuThread.Resume;
 end;
 
 function TData.CanExit: Boolean;
@@ -342,13 +259,6 @@ begin
 
   if (Assigned(fdataThread)) then
     fdataThread.Terminate;
-
-  if (Assigned(cpuThread)) then
-  begin
-    cpuThread.Terminate;
-    cpuThread.WaitFor();
-    cpuThread.Free();
-  end;
 
   // close all plugins
   for uiDll:=1 to uiTotalDlls do
@@ -448,11 +358,6 @@ begin
     LCDSmartieDisplayForm.MBMUpdateTimer.Interval := 0;
     LCDSmartieDisplayForm.MBMUpdateTimer.Interval := 250; // force an update of Mbm, etc data in 0.25 seconds
     bForceRefresh := true;
-    bDoCpuUsage := false;
-    bDoCpuSpeed := false;
-    CPUUsagePos := 1;
-    CPUUsageCount := 0;
-    bDoScreenRes := false;
     for Loop := 0 to DataThreads.Count-1 do begin
       TDataThread(DataThreads[Loop]).Active := false;
     end;
@@ -480,17 +385,17 @@ begin
   try
     for Loop := 0 to DataThreads.Count-1 do begin
       TDataThread(DataThreads[Loop]).ResolveVariables(Line);
+      if (Pos('$', line) = 0) then break;
     end;
 
     ResolvePluginVariables(line, qstattemp, bCacheResults);
     if (Pos('$', line) = 0) then goto endChange;
     ResolveOtherVariables(Line);
-    ResolveCPUVariables(Line);
     ResolveFileVariables(Line);
     ResolveLCDFunctionVariables(Line);
     if (Pos('$', line) = 0) then goto endChange;
     ResolveWinampVariables(line);
-    ResolveMBMVariables(Line);
+    ResolveDNetVariables(Line);
     ResolveSETIVariables(Line);
     ResolveFoldingVariables(Line);
     if (Pos('$', line) = 0) then goto endChange;
@@ -548,7 +453,16 @@ var
   ccount: double;
   tempst : String;
   iPos1, iPos2 : Integer;
+  screenResolution: String;
 begin
+  if (pos('$ScreenReso', line) <> 0) then begin
+    screenResolution := IntToStr(Screen.DesktopWidth) + 'x' +
+      IntToStr(Screen.DesktopHeight);
+
+    line := StringReplace(line, '$ScreenReso', screenResolution,
+      [rfReplaceAll]);
+  end;
+
 
   if decodeArgs(line, '$MObutton', maxArgs, args, prefix, postfix, numargs)
     then
@@ -1458,271 +1372,16 @@ begin
 end;
 
 
-
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 ////                                                                       ////
-////      C P U    U S A G E   T H R E A D     P R O C E D U R E S         ////
-////                                                                       ////
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-
-procedure TData.ResolveCPUVariables(var Line : string);
-begin
-  if (pos('$UpTim', line) <> 0) then
-  begin
-    dataCs.Enter();
-    try
-      line := StringReplace(line, '$UpTime', uptimereg, [rfReplaceAll]);
-      line := StringReplace(line, '$UpTims', uptimeregs, [rfReplaceAll]);
-    finally
-      dataCs.Leave();
-    end;
-  end;
-end;
-
-procedure TData.cpuUpdate;
-var
-  t: longword;
-  y, mo, d, h, m, s : Cardinal;
-  total, x: Cardinal;
-  rawcpu: Double;
-  uiRemaining: Cardinal;
-  sTempUptime: String;
-begin
-//try
-  //cpuusage!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  //Application.ProcessMessages;
-
-  if (bDoCpuUsage) then
-  begin
-    try
-      CollectCPUData;
-      rawcpu := adCpuUsage.GetCPUUsage(0);
-      rawcpu := abs(rawcpu) * 100;
-    except
-
-      // The above (CollectCPUData/GetCPUUsage) can fail if the processor
-      // Usage performance counter doesn't exist.
-      // Use the MBM Usage counter instead... It will most likely to 0.
-      rawcpu := dMbmCpuUsage;
-    end;
-
-    if (rawcpu > 100) then rawcpu := 100;
-    if (rawcpu < 0) then rawcpu := 0;
-
-    CPUUsage[CPUUsagePos] := Trunc(rawcpu);
-    Inc(CPUUsagePos);
-    if (CPUUsagePos > 5) then CPUUsagePos := 1;
-    if (CPUUsageCount < 5) then Inc(CPUUsageCount);
-
-    total := 0;
-    for x := 1 to CPUUsageCount do total := total + CPUUsage[x];
-    if (CPUUsageCount > 0) then STCPUUsage := total div CPUUsageCount;
-  end;
-
-  t := GetTickCount;
-
-  // The below code creates a very high priority thread which could cause
-  // cpu spikes.  Don't do it unless the user is using $CPUSpeed.
-  if (bDoCPUSpeed) then
-  begin
-    //Update CPU Speed (might change on clock-throttling systems
-    if (t < lastSpdUpdate) or (t - lastSpdUpdate > (ticksperseconde * 2)) then
-    begin                                                 // Update every 2 s
-      lastSpdUpdate := t;
-
-      try
-        dataCs.Enter();
-        try
-          STCPUSpeed := IntToStr(cxCpu[0].Speed.RawSpeed.AsNumber);
-        finally
-          dataCs.Leave();
-        end;
-      except
-        // BUGBUG: This has been reported as failing when with Range check error,
-        // they reported that it only occured when they ran a slow 16 bit app.
-      end;
-    end;
-  end;
-
-
-  //time/uptime!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  if (t < iLastUptime) then iUptime := iUptime + t + (MAXDWORD-iLastUptime)
-  else iUptime := iUptime + (t - iLastUptime);
-  iLastUptime := t;
-
-  y :=  iUptime div ticksperyear;
-  mo := (iUptime div tickspermonth) mod 12;
-  d := (iUptime div ticksperdag) mod 30;
-  h := (iUptime div ticksperhour) mod 24;
-  m := (iUptime div ticksperminute) mod 60;
-  s := (iUptime div ticksperseconde) mod 60;
-
-  sTempUptime := '';
-  if (y > 0) or (sTempUptime<>'') then
-    sTempUptime := sTempUptime + IntToStr(y) +  'yrs ';
-  if (mo > 0) or (sTempUptime<>'') then
-    sTempUptime := sTempUptime + IntToStr(mo) +  'mts ';
-  if (d > 0) or (sTempUptime<>'') then
-    sTempUptime := sTempUptime + IntToStr(d) +  'dys ';
-  if (h > 0) or (sTempUptime<>'') then
-    sTempUptime := sTempUptime + IntToStr(h) +  'hrs ';
-  if (m > 0) or (sTempUptime<>'') then
-    sTempUptime := sTempUptime + IntToStr(m) +  'min ';
-  sTempUptime := sTempUptime + Format('%.2d',[s], localeFormat) + 'secs';
-  dataCs.Enter();
-  uptimereg := sTempUptime;
-  dataCs.Leave();
-
-  // Create the short uptime string
-  // Display the three largest units, i.e. '15d 7h 12m' or '7h 12m 2s'
-  sTempUptime := '';
-  uiRemaining := 0;
-  if (y>0) and (sTempUptime='') then uiRemaining := 3;
-  if (uiRemaining > 0) then
-  begin
-    Dec(uiRemaining);
-    sTempUptime := sTempUptime + IntToStr(y) +'y ';
-  end;
-
-  if (mo>0) and (sTempUptime='') then uiRemaining := 3;
-  if (uiRemaining > 0) then
-  begin
-    Dec(uiRemaining);
-    sTempUptime := sTempUptime + IntToStr(mo) +'m ';
-  end;
-
-  if (d>0) and (sTempUptime='') then uiRemaining := 3;
-  if (uiRemaining > 0) then
-  begin
-    Dec(uiRemaining);
-    sTempUptime := sTempUptime + IntToStr(d) +'d ';
-  end;
-
-  if (h>0) and (sTempUptime='') then uiRemaining := 3;
-  if (uiRemaining > 0) then
-  begin
-    Dec(uiRemaining);
-    sTempUptime := sTempUptime + IntToStr(h) +'h ';
-  end;
-
-  if (m>0) and (sTempUptime='') then uiRemaining := 3;
-  if (uiRemaining > 0) then
-  begin
-    Dec(uiRemaining);
-    sTempUptime := sTempUptime + IntToStr(m) +'m ';
-  end;
-
-  if (sTempUptime='') or (uiRemaining > 0) then
-  begin
-    sTempUptime := sTempUptime + Format('%.2d', [s], localeFormat) +'s ';
-  end;
-
-  // remove the trailing space and assign to class member
-  dataCs.Enter();
-  uptimeregs := MidStr(sTempUptime, 1, Length(sTempUptime)-1);
-  dataCs.Leave();
-
-//except
-//end;
-
-end;
-
-// Runs in data thread
-procedure TData.doCpuThread;
-begin
-  coinitialize(nil);
-
-  while (not cpuThread.Terminated) do
-  begin
-    cpuUpdate();
-
-    if (not cpuThread.Terminated) then sleep(250);
-  end;
-
-  CoUninitialize;
-end;
-
-
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-////                                                                       ////
-////      M O T H E R B O A R D     S T A T S      P R O C E D U R E S     ////
+////      D I S T R I B U T E D  .  N E T          P R O C E D U R E S     ////
 ////                                                                       ////
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-
-procedure TData.ResolveMBMVariables(var Line : string);
-var
-  X : byte;
+procedure TData.ResolveDNetVariables(var Line : string);
 begin
-  if (pos('$ScreenReso', line) <> 0) then
-  begin
-    bDoScreenRes := true;
-    line := StringReplace(line, '$ScreenReso', screenResolution,
-      [rfReplaceAll]);
-  end;
-
-
-  if (pos('$CPU', line) <> 0) then
-  begin
-    line := StringReplace(line, '$CPUType', STCPUType, [rfReplaceAll]);
-
-
-    if (pos('$CPUSpeed', line) <> 0) then
-    begin
-      bDoCpuSpeed := true;
-      dataCs.Enter();
-      try
-        line := StringReplace(line, '$CPUSpeed', STCPUSpeed, [rfReplaceAll]);
-      finally
-        dataCs.Leave();
-      end;
-    end;
-
-    if (pos('$CPUUsage%', line) <> 0) then
-    begin
-      bDoCpuUsage := true;
-      line := StringReplace(line, '$CPUUsage%', IntToStr(STCPUUsage),
-        [rfReplaceAll]);
-    end;
-  end;
-
-  if (pos('$Temp', line) <> 0) then
-  begin
-    for x := 1 to 10 do
-    begin
-      line := StringReplace(line, '$Tempname' + IntToStr(x), TempName[x],
-        [rfReplaceAll]);
-      line := StringReplace(line, '$Temp' + IntToStr(x),
-        FloatToStr(Temperature[x], localeFormat), [rfReplaceAll]);
-    end;
-  end;
-  if (pos('$Fan', line) <> 0) then
-  begin
-    for x := 1 to 10 do
-    begin
-      line := StringReplace(line, '$Fanname' + IntToStr(x), Fanname[x],
-        [rfReplaceAll]);
-      line := StringReplace(line, '$FanS' + IntToStr(x),
-        FloatToStr(Fan[x], localeFormat), [rfReplaceAll]);
-    end;
-  end;
-
-  if (pos('$Volt', line) <> 0) then
-  begin
-    for x := 1 to 10 do
-    begin
-      line := StringReplace(line, '$Voltname' + IntToStr(x),Voltname[x],
-        [rfReplaceAll]);
-      line := StringReplace(line, '$Voltage' + IntToStr(x),
-        FloatToStr(Voltage[x], localeFormat), [rfReplaceAll]);
-    end;
-  end;
-
   if (pos('$Dnet', line) <> 0) then
   begin
     dataCs.Enter();
@@ -1735,85 +1394,19 @@ begin
   end;
 end;
 
-function TData.ReadMBM5Data : Boolean;
+procedure TData.UpdateDNetStats(Sender: TObject);
+//DISTRIBUTED STATS!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 var
-  myHandle, B, TotalCount : Integer;
-  temptemp, tempfan, tempmhz, tempvolt: Integer;
-  SharedData: PSharedData;
-begin
-  myHandle := OpenFileMapping(FILE_MAP_READ, False, '$M$B$M$5$S$D$');
-  if myHandle > 0 then
-  begin
-    SharedData := MapViewOfFile(myHandle, FILE_MAP_READ, 0, 0, 0);
-    with SharedData^ do
-    begin
-      TotalCount := sdIndex[0].Count + sdIndex[1].Count + sdIndex[2].Count +
-        sdIndex[3].Count + sdIndex[4].Count;
-      temptemp := 0;
-      tempfan := 0;
-      tempvolt := 0;
-      tempmhz := 0;
-      for B := 0 to TotalCount - 1 do
-      begin
-        with sdSensor[B] do
-        begin
-          if ssType = stTemperature then
-          begin
-            temptemp := temptemp + 1;
-            if temptemp > 11 then temptemp := 11;
-            Temperature[temptemp] := ssCurrent;
-            TempName[temptemp] := ssName;
-          end;
-          if ssType = stVoltage then
-          begin
-            tempvolt := tempvolt + 1;
-            if tempvolt > 11 then tempvolt := 11;
-            Voltage[tempvolt] := round(ssCurrent*100)/100;
-            VoltName[tempvolt] := ssName;
-          end;
-          if ssType = stFan then
-          begin
-            tempfan := tempfan + 1;
-            if tempfan > 11 then tempfan := 11;
-            Fan[tempfan] := ssCurrent;
-            FanName[tempfan] := ssName;
-          end;
-          if ssType = stMhz then
-          begin
-            tempmhz := tempmhz + 1;
-            if tempmhz > 5 then tempmhz := 5;
-            CPU[tempmhz] := ssCurrent;
-          end;
-          if ssType = stPercentage then
-          begin
-            dMbmCpuUsage := ssCurrent;
-          end;
-        end;
-      end;
-    end;
-    UnMapViewOfFile(SharedData);
-    Result := True;
-    CloseHandle(myHandle);
-  end
-  else result := false;
-end;
-
-procedure TData.UpdateMBMStats(Sender: TObject);
-//HARDDISK MOTHERBOARD MONITOR AND DISTRIBUTED STATS!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-var
-  x: Integer;
   fFile: textfile;
-  counter: Integer;
-  bMbm, bReplz: Boolean;
+  x,counter: Integer;
+  bReplz: Boolean;
   line: String;
   ScreenCount, LineCount: Integer;
   screenline: String;
   replline: String;
   sTemp: String;
-
 begin
 
-  bMbm := false;
   bReplz := false;
 
   for ScreenCount := 1 to MaxScreens do
@@ -1821,32 +1414,9 @@ begin
     for LineCount := 1 to config.height do
     begin
       screenline := config.screen[ScreenCount][LineCount].text;
-      if (not bMbm) and (pos('$Fan', screenline) <> 0) then bMbm := true;
-      if (not bMbm) and (pos('$Volt', screenline) <> 0) then bMbm := true;
-      if (not bMbm) and (pos('$Temp', screenline) <> 0) then bMbm := true;
-      if (not bMbm) and (pos('$CPUUsage%', screenline) <> 0) then bMbm := true; // used as backup.
       if (not bReplz) and (pos('$Dnet', screenline) <> 0) then bReplz := true;
     end;
   end;
-
-//cputype!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  try
-    STCPUType := cxCpu[0].Name.AsString;
-  except
-    on E: Exception do STCPUType := '[CPUType: ' + E.Message + ']';
-  end;
-
-//SCREENRESO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  if (bDoScreenRes) then
-  begin
-    screenResolution := IntToStr(Screen.DesktopWidth) + 'x' +
-      IntToStr(Screen.DesktopHeight);
-  end;
-
-//MBM5!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-  if bMbm then
-    mbmactive := ReadMBM5Data();
 
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   if bReplz then
@@ -2703,7 +2273,26 @@ end;
 
 function TData.GetGotEmail : boolean;
 begin
-  Result := EmailThread.GotEmail;
+  Result := false;
+  if assigned(EmailThread) then
+    Result := EmailThread.GotEmail;
+end;
+
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+////                                                                       ////
+////      M O T H E R B O A R D     S T A T S      P R O C E D U R E S     ////
+////                                                                       ////
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+
+function TData.GetMBMActive : boolean;
+begin
+  Result := false;
+  if assigned(MBMThread) then
+    Result := MBMThread.MBMActive;
 end;
 
 end.
