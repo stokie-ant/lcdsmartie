@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.77 $ $Date: 2006/03/07 06:06:41 $
+ *  $Revision: 1.78 $ $Date: 2006/03/14 19:47:26 $
  *****************************************************************************}
 
 interface
@@ -43,8 +43,6 @@ type
     HTTPUpdateTimer: TTimer;
     NextScreenTimer: TTimer;
     MBMUpdateTimer: TTimer;
-    GameUpdateTimer: TTimer;
-    EMailTimer: TTimer;
     ScrollFlashTimer: TTimer;
     WinampCtrl1: TWinampCtrl;
     // These are only used by us:
@@ -105,8 +103,6 @@ type
     procedure RightManualScrollTimerTimer(Sender: TObject);
     procedure MBMUpdateTimerTimer(Sender: TObject);
     procedure NextScreenTimerTimer(Sender: TObject);
-    procedure GameUpdateTimerTimer(Sender: TObject);
-    procedure EMailTimerTimer(Sender: TObject);
     procedure Credits1Click(Sender: TObject);
     procedure NextTheme1Click(Sender: TObject);
     procedure LastTheme1Click(Sender: TObject);
@@ -173,6 +169,7 @@ type
   public
     doesflash: Boolean;
     lcd: TLCD;
+    Data: TData;
     procedure DoFullDisplayDraw;
     procedure UpdateTimersState(InSetupState : boolean);
     procedure ChangeScreen(scr: Integer);
@@ -213,7 +210,6 @@ type
     bNewScreen: Boolean;
     frozen: Boolean;
     Backlight: boolean;
-    data: TData;
     NumberOfScreensToShift: Integer;
     iLastRandomTranCycle: Integer;
     ConfigFileName: String;
@@ -412,8 +408,6 @@ begin
   while RightManualScrollTimer.enabled = true do RightManualScrollTimer.enabled := false;
   while MBMUpdateTimer.enabled = true do MBMUpdateTimer.enabled := false;
   while NextScreenTimer.enabled = true do NextScreenTimer.enabled := false;
-  while GameUpdateTimer.enabled = true do GameUpdateTimer.enabled := false;
-  while EMailTimer.enabled = true do EMailTimer.enabled := false;
   while ScrollFlashTimer.enabled = true do ScrollFlashTimer.enabled := false;
   while TransitionTimer.enabled = true do TransitionTimer.enabled := false;
 
@@ -469,9 +463,8 @@ begin
   if (upcase(key)='?') or (upcase(key)='/') then
   begin
     HTTPUpdateTimer.interval := 10;
-    GameUpdateTimer.interval := 10;
-    EMailTimer.interval := 10;
     MBMUpdateTimer.interval := 10;
+    Data.RefreshDataThreads;
   end;
 end;
 
@@ -637,27 +630,11 @@ begin
   HTTPUpdateTimer.Interval := config.newsRefresh*1000*60;
 end;
 
-procedure TLCDSmartieDisplayForm.GameUpdateTimerTimer(Sender: TObject);
-begin
-  Data.updateGameStats;
-  GameUpdateTimer.Interval := 0;
-  GameUpdateTimer.Interval := config.gameRefresh*60000;
-end;
-
-
 procedure TLCDSmartieDisplayForm.MBMUpdateTimerTimer(Sender: TObject);
 begin
   Data.updateMBMStats(Sender);
   MBMUpdateTimer.Interval := 0;
   MBMUpdateTimer.Interval := config.mbmRefresh*1000;
-end;
-
-procedure TLCDSmartieDisplayForm.EMailTimerTimer(Sender: TObject);
-//MAILS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-begin
-  EMailTimer.Interval := 0;
-  EMailTimer.Interval := config.emailPeriod*60000;
-  Data.UpdateEmail;
 end;
 
 procedure TLCDSmartieDisplayForm.TransitionTimerTimer(Sender: TObject);
@@ -1072,8 +1049,6 @@ begin
   HTTPUpdateTimer.enabled := true;  // http update
   ActionsTimer.enabled := true;  // actions
   MBMUpdateTimer.enabled := true;  // mbm update
-  GameUpdateTimer.enabled := true;  // game update
-  EMailTimer.enabled := true;  // email update
   ScrollFlashTimer.enabled := true; // scroll/flash
   timerRefresh.enabled := true;  // update lcd and data
 end;
@@ -1720,8 +1695,7 @@ begin
     begin
       HTTPUpdateTimer.interval := 10;
       MBMUpdateTimer.interval := 10;
-      GameUpdateTimer.interval := 10;
-      EMailTimer.interval := 10;
+      Data.RefreshDataThreads;
     end;
 
     if pos('BacklightToggle', sAction) <> 0 then

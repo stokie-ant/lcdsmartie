@@ -2,7 +2,14 @@ unit UUtils;
 
 interface
 
-uses SyncObjs, Classes;
+uses
+  SysUtils, SyncObjs, Classes;
+
+const
+  maxArgs = 10;
+
+type
+  EExiting = Class(Exception);
 
 type
   TThreadMethod = procedure of object;
@@ -19,20 +26,27 @@ type
     destructor Destroy;  override;
   end;
 
-  Function CenterText(const sLine: String; iWidth: Integer): String;
-  procedure AddPluginsToPath;
-  procedure CreateShortcut(const sName, FileName,Args: string; uninstall: Boolean = False);
-  function errMsg(uError: Cardinal): String;
-  function decodeArgs(const str: String; const funcName: String; maxargs: Cardinal; var
-      args: Array of String; var prefix: String; var postfix: String; var
-      numArgs: Cardinal): Boolean;
-  function StrToIntN(const sStr: String; iStart: Integer; iSize: Integer): Integer;
-  function StrToFloatN(const sStr: String; iStart: Integer; iSize: Integer): double;
+Function CenterText(const sLine: String; iWidth: Integer): String;
+procedure AddPluginsToPath;
+procedure CreateShortcut(const sName, FileName,Args: string; uninstall: Boolean = False);
+function errMsg(uError: Cardinal): String;
+function decodeArgs(const str: String; const funcName: String; maxargs: Cardinal; var
+    args: Array of String; var prefix: String; var postfix: String; var
+    numArgs: Cardinal): Boolean;
+function StrToIntN(const sStr: String; iStart: Integer; iSize: Integer): Integer;
+function StrToFloatN(const sStr: String; iStart: Integer; iSize: Integer): double;
+
+function CleanString(str: String): String;
+function FileToString(sFilename: String): String;
+function stripspaces(FString: String): String;
+procedure RequiredParameters(uiArgs: Cardinal; uiMinArgs: Cardinal; uiMaxArgs: Cardinal = 0);
+function stripHtml(str: String): String;
 
 
 implementation
 
-uses Windows, SysUtils, Registry, ShlObj, ActiveX, ComObj, Forms, StrUtils;
+uses
+  Windows, Registry, ShlObj, ActiveX, ComObj, Forms, StrUtils;
 
 constructor TMyThread.Create(myMethod: TThreadMethod);
 begin
@@ -220,8 +234,6 @@ begin
 end;
 
 
-
-
 // ** This code was posted on http://www.experts-exchange.com by 'inthe'
 // ** which was based on code by 'madshi'.
 procedure CreateShortcut(const sName, FileName,Args: string; uninstall: Boolean = False);
@@ -248,7 +260,7 @@ begin
     begin
       FullPath := Dir + '\'+sName+'.lnk';
       if uninstall then
-        DeleteFile(FullPath)
+        SysUtils.DeleteFile(FullPath)
       else
         pszFileName.Save(PWChar(FullPath), False);
     end;
@@ -297,6 +309,90 @@ begin
   else
     result := sLine;
 end;
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+////                                                                       ////
+////          U T I L I T Y        F U N C T I O N  S                      ////
+////                                                                       ////
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+
+// Remove $'s from the string - this is used when an exception
+// message is inserted into the parsed string. This avoids
+// any chance of infinite recursion.
+function CleanString(str: String): String;
+begin
+  Result := StringReplace(str, '$', '', [rfReplaceAll]);
+end;
+
+function FileToString(sFilename: String): String;
+var
+  sl: TStringList;
+begin
+  sl := TStringList.Create;
+  try
+    try
+      sl.LoadFromFile(sFilename);
+      Result := sl.Text;
+    except
+      on E: Exception do Result := '[Exception: ' + E.Message + ']';
+    end;
+  finally
+    sl.Free;
+  end;
+end;
+
+function stripspaces(FString: String): String;
+begin
+  FString := StringReplace(FString, chr(10), '', [rfReplaceAll]);
+  FString := StringReplace(FString, chr(13), '', [rfReplaceAll]);
+  FString := StringReplace(FString, chr(9), ' ', [rfReplaceAll]);
+
+  while copy(fString, 1, 1) = ' ' do
+  begin
+    fString := copy(fString, 2, length(fString));
+  end;
+  while copy(fString, length(fString), 1) = ' ' do
+  begin
+    fString := copy(fString, 1, length(fString)-1);
+  end;
+
+  result := fString;
+end;
+
+
+function stripHtml(str: String): String;
+var
+  posTag, posTagEnd: Cardinal;
+begin
+  //LMB: this is not the best place to add this, but I have to make it work quickly:
+  str := StringReplace(str,'&deg;',#176{'°'},[rfIgnoreCase,rfReplaceAll]);
+  //LMB: <br> may be used as a separator, so instead of discarding, replace with space
+  str := StringReplace(str,'<br>',#32{space},[rfReplaceAll]);
+
+  repeat
+    posTag := pos('<', str);
+    if (posTag <> 0) then
+    begin
+      posTagEnd := posEx('>', str, posTag + 1);
+      if (posTagEnd <> 0) then Delete(str, posTag, posTagEnd-posTag + 1);
+    end;
+
+  until (posTag = 0);
+
+  result := str;
+end;
+
+procedure RequiredParameters(uiArgs: Cardinal; uiMinArgs: Cardinal; uiMaxArgs: Cardinal = 0);
+begin
+  if (uiArgs < uiMinArgs) then
+    raise Exception.Create('Too few parameters');
+  if (uiArgs > uiMaxArgs) then
+    raise Exception.Create('Too many parameters');
+end;
+
 
 end.
 

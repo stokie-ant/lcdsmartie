@@ -4,7 +4,7 @@ object LCDSmartieDisplayForm: TLCDSmartieDisplayForm
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsToolWindow
   Caption = 'LCD Smartie 5.3'
-  ClientHeight = 91
+  ClientHeight = 230
   ClientWidth = 228
   Color = clBtnFace
   TransparentColorValue = clBtnFace
@@ -415,13 +415,6 @@ object LCDSmartieDisplayForm: TLCDSmartieDisplayForm
     Left = 132
     Top = 176
   end
-  object GameUpdateTimer: TTimer
-    Enabled = False
-    Interval = 4000
-    OnTimer = GameUpdateTimerTimer
-    Left = 68
-    Top = 144
-  end
   object CoolTrayIcon1: TCoolTrayIcon
     CycleInterval = 0
     Hint = 'LCD Smartie 5.3'
@@ -516,12 +509,6 @@ object LCDSmartieDisplayForm: TLCDSmartieDisplayForm
     OnTimer = ActionsTimerTimer
     Left = 4
     Top = 176
-  end
-  object EMailTimer: TTimer
-    Enabled = False
-    OnTimer = EMailTimerTimer
-    Left = 100
-    Top = 144
   end
   object TransitionTimer: TTimer
     Enabled = False

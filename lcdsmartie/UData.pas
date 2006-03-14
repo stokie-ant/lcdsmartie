@@ -19,15 +19,15 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.66 $ $Date: 2006/03/13 16:58:01 $
+ *  $Revision: 1.67 $ $Date: 2006/03/14 19:47:25 $
  *****************************************************************************}
 
 
 interface
 
-uses Classes, System2, xmldom, XMLIntf, SysUtils, xercesxmldom, XMLDoc,
-  msxmldom, ComCtrls, ComObj, UUtils, IdHTTP, SyncObjs, IdPOP3, UConfig,
-  UDataNetwork, UDataDisk;
+uses Classes, xmldom, XMLIntf, SysUtils, xercesxmldom, XMLDoc,
+  msxmldom, ComCtrls, ComObj, UUtils, IdHTTP, SyncObjs, UConfig,
+  UDataEmail;
 
 const
   ticksperseconde = 1000;
@@ -38,12 +38,9 @@ const
   tickspermonth: Int64 = Int64(ticksperdag) * 30;
   ticksperyear: Int64 = Int64(ticksperdag) * 30 * 12;
   maxRssItems = 20;
-  maxArgs = 10;
   iMaxPluginFuncs = 20;
 
 type
-  EExiting = Class(Exception);
-
   TBusType = (btISA, btSMBus, btVIA686ABus, btDirectIO);
   TSMBType = (smtSMBIntel, smtSMBAMD, smtSMBALi, smtSMBNForce, smtSMBSIS);
   TSensorType = (stUnknown, stTemperature, stVoltage, stFan, stMhz, stPercentage);
@@ -55,18 +52,6 @@ type
   TSharedIndex = Record
     iType : TSensorType;                          // type of sensor
     Count : Integer;                              // number of sensor for that type
-  end;
-
-  TNetworkAdapterStats = record
-    netadaptername: String;
-    iNetTotalDown, iNetTotalUp,
-    iNetTotalDownOld, iPrevSysNetTotalDown,
-    iNetTotalUpOld, iPrevSysNetTotalUp : Int64;
-    uiNetUnicastDown, uiNetUnicastUp, uiNetNonUnicastDown,
-    uiNetNonUnicastUp,  uiNetDiscardsDown, uiNetDiscardsUp,
-    uiNetErrorsDown, uiNetErrorsUp: Cardinal;
-    dNetSpeedDownK, dNetSpeedUpK,
-    dNetSpeedDownM, dNetSpeedUpM: double;
   end;
 
   TSharedSensor = Record
@@ -107,12 +92,6 @@ type
 
   PSharedData = ^TSharedData;
 
-  TEmail = Record
-    messages: Integer;
-    lastSubject: String;
-    lastFrom: String;
-  end;
-
   TRss = Record
     url: String;
     title: Array [0..maxRssItems] of String; // 0 is all titles
@@ -123,7 +102,6 @@ type
   end;
 
   PHttp = ^TIdHttp;
-  PPop3 = ^TIdPop3;
 
   TMyProc = function(param1: pchar; param2: pchar): Pchar; stdcall;
   TFiniProc = procedure(); stdcall;
@@ -142,28 +120,6 @@ type
   end;
 
   TData = Class(TObject)
-  public
-    lcdSmartieUpdate: Boolean;    // data+main threads
-    lcdSmartieUpdateText: String; // data+main threads
-    mbmactive: Boolean;
-    isconnected: Boolean;         // data+main threads
-    gotEmail: Boolean;            // data+main threads
-    cLastKeyPressed: Char;
-    procedure ScreenStart;
-    procedure ScreenEnd;
-    procedure NewScreen(bYes: Boolean);
-    function change(line: String; qstattemp: Integer = 1;
-      bCacheResults: Boolean = false): String;
-    function CallPlugin(uiDll: Integer; iFunc: Integer;
-                    const sParam1: String; const sParam2:String) : String;
-    function FindPlugin(const sDllName: String): Cardinal;
-    procedure UpdateMBMStats(Sender: TObject);
-    procedure UpdateGameStats;
-    procedure UpdateHTTP;
-    procedure UpdateEmail;
-    constructor Create;
-    destructor Destroy; override;
-    function CanExit: Boolean;
   private
     localeFormat : TFormatSettings;
     usFormat : TFormatSettings; //this is initialized with US/English
@@ -173,20 +129,14 @@ type
     bNewScreenEvent: Boolean;
     bForceRefresh: Boolean;
     dataCs: TCriticalSection;  // data + main thread
-    dataThread, cpuThread: TMyThread;
+    fdataThread, cpuThread: TMyThread;
     replline2, replline1: String;
-    System1: Tsystem;
 
     // DLL plugins
     dlls: Array of TDll;
     uiTotalDlls: Cardinal;
     sDllResults: array of string;
     iDllResults: Integer;
-
-    // disk space
-    bDoDisks: Boolean; // cpu + main threads;
-    bDoDisk: Array[FirstDrive..LastDrive] of Boolean; // cpu + main threads
-    STHDFree, STHDTotal: Array[FirstDrive..LastDrive] of Int64; // cpu + main thread.
 
     //cpu usage
     CPUUsage: Array [1..5] of Cardinal;   //cpu thread only
@@ -195,19 +145,11 @@ type
     lastSpdUpdate: LongWord;              //cpu thread only
     iUptime: Int64;                       //cpu thread only
     iLastUptime: Cardinal;                //cpu thread only
-    STPageFree, STPageTotal: Int64;
-    STMemFree, STMemTotal: Int64;         // cpu + main thread.
     uptimereg, uptimeregs: String;        // Guarded by dataCs, cpu + main thread
-
-    // network stats
-    bDoNet: Boolean; // cpu + main threads;
-    NetworkAdapterStats : Array[0..MAXNETSTATS-1] of TNetworkAdapterStats;
-    ipaddress: String;                     //Guarded by dataCs, cpu + main thread
 
     // Begin MBM Stats - main thread only
     bDoScreenRes: Boolean;
     screenResolution: String;
-    STUsername, STComputername : String;
     STCPUType : string;
     bDoCpuSpeed: Boolean; // cpu + main threads.
     STCPUSpeed: String;                   // Guarded by dataCs, cpu + main thread
@@ -222,13 +164,6 @@ type
     VoltName: Array[1..11] of String;
     FanName: Array[1..11] of String;
 
-    // game stats
-    doGameUpdate : Boolean;
-    qstatreg1: Array[1..MaxScreens, 1..MaxLines] of String;  //Guarded by dataCs,  data+main thread
-    qstatreg2: Array[1..MaxScreens, 1..MaxLines] of String;  //Guarded by dataCs,  data+main thread
-    qstatreg3: Array[1..MaxScreens, 1..MaxLines] of String;  //Guarded by dataCs,  data+main thread
-    qstatreg4: Array[1..MaxScreens, 1..MaxLines] of String;  //Guarded by dataCs,  data+main thread
-
     // http
     doHTTPUpdate : boolean;
     httpCs: TCriticalSection;  // data + main thread
@@ -242,18 +177,10 @@ type
     foldMemSince, foldLastWU, foldActProcsWeek, foldTeam, foldScore,
       foldRank, foldWU: String;                              //Guarded by dataCs, data+main threads
 
-    // e-mail
-    doEmailUpdate : boolean;
-    mailCs: TCriticalSection;  // Protects mail, data + main thread
-    pop3Copy: PPop3;   // so we can cancel the request. Guarded by httpCs
-    mail: Array [0..9] of TEmail; // Guarded by mailCs, data+main thread
+    // email thread
+    EmailThread : TEmailDataThread;  // keep a copy for mainline "GotMail"
+    DataThreads : TList;  // of TDataThread
 
-    // utility functions
-    function FileToString(sFilename: String): String;
-    function CleanString(str: String): String;
-    function stripspaces(FString: String): String;
-    function stripHtml(str: String): String;
-    procedure RequiredParameters(uiArgs: Cardinal; uiMinArgs: Cardinal; uiMaxArgs: Cardinal = 0);
     // data thread
     procedure doDataThread;
     // other variables
@@ -269,24 +196,13 @@ type
       bCacheResults: Boolean);
     // winamp
     procedure ResolveWinampVariables(var Line: string);
-    // disk space
-    procedure ResolveDiskSpaceVariable(HDStat : THardDriveStats; var Line : string);
-    procedure ResolveDiskSpaceVariables(var Line : string);
-    procedure DiskUpdate;
     // cpu stats
     procedure ResolveCPUVariables(var Line : string);
     procedure cpuUpdate;
     procedure doCpuThread;
-    // network stats
-    procedure ResolveNetVariable(Variable : TNetworkStatistics; var Line : string);
-    procedure ResolveNetworkVariables(var Line: string);
-    procedure updateNetworkStats;
     // MBM stats
     function ReadMBM5Data : Boolean;
     procedure ResolveMBMVariables(var Line : string);
-    // game stats
-    procedure ResolveGameVariables(var Line : string; qstattemp: Integer = 1);
-    procedure GameUpdate;
     // HTTP stuff
     function getUrl(Url: String; maxfreq: Cardinal = 0): String;
     function getRss(Url: String;var titles, descs: Array of String; maxitems:
@@ -301,107 +217,43 @@ type
     procedure FetchHTTPUpdates;
     procedure HTTPUpdate;
     // e-mail stuff
-    procedure emailUpdate;
-    procedure ResolveEmailVariables(var Line : string);
+    function  GetGotEmail : boolean;
+  public
+    lcdSmartieUpdate: Boolean;    // data+main threads
+    lcdSmartieUpdateText: String; // data+main threads
+    mbmactive: Boolean;
+    isconnected: Boolean;         // data+main threads
+    cLastKeyPressed: Char;
+    procedure ScreenStart;
+    procedure ScreenEnd;
+    procedure NewScreen(bYes: Boolean);
+    function change(line: String; qstattemp: Integer = 1;
+      bCacheResults: Boolean = false): String;
+    function CallPlugin(uiDll: Integer; iFunc: Integer;
+                    const sParam1: String; const sParam2:String) : String;
+    function FindPlugin(const sDllName: String): Cardinal;
+    procedure UpdateMBMStats(Sender: TObject);
+    procedure UpdateHTTP;
+    constructor Create;
+    destructor Destroy; override;
+    function CanExit: Boolean;
+    procedure RefreshDataThreads;
+    //
+    property GotEmail : boolean read GetGotEmail;
   end;
 
 
 
 implementation
 
-uses cxCpu40, adCpuUsage, UMain, Windows, Forms, IpHlpApi,
-  IpIfConst, IpRtrMib, WinSock, Dialogs, Buttons, Graphics, ShellAPI,
+uses
+  Winsock, cxCpu40, adCpuUsage, UMain, Windows, Forms,
+  IpIfConst, Dialogs, Buttons, Graphics, ShellAPI,
   mmsystem, ExtActns, Messages, IdBaseComponent, IdComponent,
-  IdTCPConnection, IdTCPClient, IdMessageClient, IdMessage, Menus,
+  IdTCPConnection, IdTCPClient, IdMessageClient, Menus,
   ExtCtrls, Controls, StdCtrls, StrUtils, ActiveX, IdUri, DateUtils, IdGlobal,
 
-  UDataEmail, UDataGame;
-
-
-
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-////                                                                       ////
-////          U T I L I T Y        F U N C T I O N  S                      ////
-////                                                                       ////
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-
-// Remove $'s from the string - this is used when an exception
-// message is inserted into the parsed string. This avoids
-// any chance of infinite recursion.
-function TData.CleanString(str: String): String;
-begin
-  Result := StringReplace(str, '$', '', [rfReplaceAll]);
-end;
-
-function TData.FileToString(sFilename: String): String;
-var
-  sl: TStringList;
-begin
-  sl := TStringList.Create;
-  try
-    try
-      sl.LoadFromFile(sFilename);
-      Result := sl.Text;
-    except
-      on E: Exception do Result := '[Exception: ' + E.Message + ']';
-    end;
-  finally
-    sl.Free;
-  end;
-end;
-
-function TData.stripspaces(FString: String): String;
-begin
-  FString := StringReplace(FString, chr(10), '', [rfReplaceAll]);
-  FString := StringReplace(FString, chr(13), '', [rfReplaceAll]);
-  FString := StringReplace(FString, chr(9), ' ', [rfReplaceAll]);
-
-  while copy(fString, 1, 1) = ' ' do
-  begin
-    fString := copy(fString, 2, length(fString));
-  end;
-  while copy(fString, length(fString), 1) = ' ' do
-  begin
-    fString := copy(fString, 1, length(fString)-1);
-  end;
-
-  result := fString;
-end;
-
-
-function TData.stripHtml(str: String): String;
-var
-  posTag, posTagEnd: Cardinal;
-begin
-  //LMB: this is not the best place to add this, but I have to make it work quickly:
-  str := StringReplace(str,'&deg;',#176{'°'},[rfIgnoreCase,rfReplaceAll]);
-  //LMB: <br> may be used as a separator, so instead of discarding, replace with space
-  str := StringReplace(str,'<br>',#32{space},[rfReplaceAll]);
-
-  repeat
-    posTag := pos('<', str);
-    if (posTag <> 0) then
-    begin
-      posTagEnd := posEx('>', str, posTag + 1);
-      if (posTagEnd <> 0) then Delete(str, posTag, posTagEnd-posTag + 1);
-    end;
-
-  until (posTag = 0);
-
-  result := str;
-end;
-
-procedure TData.RequiredParameters(uiArgs: Cardinal; uiMinArgs: Cardinal; uiMaxArgs: Cardinal = 0);
-begin
-  if (uiArgs < uiMinArgs) then
-    raise Exception.Create('Too few parameters');
-  if (uiArgs > uiMaxArgs) then
-    raise Exception.Create('Too many parameters');
-end;
-
+  DataThread, UDataNetwork, UDataDisk, UDataGame, UDataMemory;
 
 
 
@@ -419,6 +271,7 @@ constructor TData.Create;
 var
   status: Integer;
   WSAData: TWSADATA;
+  DataThread : TDataThread;
 begin
   inherited;
 
@@ -442,18 +295,37 @@ begin
     // they reported that it only occured when they ran a slow 16 bit app
   end;
 
-  doEmailUpdate := True;
+  DataThreads := TList.Create;
+
+  EmailThread := TEmailDataThread.Create;  // keep a copy for mainline GotEmail call
+  EmailThread.Resume;
+  DataThreads.Add(EmailThread);
+
+  DataThread := TGameDataThread.Create;
+  DataThread.Resume;
+  DataThreads.Add(DataThread);
+
+  DataThread := TNetworkDataThread.Create;
+  DataThread.Resume;
+  DataThreads.Add(DataThread);
+
+  DataThread := TDiskDataThread.Create;
+  DataThread.Resume;
+  DataThreads.Add(DataThread);
+
+  DataThread := TMemoryDataThread.Create;
+  DataThread.Resume;
+  DataThreads.Add(DataThread);
+
   doHTTPUpdate := True;
-  doGameUpdate := True;
 
   httpCs := TCriticalSection.Create();
   rssCs := TCriticalSection.Create();
-  mailCs := TCriticalSection.Create();
   dataCs := TCriticalSection.Create();
 
   // Start data collection thread
-  dataThread := TMyThread.Create(self.doDataThread);
-  dataThread.Resume;
+  fdataThread := TMyThread.Create(self.doDataThread);
+  fdataThread.Resume;
 
   cpuThread := TMyThread.Create(self.doCpuThread);
   cpuThread.Resume;
@@ -462,10 +334,14 @@ end;
 function TData.CanExit: Boolean;
 var
   uiDll: Cardinal;
+  Loop : longint;
 begin
+  for Loop := 0 to DataThreads.Count-1 do begin
+    TDataThread(DataThreads[Loop]).Terminate;
+  end;
 
-  if (Assigned(dataThread)) then
-    dataThread.Terminate;
+  if (Assigned(fdataThread)) then
+    fdataThread.Terminate;
 
   if (Assigned(cpuThread)) then
   begin
@@ -508,8 +384,6 @@ begin
       try
         if (httpCopy <> nil) then
           httpCopy^.DisconnectSocket();
-        if (pop3Copy <> nil) then
-          pop3Copy^.DisconnectSocket();
       except
       end;
     finally
@@ -517,30 +391,37 @@ begin
     end;
   end;
 
-
   Result := True;
   { code not needed - yet as the above method of cancelling seems to work
-  if (Assigned(dataThread)) then
+  if (Assigned(fdataThread)) then
   begin
     Wait for 30 seconds and then just give up.
-    if (dataThread.Exited.WaitFor(30000) <> wrSignaled) then
+    if (fdataThread.Exited.WaitFor(30000) <> wrSignaled) then
       Result := False;
   end; }
 end;
 
 destructor TData.Destroy;
+var
+  Loop : longint;
 begin
 
-  if (Assigned(dataThread)) then
+  if (Assigned(fdataThread)) then
   begin
-    dataThread.WaitFor();
-    dataThread.Free();
+    fdataThread.WaitFor();
+    fdataThread.Free();
 
     if Assigned(httpCs) then httpCs.Free;
     if Assigned(rssCs) then rssCs.Free;
-    if Assigned(mailCs) then mailCs.Free;
     if Assigned(dataCs) then dataCs.Free;
   end;
+
+  for Loop := 0 to DataThreads.Count-1 do begin
+    TDataThread(DataThreads[Loop]).WaitFor;
+    TDataThread(DataThreads[Loop]).Free;
+  end;
+
+  DataThreads.Free;
 
   WSACleanup();
 
@@ -548,7 +429,18 @@ begin
 end;
 
 
+procedure TData.RefreshDataThreads;
+var
+  Loop : longint;
+begin
+  for Loop := 0 to DataThreads.Count-1 do begin
+    TDataThread(DataThreads[Loop]).Refresh;
+  end;
+end;
+
 procedure TData.NewScreen(bYes: Boolean);
+var
+  Loop : longint;
 begin
   bNewScreenEvent := bYes;
   if (bYes) then
@@ -561,8 +453,9 @@ begin
     CPUUsagePos := 1;
     CPUUsageCount := 0;
     bDoScreenRes := false;
-    bDoDisks := false;
-    bDoNet := false;
+    for Loop := 0 to DataThreads.Count-1 do begin
+      TDataThread(DataThreads[Loop]).Active := false;
+    end;
   end;
 end;
 
@@ -581,25 +474,27 @@ function TData.change(line: String; qstattemp: Integer = 1;
    bCacheResults: Boolean = false): String;
 label
   endChange;
+var
+  Loop : longint;
 begin
   try
+    for Loop := 0 to DataThreads.Count-1 do begin
+      TDataThread(DataThreads[Loop]).ResolveVariables(Line);
+    end;
+
     ResolvePluginVariables(line, qstattemp, bCacheResults);
     if (Pos('$', line) = 0) then goto endChange;
     ResolveOtherVariables(Line);
     ResolveCPUVariables(Line);
-    ResolveDiskSpaceVariables(Line);
-    ResolveEmailVariables(Line);
     ResolveFileVariables(Line);
     ResolveLCDFunctionVariables(Line);
     if (Pos('$', line) = 0) then goto endChange;
     ResolveWinampVariables(line);
     ResolveMBMVariables(Line);
-    ResolveGameVariables(Line,qstattemp);
     ResolveSETIVariables(Line);
     ResolveFoldingVariables(Line);
     if (Pos('$', line) = 0) then goto endChange;
     ResolveTimeVariable(Line);
-    ResolveNetworkVariables(line);
     ResolveRSSVariables(Line);
     ResolveStringFunctionVariables(Line);
 endChange:
@@ -620,12 +515,10 @@ begin
 
   try
     try
-      while (not dataThread.Terminated) do
+      while (not fdataThread.Terminated) do
       begin
-        if (not dataThread.Terminated) and (doHTTPUpdate) then HTTPUpdate;
-        if (not dataThread.Terminated) and (doEmailUpdate) then emailUpdate;
-        if (not dataThread.Terminated) and (doGameUpdate) then GameUpdate;
-        if (not dataThread.Terminated) then sleep(1000);
+        if (not fdataThread.Terminated) and (doHTTPUpdate) then HTTPUpdate;
+        if (not fdataThread.Terminated) then sleep(1000);
       end;
     finally
       CoUninitialize;
@@ -1565,97 +1458,6 @@ begin
 end;
 
 
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-////                                                                       ////
-////      D I S K    S P A C E        P R O C E D U R E S                  ////
-////                                                                       ////
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-
-procedure TData.ResolveDiskSpaceVariable(HDStat : THardDriveStats; var Line : string);
-var
-  prefix, postfix: String;
-  args: Array [1..maxArgs] of String;
-  numArgs: Cardinal;
-  letter : Cardinal;
-  MyKey : string;
-begin
-  MyKey := HDKeys[HDStat];
-  while decodeArgs(Line, MyKey, maxArgs, args, prefix, postfix, numargs) do begin
-    try
-      RequiredParameters(numargs, 1, 1);
-      letter := ord(upcase(args[1][1]));
-      Line := prefix;
-//    MyDataLock.Enter();
-      bDoDisk[letter] := true;
-      try
-        case HDStat of
-          dsHDFree : Line := Line + IntToStr(STHDFree[letter]);
-          dsHDUsed : Line := Line + IntToStr(STHDTotal[letter]-STHDFree[letter]);
-          dsHDTotal : Line := Line + IntToStr(STHDTotal[letter]);
-          dsHDFreePercent : begin
-            if (STHDTotal[letter]*STHDFree[letter] <> 0) then
-              Line := Line + intToStr(round(100/STHDTotal[letter]*STHDFree[letter]))
-            else
-              Line := Line + '0';
-          end;
-          dsHDUsedPercent : begin
-            if (STHDTotal[letter]*(STHDTotal[letter]-STHDFree[letter]) <> 0) then
-              Line := Line + intToStr(round(100/STHDTotal[letter]*(STHDTotal[letter]-STHDFree[letter])))
-            else
-              Line := Line + '0';
-          end;
-          dsHDFreeGigaBytes : Line := Line + IntToStr(round((STHDFree[letter])/1024));
-          dsHDUsedGigaBytes : Line := Line + IntToStr(round((STHDTotal[letter]-STHDFree[letter])/1024));
-          dsHDTotalGigaBytes : Line := Line + IntToStr(round(STHDTotal[letter]/1024));
-        end; // case
-      finally
-//      MyDataLock.Leave();
-      end;
-      Line := Line + postfix;
-    except
-      on E: Exception do Line := prefix + '['+ CleanString(MyKey + ': ' + E.Message) + ']' + postfix;
-    end;
-  end;
-end;
-
-procedure TData.ResolveDiskSpaceVariables(var Line : string);
-var
-  HDStats : THardDriveStats;
-begin
-  if (pos(HDKey, Line) > 0) then begin
-    bDoDisks := true;
-    for HDStats := FirstHDStat to LastHDStat do begin
-      ResolveDiskSpaceVariable(HDStats,Line);
-    end;
-  end;
-end;
-
-procedure TData.DiskUpdate;
-var
-  letter: Cardinal;
-begin
-// HD space!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  if bDoDisks then
-  begin
-    for letter := FirstDrive to LastDrive do
-    begin
-      try
-        if (bDoDisk[letter]) then
-        begin
-          bDoDisk[letter] := false;
-          STHDFree[letter] := system1.diskfreespace(chr(letter)) div (1024*1024);
-          STHDTotal[letter] := system1.disktotalspace(chr(letter)) div (1024*1024);
-        end;
-      except
-      end;
-    end;
-  end;
-end;
-
-
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -1667,43 +1469,7 @@ end;
 
 
 procedure TData.ResolveCPUVariables(var Line : string);
-var
-  mem: Int64;
 begin
-  line := StringReplace(line, '$MemFree', IntToStr(STMemFree), [rfReplaceAll]);
-  line := StringReplace(line, '$MemUsed', IntToStr(STMemTotal-STMemFree), [rfReplaceAll]);
-  line := StringReplace(line, '$MemTotal', IntToStr(STMemTotal), [rfReplaceAll]);
-  line := StringReplace(line, '$PageFree', IntToStr(STPageFree), [rfReplaceAll]);
-  line := StringReplace(line, '$PageUsed', IntToStr(STPageTotal-STPageFree), [rfReplaceAll]);
-  line := StringReplace(line, '$PageTotal', IntToStr(STPageTotal), [rfReplaceAll]);
-
-  if pos('$MemF%', line) <> 0 then
-  begin
-    if (STMemTotal > 0) then mem := round(100/STMemTotal*STMemfree)
-    else mem := 0;
-    line := StringReplace(line, '$MemF%', IntToStr(mem), [rfReplaceAll]);
-  end;
-  if pos('$MemU%', line) <> 0 then
-  begin
-    if (STMemTotal > 0) then mem := round(100/STMemTotal*(STMemTotal-STMemfree))
-    else mem := 0;
-    line := StringReplace(line, '$MemU%', IntToStr(mem), [rfReplaceAll]);
-  end;
-
-  if pos('$PageF%', line) <> 0 then
-  begin
-    if (STPageTotal > 0) then mem := round(100/STPageTotal*STPagefree)
-    else mem := 0;
-    line := StringReplace(line, '$PageF%', IntToStr(mem), [rfReplaceAll]);
-  end;
-
-  if pos('$PageU%', line) <> 0 then
-  begin
-    if (STPageTotal > 0) then mem := round(100/STPageTotal*(STPageTotal-STPagefree))
-    else mem := 0;
-    line := StringReplace(line, '$PageU%', IntToStr(mem), [rfReplaceAll]);
-  end;
-
   if (pos('$UpTim', line) <> 0) then
   begin
     dataCs.Enter();
@@ -1866,32 +1632,12 @@ end;
 
 // Runs in data thread
 procedure TData.doCpuThread;
-var
-  count: Integer; // used to update net/memory/disk stats every second.
 begin
-  count := 0;
   coinitialize(nil);
 
   while (not cpuThread.Terminated) do
   begin
     cpuUpdate();
-
-    Inc(count);
-    if (not cpuThread.Terminated) and (count > 4) then
-    begin
-      count := 0;
-      updateNetworkStats();
-      if (not cpuThread.Terminated) then
-        DiskUpdate();
-      if (not cpuThread.Terminated) then
-        STMemfree := system1.availPhysmemory div (1024 * 1024);
-      if (not cpuThread.Terminated) then
-        STMemTotal := system1.totalPhysmemory div (1024 * 1024);
-      if (not cpuThread.Terminated) then
-        STPageTotal := system1.totalPageFile div (1024 * 1024);
-      if (not cpuThread.Terminated) then
-        STPageFree := system1.AvailPageFile div (1024 * 1024);
-    end;
 
     if (not cpuThread.Terminated) then sleep(250);
   end;
@@ -1903,205 +1649,16 @@ end;
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 ////                                                                       ////
-////      N E T W O R K         S T A T S      P R O C E D U R E S         ////
-////                                                                       ////
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-procedure TData.ResolveNetVariable(Variable : TNetworkStatistics; var Line : string);
-var
-  VarKey : string;
-  args: Array [1..maxArgs] of String;
-  prefix, postfix: String;
-  numArgs: Cardinal;
-  adapterNum: Cardinal;
-begin
-  VarKey := NetworkStatisticsKeys[Variable];
-  while decodeArgs(Line, VarKey, maxArgs, args, prefix, postfix, numargs) do begin
-    try
-      RequiredParameters(numargs, 1, 1);
-      adapterNum := StrToInt(args[1]);
-      Line := prefix;
-      dataCs.Enter();
-      with NetworkAdapterStats[adapterNum] do begin
-        try
-          case Variable of
-            nsNetAdapter : Line := Line + netadaptername;
-            nsNetDownK : Line := Line + FloatToStrF(Round(iNetTotalDown/1024*10)/10,ffFixed, 18, 1, localeFormat);
-            nsNetUpK : Line := Line + FloatToStrF(Round(iNetTotalUp/1024*10)/10,ffFixed, 18, 1, localeFormat);
-            nsNetDownM : Line := Line + FloatToStrF(Round((iNetTotalDown div 1024)/1024*10)/10,ffFixed, 18, 1, localeFormat);
-            nsNetUpM : Line := Line + FloatToStrF(Round((iNetTotalUp div 1024)/1024*10)/10,ffFixed, 18, 1, localeFormat);
-            nsNetDownG : Line := Line + FloatToStrF(Round((iNetTotalDown div (1024*1024))/1024*10)/10,ffFixed, 18, 1, localeFormat);
-            nsNetUpG : Line := Line + FloatToStrF(Round((iNetTotalUp div (1024*1024))/1024*10)/10,ffFixed, 18, 1, localeFormat);
-            nsNetErrDown : Line := Line + IntToStr(uiNetErrorsDown);
-            nsNetErrUp : Line := Line + IntToStr(uiNetErrorsUp);
-            nsNetErrTot : Line := Line + IntToStr(uiNetErrorsDown + uiNetErrorsUp);
-            nsNetUniDown : Line := Line + IntToStr(uiNetUnicastDown);
-            nsNetUniUp : Line := Line + IntToStr(uiNetUnicastUp);
-            nsNetUniTot : Line := Line + IntToStr(uiNetUnicastUp + uiNetUnicastDown);
-            nsNetNuniDown : Line := Line + IntToStr(uiNetNonUnicastDown);
-            nsNetNuniUp : Line := Line + IntToStr(uiNetNonUnicastUp);
-            nsNetNuniTot : Line := Line + IntToStr(uiNetNonUnicastUp + uiNetNonUnicastDown);
-            nsNetPackTot : Line := Line + IntToStr(Int64(uiNetNonUnicastUp) + uiNetNonUnicastDown + uiNetUnicastDown + uiNetUnicastUp);
-            nsNetDiscDown : Line := Line + IntToStr(uiNetDiscardsDown);
-            nsNetDiscUp : Line := Line + IntToStr(uiNetDiscardsUp);
-            nsNetDiscTot : Line := Line + IntToStr(uiNetDiscardsUp + uiNetDiscardsDown);
-            nsNetSpDownK : Line := Line + FloatToStrF(dNetSpeedDownK, ffFixed, 18, 1, localeFormat);
-            nsNetSpUpK : Line := Line + FloatToStrF(dNetSpeedUpK, ffFixed, 18, 1, localeFormat);
-            nsNetSpDownM : Line := Line + FloatToStrF(dNetSpeedDownM, ffFixed, 18, 1, localeFormat);
-            nsNetSpUpM : Line := Line + FloatToStrF(dNetSpeedUpM, ffFixed, 18, 1, localeFormat);
-          end;
-        finally
-          dataCs.Leave();
-        end;
-      end;
-      Line := Line + postfix;
-    except
-      on E: Exception do Line := prefix + '[' + CleanString(VarKey + ': ' + E.Message) + ']' + postfix;
-    end;
-  end;
-end;
-
-procedure TData.ResolveNetworkVariables(var Line: string);
-var
-  NetStatLoop : TNetworkStatistics;
-begin
-  if (pos(NetKeyPrefix, Line) = 0) then exit;
-
-  bDoNet := true;
-  if (pos(NetIPAddressKey, Line) <> 0) then begin
-    dataCs.Enter();
-    try
-      Line := StringReplace(Line, NetIPAddressKey, IPAddress, [rfReplaceAll]);
-    finally
-      dataCs.Leave();
-    end;
-  end;
-
-  for NetStatLoop := FirstNetworkStat to LastNetworkStat do begin
-    ResolveNetVariable(NetStatLoop,Line);
-  end;
-end;
-
-procedure TData.updateNetworkStats;
-//NETWORKS STATS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-var
-  Size: ULONG;
-  IntfTable: PMibIfTable;
-  AdapterNumber: Integer;
-  MibRow: TMibIfRow;
-  phoste: PHostEnt;
-  Buffer: Array [0..100] of char;
-  maxEntries: Cardinal;
-
-begin
-
-  if (bDoNet) then
-  begin
-
-    GetHostName(Buffer, Sizeof(Buffer));
-    phoste := GetHostByName(buffer);
-    dataCs.Enter();
-    try
-      if phoste = nil then ipaddress := '127.0.0.1'
-      else ipaddress := StrPas(inet_ntoa(PInAddr(phoste^.h_addr_list^)^));
-    finally
-      dataCs.Leave();
-    end;
-
-    Size := 0;
-    if GetIfTable(nil, Size, True) <> ERROR_INSUFFICIENT_BUFFER then  Exit;
-      //raise Exception.Create('getiftable failed with ' + errMsg(GetLastError));
-
-    if (Size < sizeof( TMibIftable)) then Exit;
-//          raise Exception.Create('size too small');
-    IntfTable := AllocMem(Size);
- //   if (IntfTable = nil) then
-   //     raise Exception.Create('no memory?');
-
-    try
-      if (IntfTable <> nil) and (GetIfTable(IntfTable, Size, True) = NO_ERROR) then
-      begin
-        maxEntries := min(IntfTable^.dwNumEntries,MAXNETSTATS);
-        for AdapterNumber := 0 to maxEntries - 1 do with NetworkAdapterStats[AdapterNumber] do
-        begin
-        {$R-}MibRow := IntfTable.Table[AdapterNumber];{$R+}
-        // Ignore everything except ethernet cards
-        //if MibRow.dwType <> MIB_IF_TYPE_ETHERNET then Continue;
-
-          dataCs.Enter();
-          try
-            netadaptername := stripspaces(PChar(@MibRow.bDescr[0]));
-          finally
-            dataCs.Leave();
-          end;
-
-          // System values have a limit of 4Gb, so keep our own values,
-          // and track overflows.
-          if (MibRow.dwInOctets < iPrevSysNetTotalDown) then
-          begin
-            // System values have wrapped (at 4Gb)
-            iNetTotalDown := iNetTotalDown + MibRow.dwInOctets
-              + (MAXDWORD - iPrevSysNetTotalDown)
-          end
-          else
-          begin
-            iNetTotalDown := iNetTotalDown + (MibRow.dwInOctets - iPrevSysNetTotalDown);
-          end;
-          iPrevSysNetTotalDown := MibRow.dwInOctets;
-
-          // System values have a limit of 4Gb, so keep our own values,
-          // and track overflows.
-          if (MibRow.dwOutOctets < iPrevSysNetTotalUp) then
-          begin
-            // System values have wrapped (at 4Gb)
-            iNetTotalUp := iNetTotalUp + MibRow.dwOutOctets + (MAXDWORD - iPrevSysNetTotalUp)
-          end
-          else
-          begin
-            iNetTotalUp := iNetTotalUp + (MibRow.dwOutOctets - iPrevSysNetTotalUp);
-          end;
-          iPrevSysNetTotalUp := MibRow.dwOutOctets;
-          uiNetUnicastDown := MibRow.dwInUcastPkts;
-          uiNetUnicastUp := MibRow.dwOutUcastPkts;
-          uiNetNonUnicastDown := MibRow.dwInNUcastPkts;
-          uiNetNonUnicastUp := MibRow.dwOutNUcastPkts;
-          uiNetDiscardsDown := MibRow.dwInDiscards;
-          uiNetDiscardsUp := MibRow.dwOutDiscards;
-          uiNetErrorsDown := MibRow.dwInErrors;
-          uiNetErrorsUp := MibRow.dwOutErrors;
-          dNetSpeedDownK := round((iNetTotalDown-iNetTotalDownOld)/1024*10)/10;
-          dNetSpeedUpK := round((iNetTotalUp-iNetTotalupOld)/1024*10)/10;
-          dNetSpeedDownM := round(((iNetTotalDown-iNetTotalDownOld) div 1024)/1024*10)/10;
-          dNetSpeedUpM := round(((iNetTotalUp-iNetTotalUpOld) div 1024)/1024*10)/10;
-          iNetTotalDownOld := iNetTotalDown;
-          iNetTotalUpOld := iNetTotalUp;
-        end;
-      end;
-    finally
-      if (IntfTable <> nil) then FreeMem(IntfTable);
-    end;
-  end;
-end;
-
-
-
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-////                                                                       ////
 ////      M O T H E R B O A R D     S T A T S      P R O C E D U R E S     ////
 ////                                                                       ////
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
 
-
 procedure TData.ResolveMBMVariables(var Line : string);
 var
   X : byte;
 begin
-  line := StringReplace(line, '$Username', STUsername, [rfReplaceAll]);
-  line := StringReplace(line, '$Computername', STcomputername, [rfReplaceAll]);
   if (pos('$ScreenReso', line) <> 0) then
   begin
     bDoScreenRes := true;
@@ -2272,9 +1829,6 @@ begin
     end;
   end;
 
-  STComputername := system1.Computername;
-  STUsername := system1.Username;
-
 //cputype!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   try
     STCPUType := cxCpu[0].Name.AsString;
@@ -2378,167 +1932,6 @@ begin
     end;
   end;
 end;
-
-
-
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-////                                                                       ////
-////      G A M E         U P D A T E        P R O C E D U R E S           ////
-////                                                                       ////
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-
-procedure TData.ResolveGameVariables(var Line : string; qstattemp: Integer = 1);
-var
-  GameCount : TGameType;
-begin
-  for GameCount := MinGame to MaxGame do begin
-    if (pos(GameKeys[GameCount], line) <> 0) then begin
-      dataCs.Enter();
-      try
-        line := StringReplace(line, GameKeys[GameCount]+'1', qstatreg1[activeScreen,
-          qstattemp], [rfReplaceAll]);
-        line := StringReplace(line, GameKeys[GameCount]+'2', qstatreg2[activeScreen,
-          qstattemp], [rfReplaceAll]);
-        line := StringReplace(line, GameKeys[GameCount]+'3', qstatreg3[activeScreen,
-          qstattemp], [rfReplaceAll]);
-        line := StringReplace(line, GameKeys[GameCount]+'4', qstatreg4[activeScreen,
-          qstattemp], [rfReplaceAll]);
-      finally
-        dataCs.Leave();
-      end;
-    end;
-  end;
-end;
-
-// Runs in data thread
-procedure TData.GameUpdate;
-//GAMESTATS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-var
-  templine, templine2, templine4, line: String;
-  templine1: Array [1..80] of String;
-  counter, counter2: Integer;
-  fFile2: textfile;
-  ScreenCount, LineCount: Integer;
-  GameCount : TGameType;
-  screenline: String;
-  srvr: String;
-  sTemp: String;
-begin
-  doGameUpdate := False;
-
-  for ScreenCount := 1 to MaxScreens do
-  begin
-    for LineCount := 1 to config.height do
-    begin
-      try
-        screenline := config.screen[ScreenCount][LineCount].text;
-        for GameCount := MinGame to MaxGame do begin
-          if (pos(GameKeys[GameCount], screenline) <> 0) then begin
-            if (dataThread.Terminated) then raise EExiting.Create('');
-            srvr := GameCommandLineParams[GameCount];
-            winexec(PChar(extractfilepath(application.exename) +
-              'qstat.exe -P -of txt'
-              + intToStr(ScreenCount) + '-' + intToStr(LineCount) +
-              '.txt -sort F ' + srvr + ' ' + config.gameServer[ScreenCount, LineCount]), sw_hide);
-
-            templine := '';
-            sleep(1000);
-
-            assignfile (fFile2, extractfilepath(application.exename) + 'txt' +
-              IntToStr(ScreenCount) + '-' + IntToStr(LineCount) + '.txt');
-            try
-              reset (fFile2);
-              counter := 1;
-              while (not eof(fFile2)) and (counter < 80) do
-              begin
-                readln (fFile2, templine1[counter]);
-                counter := counter + 1;
-              end;
-            finally
-              closefile(fFile2);
-            end;
-
-            if (pos(GameKeys[GameCount]+'1', screenline) <> 0) then
-            begin
-              sTemp := copy(templine1[2], pos(' / ', templine1[2]) +
-                3, length(templine1[2]));
-              sTemp := stripspaces(copy(sTemp, pos(' ', sTemp) + 1, length(sTemp)));
-
-              dataCs.Enter();
-              qstatreg1[ScreenCount, LineCount] := sTemp;
-              dataCs.Leave();
-            end;
-
-            if (pos(GameKeys[GameCount]+'2', screenline) <> 0) then
-            begin
-              sTemp := copy(templine1[2], pos(':', templine1[2]), length(templine1[2]));
-              sTemp := copy(sTemp, pos('/', sTemp) + 4, length(sTemp));
-              sTemp := copy(sTemp, 1, pos('/', sTemp)-5);
-              sTemp := stripspaces(copy(sTemp, pos(' ', sTemp) + 1, length(sTemp)));
-
-              dataCs.Enter();
-              qstatreg2[ScreenCount, LineCount] := sTemp;
-              dataCs.Leave();
-            end;
-
-            if (pos(GameKeys[GameCount]+'3', screenline) <> 0) then
-            begin
-              sTemp := stripspaces(copy(templine1[2], pos(' ', templine1[2]),
-                   length(templine1[2])));
-              sTemp := stripspaces(copy(sTemp, 1, pos('/', sTemp) + 3));
-
-              dataCs.Enter();
-              qstatreg3[ScreenCount, LineCount] := sTemp;
-              dataCs.Leave();
-            end;
-
-            if (pos(GameKeys[GameCount]+'4', screenline) <> 0) then
-            begin
-              sTemp := '';
-              for counter2 := 1 to counter-3 do
-              begin
-                line := stripspaces(templine1[counter2 + 2]);
-                templine2 := stripspaces(copy(copy(line, pos('s ', line) + 1,
-                  length(line)), pos('s ', line) + 2, length(line)));
-                templine4 := stripspaces(copy(line, 2, pos(' frags ',
-                  line)-1));
-                line := templine2 + ':' + templine4 + ',';
-                sTemp := sTemp + line;
-              end;
-              dataCs.Enter();
-              qstatreg4[ScreenCount, LineCount] := sTemp;
-              dataCs.Leave();
-            end;
-          end;
-        end;  // gamecount
-      except
-        on EExiting do raise;
-        on E: Exception do
-        begin
-          dataCs.Enter();
-          try
-            qstatreg1[ScreenCount, LineCount] := '[Exception: ' + E.Message + ']';
-            qstatreg2[ScreenCount, LineCount] := '[Exception: ' + E.Message + ']';
-            qstatreg3[ScreenCount, LineCount] := '[Exception: ' + E.Message + ']';
-            qstatreg4[ScreenCount, LineCount] := '[Exception: ' + E.Message + ']';
-          finally
-            dataCs.Leave();
-          end;
-        end;
-      end;  // try/except
-    end;  // linecount
-  end;  // screencount
-end;
-
-procedure TData.UpdateGameStats;
-begin
-  doGameUpdate := True;
-end;
-
-
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -2703,14 +2096,14 @@ begin
         end;
         HTTP.ReadTimeout := 30000;  // 30 seconds
 
-        if (dataThread.Terminated) then raise EExiting.Create('');
+        if (fdataThread.Terminated) then raise EExiting.Create('');
 
         httpCs.Enter();
         httpCopy := @HTTP;
         httpCs.Leave();
         sl.Text := HTTP.Get(Url);
         // the get call can block for a long time so check if smartie is exiting
-        if (dataThread.Terminated) then raise EExiting.Create('');
+        if (fdataThread.Terminated) then raise EExiting.Create('');
 
         sl.savetofile(Filename);
       end;
@@ -2725,14 +2118,14 @@ begin
   except
     on E: EIdHTTPProtocolException do
     begin
-      if (dataThread.Terminated) then raise EExiting.Create('');
+      if (fdataThread.Terminated) then raise EExiting.Create('');
       if (E.ReplyErrorCode <> 304) then   // 304=Not Modified.
         raise;
     end;
 
     else
     begin
-      if (dataThread.Terminated) then raise EExiting.Create('');
+      if (fdataThread.Terminated) then raise EExiting.Create('');
       raise;
     end;
   end;
@@ -2762,7 +2155,7 @@ begin
   // the application is stopped and started quickly.
   if (maxfreq = 0) then maxfreq := config.newsRefresh;
   RssFileName := getUrl(Url, maxfreq);
-  if (dataThread.Terminated) then raise EExiting.Create('');
+  if (fdataThread.Terminated) then raise EExiting.Create('');
 
   // Parse the Xml data
   if FileExists(RssFilename) then
@@ -2820,7 +2213,7 @@ begin
   begin
     if (rss[counter].url <> '') then
     begin
-      if (dataThread.Terminated) then raise EExiting.Create('');
+      if (fdataThread.Terminated) then raise EExiting.Create('');
 
       try
         items := getRss(rss[counter].url, titles,
@@ -2843,7 +2236,7 @@ begin
             sWhole := sWhole + titles[counter2] + ':' +
               descs[counter2] + ' | ';
 
-            if (dataThread.Terminated) then raise EExiting.Create('');
+            if (fdataThread.Terminated) then raise EExiting.Create('');
           end;
           rss[counter].whole := sWhole;
           rss[counter].title[0] := sAllTitles;
@@ -2981,7 +2374,7 @@ begin
     FileName := getUrl(
       'http://setiathome2.ssl.berkeley.edu/fcgi-bin/fcgi?cmd=user_xml&email='
       + config.setiEmail, 12*60);
-    if (dataThread.Terminated) then raise EExiting.Create('');
+    if (fdataThread.Terminated) then raise EExiting.Create('');
 
     // Parse the Xml data
     if FileExists(Filename) then
@@ -3161,21 +2554,21 @@ begin
   if (DoNewsUpdate[huLCDSmartie]) then
   begin
     DoNewsUpdate[huLCDSmartie] := False;
-    if (dataThread.Terminated) then raise EExiting.Create('');
+    if (fdataThread.Terminated) then raise EExiting.Create('');
     DoLCDSmartieHTTPUpdate();
   end;
 
   if DoNewsUpdate[huSETI] then
   begin
     DoNewsUpdate[huSETI] := False;
-    if (dataThread.Terminated) then raise EExiting.Create('');
+    if (fdataThread.Terminated) then raise EExiting.Create('');
     DoSETIHTTPUpdate();
   end;
 
   if DoNewsUpdate[huFolding] then
   begin
     DoNewsUpdate[huFolding] := False;
-    if (dataThread.Terminated) then raise EExiting.Create('');
+    if (fdataThread.Terminated) then raise EExiting.Create('');
     DoFoldingHTTPUpdate();
   end;
 end;
@@ -3308,146 +2701,9 @@ end;
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-
-// Runs in data thread
-procedure TData.emailUpdate;
-var
-  CheckForMail: array[0..9] of boolean;
-  AccountLoop,ScreenLoop,LineLoop : integer;
-  screenline: String;
-  pop3: TIdPOP3;
-  msg: TIdMessage;
-  myGotEmail: Boolean;
-  messages: Integer;
-
+function TData.GetGotEmail : boolean;
 begin
-  doEmailUpdate := False;
-
-  // figure out which accounts we have to check
-  for AccountLoop := 0 to MaxEmailAccounts-1 do
-    CheckForMail[AccountLoop] := false;
-
-  for ScreenLoop := 1 to MaxScreens do
-  begin
-    for LineLoop := 1 to config.height do
-    begin
-        screenline := config.screen[ScreenLoop][LineLoop].text;
-        for AccountLoop := 0 to MaxEmailAccounts-1 do
-        begin
-          if (pos(EmailCountKey + IntToStr(AccountLoop), screenline) <> 0)
-            or (pos(EmailSubjectKey + IntToStr(AccountLoop), screenline) <> 0)
-            or (pos(EmailFromKey + IntToStr(AccountLoop), screenline) <> 0) then
-          begin
-            CheckForMail[AccountLoop] := true;
-          end;
-        end;
-    end;
-  end;
-
-  myGotEmail := False;
-  // now go check the active accounts
-  for AccountLoop := 0 to MaxEmailAccounts-1 do
-  begin
-    if CheckForMail[AccountLoop] then
-    begin
-      if (dataThread.Terminated) then raise EExiting.Create('');
-      try
-        if config.pop[AccountLoop].server <> '' then
-        begin
-          pop3 := TIdPOP3.Create(nil);
-          msg := TIdMessage.Create(nil);
-          pop3.host := config.pop[AccountLoop].server;
-          pop3.MaxLineAction := maSplit;
-          pop3.ReadTimeout := 15000;   //15 seconds
-          pop3.username := config.pop[AccountLoop].user;
-          pop3.Password := config.pop[AccountLoop].pword;
-
-          try
-            httpCs.Enter();
-            pop3Copy := @pop3;
-            httpCs.Leave();
-            if (dataThread.Terminated) then raise EExiting.Create('');
-            pop3.Connect(30000);   // 30 seconds
-            if (dataThread.Terminated) then raise EExiting.Create('');
-
-            messages := pop3.CheckMessages;
-            mailCs.Enter();
-            try
-              mail[AccountLoop].messages := messages;
-              if (mail[AccountLoop].messages > 0) and
-                (pop3.RetrieveHeader(mail[AccountLoop].messages, msg)) then
-              begin
-                mail[AccountLoop].lastSubject := msg.Subject;
-                mail[AccountLoop].lastFrom := msg.From.Name;
-              end
-              else
-              begin
-                mail[AccountLoop].lastSubject := '[none]';
-                mail[AccountLoop].lastFrom := '[none]';
-              end;
-            finally
-              mailCs.Leave();
-            end;
-
-          finally
-            httpCs.Enter();
-            pop3Copy := nil;
-            httpCs.Leave();
-            pop3.Disconnect;
-            pop3.Free;
-            msg.Free;
-          end;
-
-          if (mail[AccountLoop].messages > 0) then myGotEmail := true;
-
-        end;
-
-      except
-        on EExiting do raise;
-        on E: Exception do
-        begin
-          mailCs.Enter();
-          try
-            mail[AccountLoop].messages := 0;
-            mail[AccountLoop].lastSubject := '[email: ' + E.Message + ']';
-            mail[AccountLoop].lastFrom := '[email: ' + E.Message + ']';
-          finally
-            mailCs.Leave();
-          end;
-        end;
-      end;
-    end;
-  end;
-
-  gotEmail := myGotEmail;
-end;
-
-procedure TData.ResolveEmailVariables(var Line : string);
-var
-  AccountLoop : integer;
-begin
-  if (pos(EmailKeyPrefix, line) <> 0) then
-  begin
-    mailCs.Enter();
-    try
-      for AccountLoop := 0 to MaxEmailAccounts-1 do
-      begin
-        line := StringReplace(line, EmailCountKey + IntToStr(AccountLoop),
-          IntToStr(mail[AccountLoop].messages), [rfReplaceAll]);
-        line := StringReplace(line, EmailSubjectKey + IntToStr(AccountLoop),
-          mail[AccountLoop].lastSubject, [rfReplaceAll]);
-        line := StringReplace(line, EmailFromKey + IntToStr(AccountLoop),
-          mail[AccountLoop].lastFrom, [rfReplaceAll]);
-      end;
-    finally
-      mailCs.Leave();
-    end;
-  end;
-end;
-
-procedure TData.UpdateEmail;
-begin
-  doEmailUpdate := True;
+  Result := EmailThread.GotEmail;
 end;
 
 end.

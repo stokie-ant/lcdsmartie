@@ -19,7 +19,7 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.53 $ $Date: 2006/03/13 15:10:43 $
+ *  $Revision: 1.54 $ $Date: 2006/03/14 19:47:26 $
  *****************************************************************************}
 
 interface
@@ -1391,10 +1391,9 @@ begin
 
   SaveScreen(ScreenSpinEdit.Value);
   LCDSmartieDisplayForm.HTTPUpdateTimer.interval := 1000;
-  LCDSmartieDisplayForm.GameUpdateTimer.interval := 1000;
   LCDSmartieDisplayForm.MBMUpdateTimer.interval := 1000;
   LCDSmartieDisplayForm.ScrollFlashTimer.interval := config.scrollPeriod;
-  LCDSmartieDisplayForm.EMailTimer.interval := 800;
+  LCDSmartieDisplayForm.Data.RefreshDataThreads;
 
   config.save();
 
