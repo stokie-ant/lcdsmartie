@@ -19,38 +19,20 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.68 $ $Date: 2006/03/14 21:20:56 $
+ *  $Revision: 1.69 $ $Date: 2006/03/15 14:32:33 $
  *****************************************************************************}
 
 
 interface
 
-uses Classes, xmldom, XMLIntf, SysUtils, xercesxmldom, XMLDoc,
-  msxmldom, ComCtrls, ComObj, UUtils, IdHTTP, SyncObjs, UConfig,
-  UDataEmail, UDataMBM;
+uses
+  Classes, SysUtils, SyncObjs,
+  UDataEmail, UDataMBM, UDataSmartie;
 
 const
-  maxRssItems = 20;
   iMaxPluginFuncs = 20;
 
 type
-  THTTPUpdateType = (huRSS,huLCDSmartie,huSETI,huFolding);
-const
-  FirstHTTPUpdate = huRSS;
-  LastHTTPUpdate = huFolding;
-type
-
-  TRss = Record
-    url: String;
-    title: Array [0..maxRssItems] of String; // 0 is all titles
-    desc: Array [0..maxRssItems] of String;   // 0 is all descs
-    items: Cardinal;
-    whole: String;                            // all titles and descs
-    maxfreq: Cardinal;                        // hours - 0 means no restriction
-  end;
-
-  PHttp = ^TIdHttp;
-
   TMyProc = function(param1: pchar; param2: pchar): Pchar; stdcall;
   TFiniProc = procedure(); stdcall;
   TBridgeProc = function(iBridgeId: Integer; iFunc: Integer; param1: pchar; param2: pchar): Pchar; stdcall;
@@ -70,14 +52,12 @@ type
   TData = Class(TObject)
   private
     localeFormat : TFormatSettings;
-    usFormat : TFormatSettings; //this is initialized with US/English
     cacheresult_lastFindPlugin: Cardinal;
     cache_lastFindPlugin: String;
     uiScreenStartTime: Cardinal; // time that new start refresh started (used by plugin cache code)
     bNewScreenEvent: Boolean;
     bForceRefresh: Boolean;
     dataCs: TCriticalSection;  // data + main thread
-    fdataThread : TMyThread;
     replline2, replline1: String;
 
     // DLL plugins
@@ -86,26 +66,12 @@ type
     sDllResults: array of string;
     iDllResults: Integer;
 
-    // http
-    doHTTPUpdate : boolean;
-    httpCs: TCriticalSection;  // data + main thread
-    httpCopy: PHttp;   // so we can cancel the request. Guarded by httpCs
-    DoNewsUpdate: Array [THTTPUpdateType] of Boolean;  // data thread only
-    rssCs: TCriticalSection;  // protecting rss & rssCs
-    rss: Array of TRss;    // Guarded by rssCs, data + main thread
-    rssEntries: Cardinal;  // Guarded by rssCs, data + main thread
-    setiNumResults, setiCpuTime, setiAvgCpu, setiLastResult, setiUserTime,
-      setiTotalUsers, setiRank, setiShareRank, setiMoreWU: String; //Guarded by dataCs, data+main threads
-    foldMemSince, foldLastWU, foldActProcsWeek, foldTeam, foldScore,
-      foldRank, foldWU: String;                              //Guarded by dataCs, data+main threads
-
     // email thread
     EmailThread : TEmailDataThread;  // keep a copy for mainline "GotMail"
     MBMThread : TMBMDataThread;  // for finding MBM cpu speed
+    LCDSmartieUpdateThread : TSmartieDataThread;  // IsConnected call
     DataThreads : TList;  // of TDataThread
 
-    // data thread
-    procedure doDataThread;
     // other variables
     procedure ResolveOtherVariables(var line: String);
     procedure ResolveTimeVariable(var line: String);
@@ -121,27 +87,16 @@ type
     procedure ResolveWinampVariables(var Line: string);
     // dist.net
     procedure ResolveDNetVariables(var Line : string);
+
+    // Connected (using LCDSmartie connection)
+    function  GetIsConnected : boolean;
+    function  GetLCDSmartieUpdate : boolean;
+    function  GetLCDSmartieUpdateText : string;
     // MBM stats
     function  GetMBMActive : boolean;
-    // HTTP stuff
-    function getUrl(Url: String; maxfreq: Cardinal = 0): String;
-    function getRss(Url: String;var titles, descs: Array of String; maxitems:
-      Cardinal; maxfreq: Cardinal = 0): Cardinal;
-    procedure DoRSSHTTPUpdate;
-    procedure ResolveRSSVariables(var line: String);
-    procedure DoLCDSmartieHTTPUpdate;
-    procedure DoSETIHTTPUpdate;
-    procedure ResolveSETIVariables(var Line : string);
-    procedure DoFoldingHTTPUpdate;
-    procedure ResolveFoldingVariables(var Line : string);
-    procedure FetchHTTPUpdates;
-    procedure HTTPUpdate;
     // e-mail stuff
     function  GetGotEmail : boolean;
   public
-    lcdSmartieUpdate: Boolean;    // data+main threads
-    lcdSmartieUpdateText: String; // data+main threads
-    isconnected: Boolean;         // data+main threads
     cLastKeyPressed: Char;
     procedure ScreenStart;
     procedure ScreenEnd;
@@ -152,7 +107,6 @@ type
                     const sParam1: String; const sParam2:String) : String;
     function FindPlugin(const sDllName: String): Cardinal;
     procedure UpdateDNetStats(Sender: TObject);
-    procedure UpdateHTTP;
     constructor Create;
     destructor Destroy; override;
     function CanExit: Boolean;
@@ -160,21 +114,28 @@ type
     //
     property GotEmail : boolean read GetGotEmail;
     property MBMActive : boolean read GetMBMActive;
+    property IsConnected : boolean read GetIsConnected;
+    property LCDSmartieUpdate : boolean read GetLCDSmartieUpdate;
+    property LCDSmartieUpdateText : string read GetLCDSmartieUpdateText;
   end;
 
 
 
 implementation
 
-uses
-  Winsock, UMain, Windows, Forms,
-  IpIfConst, Dialogs, Buttons, Graphics, ShellAPI,
+{
   mmsystem, ExtActns, Messages, IdBaseComponent, IdComponent,
-  IdTCPConnection, IdTCPClient, IdMessageClient, Menus,
-  ExtCtrls, Controls, StdCtrls, StrUtils, ActiveX, IdUri, DateUtils, IdGlobal,
+  IdTCPConnection, IdTCPClient, IdMessageClient,
+  ExtCtrls, Controls, StdCtrls, ActiveX, IdUri, IdGlobal,
+  xmldom, XMLIntf, xercesxmldom, XMLDoc,
+  msxmldom, ComCtrls, ComObj,
+}
 
+uses
+  Windows, Forms, Dialogs, StrUtils, Winsock,
+  UMain, UUtils, UConfig,
   DataThread, UDataNetwork, UDataDisk, UDataGame, UDataMemory,
-  UDataCPU;
+  UDataCPU, UDataSeti, UDataFolding, UDataRSS;
 
 
 
@@ -197,15 +158,12 @@ begin
   inherited;
 
   GetLocaleFormatSettings(LOCALE_SYSTEM_DEFAULT, localeFormat);
-  GetLocaleFormatSettings($0409,                usFormat);  //English/USA
 
   status := WSAStartup(MAKEWORD(2,0), WSAData);
   if status <> 0 then
      raise Exception.Create('WSAStartup failed');
 
-  isconnected := false;
   uiTotalDlls := 0;
-  lcdSmartieUpdate := False;
 
   DataThreads := TList.Create;
 
@@ -237,15 +195,23 @@ begin
   DataThread.Resume;
   DataThreads.Add(DataThread);
 
-  doHTTPUpdate := True;
+  DataThread := TSetiDataThread.Create;
+  DataThread.Resume;
+  DataThreads.Add(DataThread);
 
-  httpCs := TCriticalSection.Create();
-  rssCs := TCriticalSection.Create();
+  DataThread := TFoldingDataThread.Create;
+  DataThread.Resume;
+  DataThreads.Add(DataThread);
+
+  DataThread := TRSSDataThread.Create;
+  DataThread.Resume;
+  DataThreads.Add(DataThread);
+
+  LCDSmartieUpdateThread := TSmartieDataThread.Create;
+  LCDSmartieUpdateThread.Resume;
+  DataThreads.Add(LCDSmartieUpdateThread);
+
   dataCs := TCriticalSection.Create();
-
-  // Start data collection thread
-  fdataThread := TMyThread.Create(self.doDataThread);
-  fdataThread.Resume;
 end;
 
 function TData.CanExit: Boolean;
@@ -256,9 +222,6 @@ begin
   for Loop := 0 to DataThreads.Count-1 do begin
     TDataThread(DataThreads[Loop]).Terminate;
   end;
-
-  if (Assigned(fdataThread)) then
-    fdataThread.Terminate;
 
   // close all plugins
   for uiDll:=1 to uiTotalDlls do
@@ -285,30 +248,7 @@ begin
   end;
   uiTotalDlls := 0;
 
-
-  // Cancel outstanding http/pop3 requests
-  if (Assigned(httpCs)) then
-  begin
-    httpCs.Enter();
-    try
-      try
-        if (httpCopy <> nil) then
-          httpCopy^.DisconnectSocket();
-      except
-      end;
-    finally
-      httpCs.Leave();
-    end;
-  end;
-
   Result := True;
-  { code not needed - yet as the above method of cancelling seems to work
-  if (Assigned(fdataThread)) then
-  begin
-    Wait for 30 seconds and then just give up.
-    if (fdataThread.Exited.WaitFor(30000) <> wrSignaled) then
-      Result := False;
-  end; }
 end;
 
 destructor TData.Destroy;
@@ -316,20 +256,12 @@ var
   Loop : longint;
 begin
 
-  if (Assigned(fdataThread)) then
-  begin
-    fdataThread.WaitFor();
-    fdataThread.Free();
-
-    if Assigned(httpCs) then httpCs.Free;
-    if Assigned(rssCs) then rssCs.Free;
-    if Assigned(dataCs) then dataCs.Free;
-  end;
-
   for Loop := 0 to DataThreads.Count-1 do begin
     TDataThread(DataThreads[Loop]).WaitFor;
     TDataThread(DataThreads[Loop]).Free;
   end;
+
+  if Assigned(dataCs) then dataCs.Free;
 
   DataThreads.Free;
 
@@ -396,11 +328,8 @@ begin
     if (Pos('$', line) = 0) then goto endChange;
     ResolveWinampVariables(line);
     ResolveDNetVariables(Line);
-    ResolveSETIVariables(Line);
-    ResolveFoldingVariables(Line);
     if (Pos('$', line) = 0) then goto endChange;
     ResolveTimeVariable(Line);
-    ResolveRSSVariables(Line);
     ResolveStringFunctionVariables(Line);
 endChange:
   except
@@ -412,28 +341,6 @@ endChange:
   line := StringReplace(line, Chr($D), '', [rfReplaceAll]);
   result := line;
 end;
-
-// Runs in data thread
-procedure TData.doDataThread;
-begin
-  coinitialize(nil);
-
-  try
-    try
-      while (not fdataThread.Terminated) do
-      begin
-        if (not fdataThread.Terminated) and (doHTTPUpdate) then HTTPUpdate;
-        if (not fdataThread.Terminated) then sleep(1000);
-      end;
-    finally
-      CoUninitialize;
-    end;
-  except
-    on E: EExiting do Exit;
-    else raise;
-  end;
-end;
-
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -1506,766 +1413,6 @@ end;
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 ////                                                                       ////
-////      H T T P         U P D A T E        P R O C E D U R E S           ////
-////                                                                       ////
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-
-
-procedure TData.ResolveRSSVariables(var line: String);
-var
-  args: Array [1..maxArgs] of String;
-  prefix, postfix: String;
-  numArgs: Cardinal;
-  RSSFeedIndex: Cardinal;
-  found: Boolean;
-  ItemIndex : Cardinal;
-begin
-  // $Rss(URL, TYPE [, NUM [, FREQ]])
-  //   TYPE is t=title, d=desc, b=both
-  //   NUM is 1 for item 1, etc. 0 means all (default). [when TYPR is b, then 0 is used]
-  //   FREQ is the number of hours that must past before checking stream again.
-  while decodeArgs(line, '$Rss', maxArgs, args, prefix, postfix, numargs)
-    do
-  begin
-    RequiredParameters(numargs, 2, 4);
-    if (numargs < 3) then
-    begin
-      args[3] := '0';
-    end;
-
-    // locate entry
-    RSSFeedIndex := 0;
-    found := false;
-    rssCs.Enter();
-    try
-      while (RSSFeedIndex < rssEntries) and (not found) do
-      begin
-        if (rss[RSSFeedIndex].url = args[1]) then found := true
-        else Inc(RSSFeedIndex);
-      end;
-
-      try
-        if (found) and (rss[RSSFeedIndex].items > 0)
-          and (Cardinal(StrToInt(args[3])) <= rss[RSSFeedIndex].items) then
-        begin
-
-          ItemIndex := StrToInt(args[3]);
-          case (args[2][1]) of
-            't' : line := prefix + rss[RSSFeedIndex].title[ItemIndex] + postfix;  // title
-            'd' : line := prefix + rss[RSSFeedIndex].desc[ItemIndex] + postfix; // description
-            'b' : begin
-              if (ItemIndex > 0) then  // both
-                line := prefix + rss[RSSFeedIndex].title[ItemIndex] + ':' +
-                        rss[RSSFeedIndex].desc[ItemIndex] + postfix
-              else
-                line := prefix + rss[RSSFeedIndex].whole + postfix;
-            end;
-            else line := prefix + '[Error: Rss: bad arg #2]' + postfix;
-          end; // case
-
-        end
-        else
-        begin
-          if (found) then
-          begin
-
-            // We know about the Rss entry but have no data...
-            if (copy(rss[RSSFeedIndex].whole, 1, 6) = '[Rss: ') then
-            begin
-              // Assume an error message is in whole
-              line := prefix + rss[RSSFeedIndex].whole + postfix;
-            end
-            else
-            begin
-              line := prefix + '[Rss: No Data]' + postfix;
-            end;
-
-          end
-          else
-          begin
-
-            // Nothing known yet - waiting for data thread...
-            line := prefix + '[Rss: Waiting for data]' + postfix;
-
-          end;
-        end;
-      except
-        on E: Exception do line := prefix + '[Rss: '
-          + CleanString(E.Message) + ']' + postfix;
-      end;
-    finally
-      rssCs.Leave();
-    end;
-  end;
-
-end;
-
-// Download URL and return file location.
-// Just return cached file if newer than maxfreq minutes.
-function TData.getUrl(Url: String; maxfreq: Cardinal = 0): String;
-var
-  HTTP: TIdHTTP;
-  sl: TStringList;
-  Filename: String;
-  lasttime: TDateTime;
-  toonew: Boolean;
-  sRest: String;
-  iRest: Integer;
-  i: Integer;
-
-begin
-  // Generate a filename for the cached Rss stream.
-  Filename := copy(LowerCase(Url),1,30);
-  sRest := copy(LowerCase(Url),30,length(Url)-30);
-
-  Filename := StringReplace(Filename, 'http://', '_', [rfReplaceAll]);
-  Filename := StringReplace(Filename, '\', '_', [rfReplaceAll]);
-  Filename := StringReplace(Filename, ':', '_', [rfReplaceAll]);
-  Filename := StringReplace(Filename, '/', '_', [rfReplaceAll]);
-  Filename := StringReplace(Filename, '"', '_', [rfReplaceAll]);
-  Filename := StringReplace(Filename, '|', '_', [rfReplaceAll]);
-  Filename := StringReplace(Filename, '<', '_', [rfReplaceAll]);
-  Filename := StringReplace(Filename, '>', '_', [rfReplaceAll]);
-  Filename := StringReplace(Filename, '&', '_', [rfReplaceAll]);
-  Filename := StringReplace(Filename, '?', '_', [rfReplaceAll]);
-  Filename := StringReplace(Filename, '=', '_', [rfReplaceAll]);
-  Filename := StringReplace(Filename, '.', '_', [rfReplaceAll]);
-  Filename := StringReplace(Filename, '%', '_', [rfReplaceAll]);
-  iRest := 0;
-  for i := 1 to length(sRest) do
-  begin
-     iRest := iRest + (Ord(sRest[i]) xor i);
-  end;
-  Filename := Filename + IntToHex(iRest, 0);
-  Filename :=  extractfilepath(application.exename) + 'cache\\' + Filename + '.cache';
-
-  try
-    toonew := false;
-    sl := TStringList.create;
-    HTTP := TIdHTTP.Create(nil);
-
-    try
-      // Only fetch new data if it's newer than the cache files' date.
-      // and if it's older than maxfreq hours.
-      if FileExists(Filename) then
-      begin
-        lasttime := FileDateToDateTime(FileAge(Filename));
-        if (MinutesBetween(Now, lasttime) < maxfreq) then toonew := true;
-        HTTP.Request.LastModified := lasttime;
-      end;
-
-      if (not toonew) then
-      begin
-        HTTP.HandleRedirects := True;
-        if (config.httpProxy <> '') and (config.httpProxyPort <> 0) then
-        begin
-          HTTP.ProxyParams.ProxyServer := config.httpProxy;
-          HTTP.ProxyParams.ProxyPort := config.httpProxyPort;
-        end;
-        HTTP.ReadTimeout := 30000;  // 30 seconds
-
-        if (fdataThread.Terminated) then raise EExiting.Create('');
-
-        httpCs.Enter();
-        httpCopy := @HTTP;
-        httpCs.Leave();
-        sl.Text := HTTP.Get(Url);
-        // the get call can block for a long time so check if smartie is exiting
-        if (fdataThread.Terminated) then raise EExiting.Create('');
-
-        sl.savetofile(Filename);
-      end;
-    finally
-      httpCs.Enter();
-      httpCopy := nil;
-      httpCs.Leave();
-
-      sl.Free;
-      HTTP.Free;
-    end;
-  except
-    on E: EIdHTTPProtocolException do
-    begin
-      if (fdataThread.Terminated) then raise EExiting.Create('');
-      if (E.ReplyErrorCode <> 304) then   // 304=Not Modified.
-        raise;
-    end;
-
-    else
-    begin
-      if (fdataThread.Terminated) then raise EExiting.Create('');
-      raise;
-    end;
-  end;
-
-  // Even if we fail to download - give the filename so they can use the old data.
-  Result := filename;
-end;
-
-function TData.getRss(Url: String; var titles, descs: Array of String;
-  maxitems: Cardinal; maxfreq: Cardinal = 0): Cardinal;
-var
-  StartItemNode : IXMLNode;
-  ANode : IXMLNode;
-  XMLDoc : IXMLDocument;
-  items: Cardinal;
-  rssFilename: String;
-  x: Integer;
-
-begin
-  items := 0;
-
-  //
-  // Fetch the Rss data
-  //
-
-  // Use newRefresh as a maxfreq if none given - this is mostly in case
-  // the application is stopped and started quickly.
-  if (maxfreq = 0) then maxfreq := config.newsRefresh;
-  RssFileName := getUrl(Url, maxfreq);
-  if (fdataThread.Terminated) then raise EExiting.Create('');
-
-  // Parse the Xml data
-  if FileExists(RssFilename) then
-  begin
-    XMLDoc := LoadXMLDocument(RssFilename);
-    //XMLDoc.Options  := [doNodeAutoCreate,  doNodeAutoIndent, doAttrNull, doAutoPrefix, doNamespaceDecl];
-    //XMLDoc.FileName := 'bbc.xml';
-    //XMLDoc.Active := True;
-
-    // This only works with some RSS feeds
-    StartItemNode :=
-      XMLDoc.DocumentElement.ChildNodes.First.ChildNodes.FindNode('item');
-    if (StartItemNode = nil) then
-    begin
-      // Would like to use FindNode at top level but it wasn't working so
-      // we'll do it long hand.
-      with XMLDoc.DocumentElement.ChildNodes do
-      begin
-        x := 0;
-        while (x < Count) and (Get(x).NodeName <> 'item') do Inc(x);
-        if (x < Count) then StartItemNode := Get(x);
-      end;
-    end;
-    if (StartItemNode = nil) then raise
-      Exception.Create('unable to parse Rss');
-
-    ANode := StartItemNode;
-
-    repeat
-      Inc(items);
-      if (ANode.ChildNodes['title'] <> nil) then titles[items] :=
-        stripHtml(ANode.ChildNodes['title'].Text)
-      else titles[items] := 'Unknown';
-
-      if (ANode.ChildNodes['title'] <> nil) then descs[items] :=
-        stripHtml(ANode.ChildNodes['description'].Text)
-      else descs[items] := 'Unknown';
-
-      ANode := ANode.NextSibling;
-    until (ANode = nil) or (items >= maxItems);
-  end;
-
-  Result := items;
-end;
-
-procedure TData.DoRSSHTTPUpdate;
-var
-  counter, counter2: Integer;
-  sAllTitles, sAllDescs, sWhole: String;
-  items: Cardinal;
-  titles: Array[0..maxRssItems] of String;
-  descs: Array[0..maxRssItems] of String;
-begin
-  for counter := 0 to rssEntries-1 do
-  begin
-    if (rss[counter].url <> '') then
-    begin
-      if (fdataThread.Terminated) then raise EExiting.Create('');
-
-      try
-        items := getRss(rss[counter].url, titles,
-          descs, maxRssItems, rss[counter].maxfreq);
-
-        rssCs.Enter();
-        try
-          rss[counter].items := items;
-
-          sAllTitles := '';
-          sAllDescs := '';
-          sWhole := '';
-          for counter2 := 1 to items do
-          begin
-            rss[counter].title[counter2] := titles[counter2];
-            rss[counter].desc[counter2] := descs[counter2];
-
-            sAllTitles := sAllTitles + titles[counter2] + ' | ';
-            sAllDescs := sAllDescs + descs[counter2] + ' | ';
-            sWhole := sWhole + titles[counter2] + ':' +
-              descs[counter2] + ' | ';
-
-            if (fdataThread.Terminated) then raise EExiting.Create('');
-          end;
-          rss[counter].whole := sWhole;
-          rss[counter].title[0] := sAllTitles;
-          rss[counter].desc[0] := sAllDescs;
-        finally
-          rssCs.Leave();
-        end;
-      except
-        on EExiting do raise;
-        on E: Exception do
-        begin
-          rssCs.Enter();
-          try
-            rss[counter].items := 0;
-            rss[counter].title[0] := '[Rss: ' + E.Message + ']';
-            rss[counter].desc[0] := '[Rss: ' + E.Message + ']';
-            rss[counter].whole := '[Rss: ' + E.Message + ']';
-          finally
-            rssCs.Leave();
-          end;
-        end;
-      end;
-    end;
-  end;
-end;
-
-procedure TData.DoLCDSmartieHTTPUpdate;
-var
-  iPos1, iPosPoint1, iPosPoint2, iPosPoint3: Integer;
-  iVersMaj, iVersMin, iVersRel, iVersBuild: Integer;
-  bUpgrade: Boolean;
-  versionline : string;
-  sFilename: String;
-begin
-  try
-    sFilename := getUrl('http://lcdsmartie.sourceforge.net/version2.txt',96*60);
-    versionline := FileToString(sFilename);
-  except
-    on E: EExiting do raise;
-    else versionline := '';
-  end;
-  versionline := StringReplace(versionline, chr(10), '', [rfReplaceAll]);
-  versionline := StringReplace(versionline, chr(13), '', [rfReplaceAll]);
-
-  if (Length(versionline) > 1) and (versionline[1]=':') then
-  begin
-    isconnected := true;
-
-    iPos1 := PosEx(':', versionline, 2);
-
-    if (iPos1 <> 0) then
-    begin
-      iPosPoint1 := PosEx('.', versionline, 2);
-      iPosPoint2 := PosEx('.', versionline, iPosPoint1 + 1);
-      iPosPoint3 := PosEx('.', versionline, iPosPoint2 + 1);
-
-      if (iPosPoint1 <> 0) and (iPosPoint2 <> 0) and (iPosPoint3 <> 0)
-        and (iPosPoint3 < iPos1) then
-      begin
-        try
-          iVersMaj := StrToInt(MidStr(versionline, 2, iPosPoint1-2));
-          iVersMin := StrToInt(MidStr(versionline, iPosPoint1+1, iPosPoint2-(iPosPoint1+1)));
-          iVersRel := StrToInt(MidStr(versionline, iPosPoint2+1, iPosPoint3-(iPosPoint2+1)));
-          iVersBuild:= StrToInt(MidStr(versionline, iPosPoint3+1, iPos1-(iPosPoint3+1)));
-        except
-          iVersMaj := 0;
-          iVersMin := 0;
-          iVersRel := 0;
-          iVersBuild := 0;
-        end;
-
-        bUpgrade := false;
-        if (iVersMaj > OurVersMaj) then bUpgrade := true;
-
-        if (iVersMaj = OurVersMaj) then
-        begin
-          if (iVersMin > OurVersMin) then bUpgrade := true;
-
-          if (iVersMin = OurVersMin) then
-          begin
-            if (iVersRel > OurVersRel) then bUpgrade := true;
-
-            if (iVersRel = OurVersRel) then
-            begin
-              if (iVersBuild > OurVersBuild) then bUpgrade := true;
-            end;
-          end;
-        end;
-
-        if (bUpgrade) then
-        begin
-          if (lcdSmartieUpdateText <> MidStr(versionline, iPos1+1, 62)) then
-          begin
-            lcdSmartieUpdateText := MidStr(versionline, iPos1+1, 62);
-            lcdSmartieUpdate := True;
-          end;
-        end;
-      end;
-    end;
-  end;
-end;
-
-procedure TData.ResolveSETIVariables(var Line : string);
-begin
-  if (pos('$SETI', line) <> 0) then
-  begin
-    dataCs.Enter();
-    try
-      line := StringReplace(line, '$SETIResults', setiNumResults, [rfReplaceAll]);
-      line := StringReplace(line, '$SETICPUTime', setiCpuTime, [rfReplaceAll]);
-      line := StringReplace(line, '$SETIAverage', setiAvgCpu, [rfReplaceAll]);
-      line := StringReplace(line, '$SETILastresult', setiLastResult, [rfReplaceAll]);
-      line := StringReplace(line, '$SETIusertime', setiUserTime, [rfReplaceAll]);
-      line := StringReplace(line, '$SETItotalusers', setiTotalUsers, [rfReplaceAll]);
-      line := StringReplace(line, '$SETIrank', setiRank, [rfReplaceAll]);
-      line := StringReplace(line, '$SETIsharingrank', setiShareRank, [rfReplaceAll]);
-      line := StringReplace(line, '$SETImoreWU', setiMoreWU, [rfReplaceAll]);
-    finally
-      dataCs.Leave();
-    end;
-  end;
-end;
-
-procedure TData.DoSETIHTTPUpdate;
-var
-  StartItemNode : IXMLNode;
-  ANode : IXMLNode;
-  XMLDoc : IXMLDocument;
-  Filename: String;
-
-begin
-
-  // Fetch the Rss data  (but not more oftern than 24 hours)
-  try
-    FileName := getUrl(
-      'http://setiathome2.ssl.berkeley.edu/fcgi-bin/fcgi?cmd=user_xml&email='
-      + config.setiEmail, 12*60);
-    if (fdataThread.Terminated) then raise EExiting.Create('');
-
-    // Parse the Xml data
-    if FileExists(Filename) then
-    begin
-      XMLDoc := LoadXMLDocument(Filename);
-
-      StartItemNode := XMLDoc.DocumentElement.ChildNodes.FindNode('userinfo');
-      ANode := StartItemNode;
-
-      dataCs.Enter();
-      try
-        setiNumResults := ANode.ChildNodes['numresults'].Text;
-        setiCpuTime := ANode.ChildNodes['cputime'].Text;
-        setiAvgCpu := ANode.ChildNodes['avecpu'].Text;
-        setiLastResult := ANode.ChildNodes['lastresulttime'].Text;
-        setiUserTime := ANode.ChildNodes['usertime'].Text;
-      finally
-        dataCs.Leave();
-      end;
-      // not used: 'regdate'
-
-      // not used: group info.
-
-      StartItemNode := XMLDoc.DocumentElement.ChildNodes.FindNode('rankinfo');
-      ANode := StartItemNode;
-
-      dataCs.Enter();
-      try
-        setiTotalUsers := ANode.ChildNodes['ranktotalusers'].Text;
-        setiRank := ANode.ChildNodes['rank'].Text;
-        setiShareRank := ANode.ChildNodes['num_samerank'].Text;
-        // SETI provides floats not dependent on user's locale, but always in US format
-        setiMoreWU := FloatToStr(
-          100-StrToFloat(ANode.ChildNodes['top_rankpct'].Text, usFormat),
-          localeFormat);
-      finally
-        dataCs.Leave();
-      end;
-    end;
-  except
-    on EExiting do raise;
-    on E: Exception do
-    begin
-      dataCs.Enter();
-      try
-        setiNumResults := '[Seti: ' + E.Message + ']';
-        setiCpuTime := '[Seti: ' + E.Message + ']';
-        setiAvgCpu := '[Seti: ' + E.Message + ']';
-        setiLastResult := '[Seti: ' + E.Message + ']';
-        setiUserTime := '[Seti: ' + E.Message + ']';
-        setiTotalUsers := '[Seti: ' + E.Message + ']';
-        setiRank := '[Seti: ' + E.Message + ']';
-        setiShareRank := '[Seti: ' + E.Message + ']';
-        setiMoreWU := '[Seti: ' + E.Message + ']';
-      finally
-        dataCs.Leave();
-      end;
-    end;
-  end;
-end;
-
-procedure TData.ResolveFoldingVariables(var Line : string);
-begin
-  if (pos('$FOLD', line) <> 0) then
-  begin
-    dataCs.Enter();
-    try
-      line := StringReplace(line, '$FOLDmemsince', foldMemSince, [rfReplaceAll]);
-      line := StringReplace(line, '$FOLDlastwu', foldLastWU, [rfReplaceAll]);
-      line := StringReplace(line, '$FOLDactproc', foldActProcsWeek, [rfReplaceAll]);
-      line := StringReplace(line, '$FOLDteam', foldTeam, [rfReplaceAll]);
-      line := StringReplace(line, '$FOLDscore', foldScore, [rfReplaceAll]);
-      line := StringReplace(line, '$FOLDrank', foldRank, [rfReplaceAll]);
-      line := StringReplace(line, '$FOLDwu', foldWU, [rfReplaceAll]);
-    finally
-      dataCs.Leave();
-    end;
-  end;
-end;
-
-procedure TData.DoFoldingHTTPUpdate;
-var
-  tempstr,tempstr2 : string;
-  sFilename: String;
-begin
-  try
-    sFilename := getUrl(
-      'http://vspx27.stanford.edu/cgi-bin/main.py?qtype=userpage&username='
-      + config.foldUsername, config.newsRefresh);
-    tempstr := FileToString(sFilename);
-
-    tempstr := StringReplace(tempstr,'&deg;',#176{'°'},[rfIgnoreCase,rfReplaceAll]);//LMB
-    tempstr := StringReplace(tempstr, '&amp;', '&', [rfReplaceAll]);
-    tempstr := StringReplace(tempstr, chr(10), '', [rfReplaceAll]);
-    tempstr := StringReplace(tempstr, chr(13), '', [rfReplaceAll]);
-
-    dataCs.Enter();
-    foldMemSince := '[FOLDmemsince: not supported]';
-    dataCs.Leave();
-
-    tempstr2 := copy(tempstr, pos('Date of last work unit', tempstr) + 22,
-      500);
-    tempstr2 := copy(tempstr2, 1, pos('</TR>', tempstr2)-1);
-    tempstr2 := stripspaces(stripHtml(tempstr2));
-    dataCs.Enter();
-    foldLastWU := tempstr2;
-    dataCs.Leave();
-
-    tempstr2 := copy(tempstr, pos('Total score', tempstr) + 11, 100);
-    tempstr2 := copy(tempstr2, 1, pos('</TR>', tempstr2)-1);
-    tempstr2 := stripspaces(stripHtml(tempstr2));
-    dataCs.Enter();
-    foldScore := tempstr2;
-    dataCs.Leave();
-
-    tempstr2 := copy(tempstr, pos('Overall rank (if points are combined)',
-      tempstr) + 37, 100);
-    tempstr2 := copy(tempstr2, 1, pos('of', tempstr2)-1);
-    tempstr2 := stripspaces(stripHtml(tempstr2));
-    dataCs.Enter();
-    foldRank := tempstr2;
-    dataCs.Leave();
-
-    tempstr2 := copy(tempstr, pos('Active processors (within 7 days)',
-      tempstr) + 33, 100);
-    tempstr2 := copy(tempstr2, 1, pos('</TR>', tempstr2)-1);
-    tempstr2 := stripspaces(stripHtml(tempstr2));
-    dataCs.Enter();
-    foldActProcsWeek := tempstr2;
-    dataCs.Leave();
-
-    tempstr2 := copy(tempstr, pos('Team', tempstr) + 4, 500);
-    tempstr2 := copy(tempstr2, 1, pos('</TR>', tempstr2)-1);
-    tempstr2 := stripspaces(stripHtml(tempstr2));
-    dataCs.Enter();
-    foldTeam := tempstr2;
-    dataCs.Leave();
-
-    tempstr2 := copy(tempstr, pos('WU', tempstr) + 2, 500);
-    tempstr2 := copy(tempstr2, 1, pos('</TR>', tempstr2)-1);
-    if (pos('(', tempstr2) <> 0) then tempstr2 := copy(tempstr2, 1, pos('(',
-      tempstr2)-1);
-    tempstr2 := stripspaces(stripHtml(tempstr2));
-    dataCs.Enter();
-    foldWU := tempstr2;
-    dataCs.Leave();
-
-  except
-    on EExiting do raise;
-    on E: Exception do
-    begin
-      dataCs.Enter();
-      try
-        foldMemSince := '[fold: ' + E.Message + ']';
-        foldLastWU := '[fold: ' + E.Message + ']';
-        foldActProcsWeek := '[fold: ' + E.Message + ']';
-        foldTeam := '[fold: ' + E.Message + ']';
-        foldScore := '[fold: ' + E.Message + ']';
-        foldRank := '[fold: ' + E.Message + ']';
-        foldWU := '[fold: ' + E.Message + ']';
-      finally
-        dataCs.Leave();
-      end;
-    end;
-  end;
-end;
-
-// Runs in data thread
-procedure TData.FetchHTTPUpdates;
-begin
-  if DoNewsUpdate[huRSS] then
-  begin
-    DoNewsUpdate[huRSS] := False;
-    DoRSSHTTPUpdate();
-  end;
-
-  if (DoNewsUpdate[huLCDSmartie]) then
-  begin
-    DoNewsUpdate[huLCDSmartie] := False;
-    if (fdataThread.Terminated) then raise EExiting.Create('');
-    DoLCDSmartieHTTPUpdate();
-  end;
-
-  if DoNewsUpdate[huSETI] then
-  begin
-    DoNewsUpdate[huSETI] := False;
-    if (fdataThread.Terminated) then raise EExiting.Create('');
-    DoSETIHTTPUpdate();
-  end;
-
-  if DoNewsUpdate[huFolding] then
-  begin
-    DoNewsUpdate[huFolding] := False;
-    if (fdataThread.Terminated) then raise EExiting.Create('');
-    DoFoldingHTTPUpdate();
-  end;
-end;
-
-// Runs in data thread
-procedure TData.HTTPUpdate;
-const
-  maxArgs = 10;
-var
-  UpdateTypeLoop : tHTTPUpdateType;
-  screenline: String;
-  RSSLoop,ScreenCount,LineCount : integer;
-  args: Array [1..maxArgs] of String;
-  prefix: String;
-  postfix: String;
-  numargs: Cardinal;
-  myRssCount: Integer;
-  updateNeeded: Boolean;
-  iFound: Integer;
-  iMaxFreq: Integer;
-begin
-  doHTTPUpdate := False;
-
-  // TODO: this should only be done when the config changes...
-  myRssCount := 0;
-  DoNewsUpdate[huLCDSmartie] := config.checkUpdates;
-
-  for ScreenCount := 1 to MaxScreens do
-  begin
-    for LineCount := 1 to config.height do
-    begin
-        screenline := config.screen[ScreenCount][LineCount].text;
-        while decodeArgs(screenline, '$Rss', maxArgs, args, prefix, postfix,
-          numargs) do
-        begin
-          // check if we have already seen this url:
-          iFound := -1;
-          for RSSLoop := 0 to myRssCount-1 do
-            if (rss[RSSLoop].url = args[1]) then iFound := RSSLoop;
-
-          iMaxFreq := 0;
-          if (numargs >= 4) then
-          begin
-            try
-              iMaxFreq := StrToInt(args[4]) * 60;
-            except
-            end;
-          end;
-
-          if (iFound = -1) then
-          begin
-            rssCs.Enter();
-
-            try
-              // not found - add details:
-              if (myRssCount + 1 >= Length(rss)) then
-                SetLength(rss, myRssCount + 10);
-
-              if (rss[myRssCount].url <> args[1]) then
-              begin
-                rss[myRssCount].url := args[1];
-                rss[myRssCount].whole := '';
-                rss[myRssCount].items := 0;
-              end;
-
-              rss[myRssCount].maxfreq := 0;
-              if (numargs >= 4) then
-              begin
-                  rss[myRssCount].maxfreq := iMaxFreq
-              end;
-            finally
-              rssCs.Leave();
-            end;
-
-            Inc(myRssCount);
-          end
-          else
-          begin
-            // seen this one before - raise the maxfreq if this one is higher.
-            if (numargs >= 4)
-              and (rss[iFound].maxfreq < Cardinal(iMaxFreq)) then
-            begin
-              try
-                rssCs.Enter();
-                try
-                  rss[iFound].maxfreq := iMaxFreq;
-                finally
-                  rssCs.Leave();
-                end;
-              except
-              end;
-            end;
-          end;
-
-          // remove this Rss, and continue to parse the rest
-          screenline := prefix + postfix;
-        end;
-        if (pos('$SETI', screenline) <> 0) then DoNewsUpdate[huSETI] := true;
-        if (pos('$FOLD', screenline) <> 0) then DoNewsUpdate[huFolding] := true;
-    end;
-  end;
-
-  rssCs.Enter();
-  try
-    rssEntries := myRssCount;
-  finally
-    rssCs.Leave();
-  end;
-  if (myRssCount > 0) then DoNewsUpdate[huRSS] := true;
-
-  updateNeeded := False;
-  for UpdateTypeLoop := FirstHTTPUpdate to LastHTTPUpdate do
-  begin
-    if (donewsupdate[UpdateTypeLoop]) then updateNeeded := true;
-  end;
-  if (updateNeeded) then FetchHTTPUpdates;
-end;
-
-procedure TData.UpdateHTTP;
-begin
-  doHTTPUpdate := True;
-end;
-
-
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-////                                                                       ////
 ////      E - M A I L    C H E C K I N G    P R O  C E D U R E S           ////
 ////                                                                       ////
 ///////////////////////////////////////////////////////////////////////////////
@@ -2293,6 +1440,37 @@ begin
   Result := false;
   if assigned(MBMThread) then
     Result := MBMThread.MBMActive;
+end;
+
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+////                                                                       ////
+////      L C D   S M A R T I E   U P D A T E      P R O C E D U R E S     ////
+////                                                                       ////
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+
+function TData.GetIsConnected : boolean;
+begin
+  Result := false;
+  if assigned(LCDSmartieUpdateThread) then
+    Result := LCDSmartieUpdateThread.IsConnected;
+end;
+
+function TData.GetLCDSmartieUpdate : boolean;
+begin
+  Result := false;
+  if assigned(LCDSmartieUpdateThread) then
+    Result := LCDSmartieUpdateThread.LCDSmartieUpdate;
+end;
+
+function TData.GetLCDSmartieUpdateText : string;
+begin
+  Result := '';
+  if assigned(LCDSmartieUpdateThread) then
+    Result := LCDSmartieUpdateThread.LCDSmartieUpdateText;
 end;
 
 end.

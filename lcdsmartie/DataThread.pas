@@ -15,6 +15,7 @@ type
     fDataLock : TCriticalSection;  // Protects mail, data + main thread
     procedure  DoUpdate; virtual;
     procedure SetActive(Value : boolean); virtual;
+    function UsesCOMObjects : boolean; virtual;
   public
     constructor Create(AInterval : longint);
     destructor Destroy; override;
@@ -27,7 +28,7 @@ type
 implementation
 
 uses
-  Windows;
+  ActiveX,Windows;
 
 constructor TDataThread.Create(AInterval : longint);
 begin
@@ -41,6 +42,11 @@ destructor TDataThread.Destroy;
 begin
   inherited;
   fDataLock.Free;
+end;
+
+function TDataThread.UsesCOMObjects : boolean;
+begin
+  result := false;
 end;
 
 procedure TDataThread.SetActive(Value : boolean);
@@ -57,6 +63,7 @@ procedure TDataThread.Execute;
 var
   WaitLoop : longint;
 begin
+  if UsesCOMObjects then coinitialize(nil);  // required for XML COM object
   while not Terminated do begin
     DoUpdate;
     fRefresh := false;
@@ -66,6 +73,7 @@ begin
     end;
     if not Terminated then sleep(200);  // minimum sleep interval upon external refresh call
   end;
+  if UsesCOMObjects then CoUninitialize;     // required for XML COM object
 end;
 
 procedure TDataThread.DoUpdate;

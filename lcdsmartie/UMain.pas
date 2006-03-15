@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.79 $ $Date: 2006/03/14 21:20:56 $
+ *  $Revision: 1.80 $ $Date: 2006/03/15 14:32:33 $
  *****************************************************************************}
 
 interface
@@ -607,15 +607,17 @@ end;
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
+var
+  DidUpdateWarning : boolean = false;
 
 procedure TLCDSmartieDisplayForm.HTTPUpdateTimerTimer(Sender: TObject);
 begin
-  if (data.lcdSmartieUpdate) then
+  if (data.LCDSmartieUpdate and not DidUpdateWarning) then
   begin
-    data.lcdSmartieUpdate := False;
+    DidUpdateWarning := true;
 
     if MessageDlg('A new version of LCD Smartie is detected. ' + chr(13) +
-      data.lcdSmartieUpdateText + chr(13) + 'Go to LCD Smartie website?',
+      data.LCDSmartieUpdateText + chr(13) + 'Go to LCD Smartie website?',
       mtConfirmation, [mbYes, mbNo], 0) = mrYes then
     begin
       ShellExecute(0, Nil, pchar('http://lcdsmartie.sourceforge.net/'), Nil,
@@ -624,10 +626,6 @@ begin
 
     if (bTerminating) then Exit;
   end;
-
-  Data.UpdateHTTP();
-  HTTPUpdateTimer.Interval := 0;
-  HTTPUpdateTimer.Interval := config.newsRefresh*1000*60;
 end;
 
 procedure TLCDSmartieDisplayForm.MBMUpdateTimerTimer(Sender: TObject);
