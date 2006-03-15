@@ -152,7 +152,7 @@ function decodeArgs(const str: String; const funcName: String; maxargs: Cardinal
   var args: Array of String; var prefix: String; var postfix: String; var
   numArgs: Cardinal): Boolean;
 var
-  posFuncStart, posArgsStart, posArgsEnd, posComma, posComma2: Integer;
+  posParen, posFuncStart, posArgsStart, posArgsEnd, posComma, posComma2: Integer;
   posTemp: Integer;
   uiLevel: Cardinal;
   iStrLen: Integer;
@@ -165,8 +165,10 @@ begin
   posFuncStart := 0;
   repeat
     posFuncStart := PosEx(funcName, str, posFuncStart+1);
-    if (posFuncStart <> 0) and (posFuncStart < iStrLen)
-      and (str[posFuncStart+length(funcName)] = '(') then break;
+    posParen := posFuncStart + length(funcName);
+    if (posFuncStart > 0) and
+       (posParen <= iStrLen) and
+       (str[posParen] = '(') then break;
   until (posFuncStart = 0);
 
   if (posFuncStart <> 0) then

@@ -19,7 +19,7 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.55 $ $Date: 2006/03/15 15:44:41 $
+ *  $Revision: 1.56 $ $Date: 2006/03/15 16:03:55 $
  *****************************************************************************}
 
 interface
@@ -693,6 +693,8 @@ begin
   WinampStat := TWinampStat(WinampListBox.itemindex);
   if (WinampStat >= FirstWinampStat) and (WinampStat <= LastWinampStat) then begin
     VariableEdit.Text := WinampKeys[WinampStat];
+    if (WinampStat = wsWinampPosition) then  // special case, should be resolved elsewhere
+      VariableEdit.Text := VariableEdit.Text + '(10)';
   end else
     VariableEdit.Text := NoVariable;
 
