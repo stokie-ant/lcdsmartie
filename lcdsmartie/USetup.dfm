@@ -72,24 +72,6 @@ object SetupForm: TSetupForm
         Width = 180
         Height = 265
         ItemHeight = 13
-        Items.Strings = (
-          'TrackTitle'
-          'Channels (stereo/mono)'
-          'kbps'
-          'KHz'
-          'Time (seconds)'
-          'Time (hrs + min + sec) (long)'
-          'Time (hrs + min + sec) (short)'
-          'Remaining Time (seconds)'
-          'Remaining (hrs+min+sec) (long)'
-          'Remaining (hrs+min+sec) (short)'
-          'Total length (seconds)'
-          'Total length (hrs + min + sec)(long)'
-          'Total length (hrs + min + sec)(short)'
-          'Position(10) (bar) '
-          'playlist number of current track'
-          'total tracks in playlist'
-          'Current Status')
         TabOrder = 0
         OnClick = WinampListBoxClick
         OnDblClick = InsertButtonClick

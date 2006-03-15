@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.69 $ $Date: 2006/03/15 14:32:33 $
+ *  $Revision: 1.70 $ $Date: 2006/03/15 15:44:41 $
  *****************************************************************************}
 
 
@@ -51,14 +51,11 @@ type
 
   TData = Class(TObject)
   private
-    localeFormat : TFormatSettings;
     cacheresult_lastFindPlugin: Cardinal;
     cache_lastFindPlugin: String;
     uiScreenStartTime: Cardinal; // time that new start refresh started (used by plugin cache code)
     bNewScreenEvent: Boolean;
     bForceRefresh: Boolean;
-    dataCs: TCriticalSection;  // data + main thread
-    replline2, replline1: String;
 
     // DLL plugins
     dlls: Array of TDll;
@@ -83,11 +80,6 @@ type
     procedure LoadPlugin(sDllName: String; bDotNet: Boolean = false);
     procedure ResolvePluginVariables(var line: String; qstattemp: Integer;
       bCacheResults: Boolean);
-    // winamp
-    procedure ResolveWinampVariables(var Line: string);
-    // dist.net
-    procedure ResolveDNetVariables(var Line : string);
-
     // Connected (using LCDSmartie connection)
     function  GetIsConnected : boolean;
     function  GetLCDSmartieUpdate : boolean;
@@ -106,7 +98,6 @@ type
     function CallPlugin(uiDll: Integer; iFunc: Integer;
                     const sParam1: String; const sParam2:String) : String;
     function FindPlugin(const sDllName: String): Cardinal;
-    procedure UpdateDNetStats(Sender: TObject);
     constructor Create;
     destructor Destroy; override;
     function CanExit: Boolean;
@@ -123,21 +114,12 @@ type
 
 implementation
 
-{
-  mmsystem, ExtActns, Messages, IdBaseComponent, IdComponent,
-  IdTCPConnection, IdTCPClient, IdMessageClient,
-  ExtCtrls, Controls, StdCtrls, ActiveX, IdUri, IdGlobal,
-  xmldom, XMLIntf, xercesxmldom, XMLDoc,
-  msxmldom, ComCtrls, ComObj,
-}
-
 uses
   Windows, Forms, Dialogs, StrUtils, Winsock,
   UMain, UUtils, UConfig,
   DataThread, UDataNetwork, UDataDisk, UDataGame, UDataMemory,
-  UDataCPU, UDataSeti, UDataFolding, UDataRSS;
-
-
+  UDataCPU, UDataSeti, UDataFolding, UDataRSS, UDataDNet,
+  UDataWinamp;
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -156,8 +138,6 @@ var
   DataThread : TDataThread;
 begin
   inherited;
-
-  GetLocaleFormatSettings(LOCALE_SYSTEM_DEFAULT, localeFormat);
 
   status := WSAStartup(MAKEWORD(2,0), WSAData);
   if status <> 0 then
@@ -195,6 +175,10 @@ begin
   DataThread.Resume;
   DataThreads.Add(DataThread);
 
+  LCDSmartieUpdateThread := TSmartieDataThread.Create;
+  LCDSmartieUpdateThread.Resume;
+  DataThreads.Add(LCDSmartieUpdateThread);
+
   DataThread := TSetiDataThread.Create;
   DataThread.Resume;
   DataThreads.Add(DataThread);
@@ -207,11 +191,9 @@ begin
   DataThread.Resume;
   DataThreads.Add(DataThread);
 
-  LCDSmartieUpdateThread := TSmartieDataThread.Create;
-  LCDSmartieUpdateThread.Resume;
-  DataThreads.Add(LCDSmartieUpdateThread);
-
-  dataCs := TCriticalSection.Create();
+  DataThread := TDNetDataThread.Create;
+  DataThread.Resume;
+  DataThreads.Add(DataThread);
 end;
 
 function TData.CanExit: Boolean;
@@ -261,8 +243,6 @@ begin
     TDataThread(DataThreads[Loop]).Free;
   end;
 
-  if Assigned(dataCs) then dataCs.Free;
-
   DataThreads.Free;
 
   WSACleanup();
@@ -287,11 +267,10 @@ begin
   bNewScreenEvent := bYes;
   if (bYes) then
   begin
-    LCDSmartieDisplayForm.MBMUpdateTimer.Interval := 0;
-    LCDSmartieDisplayForm.MBMUpdateTimer.Interval := 250; // force an update of Mbm, etc data in 0.25 seconds
     bForceRefresh := true;
     for Loop := 0 to DataThreads.Count-1 do begin
       TDataThread(DataThreads[Loop]).Active := false;
+      TDataThread(DataThreads[Loop]).Refresh;
     end;
   end;
 end;
@@ -320,15 +299,13 @@ begin
       if (Pos('$', line) = 0) then break;
     end;
 
-    ResolvePluginVariables(line, qstattemp, bCacheResults);
     if (Pos('$', line) = 0) then goto endChange;
+    ResolvePluginVariables(line, qstattemp, bCacheResults);
     ResolveOtherVariables(Line);
     ResolveFileVariables(Line);
+    if (Pos('$', line) = 0) then goto endChange;
     ResolveLCDFunctionVariables(Line);
-    if (Pos('$', line) = 0) then goto endChange;
     ResolveWinampVariables(line);
-    ResolveDNetVariables(Line);
-    if (Pos('$', line) = 0) then goto endChange;
     ResolveTimeVariable(Line);
     ResolveStringFunctionVariables(Line);
 endChange:
@@ -340,6 +317,70 @@ endChange:
   line := StringReplace(line, Chr($A), '', [rfReplaceAll]);
   line := StringReplace(line, Chr($D), '', [rfReplaceAll]);
   result := line;
+end;
+
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+////                                                                       ////
+////      E - M A I L    C H E C K I N G    P R O  C E D U R E S           ////
+////                                                                       ////
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+function TData.GetGotEmail : boolean;
+begin
+  Result := false;
+  if assigned(EmailThread) then
+    Result := EmailThread.GotEmail;
+end;
+
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+////                                                                       ////
+////      M O T H E R B O A R D     S T A T S      P R O C E D U R E S     ////
+////                                                                       ////
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+
+function TData.GetMBMActive : boolean;
+begin
+  Result := false;
+  if assigned(MBMThread) then
+    Result := MBMThread.MBMActive;
+end;
+
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+////                                                                       ////
+////      L C D   S M A R T I E   U P D A T E      P R O C E D U R E S     ////
+////                                                                       ////
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+
+function TData.GetIsConnected : boolean;
+begin
+  Result := false;
+  if assigned(LCDSmartieUpdateThread) then
+    Result := LCDSmartieUpdateThread.IsConnected;
+end;
+
+function TData.GetLCDSmartieUpdate : boolean;
+begin
+  Result := false;
+  if assigned(LCDSmartieUpdateThread) then
+    Result := LCDSmartieUpdateThread.LCDSmartieUpdate;
+end;
+
+function TData.GetLCDSmartieUpdateText : string;
+begin
+  Result := '';
+  if assigned(LCDSmartieUpdateThread) then
+    Result := LCDSmartieUpdateThread.LCDSmartieUpdateText;
 end;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -414,8 +455,6 @@ begin
         + CleanString(E.Message) + ']' + postfix;
     end;
   end;
-
-
 end;
 
 procedure TData.ResolveTimeVariable(var line: String);
@@ -688,7 +727,6 @@ begin
     end;
   end;
 end;
-
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -965,512 +1003,6 @@ begin
   begin
     raise Exception.Create('LoadLibrary failed with ' + ErrMsg(GetLastError));
   end;
-end;
-
-
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-////                                                                       ////
-////      W I N A M P                 P R O C E D U R E S                  ////
-////                                                                       ////
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-
-
-procedure TData.ResolveWinampVariables(var Line: string);
-var
-  tempstr: String;
-  barLength: Cardinal;
-  barPosition: Integer;
-  trackLength, trackPosition, t: Integer;
-  i: Integer;
-  m, h, s: Integer;
-  args: Array [1..maxArgs] of String;
-  prefix, postfix: String;
-  numArgs: Cardinal;
-begin
-  if pos('$Winamp', line) = 0 then exit;
-
-  trackLength := LCDSmartieDisplayForm.winampctrl1.TrackLength;
-  trackPosition := LCDSmartieDisplayForm.winampctrl1.TrackPosition;
-  if (trackLength < 0) then trackLength := 0;
-  if (trackPosition < 0) then trackPosition := 0;
-
-  if pos('$WinampTitle', line) <> 0 then
-  begin
-    tempstr := LCDSmartieDisplayForm.winampctrl1.GetCurrSongTitle;
-    i:=1;
-    while (i<=length(tempstr)) and (tempstr[i]>='0')
-      and (tempstr[i]<='9') do Inc(i);
-
-    if (i<length(tempstr)) and (tempstr[i]='.') and (tempstr[i+1]=' ') then
-      tempstr := copy(tempstr, i+2, length(tempstr));
-    line := StringReplace(line, '$WinampTitle', Trim(tempstr), [rfReplaceAll]);
-  end;
-  if pos('$WinampChannels', line) <> 0 then
-  begin
-    if LCDSmartieDisplayForm.winampctrl1.GetSongInfo(2)>1 then tempstr := 'stereo'
-    else tempstr := 'mono';
-    line := StringReplace(line, '$WinampChannels', tempstr, [rfReplaceAll]);
-  end;
-  if pos('$WinampKBPS', line) <> 0 then
-  begin
-    line := StringReplace(line, '$WinampKBPS',
-      IntToStr(LCDSmartieDisplayForm.winampctrl1.GetSongInfo(1)), [rfReplaceAll]);
-  end;
-  if pos('$WinampFreq', line) <> 0 then
-  begin
-    line := StringReplace(line, '$WinampFreq',
-      IntToStr(LCDSmartieDisplayForm.winampctrl1.GetSongInfo(0)), [rfReplaceAll]);
-  end;
-  if pos('$WinampStat', line) <> 0 then
-  begin
-    case LCDSmartieDisplayForm.WinampCtrl1.GetState of
-      0: line := StringReplace(line, '$WinampStat', 'stopped',
-        [rfReplaceAll]);
-      1: line := StringReplace(line, '$WinampStat', 'playing',
-        [rfReplaceAll]);
-      3: line := StringReplace(line, '$WinampStat', 'paused',
-        [rfReplaceAll]);
-      else line := StringReplace(line, '$WinampStat', '[unknown]',
-          [rfReplaceAll]);
-    end;
-  end;
-
-  while decodeArgs(line, '$WinampPosition', maxArgs, args, prefix, postfix,
-    numargs) do
-  begin
-    try
-      RequiredParameters(numargs, 1, 1);
-      barlength := strtoint(args[1]);
-
-      if (trackLength > 0) then barPosition := round(((trackPosition /
-        1000)*barLength) /trackLength)
-      else barPosition := 0;
-
-      tempstr := '';
-
-      for i := 1 to barPosition-1 do tempstr := tempstr +  '-';
-      tempstr := tempstr +  '+';
-      for i := barPosition + 1 to barlength do tempstr := tempstr +  '-';
-      tempstr := copy(tempstr, 1, barlength);
-
-      line := prefix + tempstr + postfix;
-    except
-      on E: Exception do line := prefix + '[WinampPosition: '
-        + CleanString(E.Message) + ']' + postfix;
-    end;
-  end;
-
-  if pos('$WinampPolo', line) <> 0 then
-  begin
-    t := trackPosition;
-    if t / 1000 > trackLength then t := trackLength;
-    h := t div ticksperhour;
-    t := t - h * ticksperhour;
-    m := t div ticksperminute;
-    t := t - m * ticksperminute;
-    s := t div ticksperseconde;
-    tempstr := '';
-    if h > 0 then
-    begin
-      tempstr := tempstr + IntToStr(h) +  'hrs ';
-      tempstr := tempstr + formatfloat('00', m, localeFormat) +  'min ';
-      tempstr := tempstr + formatfloat('00', s, localeFormat) +  'sec';
-    end
-    else
-    begin
-      if m > 0 then
-      begin
-        tempstr := tempstr + IntToStr(m) +  'min ';
-        tempstr := tempstr + formatfloat('00', s, localeFormat) +  'sec';
-      end
-      else
-      begin
-        tempstr := tempstr + IntToStr(s) +  'sec';
-      end;
-    end;
-    line := StringReplace(line, '$WinampPolo', tempstr, [rfReplaceAll]);
-  end;
-
-  if pos('$WinampRelo', line) <> 0 then
-  begin
-    t := trackLength*1000 - trackPosition;
-    if t/1000> trackLength then t := trackLength;
-    h := t div ticksperhour;
-    t := t -h * ticksperhour;
-    m := t div ticksperminute;
-    t := t -m * ticksperminute;
-    s := t div ticksperseconde;
-    tempstr := '';
-    if h > 0 then
-    begin
-      tempstr := tempstr + IntToStr(h) +  'hrs ';
-      tempstr := tempstr + formatfloat('00', m, localeFormat) +  'min ';
-      tempstr := tempstr + formatfloat('00', s, localeFormat) +  'sec';
-    end
-    else
-    begin
-      if m > 0 then
-      begin
-        tempstr := tempstr + IntToStr(m) +  'min ';
-        tempstr := tempstr + formatfloat('00', s, localeFormat) +  'sec';
-      end
-      else
-      begin
-        tempstr := tempstr + IntToStr(s) +  'sec';
-      end;
-    end;
-    line := StringReplace(line, '$WinampRelo', tempstr, [rfReplaceAll]);
-  end;
-
-  if pos('$WinampPosh', line) <> 0 then
-  begin
-    t := trackPosition;
-    if t/1000> trackLength then t := trackLength;
-    h := t div ticksperhour;
-    t := t -h * ticksperhour;
-    m := t div ticksperminute;
-    t := t -m * ticksperminute;
-    s := t div ticksperseconde;
-    tempstr := '';
-    if h > 0 then
-    begin
-      tempstr := tempstr + IntToStr(h) +  ':';
-      tempstr := tempstr + formatfloat('00', m, localeFormat) +  ':';
-      tempstr := tempstr + formatfloat('00', s, localeFormat);
-    end
-    else
-    begin
-      if m > 0 then
-      begin
-        tempstr := tempstr + IntToStr(m) +  ':';
-        tempstr := tempstr + formatfloat('00', s, localeFormat);
-      end
-      else
-      begin
-        tempstr := tempstr + IntToStr(s);
-      end;
-    end;
-    line := StringReplace(line, '$WinampPosh', tempstr, [rfReplaceAll]);
-  end;
-
-  if pos('$WinampResh', line) <> 0 then
-  begin
-    t := trackLength * 1000 - trackPosition;
-    if t / 1000 > trackLength then t := trackLength;
-    h := t div ticksperhour;
-    t := t - h * ticksperhour;
-    m := t div ticksperminute;
-    t := t - m * ticksperminute;
-    s := t div ticksperseconde;
-    tempstr := '';
-    if h > 0 then
-    begin
-      tempstr := tempstr + IntToStr(h) +  ':';
-      tempstr := tempstr + formatfloat('00', m, localeFormat) +  ':';
-      tempstr := tempstr + formatfloat('00', s, localeFormat);
-    end
-    else
-    begin
-      if m > 0 then
-      begin
-        tempstr := tempstr + IntToStr(m) +  ':';
-        tempstr := tempstr + formatfloat('00', s, localeFormat);
-      end
-      else
-      begin
-        tempstr := tempstr + IntToStr(s);
-      end;
-    end;
-    line := StringReplace(line, '$WinampResh', tempstr, [rfReplaceAll]);
-  end;
-
-  if pos('$Winamppos', line) <> 0 then
-  begin
-    t := round((trackPosition / 1000));
-    if t > trackLength then t := trackLength;
-    line := StringReplace(line, '$Winamppos', IntToStr(t), [rfReplaceAll]);
-  end;
-  if pos('$WinampRem', line) <> 0 then
-  begin
-    t := round(tracklength-(trackPosition / 1000));
-    if t > trackLength then t := trackLength;
-    line := StringReplace(line, '$WinampRem', IntToStr(t), [rfReplaceAll]);
-  end;
-
-  if pos('$WinampLengtl', line) <> 0 then
-  begin
-    t := trackLength * 1000;
-    h := t div ticksperhour;
-    t := t - h * ticksperhour;
-    m := t div ticksperminute;
-    t := t - m * ticksperminute;
-    s := t div ticksperseconde;
-    tempstr := '';
-    if h > 0 then
-    begin
-      tempstr := tempstr + IntToStr(h) +  'hrs ';
-      tempstr := tempstr + formatfloat('00', m, localeFormat) +  'min ';
-      tempstr := tempstr + formatfloat('00', s, localeFormat) +  'sec';
-    end
-    else
-    begin
-      if m > 0 then
-      begin
-        tempstr := tempstr + IntToStr(m) +  'min ';
-        tempstr := tempstr + formatfloat('00', s, localeFormat) +  'sec';
-      end
-      else
-      begin
-        tempstr := tempstr + IntToStr(s) +  'sec';
-      end;
-    end;
-    line := StringReplace(line, '$WinampLengtl', tempstr, [rfReplaceAll]);
-  end;
-
-  if pos('$WinampLengts', line) <> 0 then
-  begin
-    t := trackLength*1000;
-    h := t div ticksperhour;
-    t := t - h * ticksperhour;
-    m := t div ticksperminute;
-    t := t - m * ticksperminute;
-    s := t div ticksperseconde;
-    tempstr := '';
-    if h > 0 then
-    begin
-      tempstr := tempstr + IntToStr(h) + ':';
-      tempstr := tempstr + formatfloat('00', m, localeFormat) + ':';
-      tempstr := tempstr + formatfloat('00', s, localeFormat);
-    end
-    else
-    begin
-      if m > 0 then
-      begin
-        tempstr := tempstr + IntToStr(m) + ':';
-        tempstr := tempstr + formatfloat('00', s, localeFormat);
-      end
-      else
-      begin
-        tempstr := tempstr + IntToStr(s);
-      end;
-    end;
-    line := StringReplace(line, '$WinampLengts', tempstr, [rfReplaceAll]);
-  end;
-
-  if pos('$WinampLength', line) <> 0 then
-  begin
-    line := StringReplace(line, '$WinampLength', IntToStr(trackLength),
-      [rfReplaceAll]);
-  end;
-
-  if pos('$WinampTracknr', line) <> 0 then
-  begin
-    line := StringReplace(line, '$WinampTracknr',
-      IntToStr(LCDSmartieDisplayForm.winampctrl1.GetListPos + 1), [rfReplaceAll]);
-  end;
-  if pos('$WinampTotalTracks', line) <> 0 then
-  begin
-    line := StringReplace(line, '$WinampTotalTracks',
-      IntToStr(LCDSmartieDisplayForm.winampctrl1.GetListCount), [rfReplaceAll]);
-  end;
-end;
-
-
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-////                                                                       ////
-////      D I S T R I B U T E D  .  N E T          P R O C E D U R E S     ////
-////                                                                       ////
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-procedure TData.ResolveDNetVariables(var Line : string);
-begin
-  if (pos('$Dnet', line) <> 0) then
-  begin
-    dataCs.Enter();
-    try
-      line := StringReplace(line, '$DnetDone', replline2, [rfReplaceAll]);
-      line := StringReplace(line, '$DnetSpeed', replline1, [rfReplaceAll]);
-    finally
-      dataCs.Leave();
-    end;
-  end;
-end;
-
-procedure TData.UpdateDNetStats(Sender: TObject);
-//DISTRIBUTED STATS!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-var
-  fFile: textfile;
-  x,counter: Integer;
-  bReplz: Boolean;
-  line: String;
-  ScreenCount, LineCount: Integer;
-  screenline: String;
-  replline: String;
-  sTemp: String;
-begin
-
-  bReplz := false;
-
-  for ScreenCount := 1 to MaxScreens do
-  begin
-    for LineCount := 1 to config.height do
-    begin
-      screenline := config.screen[ScreenCount][LineCount].text;
-      if (not bReplz) and (pos('$Dnet', screenline) <> 0) then bReplz := true;
-    end;
-  end;
-
-//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  if bReplz then
-  begin
-    x := 0;
-    replline := 'File not found';
-    if FileExists(config.distLog) = true then
-    begin
-      assignfile(fFile, config.distLog);
-      reset (fFile);
-      while not eof(fFile) do
-      begin
-        readln (fFile);
-        x := x + 1;
-      end;
-      reset(fFile);
-      for counter := 1 to x-50 do
-      begin
-        readln(fFile);
-      end;
-      while not eof(fFile) do
-      begin
-        readln(fFile, line);
-        replline := replline + ' ' + line;
-      end;
-      closefile(fFile);
-    end;
-    replline := copy(replline, pos('Completed', replline)-5,
-      length(replline));
-    for x := 1 to 9 do
-    begin
-      if pos('Completed', replline) <> 0 then
-      begin
-        replline := copy(replline, pos('Completed', replline)-5,
-          length(replline));
-        replline := StringReplace(replline, 'Completed', '-', []);
-      end;
-    end;
-
-    if copy(replline, 1, 3) = 'RC5' then
-    begin
-      sTemp := copy(replline, pos('- [', replline) + 3, pos(' keys',
-        replline)-pos('- [', replline));
-      if length(sTemp) > 7 then
-      begin
-        sTemp := copy(sTemp, 1, pos(',', copy(sTemp, 3,
-          length(sTemp))) + 1);
-      end;
-      dataCs.Enter();
-      replline1 := sTemp;
-      dataCs.Leave();
-
-      replline := copy(replline, pos('completion', replline) + 30, 200);
-      sTemp := copy(replline, pos('(', replline) + 1, pos('.',
-        replline)-pos('(', replline)-1);
-
-      dataCs.Enter();
-      replline2 := sTemp;
-      dataCs.Leave();
-    end;
-
-    if copy(replline, 1, 3) = 'OGR' then
-    begin
-      sTemp := copy(replline, pos('- [', replline) + 3, pos(' nodes',
-        replline)-pos('- [', replline));
-      if length(sTemp) > 7 then
-      begin
-        sTemp := copy(sTemp, 1, pos(',', copy(sTemp, 3,
-          length(sTemp))) + 1);
-      end;
-
-      dataCs.Enter();
-      replline1 := sTemp;
-      dataCs.Leave();
-
-      replline := copy(replline, pos('remain', replline) + 8, 100);
-      sTemp := copy(replline, pos('(', replline) + 1, pos('stats',
-        replline)-pos('(', replline)-3);
-
-      dataCs.Enter();
-      replline2 := sTemp;
-      dataCs.Leave();
-    end;
-  end;
-end;
-
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-////                                                                       ////
-////      E - M A I L    C H E C K I N G    P R O  C E D U R E S           ////
-////                                                                       ////
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-function TData.GetGotEmail : boolean;
-begin
-  Result := false;
-  if assigned(EmailThread) then
-    Result := EmailThread.GotEmail;
-end;
-
-
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-////                                                                       ////
-////      M O T H E R B O A R D     S T A T S      P R O C E D U R E S     ////
-////                                                                       ////
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-
-function TData.GetMBMActive : boolean;
-begin
-  Result := false;
-  if assigned(MBMThread) then
-    Result := MBMThread.MBMActive;
-end;
-
-
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-////                                                                       ////
-////      L C D   S M A R T I E   U P D A T E      P R O C E D U R E S     ////
-////                                                                       ////
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-
-function TData.GetIsConnected : boolean;
-begin
-  Result := false;
-  if assigned(LCDSmartieUpdateThread) then
-    Result := LCDSmartieUpdateThread.IsConnected;
-end;
-
-function TData.GetLCDSmartieUpdate : boolean;
-begin
-  Result := false;
-  if assigned(LCDSmartieUpdateThread) then
-    Result := LCDSmartieUpdateThread.LCDSmartieUpdate;
-end;
-
-function TData.GetLCDSmartieUpdateText : string;
-begin
-  Result := '';
-  if assigned(LCDSmartieUpdateThread) then
-    Result := LCDSmartieUpdateThread.LCDSmartieUpdateText;
 end;
 
 end.

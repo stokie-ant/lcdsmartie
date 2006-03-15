@@ -5,6 +5,9 @@ interface
 uses
   SysUtils, SyncObjs, Classes;
 
+var
+  localeFormat : TFormatSettings;
+
 const
   maxArgs = 10;
   ticksperseconde = 1000;
@@ -401,6 +404,7 @@ begin
     raise Exception.Create('Too many parameters');
 end;
 
-
+begin
+  GetLocaleFormatSettings(LOCALE_SYSTEM_DEFAULT, localeFormat);
 end.
 

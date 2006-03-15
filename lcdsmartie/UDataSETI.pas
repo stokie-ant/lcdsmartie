@@ -8,7 +8,6 @@ uses
 type
   TSETIDataThread = class(TURLThread)
   private
-    localeFormat : TFormatSettings;
     usFormat : TFormatSettings; //this is initialized with US/English
     setiNumResults, setiCpuTime, setiAvgCpu, setiLastResult, setiUserTime,
     setiTotalUsers, setiRank, setiShareRank, setiMoreWU: String;
@@ -29,7 +28,6 @@ uses
 
 constructor TSETIDataThread.Create;
 begin
-  GetLocaleFormatSettings(LOCALE_SYSTEM_DEFAULT, localeFormat);
   GetLocaleFormatSettings($0409,usFormat);  //English/USA
   inherited Create(config.newsRefresh*60000);
 end;

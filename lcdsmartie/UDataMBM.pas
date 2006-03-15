@@ -69,7 +69,6 @@ type
   private
     // Begin MBM Stats - main thread only
     fmbmactive: Boolean;
-    localeFormat : TFormatSettings;
     fMbmCpuUsage: double;
     MBMStats : array[1..MaxMBMStat] of TMBMRecord;
     CPU: Array [1..MaxMBMCPU] of double;
@@ -89,11 +88,10 @@ type
 implementation
 
 uses
-  Math, Windows, UConfig;
+  Math, Windows, UConfig, UUtils;
 
 constructor TMBMDataThread.Create;
 begin
-  GetLocaleFormatSettings(LOCALE_SYSTEM_DEFAULT, localeFormat);
   fMbmCpuUsage := 0;
   fmbmactive := false;
   fillchar(MBMStats,sizeof(MBMStats),$00);

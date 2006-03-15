@@ -99,7 +99,6 @@ type
     // network stats
     NetworkAdapterStats : Array[0..MAXNETSTATS-1] of TNetworkAdapterStats;
     ipaddress: String;                     //Guarded by dataCs, cpu + main thread
-    localeFormat : TFormatSettings;
     procedure ResolveNetVariable(Variable : TNetworkStatistics; var Line : string);
   protected
     procedure  DoUpdate; override;
@@ -116,7 +115,6 @@ uses
 
 constructor TNetworkDataThread.Create;
 begin
-  GetLocaleFormatSettings(LOCALE_SYSTEM_DEFAULT, localeFormat);
   inherited Create(1000);
 end;
 

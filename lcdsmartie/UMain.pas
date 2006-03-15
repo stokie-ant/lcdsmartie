@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.80 $ $Date: 2006/03/15 14:32:33 $
+ *  $Revision: 1.81 $ $Date: 2006/03/15 15:44:41 $
  *****************************************************************************}
 
 interface
@@ -40,9 +40,8 @@ type
   TInitialWindowState = (NoChange, HideMainForm, TotalHideMainForm);
 
   TLCDSmartieDisplayForm = class(TForm)
-    HTTPUpdateTimer: TTimer;
+    LCDSmartieCheckUpdateTimer: TTimer;
     NextScreenTimer: TTimer;
-    MBMUpdateTimer: TTimer;
     ScrollFlashTimer: TTimer;
     WinampCtrl1: TWinampCtrl;
     // These are only used by us:
@@ -97,11 +96,10 @@ type
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure BacklightOn1Click(Sender: TObject);
     procedure TimerRefreshTimer(Sender: TObject);
-    procedure HTTPUpdateTimerTimer(Sender: TObject);
+    procedure LCDSmartieCheckUpdateTimerTimer(Sender: TObject);
     procedure ActionsTimerTimer(Sender: TObject);
     procedure LeftManualScrollTimerTimer(Sender: TObject);
     procedure RightManualScrollTimerTimer(Sender: TObject);
-    procedure MBMUpdateTimerTimer(Sender: TObject);
     procedure NextScreenTimerTimer(Sender: TObject);
     procedure Credits1Click(Sender: TObject);
     procedure NextTheme1Click(Sender: TObject);
@@ -402,11 +400,10 @@ begin
   bTerminating := true;
 
   while timerRefresh.enabled = true do timerRefresh.enabled := false;
-  while HTTPUpdateTimer.enabled = true do HTTPUpdateTimer.enabled := false;
+  while LCDSmartieCheckUpdateTimer.enabled = true do LCDSmartieCheckUpdateTimer.enabled := false;
   while ActionsTimer.enabled = true do ActionsTimer.enabled := false;
   while LeftManualScrollTimer.enabled = true do LeftManualScrollTimer.enabled := false;
   while RightManualScrollTimer.enabled = true do RightManualScrollTimer.enabled := false;
-  while MBMUpdateTimer.enabled = true do MBMUpdateTimer.enabled := false;
   while NextScreenTimer.enabled = true do NextScreenTimer.enabled := false;
   while ScrollFlashTimer.enabled = true do ScrollFlashTimer.enabled := false;
   while TransitionTimer.enabled = true do TransitionTimer.enabled := false;
@@ -462,8 +459,6 @@ begin
   if upcase(key)='.' then NextButton.click();
   if (upcase(key)='?') or (upcase(key)='/') then
   begin
-    HTTPUpdateTimer.interval := 10;
-    MBMUpdateTimer.interval := 10;
     Data.RefreshDataThreads;
   end;
 end;
@@ -610,7 +605,7 @@ end;
 var
   DidUpdateWarning : boolean = false;
 
-procedure TLCDSmartieDisplayForm.HTTPUpdateTimerTimer(Sender: TObject);
+procedure TLCDSmartieDisplayForm.LCDSmartieCheckUpdateTimerTimer(Sender: TObject);
 begin
   if (data.LCDSmartieUpdate and not DidUpdateWarning) then
   begin
@@ -626,13 +621,6 @@ begin
 
     if (bTerminating) then Exit;
   end;
-end;
-
-procedure TLCDSmartieDisplayForm.MBMUpdateTimerTimer(Sender: TObject);
-begin
-  Data.UpdateDNetStats(Sender);
-  MBMUpdateTimer.Interval := 0;
-  MBMUpdateTimer.Interval := config.mbmRefresh*1000;
 end;
 
 procedure TLCDSmartieDisplayForm.TransitionTimerTimer(Sender: TObject);
@@ -1044,9 +1032,7 @@ begin
   end;
 
 
-  HTTPUpdateTimer.enabled := true;  // http update
   ActionsTimer.enabled := true;  // actions
-  MBMUpdateTimer.enabled := true;  // mbm update
   ScrollFlashTimer.enabled := true; // scroll/flash
   timerRefresh.enabled := true;  // update lcd and data
 end;
@@ -1691,8 +1677,6 @@ begin
 
     if pos('RefreshAll', sAction) <> 0 then
     begin
-      HTTPUpdateTimer.interval := 10;
-      MBMUpdateTimer.interval := 10;
       Data.RefreshDataThreads;
     end;
 

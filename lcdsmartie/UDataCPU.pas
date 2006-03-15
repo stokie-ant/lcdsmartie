@@ -8,7 +8,6 @@ uses
 type
   TCPUDataThread = class(TDataThread)
   private
-    localeFormat : TFormatSettings;
     fMBMThread : TMBMDataThread;
     //cpu usage
     STCPUType : string;
@@ -49,7 +48,6 @@ begin
 
   Active := false;  // set the defaults
   fMBMThread := MBMThread;
-  GetLocaleFormatSettings(LOCALE_SYSTEM_DEFAULT, localeFormat);
   inherited Create(250);
 end;
 

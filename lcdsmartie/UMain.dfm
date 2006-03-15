@@ -4,7 +4,7 @@ object LCDSmartieDisplayForm: TLCDSmartieDisplayForm
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsToolWindow
   Caption = 'LCD Smartie 5.3'
-  ClientHeight = 191
+  ClientHeight = 214
   ClientWidth = 228
   Color = clBtnFace
   TransparentColorValue = clBtnFace
@@ -328,10 +328,10 @@ object LCDSmartieDisplayForm: TLCDSmartieDisplayForm
     Left = 164
     Top = 176
   end
-  object HTTPUpdateTimer: TTimer
+  object LCDSmartieCheckUpdateTimer: TTimer
     Enabled = False
     Interval = 10000
-    OnTimer = HTTPUpdateTimerTimer
+    OnTimer = LCDSmartieCheckUpdateTimerTimer
     Left = 4
     Top = 144
   end
@@ -401,13 +401,6 @@ object LCDSmartieDisplayForm: TLCDSmartieDisplayForm
     OnTimer = RightManualScrollTimerTimer
     Left = 100
     Top = 176
-  end
-  object MBMUpdateTimer: TTimer
-    Enabled = False
-    Interval = 10
-    OnTimer = MBMUpdateTimerTimer
-    Left = 36
-    Top = 144
   end
   object NextScreenTimer: TTimer
     Enabled = False

@@ -19,7 +19,7 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.54 $ $Date: 2006/03/14 19:47:26 $
+ *  $Revision: 1.55 $ $Date: 2006/03/15 15:44:41 $
  *****************************************************************************}
 
 interface
@@ -270,7 +270,7 @@ implementation
 
 uses
   Windows, ShellApi, graphics, sysutils, Registry, StrUtils,
-  UMain, UInteract, UConfig, UDataEmail, UDataNetwork;
+  UMain, UInteract, UConfig, UDataEmail, UDataNetwork, UDataWinamp;
 
 {$R *.DFM}
 
@@ -283,7 +283,6 @@ begin
   with SetupForm do begin
     ShowModal;
     Result := (ModalResult = mrOK);
-    LCDSmartieDisplayForm.HTTPUpdateTimer.interval := 500;
     LCDSmartieDisplayForm.NextScreenTimer.interval := 0;
     if (not config.screen[activeScreen][1].bSticky) then
       LCDSmartieDisplayForm.NextScreenTimer.interval := config.screen[activeScreen][1].showTime*1000;
@@ -328,6 +327,7 @@ var
   SR : TSearchRec;
   Loop,FindResult : integer;
   NetStat : TNetworkStatistics;
+  WinampStat : TWinampStat;
 begin
   MainPageControl.ActivePage := ScreensTabSheet;
   //if pagecontrol1.activepage = tabsheet13 then pagecontrol1.ActivePage :=
@@ -405,6 +405,12 @@ begin
   for NetStat := FirstNetworkStat to LastNetworkStat do begin
     NetworkStatsListBox.Items.Add(NetworkUserHints[NetStat]);
   end;
+
+  WinampListBox.Clear;
+  for WinampStat := FirstWinampStat to LastWinampStat do begin
+    WinampListBox.Items.Add(WinampHints[WinampStat]);
+  end;
+
 
   LCDSizeComboBox.Items.Clear;
   for i := 1 to MaxScreenSizes do
@@ -681,27 +687,14 @@ begin
 end;
 
 procedure TSetupForm.WinampListBoxClick(Sender: TObject);
+var
+  WinampStat : TWinampStat;
 begin
-  case WinampListBox.itemindex of
-    0 : VariableEdit.Text := '$WinampTitle';
-    1 : VariableEdit.Text := '$WinampChannels';
-    2 : VariableEdit.Text := '$WinampKBPS';
-    3 : VariableEdit.Text := '$WinampFreq';
-    4 : VariableEdit.Text := '$Winamppos';
-    5 : VariableEdit.Text := '$WinampPolo';
-    6 : VariableEdit.Text := '$WinampPosh';
-    7 : VariableEdit.Text := '$WinampRem';
-    8 : VariableEdit.Text := '$WinampRelo';
-    9 : VariableEdit.Text := '$WinampResh';
-    10 : VariableEdit.Text := '$WinampLength';
-    11 : VariableEdit.Text := '$WinampLengtl';
-    12 : VariableEdit.Text := '$WinampLengts';
-    13 : VariableEdit.Text := '$WinampPosition(10)';
-    14 : VariableEdit.Text := '$WinampTracknr';
-    15 : VariableEdit.Text := '$WinampTotalTracks';
-    16 : VariableEdit.Text := '$WinampStat';
-    else VariableEdit.Text := NoVariable;
-  end; // case
+  WinampStat := TWinampStat(WinampListBox.itemindex);
+  if (WinampStat >= FirstWinampStat) and (WinampStat <= LastWinampStat) then begin
+    VariableEdit.Text := WinampKeys[WinampStat];
+  end else
+    VariableEdit.Text := NoVariable;
 
   if not (VariableEdit.Text = NoVariable) then
     FocusToInputField();
@@ -1390,8 +1383,6 @@ begin
   config.httpProxyPort := StrToInt(WebProxyPortEdit.text);
 
   SaveScreen(ScreenSpinEdit.Value);
-  LCDSmartieDisplayForm.HTTPUpdateTimer.interval := 1000;
-  LCDSmartieDisplayForm.MBMUpdateTimer.interval := 1000;
   LCDSmartieDisplayForm.ScrollFlashTimer.interval := config.scrollPeriod;
   LCDSmartieDisplayForm.Data.RefreshDataThreads;
 
