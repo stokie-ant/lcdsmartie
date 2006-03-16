@@ -27,7 +27,7 @@ object SetupForm: TSetupForm
     Top = 0
     Width = 233
     Height = 409
-    ActivePage = WinampTabSheet
+    ActivePage = MBMTabSheet
     Font.Charset = ANSI_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
@@ -146,70 +146,9 @@ object SetupForm: TSetupForm
       object MBMListBox: TListBox
         Left = 0
         Top = 0
-        Width = 185
+        Width = 181
         Height = 321
         ItemHeight = 13
-        Items.Strings = (
-          'Temperature 1'
-          'Temperature 2'
-          'Temperature 3'
-          'Temperature 4'
-          'Temperature 5'
-          'Temperature 6'
-          'Temperature 7'
-          'Temperature 8'
-          'Temperature 9'
-          'Temperature 10'
-          'Fan speed 1'
-          'Fan speed 2'
-          'Fan speed 3'
-          'Fan speed 4'
-          'Fan speed 5'
-          'Fan speed 6'
-          'Fan speed 7'
-          'Fan speed 8'
-          'Fan speed 9'
-          'Fan speed 10'
-          'Voltage 1'
-          'Voltage 2'
-          'Voltage 3'
-          'Voltage 4'
-          'Voltage 5'
-          'Voltage 6'
-          'Voltage 7'
-          'Voltage 8'
-          'Voltage 9'
-          'Voltage 10'
-          'Temperature name 1'
-          'Temperature name 2'
-          'Temperature name 3'
-          'Temperature name 4'
-          'Temperature name 5'
-          'Temperature name 6'
-          'Temperature name 7'
-          'Temperature name 8'
-          'Temperature name 9'
-          'Temperature name 10'
-          'Fan name 1'
-          'Fan name 2'
-          'Fan name 3'
-          'Fan name 4'
-          'Fan name 5'
-          'Fan name 6'
-          'Fan name 7'
-          'Fan name 8'
-          'Fan name 9'
-          'Fan name 10'
-          'Voltage name 1'
-          'Voltage name 2'
-          'Voltage name 3'
-          'Voltage name 4'
-          'Voltage name 5'
-          'Voltage name 6'
-          'Voltage name 7'
-          'Voltage name 8'
-          'Voltage name 9'
-          'Voltage name 10')
         TabOrder = 0
         OnClick = MBMListBoxClick
         OnDblClick = InsertButtonClick

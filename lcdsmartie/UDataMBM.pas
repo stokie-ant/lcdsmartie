@@ -6,6 +6,29 @@ uses
   SysUtils,DataThread;
 
 const
+  FanKey  = '$Fan';
+  FanNameKey  = FanKey + 'name';
+  FanSpeedKey  = FanKey + 'S';
+  TempKey = '$Temp';
+  TempNameKey  = TempKey + 'name';
+  TemperatureKey  = TempKey;
+  VoltKey = '$Volt';
+  VoltNameKey  = VoltKey + 'name';
+  VoltageKey  = VoltKey + 'age';
+
+type
+  TMBMStat = (mbFanSpeed,mbFanName,mbTemperature,mbTempName,mbVoltage,mbVoltName);
+const
+  FirstMBMStat = mbFanSpeed;
+  LastMBMStat = mbVoltName;
+
+  MBMStatKey : array[TMBMStat] of string = (
+    FanSpeedKey,FanNameKey,TemperatureKey,TempNameKey,VoltageKey,VoltNameKey);
+
+  MBMHints : array[TMBMStat] of string = (
+    'Fan speed','Fan name','Temperature ','Temperure name','Voltage','Voltage name');
+
+const
   MaxMBMStat = 11;
   MaxMBMCPU = 5;
 
@@ -121,30 +144,15 @@ procedure TMBMDataThread.ResolveVariables(var Line : string);
 var
   StatNo : byte;
 begin
-  if (pos('$Temp', line) <> 0) then
+  if (pos(FanKey, line) <> 0) then
   begin
     fDataLock.Enter;
     try
       for StatNo := 1 to MaxMBMStat-1 do
       begin
-        line := StringReplace(line, '$Tempname' + IntToStr(StatNo), MBMStats[StatNo].TempName,
+        line := StringReplace(line, FanNameKey + IntToStr(StatNo), MBMStats[StatNo].Fanname,
           [rfReplaceAll]);
-        line := StringReplace(line, '$Temp' + IntToStr(StatNo),
-          FloatToStr(MBMStats[StatNo].Temperature, localeFormat), [rfReplaceAll]);
-      end;
-    finally
-      fDataLock.Leave;
-    end;
-  end;
-  if (pos('$Fan', line) <> 0) then
-  begin
-    fDataLock.Enter;
-    try
-      for StatNo := 1 to MaxMBMStat-1 do
-      begin
-        line := StringReplace(line, '$Fanname' + IntToStr(StatNo), MBMStats[StatNo].Fanname,
-          [rfReplaceAll]);
-        line := StringReplace(line, '$FanS' + IntToStr(StatNo),
+        line := StringReplace(line, FanSpeedKey + IntToStr(StatNo),
           FloatToStr(MBMStats[StatNo].Fan, localeFormat), [rfReplaceAll]);
       end;
     finally
@@ -152,15 +160,31 @@ begin
     end;
   end;
 
-  if (pos('$Volt', line) <> 0) then
+  if (pos(TempKey, line) <> 0) then
   begin
     fDataLock.Enter;
     try
       for StatNo := 1 to MaxMBMStat-1 do
       begin
-        line := StringReplace(line, '$Voltname' + IntToStr(StatNo),MBMStats[StatNo].Voltname,
+        line := StringReplace(line, TempNameKey + IntToStr(StatNo), MBMStats[StatNo].TempName,
           [rfReplaceAll]);
-        line := StringReplace(line, '$Voltage' + IntToStr(StatNo),
+        line := StringReplace(line, TemperatureKey + IntToStr(StatNo),
+          FloatToStr(MBMStats[StatNo].Temperature, localeFormat), [rfReplaceAll]);
+      end;
+    finally
+      fDataLock.Leave;
+    end;
+  end;
+
+  if (pos(VoltKey, line) <> 0) then
+  begin
+    fDataLock.Enter;
+    try
+      for StatNo := 1 to MaxMBMStat-1 do
+      begin
+        line := StringReplace(line, VoltNameKey + IntToStr(StatNo),MBMStats[StatNo].Voltname,
+          [rfReplaceAll]);
+        line := StringReplace(line, VoltageKey + IntToStr(StatNo),
           FloatToStr(MBMStats[StatNo].Voltage, localeFormat), [rfReplaceAll]);
       end;
     finally
@@ -248,9 +272,9 @@ begin
     for LineCount := 1 to config.height do
     begin
       screenline := config.screen[ScreenCount][LineCount].text;
-      if (not bMbm) and (pos('$Fan', screenline) <> 0) then bMbm := true;
-      if (not bMbm) and (pos('$Volt', screenline) <> 0) then bMbm := true;
-      if (not bMbm) and (pos('$Temp', screenline) <> 0) then bMbm := true;
+      if (not bMbm) and (pos(FanKey, screenline) <> 0) then bMbm := true;
+      if (not bMbm) and (pos(TempKey, screenline) <> 0) then bMbm := true;
+      if (not bMbm) and (pos(VoltKey, screenline) <> 0) then bMbm := true;
       if (not bMbm) and (pos('$CPUUsage%', screenline) <> 0) then bMbm := true; // used as backup.
     end;
   end;

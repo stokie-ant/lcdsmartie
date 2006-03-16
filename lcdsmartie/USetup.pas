@@ -19,7 +19,7 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.56 $ $Date: 2006/03/15 16:03:55 $
+ *  $Revision: 1.57 $ $Date: 2006/03/16 14:49:42 $
  *****************************************************************************}
 
 interface
@@ -270,7 +270,8 @@ implementation
 
 uses
   Windows, ShellApi, graphics, sysutils, Registry, StrUtils,
-  UMain, UInteract, UConfig, UDataEmail, UDataNetwork, UDataWinamp;
+  UMain, UInteract, UConfig, UDataEmail, UDataNetwork, UDataWinamp,
+  UDataMBM;
 
 {$R *.DFM}
 
@@ -328,6 +329,7 @@ var
   Loop,FindResult : integer;
   NetStat : TNetworkStatistics;
   WinampStat : TWinampStat;
+  MBMStat : TMBMStat;
 begin
   MainPageControl.ActivePage := ScreensTabSheet;
   //if pagecontrol1.activepage = tabsheet13 then pagecontrol1.ActivePage :=
@@ -409,6 +411,13 @@ begin
   WinampListBox.Clear;
   for WinampStat := FirstWinampStat to LastWinampStat do begin
     WinampListBox.Items.Add(WinampHints[WinampStat]);
+  end;
+
+  MBMListBox.Clear;
+  for Loop := 1 to MaxMBMStat-1 do begin
+    for MBMStat := FirstMBMStat to LastMBMStat do begin
+      MBMListBox.Items.Add(MBMHints[MBMStat] + ' ' + IntToStr(Loop));
+    end;
   end;
 
 
@@ -863,70 +872,17 @@ begin
 end;
 
 procedure TSetupForm.MBMListBoxClick(Sender: TObject);
+var
+  MBMStat : TMBMStat;
+  Index : integer;
 begin
-  case MBMListBox.itemindex of
-    0 : VariableEdit.Text := '$Temp1';
-    1 : VariableEdit.Text := '$Temp2';
-    2 : VariableEdit.Text := '$Temp3';
-    3 : VariableEdit.Text := '$Temp4';
-    4 : VariableEdit.Text := '$Temp5';
-    5 : VariableEdit.Text := '$Temp6';
-    6 : VariableEdit.Text := '$Temp7';
-    7 : VariableEdit.Text := '$Temp8';
-    8 : VariableEdit.Text := '$Temp9';
-    9 : VariableEdit.Text := '$Temp10';
-    10 : VariableEdit.Text := '$FanS1';
-    11 : VariableEdit.Text := '$FanS2';
-    12 : VariableEdit.Text := '$FanS3';
-    13 : VariableEdit.Text := '$FanS4';
-    14 : VariableEdit.Text := '$FanS5';
-    15 : VariableEdit.Text := '$FanS6';
-    16 : VariableEdit.Text := '$FanS7';
-    17 : VariableEdit.Text := '$FanS8';
-    18 : VariableEdit.Text := '$FanS9';
-    19 : VariableEdit.Text := '$FanS10';
-    20 : VariableEdit.Text := '$Voltage1';
-    21 : VariableEdit.Text := '$Voltage2';
-    22 : VariableEdit.Text := '$Voltage3';
-    23 : VariableEdit.Text := '$Voltage4';
-    24 : VariableEdit.Text := '$Voltage5';
-    25 : VariableEdit.Text := '$Voltage6';
-    26 : VariableEdit.Text := '$Voltage7';
-    27 : VariableEdit.Text := '$Voltage8';
-    28 : VariableEdit.Text := '$Voltage9';
-    29 : VariableEdit.Text := '$Voltage10';
-    30 : VariableEdit.Text := '$Tempname1';
-    31 : VariableEdit.Text := '$Tempname2';
-    32 : VariableEdit.Text := '$Tempname3';
-    33 : VariableEdit.Text := '$Tempname4';
-    34 : VariableEdit.Text := '$Tempname5';
-    35 : VariableEdit.Text := '$Tempname6';
-    36 : VariableEdit.Text := '$Tempname7';
-    37 : VariableEdit.Text := '$Tempname8';
-    38 : VariableEdit.Text := '$Tempname9';
-    39 : VariableEdit.Text := '$Tempname10';
-    40 : VariableEdit.Text := '$Fanname1';
-    41 : VariableEdit.Text := '$Fanname2';
-    42 : VariableEdit.Text := '$Fanname3';
-    43 : VariableEdit.Text := '$Fanname4';
-    44 : VariableEdit.Text := '$Fanname5';
-    45 : VariableEdit.Text := '$Fanname6';
-    46 : VariableEdit.Text := '$Fanname7';
-    47 : VariableEdit.Text := '$Fanname8';
-    48 : VariableEdit.Text := '$Fanname9';
-    49 : VariableEdit.Text := '$Fanname10';
-    50 : VariableEdit.Text := '$Voltname1';
-    51 : VariableEdit.Text := '$Voltname2';
-    52 : VariableEdit.Text := '$Voltname3';
-    53 : VariableEdit.Text := '$Voltname4';
-    54 : VariableEdit.Text := '$Voltname5';
-    55 : VariableEdit.Text := '$Voltname6';
-    56 : VariableEdit.Text := '$Voltname7';
-    57 : VariableEdit.Text := '$Voltname8';
-    58 : VariableEdit.Text := '$Voltname9';
-    59 : VariableEdit.Text := '$Voltname10';
-    else VariableEdit.Text := NoVariable;
-  end; // case
+  MBMStat := TMBMStat(MBMListBox.itemindex mod (ord(LastMBMStat)+1));
+  Index := MBMListBox.itemindex div (ord(LastMBMStat)+1) + 1;
+
+  if (MBMStat >= FirstMBMStat) and (MBMStat <= LastMBMStat) then begin
+    VariableEdit.Text := MBMStatKey[MBMStat]+IntToStr(Index);
+  end else
+    VariableEdit.Text := NoVariable;
 
   if not (VariableEdit.Text = NoVariable) then
     FocusToInputField();
