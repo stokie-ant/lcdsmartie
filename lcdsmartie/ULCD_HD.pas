@@ -19,7 +19,7 @@ unit ULCD_HD;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/Attic/ULCD_HD.pas,v $
- *  $Revision: 1.22 $ $Date: 2006/03/02 21:21:58 $
+ *  $Revision: 1.23 $ $Date: 2006/03/18 01:59:25 $
  *
  *  Based on code from the following (open-source) projects:
  *     WinAmp LCD Plugin
@@ -404,7 +404,8 @@ begin
       QueryPerformanceCounter(iCurr);
 
       if (iCurr < iBegin) then iBegin := 0;
-		  uiElapsed := ((iCurr - iBegin) * 1000000) div iHighResTimerFreq;
+		  uiElapsed := (iCurr - iBegin) div (iHighResTimerFreq div 1000000);
+      // Div freq (counts per second) by 10^6 for counts per microsecond
 
 	  until (uiElapsed > uiUsecsScaled);
   end
