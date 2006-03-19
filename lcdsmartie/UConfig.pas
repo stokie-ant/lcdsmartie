@@ -19,7 +19,7 @@ unit UConfig;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UConfig.pas,v $
- *  $Revision: 1.50 $ $Date: 2006/03/10 14:35:36 $
+ *  $Revision: 1.51 $ $Date: 2006/03/19 16:18:59 $
  *****************************************************************************}
 
 interface
@@ -89,6 +89,7 @@ type
     server: String;
     user: String;
     pword: String;
+    port_ssl: String;
   end;
 
   TTestDriverSettings = Record
@@ -243,7 +244,7 @@ var
   initfile: textfile;
   ConfigLineCount, ScreenCount, LineCount: Integer;
   configline: String;
-  configArray: Array[1..100] of String;
+  configArray: Array[1..101] of String;
 begin
   // Load Game server list.
   try
@@ -362,10 +363,11 @@ begin
   httpProxy := configArray[93];
   httpProxyPort := StrToInt(configArray[94]);
 
-  // Pop accounts
+  // Pop accounts + ssl
   pop[1].server := copy(configArray[95], 1, pos('¿0', configArray[95])-1);
   pop[1].user := copy(configArray[96], 1, pos('¿0', configArray[96])-1);
   pop[1].pword := copy(configArray[97], 1, pos('¿0', configArray[97])-1);
+  pop[1].port_ssl := copy(configArray[101], 1, pos('¿0', configArray[101])-1);
 
   pop[2].server := copy(configArray[95], pos('¿0', configArray[95]) + 2,
     pos('¿1', configArray[95])-pos('¿0', configArray[95])-2);
@@ -373,6 +375,8 @@ begin
     pos('¿1', configArray[96])-pos('¿0', configArray[96])-2);
   pop[2].pword := copy(configArray[97], pos('¿0', configArray[97]) + 2,
     pos('¿1', configArray[97])-pos('¿0', configArray[97])-2);
+  pop[2].port_ssl := copy(configArray[101], pos('¿0', configArray[101]) + 2,
+    pos('¿1', configArray[101])-pos('¿0', configArray[101])-2);
 
   pop[3].server := copy(configArray[95], pos('¿1', configArray[95]) + 2,
     pos('¿2', configArray[95])-pos('¿1', configArray[95])-2);
@@ -380,6 +384,8 @@ begin
     pos('¿2', configArray[96])-pos('¿1', configArray[96])-2);
   pop[3].pword := copy(configArray[97], pos('¿1', configArray[97]) + 2,
     pos('¿2', configArray[97])-pos('¿1', configArray[97])-2);
+  pop[3].port_ssl := copy(configArray[101], pos('¿1', configArray[101]) + 2,
+    pos('¿2', configArray[101])-pos('¿1', configArray[101])-2);
 
   pop[4].server := copy(configArray[95], pos('¿2', configArray[95]) + 2,
     pos('¿3', configArray[95])-pos('¿2', configArray[95])-2);
@@ -387,6 +393,8 @@ begin
     pos('¿3', configArray[96])-pos('¿2', configArray[96])-2);
   pop[4].pword := copy(configArray[97], pos('¿2', configArray[97]) + 2,
     pos('¿3', configArray[97])-pos('¿2', configArray[97])-2);
+  pop[4].port_ssl := copy(configArray[101], pos('¿2', configArray[101]) + 2,
+    pos('¿3', configArray[101])-pos('¿2', configArray[101])-2);
 
   pop[5].server := copy(configArray[95], pos('¿3', configArray[95]) + 2,
     pos('¿4', configArray[95])-pos('¿3', configArray[95])-2);
@@ -394,6 +402,8 @@ begin
     pos('¿4', configArray[96])-pos('¿3', configArray[96])-2);
   pop[5].pword := copy(configArray[97], pos('¿3', configArray[97]) + 2,
     pos('¿4', configArray[97])-pos('¿3', configArray[97])-2);
+  pop[5].port_ssl := copy(configArray[101], pos('¿3', configArray[101]) + 2,
+    pos('¿4', configArray[101])-pos('¿3', configArray[101])-2);
 
   pop[6].server := copy(configArray[95], pos('¿4', configArray[95]) + 2,
     pos('¿5', configArray[95])-pos('¿4', configArray[95])-2);
@@ -401,6 +411,8 @@ begin
     pos('¿5', configArray[96])-pos('¿4', configArray[96])-2);
   pop[6].pword := copy(configArray[97], pos('¿4', configArray[97]) + 2,
     pos('¿5', configArray[97])-pos('¿4', configArray[97])-2);
+  pop[6].port_ssl := copy(configArray[101], pos('¿4', configArray[101]) + 2,
+    pos('¿5', configArray[101])-pos('¿4', configArray[101])-2);
 
   pop[7].server := copy(configArray[95], pos('¿5', configArray[95]) + 2,
     pos('¿6', configArray[95])-pos('¿5', configArray[95])-2);
@@ -408,6 +420,8 @@ begin
     pos('¿6', configArray[96])-pos('¿5', configArray[96])-2);
   pop[7].pword := copy(configArray[97], pos('¿5', configArray[97]) + 2,
     pos('¿6', configArray[97])-pos('¿5', configArray[97])-2);
+  pop[7].port_ssl := copy(configArray[101], pos('¿5', configArray[101]) + 2,
+    pos('¿6', configArray[101])-pos('¿5', configArray[101])-2);
 
   pop[8].server := copy(configArray[95], pos('¿6', configArray[95]) + 2,
     pos('¿7', configArray[95])-pos('¿6', configArray[95])-2);
@@ -415,6 +429,8 @@ begin
     pos('¿7', configArray[96])-pos('¿6', configArray[96])-2);
   pop[8].pword := copy(configArray[97], pos('¿6', configArray[97]) + 2,
     pos('¿7', configArray[97])-pos('¿6', configArray[97])-2);
+  pop[8].port_ssl := copy(configArray[101], pos('¿6', configArray[101]) + 2,
+    pos('¿7', configArray[101])-pos('¿6', configArray[101])-2);
 
   pop[9].server := copy(configArray[95], pos('¿7', configArray[95]) + 2,
     pos('¿8', configArray[95])-pos('¿7', configArray[95])-2);
@@ -422,6 +438,8 @@ begin
     pos('¿8', configArray[96])-pos('¿7', configArray[96])-2);
   pop[9].pword := copy(configArray[97], pos('¿7', configArray[97]) + 2,
     pos('¿8', configArray[97])-pos('¿7', configArray[97])-2);
+  pop[9].port_ssl := copy(configArray[101], pos('¿7', configArray[101]) + 2,
+    pos('¿8', configArray[101])-pos('¿7', configArray[101])-2);
 
   pop[0].server := copy(configArray[95], pos('¿8', configArray[95]) + 2,
     pos('¿9', configArray[95])-pos('¿8', configArray[95])-2);
@@ -429,6 +447,8 @@ begin
     pos('¿9', configArray[96])-pos('¿8', configArray[96])-2);
   pop[0].pword := copy(configArray[97], pos('¿8', configArray[97]) + 2,
     pos('¿9', configArray[97])-pos('¿8', configArray[97])-2);
+  pop[0].port_ssl := copy(configArray[101], pos('¿8', configArray[101]) + 2,
+    pos('¿9', configArray[101])-pos('¿8', configArray[101])-2);    
 
   xScreenType := TScreenType(StrToInt(configArray[98]));
   comPort := StrToInt(configArray[99]);
@@ -673,7 +693,7 @@ begin
   bAutoStartHide := initFile.ReadBool('General Settings', 'AutoStartHidden', false);
 
 
-  // Pop accounts
+  // Pop accounts + ssl
   for MailCount := 0 to MaxEmailAccounts-1 do
   begin
     sPOPAccount := Format('%.2u', [MailCount], localeFormat);
@@ -682,6 +702,8 @@ begin
     pop[MailCount].user := initFile.ReadString('POP Accounts', 'User' + sPOPAccount,
       '');
     pop[MailCount].pword := initFile.ReadString('POP Accounts', 'Password' +
+      sPOPAccount, '');
+    pop[MailCount].port_ssl := initFile.ReadString('POP Accounts', 'Port_ssl' +
       sPOPAccount, '');
   end;
 
@@ -834,7 +856,7 @@ begin
   initFile.WriteBool('General Settings', 'AutoStart', bAutoStart);
   initFile.WriteBool('General Settings', 'AutoStartHidden', bAutoStartHide);
 
-  // Pop accounts
+  // Pop accounts + ssl
   for MailCount := 0 to MaxEmailAccounts-1 do
   begin
     sPOPAccount := Format('%.2u', [MailCount], localeFormat);
@@ -844,6 +866,8 @@ begin
       pop[MailCount].user + '"');
     initFile.WriteString('POP Accounts', 'Password' + sPOPAccount, '"' +
       pop[MailCount].pword + '"');
+    initFile.WriteString('POP Accounts', 'Port_ssl' + sPOPAccount,
+      pop[MailCount].port_ssl);
   end;
 
   for ScreenCount := 1 to MaxScreens do
