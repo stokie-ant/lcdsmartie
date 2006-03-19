@@ -19,7 +19,7 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.57 $ $Date: 2006/03/16 14:49:42 $
+ *  $Revision: 1.58 $ $Date: 2006/03/19 15:49:25 $
  *****************************************************************************}
 
 interface
@@ -199,6 +199,8 @@ type
     ContrastTrackBar: TTrackBar;
     GroupBox1: TGroupBox;
     BrightnessTrackBar: TTrackBar;
+    EmailSSLEdit: TEdit;
+    Label2: TLabel;
     procedure FormShow(Sender: TObject);
     procedure LCDSizeComboBoxChange(Sender: TObject);
     procedure ScreenSpinEditChange(Sender: TObject);
@@ -1360,13 +1362,17 @@ begin
 end;
 
 procedure TSetupForm.FormCreate(Sender: TObject);
+var pathssl :string;
 begin
+  pathssl := ExtractFilePath(ParamStr(0));
   ActionsStringGrid.RowCount := 0;
   ActionsStringGrid.ColWidths[0] := 116;
   ActionsStringGrid.ColWidths[1] := 20;
   ActionsStringGrid.ColWidths[2] := 56;
   ActionsStringGrid.ColWidths[3] := 36;
   ActionsStringGrid.ColWidths[4] := 156;
+  if not fileExists(pathssl+'libeay32.dll') or
+     not fileExists(pathssl+'ssleay32.dll') then EmailSSLEdit.Enabled :=False ;
 end;
 
 procedure TSetupForm.OutputListBoxClick(Sender: TObject);

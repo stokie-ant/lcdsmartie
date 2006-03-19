@@ -27,7 +27,7 @@ object SetupForm: TSetupForm
     Top = 0
     Width = 233
     Height = 409
-    ActivePage = MBMTabSheet
+    ActivePage = EmailTabSheet
     Font.Charset = ANSI_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
@@ -448,21 +448,21 @@ object SetupForm: TSetupForm
       Caption = 'Email'
       ImageIndex = 7
       object Label31: TLabel
-        Left = 8
-        Top = 252
+        Left = 26
+        Top = 228
         Width = 36
         Height = 13
         Caption = 'Server:'
       end
       object Label32: TLabel
-        Left = 8
+        Left = 7
         Top = 276
         Width = 55
         Height = 13
         Caption = 'Loginname:'
       end
       object Label33: TLabel
-        Left = 8
+        Left = 12
         Top = 300
         Width = 50
         Height = 13
@@ -477,14 +477,14 @@ object SetupForm: TSetupForm
       end
       object Label50: TLabel
         Left = 8
-        Top = 220
+        Top = 204
         Width = 69
         Height = 13
         Caption = 'Email account:'
       end
       object Label28: TLabel
         Left = 56
-        Top = 192
+        Top = 179
         Width = 56
         Height = 13
         Caption = 'POP3 only'
@@ -495,13 +495,21 @@ object SetupForm: TSetupForm
         Font.Style = [fsBold]
         ParentFont = False
       end
+      object Label2: TLabel
+        Left = 41
+        Top = 253
+        Width = 21
+        Height = 13
+        Caption = 'SSL:'
+      end
       object EmailPasswordEdit: TEdit
         Left = 64
         Top = 296
         Width = 113
         Height = 21
+        Color = 16706270
         PasswordChar = '*'
-        TabOrder = 4
+        TabOrder = 5
         Text = 'Ur passw'
       end
       object EmailLoginEdit: TEdit
@@ -509,12 +517,12 @@ object SetupForm: TSetupForm
         Top = 272
         Width = 113
         Height = 21
-        TabOrder = 3
+        TabOrder = 4
         Text = 'Ur loginname'
       end
       object EmailServerEdit: TEdit
         Left = 64
-        Top = 248
+        Top = 224
         Width = 113
         Height = 21
         TabOrder = 2
@@ -534,7 +542,7 @@ object SetupForm: TSetupForm
         MaxValue = 10080
         MinValue = 1
         ParentFont = False
-        TabOrder = 5
+        TabOrder = 6
         Value = 3
       end
       object EmailListBox: TListBox
@@ -549,7 +557,7 @@ object SetupForm: TSetupForm
       end
       object EmailAccountComboBox: TComboBox
         Left = 104
-        Top = 216
+        Top = 200
         Width = 73
         Height = 21
         Style = csDropDownList
@@ -557,6 +565,17 @@ object SetupForm: TSetupForm
         ItemHeight = 13
         TabOrder = 1
         OnChange = EmailAccountComboBoxChange
+      end
+      object EmailSSLEdit: TEdit
+        Left = 64
+        Top = 248
+        Width = 113
+        Height = 21
+        Hint = 'SSL addon for gmail (995)'
+        Color = 16706270
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 3
       end
     end
     object NetworkStatsTabSheet: TTabSheet
