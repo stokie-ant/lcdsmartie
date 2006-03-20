@@ -3372,4 +3372,17 @@ object CreditsForm: TCreditsForm
     ParentFont = False
     OnClick = CloseClick
   end
+  object Label5: TLabel
+    Left = 6
+    Top = 232
+    Width = 274
+    Height = 13
+    Caption = 'SSL support by  Cristiano Vaccarini "aka vcorp"'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'MS Sans Serif'
+    Font.Style = [fsBold]
+    ParentFont = False
+  end
 end
