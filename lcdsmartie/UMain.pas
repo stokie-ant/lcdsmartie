@@ -19,15 +19,15 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.81 $ $Date: 2006/03/15 15:44:41 $
+ *  $Revision: 1.82 $ $Date: 2006/03/20 20:40:55 $
  *****************************************************************************}
 
 interface
 
 uses
   Messages, CoolTrayIcon, Menus,
-  WinampCtrl, ExtCtrls, Controls, StdCtrls, Buttons, Classes, Forms,
-  UConfig, ULCD, UData;
+  WinampCtrl, ExtCtrls, Controls, StdCtrls, Buttons, Classes, Forms, UConfig,
+  ULCD, UData;
 
 const
   WM_ICONTRAY = WM_USER + 1;   // User-defined message
@@ -262,6 +262,8 @@ begin
 
   SetCurrentDir(extractfilepath(application.exename));
   CreateDirectory('cache', nil);
+  CreateDirectory('plugins', nil);
+  CreateDirectory('displays', nil);
   AddPluginsToPath();
 
   ScreenLCD[1] := @Line1Panel;

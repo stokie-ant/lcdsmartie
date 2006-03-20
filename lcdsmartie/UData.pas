@@ -19,15 +19,14 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.70 $ $Date: 2006/03/15 15:44:41 $
+ *  $Revision: 1.71 $ $Date: 2006/03/20 20:40:54 $
  *****************************************************************************}
 
 
 interface
 
 uses
-  Classes, SysUtils, SyncObjs,
-  UDataEmail, UDataMBM, UDataSmartie;
+  Classes, SysUtils, SyncObjs, UDataEmail, UDataMBM, UDataSmartie;
 
 const
   iMaxPluginFuncs = 20;

@@ -15,8 +15,15 @@ This project requires the following components to be installed and in
 the projects path:
  - CoolTrayIcon from: http://subsimple.com/delphi.asp
  - WinampCtrl.
+ - Indy v10.5.1
+ - indy SSL library
+ - MadExcepts
 
-All of these components can be found in the components sub-directory.
+All of these components can be found in the components sub-directory or here:
+
+http://www.vcorp.it/downloads/indy10.1.5_d7.exe
+http://www.vcorp.it/downloads/indy_OpenSSL096m.zip
+
 
 Install all components before loading the LCD Smartie project.
 
@@ -31,6 +38,18 @@ Setting up the environment
 ==========================
 Copy all the files (but not the CVS subdirectory!) from release-dir to the top
 level directory - these are required for running the build.
+
+Structure:
+LCDSmartieDir	->
+		->imagesDir  ->here comes the skin images
+		->pluginsDir ->here comes the plugins
+		->cacheDir
+		->displays   ->here comes the dll display plugin
+		->LcdSmartie.exe
+		->config.ini
+		->inpout32.dll
+		->libeay32.dll
+		->ssleay32.dll
 
 
 ---------------------------------------------------------------

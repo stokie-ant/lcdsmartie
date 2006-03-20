@@ -34,7 +34,7 @@ destructor TURLThread.Destroy;
 begin
   fDataLock.Enter();
   if assigned(httpCopy) then
-    httpCopy^.DisconnectSocket();
+    httpCopy^.Disconnect;
   fDataLock.Leave();
   inherited;
 end;
@@ -126,7 +126,7 @@ begin
     on E: EIdHTTPProtocolException do
     begin
       if (Terminated) then raise EExiting.Create('');
-      if (E.ReplyErrorCode <> 304) then   // 304=Not Modified.
+      if (E.ErrorCode <> 304) then   // 304=Not Modified.
         raise;
     end;
 

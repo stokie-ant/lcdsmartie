@@ -90,11 +90,11 @@ MaxStackSize=1048576
 ImageBase=4194304
 ExeDescription=LCD Smartie: displays info on LCDs
 [Directories]
-OutputDir=
+OutputDir=release-dir
 UnitOutputDir=dcu
 PackageDLLOutputDir=
 PackageDCPOutputDir=
-SearchPath=components\CoolTrayIcon;components\WinampCtrl
+SearchPath=components\CoolTrayIcon;components\WinampCtrl;D:\Dcomp\Delphi7\CoolTrayIcon;D:\Dcomp\Delphi7\WinampCtrl
 Packages=vcl
 Conditionals=madExcept
 DebugSourceDirs=
@@ -140,14 +140,16 @@ Item0=madExcept
 Count=1
 Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
 [HistoryLists\hlSearchPath]
-Count=4
-Item0=components\CoolTrayIcon;components\WinampCtrl
-Item1=$(DELPHI)\Lib\Debug;components\CoolTrayIcon;components\WinampCtrl
-Item2=components\CoolTrayIcon;components\TMSAsync32\d7;components\WinampCtrl
-Item3=$(DELPHI)\Lib\Debug;components\CoolTrayIcon;components\TMSAsync32\d7;components\WinampCtrl
+Count=5
+Item0=components\CoolTrayIcon;components\WinampCtrl;D:\Dcomp\Delphi7\CoolTrayIcon;D:\Dcomp\Delphi7\WinampCtrl
+Item1=components\CoolTrayIcon;components\WinampCtrl
+Item2=$(DELPHI)\Lib\Debug;components\CoolTrayIcon;components\WinampCtrl
+Item3=components\CoolTrayIcon;components\TMSAsync32\d7;components\WinampCtrl
+Item4=$(DELPHI)\Lib\Debug;components\CoolTrayIcon;components\TMSAsync32\d7;components\WinampCtrl
 [HistoryLists\hlUnitOutputDirectory]
 Count=1
 Item0=dcu
 [HistoryLists\hlOutputDirectorry]
-Count=1
-Item0=exe
+Count=2
+Item0=release-dir
+Item1=exe

@@ -3,7 +3,10 @@ unit UDataEmail;
 interface
 
 uses
-  SyncObjs,Classes,UConfig,IdPOP3,DataThread;
+  SyncObjs, Classes, UConfig, DataThread, IdBaseComponent, IdHTTP, IdComponent,
+  IdTCPConnection, IdTCPClient, IdExplicitTLSClientServerBase, IdMessageClient,
+  IdPOP3, IdIOHandler, IdIOHandlerSocket, IdIOHandlerStack, IdSSL, IdSSLOpenSSL,
+  IdMessage, IdGlobal;
 
 const
   EmailKeyPrefix = '$Email';
@@ -22,7 +25,7 @@ type
 
   TEmailDataThread = class(TDataThread)
   private
-    fGotEmail : boolean;            // data+main threads
+    fGotEmail : boolean; // data+main threads
     fPOP3Copy : PPop3;   // so we can cancel the request. Guarded by httpCs
     fMail : array [0..MaxEmailAccounts-1] of TEmail; // Guarded by mailCs, data+main thread
   protected
@@ -37,7 +40,7 @@ type
 implementation
 
 uses
-  IdGlobal,UUtils,SysUtils,IdMessage;
+  UUtils, SysUtils;
 
 constructor TEmailDataThread.Create;
 begin
@@ -49,7 +52,7 @@ end;
 destructor TEmailDataThread.Destroy;
 begin
   if assigned(fPOP3Copy) then
-    fPOP3Copy^.DisconnectSocket();
+    fPOP3Copy^.Disconnect;
   inherited;
 end;
 
@@ -60,6 +63,7 @@ var
   screenline: String;
   pop3: TIdPOP3;
   msg: TIdMessage;
+  SSLHandler: TIdSSLIOHandlerSocketOpenSSL; //ssl added 20/03/2006 by vcorp
   myGotEmail: Boolean;
   messages: Integer;
 begin
@@ -95,17 +99,40 @@ begin
         if config.pop[AccountLoop].server <> '' then
         begin
           pop3 := TIdPOP3.Create(nil);
+          SSLHandler := TIdSSLIOHandlerSocketOpenSSL.Create(nil);
           msg := TIdMessage.Create(nil);
+
           pop3.host := config.pop[AccountLoop].server;
-          pop3.MaxLineAction := maSplit;
           pop3.ReadTimeout := 15000;   //15 seconds
           pop3.username := config.pop[AccountLoop].user;
           pop3.Password := config.pop[AccountLoop].pword;
 
+          //SSL Control and port assignement
+          if config.pop[AccountLoop].port_ssl <> ''
+          then begin
+          SSLHandler.MaxLineAction := maException;
+          SSLHandler.ConnectTimeout := 15000;
+          SSLHandler.SSLOptions.Method := sslvSSLv2;
+          SSLHandler.SSLOptions.Mode := sslmUnassigned;
+          SSLHandler.SSLOptions.VerifyMode := [];
+          SSLHandler.SSLOptions.VerifyDepth := 0;
+          pop3.IOHandler := SSLHandler;
+          pop3.UseTLS := utUseImplicitTLS;
+          pop3.Port := StrToInt(config.pop[AccountLoop].port_ssl);
+          SSLHandler.Host := config.pop[AccountLoop].server;
+          SSLHandler.Port := StrToInt(config.pop[AccountLoop].port_ssl);
+          end else
+          begin
+          pop3.IOHandler := nil;
+          pop3.UseTLS := utNoTLSSupport;
+          pop3.Port := 110;
+          end;
+
           try
             fPOP3Copy := @pop3;
             if (Terminated) then raise EExiting.Create('');
-            pop3.Connect(30000);   // 30 seconds
+            pop3.ConnectTimeout := 15000; // 30 seconds
+            pop3.Connect;
             if (Terminated) then raise EExiting.Create('');
 
             messages := pop3.CheckMessages;
@@ -132,6 +159,7 @@ begin
             pop3.Disconnect;
             pop3.Free;
             msg.Free;
+            SSLHandler.Free;
           end;
 
           if (fMail[AccountLoop].messages > 0) then myGotEmail := true;

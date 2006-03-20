@@ -19,7 +19,7 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.58 $ $Date: 2006/03/19 15:49:25 $
+ *  $Revision: 1.59 $ $Date: 2006/03/20 20:40:55 $
  *****************************************************************************}
 
 interface
@@ -404,6 +404,7 @@ begin
   EmailServerEdit.text := config.pop[1].server;
   EmailLoginEdit.text := config.pop[1].user;
   EmailPasswordEdit.text := config.pop[1].pword;
+  EmailSSLEdit.Text := config.pop[1].port_ssl;
 
   NetworkStatsListBox.Clear;
   for NetStat := FirstNetworkStat to LastNetworkStat do begin
@@ -1063,6 +1064,7 @@ begin
   config.pop[(CurrentlyShownEmailAccount + 1) mod MaxEmailAccounts].server := EmailServerEdit.text;
   config.pop[(CurrentlyShownEmailAccount + 1) mod MaxEmailAccounts].user := EmailLoginEdit.text;
   config.pop[(CurrentlyShownEmailAccount + 1) mod MaxEmailAccounts].pword := EmailPasswordEdit.text;
+  config.pop[(CurrentlyShownEmailAccount + 1) mod MaxEmailAccounts].port_ssl := EmailSSLEdit.text;
 
   if EmailAccountComboBox.itemIndex < 0 then EmailAccountComboBox.itemindex := 0;
 
@@ -1070,6 +1072,7 @@ begin
   EmailServerEdit.text := config.pop[(CurrentlyShownEmailAccount + 1) mod MaxEmailAccounts].server;
   EmailLoginEdit.text := config.pop[(CurrentlyShownEmailAccount + 1) mod MaxEmailAccounts].user;
   EmailPasswordEdit.text := config.pop[(CurrentlyShownEmailAccount + 1) mod MaxEmailAccounts].pword;
+  EmailSSLEdit.text := config.pop[(CurrentlyShownEmailAccount + 1) mod MaxEmailAccounts].port_ssl;
 end;
 
 procedure TSetupForm.ContinueLine1CheckBoxClick(Sender: TObject);
@@ -1337,6 +1340,8 @@ begin
   config.pop[(EmailAccountComboBox.itemindex + 1) mod MaxEmailAccounts].server := EmailServerEdit.text;
   config.pop[(EmailAccountComboBox.itemindex + 1) mod MaxEmailAccounts].user := EmailLoginEdit.text;
   config.pop[(EmailAccountComboBox.itemindex + 1) mod MaxEmailAccounts].pword := EmailPasswordEdit.text;
+  config.pop[(EmailAccountComboBox.itemindex + 1) mod MaxEmailAccounts].port_ssl := EmailSSLEdit.text;
+
 
   if (WebProxyPortEdit.text = '') then WebProxyPortEdit.text := '0';
   config.httpProxy := WebProxyServerEdit.text;
@@ -1371,6 +1376,7 @@ begin
   ActionsStringGrid.ColWidths[2] := 56;
   ActionsStringGrid.ColWidths[3] := 36;
   ActionsStringGrid.ColWidths[4] := 156;
+ // check if ssl dll exists , if not block the ssl edit !!!
   if not fileExists(pathssl+'libeay32.dll') or
      not fileExists(pathssl+'ssleay32.dll') then EmailSSLEdit.Enabled :=False ;
 end;
