@@ -37,7 +37,7 @@ var
   Index : integer;
   Font : byte;
 begin
-  P1 := string(param1);
+  P1 := param1;
   P := pos('#',P1);
   Font := 1;
   if (P > 0) then begin
@@ -50,7 +50,7 @@ begin
       Font := 1;
     end;
   end;
-  S := string(param2);
+  S := param2;
   try
     Line := StrToInt(P1);
   except
@@ -95,7 +95,10 @@ begin
       end;
     end;
     delete(S,Index,1);
-    insert(S2,S,Index);
+    if (S = '') then
+      S := S2
+    else
+      insert(S2,S,Index);
     Index := Index + length(S2);
   end;
   try
@@ -105,7 +108,7 @@ begin
         2 : S := BoldChars+S;
       end;
     end;
-    result := pchar(S);
+    Result := pchar(S);
   except
     on E: Exception do
       result := PChar('bignum2 exception: ' + E.Message);
