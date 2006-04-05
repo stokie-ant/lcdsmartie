@@ -21,7 +21,7 @@ function DISPLAYDLL_Init(SizeX,SizeY : byte; StartupParameters : pchar; OK : pbo
 // open port
 begin
   OK^ := true;
-  Result := PChar(DLLProjectName + ' ' + Version);
+  Result := PChar(DLLProjectName + ' ' + Version + #0);
   try
     LCDDisplayForm := TLCDDisplayForm.Create(nil);
     with LCDDisplayForm do begin
@@ -30,7 +30,7 @@ begin
     end;
   except
     on E: Exception do begin
-      result := PChar('DESKTOP.DLL Exception: ' + E.Message);
+      result := PChar('DESKTOP.DLL Exception: ' + E.Message + #0);
       OK^ := false;
     end;
   end;
@@ -142,17 +142,17 @@ end;
 
 function DISPLAYDLL_DefaultParameters : pchar; stdcall;
 begin
-  DISPLAYDLL_DefaultParameters := pchar('');
+  DISPLAYDLL_DefaultParameters := pchar(#0);
 end;
 
 function DISPLAYDLL_Usage : pchar; stdcall;
 begin
-  Result := pchar('No parameters');
+  Result := pchar('No parameters' + #0);
 end;
 
 function DISPLAYDLL_DriverName : pchar; stdcall;
 begin
-  Result := PChar(DLLProjectName + ' ' + Version);
+  Result := PChar(DLLProjectName + ' ' + Version + #0);
 end;
 
 // don't forget to export the funtions, else nothing works :)

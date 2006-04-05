@@ -97,7 +97,7 @@ PackageDCPOutputDir=
 SearchPath=
 Packages=vcl;rtl;vclx;indy;inet;xmlrtl;vclie;inetdbbde;inetdbxpress;dbrtl;dsnap;dsnapcon;vcldb;soaprtl;VclSmp;dbexpress;dbxcds;inetdb;bdertl;vcldbx;webdsnap;websnap;adortl;ibxpress;teeui;teedb;tee;dss;visualclx;visualdbclx;vclactnband;vclshlctrls;IntrawebDB_50_70;Intraweb_50_70;Rave50CLX;Rave50VCL;dclOfficeXP;CoolTrayIcon_D6plus;WinampCtrl7;madBasic_;madDisAsm_;VaComm7
 Conditionals=
-DebugSourceDirs=
+DebugSourceDirs=Y:\HTPC\lcdsmartie\;Y:\lcdsmartie\
 UsePackages=0
 [Parameters]
 RunParams=
@@ -108,7 +108,7 @@ DebugCWD=
 [Language]
 ActiveLang=
 ProjectLang=$00000409
-RootDir=C:\Documents and Settings\James\My Documents\Designs\lcdsmartie\Display Example\
+RootDir=
 [Version Info]
 IncludeVerInfo=1
 AutoIncBuild=0
@@ -134,11 +134,13 @@ OriginalFilename=CRYSTAL.DLL
 ProductName=LCD Smartie
 ProductVersion=1.0.0.0
 Comments=
+[HistoryLists\hlDebugSourcePath]
+Count=1
+Item0=Y:\HTPC\lcdsmartie\;Y:\lcdsmartie\
 [HistoryLists\hlUnitAliases]
 Count=1
 Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
 [HistoryLists\hlOutputDirectorry]
-Count=3
+Count=2
 Item0=..\release-dir\displays
 Item1=..\displays
-Item2=..\release-dr\displays

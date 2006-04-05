@@ -636,13 +636,13 @@ var
   S : string;
 begin
   OK^ := true;
-  Result := PChar(DLLProjectName + ' ' + Version);
+  Result := PChar(DLLProjectName + ' ' + Version + #0);
   try
     S := uppercase(string(StartupParameters));
     LCD_CF := TLCD_CF.CreateSerial(S);
   except
     on E: Exception do begin
-      result := PChar('CRYSTAL.DLL Exception: ' + E.Message);
+      result := PChar('CRYSTAL.DLL Exception: ' + E.Message + #0);
       OK^ := false;
     end;
   end;
@@ -744,17 +744,17 @@ end;
 
 function DISPLAYDLL_DefaultParameters : pchar; stdcall;
 begin
-  DISPLAYDLL_DefaultParameters := pchar('COM1,9600,2');
+  DISPLAYDLL_DefaultParameters := pchar('COM1,9600,2' + #0);
 end;
 
 function DISPLAYDLL_Usage : pchar; stdcall;
 begin
-  Result := pchar('Usage: COM1,9600,v'+#13#10+'v = CGROM version (1 or 2)');
+  Result := pchar('Usage: COM1,9600,v'+#13#10+'v = CGROM version (1 or 2)' + #0);
 end;
 
 function DISPLAYDLL_DriverName : pchar; stdcall;
 begin
-  Result := PChar(DLLProjectName + ' ' + Version);
+  Result := PChar(DLLProjectName + ' ' + Version + #0);
 end;
 
 // don't forget to export the funtions, else nothing works :)

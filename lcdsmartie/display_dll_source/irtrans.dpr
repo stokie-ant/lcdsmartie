@@ -208,7 +208,7 @@ var
   Loop : integer;
 begin
   OK^ := true;
-  Result := PChar(DLLProjectName + ' ' + Version);
+  Result := PChar(DLLProjectName + ' ' + Version + #0);
   try
     MyX := 1;
     MyY := 1;
@@ -252,7 +252,7 @@ begin
     SocketHealthThread.Resume;
   except
     on E: Exception do begin
-      result := PChar('IRTRANS.DLL Exception: ' + E.Message);
+      result := PChar('IRTRANS.DLL Exception: ' + E.Message + #0);
       OK^ := false;
     end;
   end;
@@ -269,17 +269,17 @@ end;
 
 function DISPLAYDLL_DefaultParameters : pchar; stdcall;
 begin
-  DISPLAYDLL_DefaultParameters := pchar('localhost');
+  DISPLAYDLL_DefaultParameters := pchar('localhost' + #0);
 end;
 
 function DISPLAYDLL_Usage : pchar; stdcall;
 begin
-  DISPLAYDLL_Usage := pchar('Usage: serverhost'+#13#10+'usually 127.0.0.1 or localhost');
+  DISPLAYDLL_Usage := pchar('Usage: serverhost'+#13#10+'usually 127.0.0.1 or localhost' + #0);
 end;
 
 function DISPLAYDLL_DriverName : pchar; stdcall;
 begin
-  Result := PChar(DLLProjectName + ' ' + Version);
+  Result := PChar(DLLProjectName + ' ' + Version + #0);
 end;
 
 // don't forget to export the funtions, else nothing works :)

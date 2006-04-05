@@ -75,7 +75,7 @@ var
   DisplayInitted : boolean;
 begin
   OK^ := true;
-  Result := PChar(DLLProjectName + ' ' + Version);
+  Result := PChar(DLLProjectName + ' ' + Version + #0);
   fillchar(FrameBuffer,sizeof(FrameBuffer),$00);
   MyX := 1;
   MyY := 1;
@@ -85,26 +85,26 @@ begin
     if (length(Path) > 0) then begin
       Path := includetrailingpathdelimiter(Path);
     end;
-    IMONDLL := LoadLibrary(pchar(Path+'sg_vfd.dll'));
+    IMONDLL := LoadLibrary(pchar(Path+'sg_vfd.dll' + #0));
     if (IMONDLL = 0) then begin
-      result := PChar('IMON.DLL Exception: <'+Path+'sg_vfd.dll> not found!');
+      result := PChar('IMON.DLL Exception: <'+Path+'sg_vfd.dll> not found!' + #0);
       OK^ := false;
     end else begin
-      iMONInitFunc := getprocaddress(IMONDLL,pchar('iMONVFD_Init'));
-      iMONUninitProc := getprocaddress(IMONDLL,pchar('iMONVFD_Uninit'));
-      iMONIsInitedFunc := getprocaddress(IMONDLL,pchar('iMONVFD_IsInited'));
-      iMONSetTextFunc := getprocaddress(IMONDLL,pchar('iMONVFD_SetText'));
-      iMONSetEQFunc := getprocaddress(IMONDLL,pchar('iMONVFD_SetEQ'));
+      iMONInitFunc := getprocaddress(IMONDLL,pchar('iMONVFD_Init' + #0));
+      iMONUninitProc := getprocaddress(IMONDLL,pchar('iMONVFD_Uninit' + #0));
+      iMONIsInitedFunc := getprocaddress(IMONDLL,pchar('iMONVFD_IsInited' + #0));
+      iMONSetTextFunc := getprocaddress(IMONDLL,pchar('iMONVFD_SetText' + #0));
+      iMONSetEQFunc := getprocaddress(IMONDLL,pchar('iMONVFD_SetEQ' + #0));
       if assigned(iMONInitFunc) then
         DisplayInitted := iMONInitFunc;
       if not DisplayInitted then begin
-        result := PChar('IMON.DLL: Display not found');
+        result := PChar('IMON.DLL: Display not found' + #0);
         OK^ := false;
       end;
     end;
   except
     on E: Exception do begin
-      result := PChar('IMON.DLL Exception: ' + E.Message);
+      result := PChar('IMON.DLL Exception: ' + E.Message + #0);
       OK^ := false;
     end;
   end;
@@ -158,17 +158,17 @@ end;
 
 function DISPLAYDLL_DefaultParameters : pchar; stdcall;
 begin
-  DISPLAYDLL_DefaultParameters := pchar('');
+  DISPLAYDLL_DefaultParameters := pchar(#0);
 end;
 
 function DISPLAYDLL_Usage : pchar; stdcall;
 begin
-  Result := pchar('Usage: <dllpath>'+#13#10+'where dllpath is the location of sg_vfd.dll');
+  Result := pchar('Usage: <dllpath>'+#13#10+'where dllpath is the location of sg_vfd.dll' + #0);
 end;
 
 function DISPLAYDLL_DriverName : pchar; stdcall;
 begin
-  Result := PChar(DLLProjectName + ' ' + Version);
+  Result := PChar(DLLProjectName + ' ' + Version + #0);
 end;
 
 // don't forget to export the funtions, else nothing works :)

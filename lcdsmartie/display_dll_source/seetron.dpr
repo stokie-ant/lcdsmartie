@@ -196,7 +196,7 @@ var
 begin
   LineLength := SizeX;
   OK^ := true;
-  Result := PChar(DLLProjectName + ' ' + Version);
+  Result := PChar(DLLProjectName + ' ' + Version + #0);
   try
     S2 := uppercase(string(StartupParameters));
     S := substring(S2) + ',' + substring(S2);  // get COM1,9600
@@ -208,7 +208,7 @@ begin
     COMPort.OpenSerialPort(S);
   except
     on E: Exception do begin
-      result := PChar('SEETRON.DLL Exception: ' + E.Message);
+      result := PChar('SEETRON.DLL Exception: ' + E.Message + #0);
       OK^ := false;
     end;
   end;
@@ -228,19 +228,19 @@ end;
 
 function DISPLAYDLL_DefaultParameters : pchar; stdcall;
 begin
-  DISPLAYDLL_DefaultParameters := pchar('COM1,9600,1');
+  DISPLAYDLL_DefaultParameters := pchar('COM1,9600,1' + #0);
 end;
 
 function DISPLAYDLL_Usage : pchar; stdcall;
 begin
   Result := pchar('Usage: COM1,9600,p'+#13#10+
                   'p = Protocol'+#13#10+
-                  '1=LCD 2=Terminal');
+                  '1=LCD 2=Terminal' + #0);
 end;
 
 function DISPLAYDLL_DriverName : pchar; stdcall;
 begin
-  Result := PChar(DLLProjectName + ' ' + Version);
+  Result := PChar(DLLProjectName + ' ' + Version + #0);
 end;
 
 // don't forget to export the funtions, else nothing works :)

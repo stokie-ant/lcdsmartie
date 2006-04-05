@@ -90,7 +90,7 @@ MaxStackSize=1048576
 ImageBase=4194304
 ExeDescription=
 [Directories]
-OutputDir=Y:\HTPC\lcdsmartie\release-dir\displays
+OutputDir=..\release-dir\displays
 UnitOutputDir=
 PackageDLLOutputDir=
 PackageDCPOutputDir=
@@ -138,7 +138,9 @@ Comments=
 Count=1
 Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
 [HistoryLists\hlOutputDirectorry]
-Count=3
-Item0=Y:\HTPC\lcdsmartie\release-dir\displays
-Item1=..\release_dir\displays
-Item2=..\displays
+Count=5
+Item0=..\release-dir\displays
+Item1=Y:\lcdsmartie\release-dir\displays
+Item2=Y:\HTPC\lcdsmartie\release-dir\displays
+Item3=..\release_dir\displays
+Item4=..\displays

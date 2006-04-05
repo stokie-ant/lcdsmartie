@@ -134,7 +134,7 @@ var
   VI: TOSVERSIONINFO; // For checking Windows version
 begin
   { Try inpout32.dll first, since it supports x64 }
-  IOPlugin := LoadLibrary(PChar('inpout32.dll'));
+  IOPlugin := LoadLibrary(PChar('inpout32.dll' + #0));
   if (IOPlugin <> 0) then
   begin
     DlPortWritePortUchar := TDlPortWritePortUchar(GetProcAddress(IOPlugin,'Out32'));
@@ -149,7 +149,7 @@ begin
   end;
 
   { Try good old dlportio.dll next, for backwards compatiability }
-  IOPlugin := LoadLibrary(PChar('dlportio.dll'));
+  IOPlugin := LoadLibrary(PChar('dlportio.dll' + #0));
   if (IOPlugin <> 0) then
   begin
     DlPortWritePortUchar := TDlPortWritePortUchar(GetProcAddress(IOPlugin,
@@ -645,7 +645,7 @@ var
   b1x16,bKS0073 : boolean;
 begin
   OK^ := true;
-  Result := PChar(DLLProjectName + ' ' + Version);
+  Result := PChar(DLLProjectName + ' ' + Version + #0);
   try
     Params := string(StartupParameters);
     Addr := uppercase(SubString(Params));
@@ -676,7 +676,7 @@ begin
     LCD_HD := TLCD_HD.CreateParallel(PortAddr,SizeX,SizeY,Mult,b1x16,bKS0073);
   except
     on E: Exception do begin
-      result := PChar('HD44780.DLL Exception: ' + E.Message);
+      result := PChar('HD44780.DLL Exception: ' + E.Message + #0);
       OK^ := false;
     end;
   end;
@@ -741,19 +741,19 @@ end;
 
 function DISPLAYDLL_DefaultParameters : pchar; stdcall;
 begin
-  DISPLAYDLL_DefaultParameters := pchar('LPT1');
+  DISPLAYDLL_DefaultParameters := pchar('LPT1' + #0);
 end;
 
 function DISPLAYDLL_Usage : pchar; stdcall;
 begin
   Result := pchar('Usage: PORT[,m,a1,a2]'+#13#10+
                   'PORT = LPT1 or $378    m = timing multiplier'+#13#10+
-                  'a1 = 1x16 addressing   a2 = KS0073 addressing');
+                  'a1 = 1x16 addressing   a2 = KS0073 addressing' + #0);
 end;
 
 function DISPLAYDLL_DriverName : pchar; stdcall;
 begin
-  Result := PChar(DLLProjectName + ' ' + Version);
+  Result := PChar(DLLProjectName + ' ' + Version + #0);
 end;
 
 // don't forget to export the funtions, else nothing works :)

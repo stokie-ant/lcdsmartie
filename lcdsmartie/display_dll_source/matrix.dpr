@@ -778,7 +778,7 @@ var
   S : string;
 begin
   OK^ := true;
-  Result := PChar(DLLProjectName + ' ' + Version);
+  Result := PChar(DLLProjectName + ' ' + Version + #0);
   try
     S := uppercase(string(StartupParameters));
     if (pos('USB',S) = 1) then begin
@@ -788,7 +788,7 @@ begin
     end;
   except
     on E: Exception do begin
-      result := PChar('MATRIX.DLL Exception: ' + E.Message);
+      result := PChar('MATRIX.DLL Exception: ' + E.Message + #0);
       OK^ := false;
     end;
   end;
@@ -908,17 +908,17 @@ end;
 
 function DISPLAYDLL_DefaultParameters : pchar; stdcall;
 begin
-  DISPLAYDLL_DefaultParameters := pchar('COM1,9600');
+  DISPLAYDLL_DefaultParameters := pchar('COM1,9600' + #0);
 end;
 
 function DISPLAYDLL_Usage : pchar; stdcall;
 begin
-  Result := pchar('Usage: COM1,9600 or USB');
+  Result := pchar('Usage: COM1,9600 or USB' + #0);
 end;
 
 function DISPLAYDLL_DriverName : pchar; stdcall;
 begin
-  Result := PChar(DLLProjectName + ' ' + Version);
+  Result := PChar(DLLProjectName + ' ' + Version + #0);
 end;
 
 // don't forget to export the funtions, else nothing works :)
