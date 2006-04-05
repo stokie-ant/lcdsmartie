@@ -19,15 +19,15 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.82 $ $Date: 2006/03/20 20:40:55 $
+ *  $Revision: 1.83 $ $Date: 2006/04/05 03:37:09 $
  *****************************************************************************}
 
 interface
 
 uses
-  Messages, CoolTrayIcon, Menus,
+  Messages, CoolTrayIcon, Menus, Graphics,
   WinampCtrl, ExtCtrls, Controls, StdCtrls, Buttons, Classes, Forms, UConfig,
-  ULCD, UData;
+  ULCD, UData, lcdline;
 
 const
   WM_ICONTRAY = WM_USER + 1;   // User-defined message
@@ -37,6 +37,29 @@ const
   OurVersBuild = 18;
 
 type
+  PObject = ^TObject;
+
+  TOnScreenLineWrapper = class
+  private
+    fOwner : PObject;
+    fCaption : string;
+    fTrueLCD : boolean;
+    procedure SetVisible(Value : boolean);
+    procedure SetLineWidth(Value : integer);
+    procedure SetCaption(Value : string);
+    procedure SetLineColor(Value : TColor);
+    procedure SetFontColor(Value : TColor);
+  protected
+    property Visible : boolean write SetVisible;
+    property LineWidth : integer write SetLineWidth;
+    property Caption : string read fCaption write SetCaption;
+    property LineColor : TColor write SetLineColor;
+    property FontColor : TColor write SetFontColor;
+  public
+    constructor Create(AOwner : PObject; TrueLCD : boolean);
+    destructor Destroy; override;
+  end;
+
   TInitialWindowState = (NoChange, HideMainForm, TotalHideMainForm);
 
   TLCDSmartieDisplayForm = class(TForm)
@@ -52,10 +75,6 @@ type
     LogoImage: TImage;
     HideButton: TButton;
     CoolTrayIcon1: TCoolTrayIcon;
-    Line1Panel: TPanel;
-    Line2Panel: TPanel;
-    Line3Panel: TPanel;
-    Line4Panel: TPanel;   // aka ScreenLCD[4]
     Configure1: TMenuItem;
     BacklightOn1: TMenuItem;
     Commands1: TMenuItem;
@@ -87,6 +106,14 @@ type
     TimerRefresh: TTimer;
     PreviousButton: TButton;
     NextButton: TButton;
+    xLine1Panel: TPanel;
+    xLine2Panel: TPanel;
+    xLine3Panel: TPanel;
+    xLine4Panel: TPanel;   // aka ScreenLCD[4]
+    Line1LCDPanel: TLCDLineFrame;
+    Line2LCDPanel: TLCDLineFrame;
+    Line4LCDPanel: TLCDLineFrame;
+    Line3LCDPanel: TLCDLineFrame;
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure ShowWindow1Click(Sender: TObject);
@@ -164,20 +191,9 @@ type
     procedure PreviousButtonClick(Sender: TObject);
     procedure NextButtonClick(Sender: TObject);
     procedure PopupMenu1Popup(Sender: TObject);
-  public
-    doesflash: Boolean;
-    lcd: TLCD;
-    Data: TData;
-    procedure DoFullDisplayDraw;
-    procedure UpdateTimersState(InSetupState : boolean);
-    procedure ChangeScreen(scr: Integer);
-    procedure ResetScrollPositions;
-    procedure SetupAutoStart;
-    procedure ReInitLCD();
-    procedure customchar(fline: String);
   private
     InitialWindowState: TInitialWindowState;
-    ScreenLCD: Array[1..MaxLines] of ^TPanel;
+    ScreenLCD: Array[1..MaxLines] of TOnScreenLineWrapper;
     parsedLine: Array[1..MaxLines] of String;
     scrollPos: Array[1..MaxLines] of Integer;
     tmpline: Array [1..MaxLines] of String;
@@ -230,6 +246,19 @@ type
     procedure LoadSkin;
     procedure LoadColors;
     procedure ProcessCommandLineParams;
+    procedure AssignOnscreenDisplay(TrueLCD : boolean);
+  public
+    doesflash: Boolean;
+    lcd: TLCD;
+    Data: TData;
+    procedure DoFullDisplayDraw;
+    procedure UpdateTimersState(InSetupState : boolean);
+    procedure ChangeScreen(scr: Integer);
+    procedure ResetScrollPositions;
+    procedure SetupAutoStart;
+    procedure ReInitLCD();
+    procedure customchar(fline: String);
+    property ShowTrueLCD : boolean write AssignOnscreenDisplay;
   end;
 
 var
@@ -242,9 +271,100 @@ implementation
 {$R *.DFM}
 
 uses
-  Windows, SysUtils, Graphics, Dialogs, ShellAPI, mmsystem, StrUtils,
-  USetup, UCredits, ULCD_DLL, ExtActns, UUtils;
+  Windows, SysUtils, Dialogs, ShellAPI, mmsystem, StrUtils,
+  USetup, UCredits, ULCD_DLL, ExtActns, UUtils, FONTMGR;
 
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+////                                                                       ////
+////      O N   S C R E E N   D I S P L A Y                                ////
+////                                                                       ////
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+constructor TOnScreenLineWrapper.Create(AOwner : PObject; TrueLCD : boolean);
+begin
+  fCaption := '';
+  fOwner := AOwner;
+  fTrueLCD := TrueLCD;
+end;
+
+destructor TOnScreenLineWrapper.Destroy;
+begin
+  inherited;
+end;
+
+procedure TOnScreenLineWrapper.SetVisible(Value : boolean);
+begin
+  if fTrueLCD then (fOwner^ as TLCDLineFrame).Visible := Value
+  else (fOwner^ as TPanel).Visible := Value;
+end;
+
+procedure TOnScreenLineWrapper.SetLineWidth(Value : integer);
+var
+  iDelta : integer;
+begin
+  if fTrueLCD then (fOwner^ as TLCDLineFrame).LineWidth := value
+  else begin
+    iDelta := 321 - ((321 * Value) div 40);
+    (fOwner^ as TPanel).Width := 321 - iDelta;
+  end;
+end;
+
+procedure TOnScreenLineWrapper.SetCaption(Value : string);
+begin
+  fCaption := Value;
+  if fTrueLCD then begin
+    (fOwner^ as TLCDLineFrame).Caption := Value
+  end else
+    (fOwner^ as TPanel).Caption := Value;
+end;
+
+procedure TOnScreenLineWrapper.SetLineColor(Value : TColor);
+begin
+  if fTrueLCD then
+    (fOwner^ as TLCDLineFrame).LineColor := Value
+  else
+    (fOwner^ as TPanel).Color := Value;
+end;
+
+procedure TOnScreenLineWrapper.SetFontColor(Value : TColor);
+begin
+  if fTrueLCD then
+    (fOwner^ as TLCDLineFrame).FontColor := Value
+  else
+    (fOwner^ as TPanel).Font.Color := Value;
+end;
+
+procedure TLCDSmartieDisplayForm.AssignOnscreenDisplay(TrueLCD : boolean);
+var
+  Loop : byte;
+begin
+  if assigned(ScreenLCD[1]) and (ScreenLCD[1].fTrueLCD = TrueLCD) then exit;
+  for Loop := 1 to MaxLines do begin
+    if assigned(ScreenLCD[Loop]) then begin
+      ScreenLCD[Loop].Visible := false;
+      ScreenLCD[Loop].Free;
+    end;
+  end;
+  if TrueLCD then begin
+    ScreenLCD[1] := TOnScreenLineWrapper.Create(@Line1LCDPanel,TrueLCD);
+    ScreenLCD[2] := TOnScreenLineWrapper.Create(@Line2LCDPanel,TrueLCD);
+    ScreenLCD[3] := TOnScreenLineWrapper.Create(@Line3LCDPanel,TrueLCD);
+    ScreenLCD[4] := TOnScreenLineWrapper.Create(@Line4LCDPanel,TrueLCD);
+  end else begin
+    ScreenLCD[1] := TOnScreenLineWrapper.Create(@xLine1Panel,TrueLCD);
+    ScreenLCD[2] := TOnScreenLineWrapper.Create(@xLine2Panel,TrueLCD);
+    ScreenLCD[3] := TOnScreenLineWrapper.Create(@xLine3Panel,TrueLCD);
+    ScreenLCD[4] := TOnScreenLineWrapper.Create(@xLine4Panel,TrueLCD);
+  end;
+  ScreenLCD[1].visible := true;
+  ScreenLCD[2].visible := config.height > 1;
+  ScreenLCD[3].visible := config.height > 2;
+  ScreenLCD[4].visible := config.height > 3;
+  SetOnscreenBacklight;
+end;
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -257,6 +377,7 @@ uses
 
 procedure TLCDSmartieDisplayForm.FormCreate(Sender: TObject);
 begin
+  fillchar(ScreenLCD,sizeof(ScreenLCD),$00);
   bTerminating := false;
   Randomize;
 
@@ -265,11 +386,6 @@ begin
   CreateDirectory('plugins', nil);
   CreateDirectory('displays', nil);
   AddPluginsToPath();
-
-  ScreenLCD[1] := @Line1Panel;
-  ScreenLCD[2] := @Line2Panel;
-  ScreenLCD[3] := @Line3Panel;
-  ScreenLCD[4] := @Line4Panel;
 
   ConfigFileName := 'config.ini';
   ProcessCommandLineParams;  // can change config file name
@@ -280,6 +396,8 @@ begin
     showmessage('Fatal Error:  Failed to load configuration');
     application.Terminate;
   end;
+
+  ShowTrueLCD := Config.EmulateLCD;
 
 //SetWindowLong(Application.Handle, GWL_EXSTYLE, GetWindowLong(Application.Handle, GWL_EXSTYLE) or WS_EX_TOOLWINDOW and not W
 //S_EX_APPWINDOW );
@@ -469,6 +587,7 @@ procedure TLCDSmartieDisplayForm.ResizeHeight;
 var
   iDelta: Integer;
 begin
+  ScreenLCD[1].visible := true;
   ScreenLCD[2].visible := false;
   ScreenLCD[3].visible := false;
   ScreenLCD[4].visible := false;
@@ -545,7 +664,7 @@ begin
   HideImage.left := 323 - iDelta;
   for h := 1 to MaxLines do
   begin
-    ScreenLCD[h].width := 321 - iDelta;
+    ScreenLCD[h].LineWidth := iTempWidth;
   end;
   BarMiddleImage.width := 220 - iDelta;
 
@@ -1474,6 +1593,7 @@ begin
     begin
       Lcd.customChar(i, customChars[i]);
       customCharsChanged[i] := false;
+      FontManager.CustomChar(i, customChars[i]);
     end;
   end;
 end;
@@ -1959,8 +2079,8 @@ begin
 
   LCDSmartieDisplayForm.Color := ScreenColor;
   for Loop := 1 to MaxLines do begin
-    ScreenLCD[Loop].Color := ScreenColor;
-    ScreenLCD[Loop].Font.Color := FontColor;
+    ScreenLCD[Loop].LineColor := ScreenColor;
+    ScreenLCD[Loop].FontColor := FontColor;
   end;
 end;
 

@@ -64,17 +64,11 @@ var
   B : byte;
 begin
   S := string(Str);
-  // characters 1-8 (custom chars) and 32-127 are the only valid on screen characters
+  // characters 128-135 (custom chars) and 32-127 are the only valid on screen characters
   for Loop := 1 to length(S) do begin
     B := ord(S[Loop]);
-    if (B < 32) or (B > 127) then begin
-      case B of
-        Ord('°'): B := 1;
-        Ord('ž'): B := 2;
-        else B := ((B - 1) mod 8) + 1;
-      end; // case
-      S[Loop] := char(b);
-    end;
+    if (B < 32) or (B > 135) then
+      S[Loop] := char(32);
   end;
   try
     LCDDisplayForm.ScreenWrite(S);
@@ -89,6 +83,11 @@ begin
     LCDDisplayForm.CustomChar(Chr,Data);
   except
   end;
+end;
+
+function DISPLAYDLL_CustomCharIndex(Index : byte) : byte; stdcall;
+begin
+  DISPLAYDLL_CustomCharIndex := 127+Index;
 end;
 
 procedure DISPLAYDLL_SetBacklight(LightOn : boolean); stdcall;
@@ -165,6 +164,7 @@ exports
   DISPLAYDLL_SetBacklight,
   DISPLAYDLL_ReadKey,
   DISPLAYDLL_CustomChar,
+  DISPLAYDLL_CustomCharIndex,
   DISPLAYDLL_Write,
   DISPLAYDLL_SetPosition,
   DISPLAYDLL_DefaultParameters,

@@ -19,7 +19,7 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.59 $ $Date: 2006/03/20 20:40:55 $
+ *  $Revision: 1.60 $ $Date: 2006/04/05 03:37:10 $
  *****************************************************************************}
 
 interface
@@ -201,6 +201,7 @@ type
     BrightnessTrackBar: TTrackBar;
     EmailSSLEdit: TEdit;
     Label2: TLabel;
+    EmulateLCDCheckbox: TCheckBox;
     procedure FormShow(Sender: TObject);
     procedure LCDSizeComboBoxChange(Sender: TObject);
     procedure ScreenSpinEditChange(Sender: TObject);
@@ -271,7 +272,7 @@ function PerformingSetup : boolean;
 implementation
 
 uses
-  Windows, ShellApi, graphics, sysutils, Registry, StrUtils,
+  Math, Windows, ShellApi, graphics, sysutils, Registry, StrUtils,
   UMain, UInteract, UConfig, UDataEmail, UDataNetwork, UDataWinamp,
   UDataMBM;
 
@@ -388,6 +389,7 @@ begin
   NoAutoStart.Checked := True;
   AutoStart.Checked := config.bAutoStart;
   AutoStartHide.Checked := config.bAutoStartHide;
+  EmulateLCDCheckbox.Checked := config.EmulateLCD;
 
   WebProxyServerEdit.text := config.httpProxy;
   WebProxyPortEdit.text := IntToStr(config.httpProxyPort);
@@ -435,6 +437,7 @@ begin
   ContrastTrackBar.position := config.DLL_contrast;
   BrightnessTrackBar.position := config.DLL_brightness;
   DisplayPluginList.Items.Clear;
+  DisplayPluginList.Items.Add('None');
   DLLPath := extractfilepath(paramstr(0))+'displays\';
   FindResult := findfirst(DLLPath+'*.dll',0,SR);
   while (FindResult = 0) do begin
@@ -510,7 +513,13 @@ end;
 
 procedure TSetupForm.DisplayPluginListChange(Sender: TObject);
 begin
-  LoadHint(DLLPath+DisplayPluginList.Text);
+  if (DisplayPluginList.ItemIndex > 0) then
+    LoadHint(DLLPath+DisplayPluginList.Text)
+  else begin
+    UsageLabel.Caption := 'no parameters';
+    IDLabel.Caption := '';
+    ParametersEdit.Text := '';
+  end;
 end;
 
 procedure TSetupForm.LCDSizeComboBoxChange(Sender: TObject);
@@ -581,8 +590,16 @@ begin
   begin
     config.screen[scr][y].enabled := ScreenEnabledCheckBox.checked;
     config.screen[scr][y].skip := SkipScreenComboBox.itemindex;
-    config.screen[scr][y].theme := ThemeNumberSpinEdit.value-1;
-    config.screen[scr][y].showTime := TimeToShowSpinEdit.value;
+    try
+      config.screen[scr][y].theme := ThemeNumberSpinEdit.value-1;
+    except
+      config.screen[scr][y].theme := 0;
+    end;
+    try
+      config.screen[scr][y].showTime := TimeToShowSpinEdit.value;
+    except
+      config.screen[scr][y].showTime := 10;
+    end;
     config.screen[scr][y].bSticky := StickyCheckbox.Checked;
 
     // ensure no ¿s occur in the text.
@@ -692,7 +709,11 @@ procedure TSetupForm.ScreenSpinEditChange(Sender: TObject);
 begin
   SaveScreen(CurrentScreen);
 
-  CurrentScreen := ScreenSpinEdit.Value;
+  try
+    CurrentScreen := max(1,min(MaxScreens,ScreenSpinEdit.Value));
+  except
+    CurrentScreen := 1;
+  end;
 
   LoadScreen(CurrentScreen);
   LCDSmartieDisplayForm.ChangeScreen(CurrentScreen);
@@ -1328,11 +1349,14 @@ begin
   config.bHideOnStartup := HideOnStartup.Checked;
   config.bAutoStart := AutoStart.checked;
   config.bAutoStartHide := AutoStartHide.checked;
+  config.EmulateLCD := EmulateLCDCheckbox.Checked;
 
   config.DLL_contrast := ContrastTrackBar.position;
   config.DLL_brightness := BrightnessTrackBar.position;
   config.DisplayDLLParameters := ParametersEdit.Text;
   config.DisplayDLLName := DisplayPluginList.Text;
+  if (config.DisplayDLLName = 'None') then
+    config.DisplayDLLName := '';
 
   LCDSmartieDisplayForm.SetupAutoStart();
 
@@ -1358,6 +1382,7 @@ begin
     LCDSmartieDisplayForm.ReInitLCD();
   end;
 
+  LCDSmartieDisplayForm.ShowTrueLCD := Config.EmulateLCD;
 end;
 
 // ok has been pressed.

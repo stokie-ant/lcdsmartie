@@ -90,7 +90,7 @@ MaxStackSize=1048576
 ImageBase=4194304
 ExeDescription=
 [Directories]
-OutputDir=..\displays
+OutputDir=Y:\HTPC\lcdsmartie\release-dir\displays
 UnitOutputDir=
 PackageDLLOutputDir=
 PackageDCPOutputDir=
@@ -101,7 +101,7 @@ DebugSourceDirs=
 UsePackages=0
 [Parameters]
 RunParams=
-HostApplication=C:\Documents and Settings\Administrator\Desktop\5.3 development\lcdsmartie\LCDSmartie.exe
+HostApplication=Y:\HTPC\lcdsmartie\release-dir\LCDSmartie.exe
 Launcher=
 UseLauncher=0
 DebugCWD=
@@ -138,5 +138,7 @@ Comments=
 Count=1
 Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
 [HistoryLists\hlOutputDirectorry]
-Count=1
-Item0=..\displays
+Count=3
+Item0=Y:\HTPC\lcdsmartie\release-dir\displays
+Item1=..\release_dir\displays
+Item2=..\displays

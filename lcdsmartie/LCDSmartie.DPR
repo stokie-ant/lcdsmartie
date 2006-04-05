@@ -4,7 +4,8 @@ uses
   madExcept,
   madLinkDisAsm,
   Forms,
-  UMain in 'UMain.pas' {LCDSmartieDisplayForm};
+  UMain in 'UMain.pas' {LCDSmartieDisplayForm},
+  lcdline in 'lcdline.pas' {LCDLineFrame: TFrame};
 
 {$R *.RES}
 

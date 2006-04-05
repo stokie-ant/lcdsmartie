@@ -21,6 +21,7 @@ type
   TPowerResumeProc = procedure; stdcall;
   TSetGPOProc = procedure(GPO : byte; GPOOn : boolean); stdcall;
   TSetFanProc = procedure(T1,T2 : byte); stdcall;
+  TCustomCharIndex = function(Index : byte) : byte; stdcall;
 
   TLCD_DLL = class(TLCD)
   public
@@ -51,6 +52,8 @@ type
     PowerResumeProc : TPowerResumeProc;
     SetGPOProc : TSetGPOProc;
     SetFanProc : TSetFanProc;
+    CustomIndex : TCustomCharIndex;
+    CustomCharIndex : array[1..8] of byte;
     OK : boolean;
   end;
 
@@ -62,6 +65,7 @@ uses
 constructor TLCD_DLL.CreateDLL(SizeX,SizeY : byte; DLLName,StartupParameters : string);
 var
   S : string;
+  Loop : byte;
 begin
   MyDLL := 0;
   InitFunc := nil;
@@ -76,6 +80,13 @@ begin
   PowerResumeProc := nil;
   SetGPOProc := nil;
   SetFanProc := nil;
+  CustomIndex := nil;
+  CustomCharIndex[1] := 176;
+  CustomCharIndex[2] := 158;
+  for Loop := 3 to 8 do
+    CustomCharIndex[Loop] := 128+Loop;
+  OK := false;
+  if (DLLName = '') then exit;
   OK := true;
   S := extractfilepath(paramstr(0))+'displays\'+DLLName;
   if not FileExists(S) then begin
@@ -98,6 +109,7 @@ begin
         PowerResumeProc := GetProcAddress(MyDLL,pchar('DISPLAYDLL_PowerResume'));
         SetGPOProc := GetProcAddress(MyDLL,pchar('DISPLAYDLL_SetGPO'));
         SetFanProc := GetProcAddress(MyDLL,pchar('DISPLAYDLL_SetFan'));
+        CustomIndex := GetProcAddress(MyDLL,pchar('DISPLAYDLL_CustomCharIndex'));
       end;
     except
       on E:Exception do begin
@@ -111,7 +123,13 @@ begin
       OK := false;
       S := string(InitFunc(SizeX,SizeY,pchar(StartupParameters),@OK));
       if not OK then
-        raise EInOutError.Create('DLL Initialize error: '+S);
+        raise EInOutError.Create('DLL Initialize error: '+S)
+      else begin
+        if assigned(CustomIndex) then begin
+          for Loop := 1 to 8 do
+            CustomCharIndex[Loop] := CustomIndex(Loop);
+        end;
+      end;
     end;
   end;
   inherited;
@@ -233,11 +251,30 @@ begin
 end;
 
 procedure TLCD_DLL.Write(Str: String);
+var
+  i : byte;
 begin
-  if OK and assigned(WriteProc) then begin
-    try
-      WriteProc(pchar(Str));
-    except
+  if OK then begin
+    if assigned(CustomIndex) then begin
+      for i:= 1 to Length(str) do
+      begin
+        case Ord(str[i]) of
+          176 : str[i] := Chr(CustomCharIndex[1]);
+          158 : str[i] := Chr(CustomCharIndex[2]);
+          131 : str[i] := Chr(CustomCharIndex[3]);
+          132 : str[i] := Chr(CustomCharIndex[4]);
+          133 : str[i] := Chr(CustomCharIndex[5]);
+          134 : str[i] := Chr(CustomCharIndex[6]);
+          135 : str[i] := Chr(CustomCharIndex[7]);
+          136 : str[i] := Chr(CustomCharIndex[8]);
+        end;
+      end;
+    end;
+    if assigned(WriteProc) then begin
+      try
+        WriteProc(pchar(Str));
+      except
+      end;
     end;
   end;
 end;

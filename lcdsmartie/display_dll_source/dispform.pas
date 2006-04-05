@@ -9,11 +9,11 @@ uses
 const
   MaxWidth = 40;
   MaxHeight = 4;
-  CharWidth = 5;
-  CharHeight = 8;
+  Char_Width = 5;
+  Char_Height = 8;
 
 type
-  TFontArray = array[0..255] of TBitmap;
+  TFontArray = array[32..135] of TBitmap;
 
   TLCDDisplayForm = class(TForm)
     RootPanel: TPanel;
@@ -54,13 +54,14 @@ procedure TLCDDisplayForm.LoadFont;
 var
   Loop : longint;
 begin
-  for Loop := 0 to 255 do begin
+  for Loop := 32 to 135 do begin
     Font[Loop] := TBitmap.Create;
-    Font[Loop].Width := CharWidth;
-    Font[Loop].Height := CharHeight;
-    if (Loop >= 32) or (Loop <= 127) then begin
-      DefaultFont.GetBitmap(Loop-32,Font[Loop]);
-    end;
+    Font[Loop].Width := Char_Width;
+    Font[Loop].Height := Char_Height;
+    if (Loop < 128) then
+      DefaultFont.GetBitmap(Loop-32,Font[Loop])
+    else
+      DefaultFont.GetBitmap(0,Font[Loop]);
   end;
 end;
 
@@ -106,15 +107,15 @@ begin
   Y := min(MaxHeight,Y);
   MyWidth := X;
   MyHeight := Y;
-  Width := WidthOffset + (X*(CharWidth+1)*2);
-  Height := HeightOffset + (Y*(CharHeight+1)*2);
-  Constraints.MinWidth := WidthOffset + X*(CharWidth+1);
-  Constraints.MinHeight := HeightOffset + Y*(CharHeight+1);
+  Width := WidthOffset + (X*(Char_Width+1)*2);
+  Height := HeightOffset + (Y*(Char_Height+1)*2);
+  Constraints.MinWidth := WidthOffset + X*(Char_Width+1);
+  Constraints.MinHeight := HeightOffset + Y*(Char_Height+1);
   if assigned(BackgroundBitmap) then BackgroundBitmap.Free;
   BackgroundBitmap := TBitmap.Create;
   with BackgroundBitmap do begin
-    Width := X*(CharWidth+1);
-    Height := Y*(CharHeight+1);
+    Width := X*(Char_Width+1);
+    Height := Y*(Char_Height+1);
     ClearDisplay;
   end;
 end;
@@ -142,15 +143,15 @@ begin
   CurChar := Font[C];
   with SrcRect do begin
     Left := 0;
-    Right := CharWidth;
+    Right := Char_Width;
     Top := 0;
-    Bottom := CharHeight;
+    Bottom := Char_Height;
   end;
   with DestRect do begin
-    Top := (CurrentY-1)*(CharHeight+1);
-    Bottom := Top + CharHeight;
-    Left := (CurrentX-1)*(CharWidth+1);
-    Right := Left + CharWidth;
+    Top := (CurrentY-1)*(Char_Height+1);
+    Bottom := Top + Char_Height;
+    Left := (CurrentX-1)*(Char_Width+1);
+    Right := Left + Char_Width;
   end;
   BackgroundBitmap.Canvas.CopyRect(DestRect,CurChar.Canvas,SrcRect);
   inc(CurrentX);
@@ -197,13 +198,14 @@ procedure TLCDDisplayForm.CustomChar(Index : byte; Bytes : array of byte);
 var
   X,Y : byte;
 begin
-  with Font[Index].Canvas do begin
-    for X := 0 to CharWidth-1 do begin
-      for Y := 0 to CharHeight do begin
+  Index := min(8,max(1,Index));
+  with Font[127+Index].Canvas do begin
+    for X := 0 to Char_Width-1 do begin
+      for Y := 0 to Char_Height-1 do begin
         if ((Bytes[Y] and (1 shl X)) > 0) then
-          Pixels[CharWidth-1-X,Y] := clBlack
+          Pixels[Char_Width-1-X,Y] := clBlack
         else
-          Pixels[CharWidth-1-X,Y] := clWhite;
+          Pixels[Char_Width-1-X,Y] := clWhite;
       end;
     end;
   end;

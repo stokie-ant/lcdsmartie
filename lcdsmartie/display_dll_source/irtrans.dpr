@@ -111,31 +111,16 @@ end;
 
 procedure DISPLAYDLL_Write(Str : pchar); stdcall;
 var
-  B : byte;
-  Loop,Index : integer;
+  Index : integer;
   buf : TSTATUSBUFFER;
   res : integer;
   statustimeout : dword;
-  S : string;
 begin
-  S := string(Str);
-  // characters 1-8 (custom chars) and 32-127 are the only valid on screen characters
-  for Loop := 1 to length(S) do begin
-    B := ord(S[Loop]);
-    if (B < 32) or (B > 127) then begin
-      case B of
-        Ord('°'): B := 1;
-        Ord('ž'): B := 2;
-        else B := ((B - 1) mod 8) + 1;
-      end; // case
-      S[Loop] := char(b);
-    end;
-  end;
   try
     LCDComRec.netcommand := COMMAND_LCD;
     LCDComRec.adress := ord('L');
     Index := (MyY-1)*40 + (MyX-1);
-    strcopy(pchar(@LCDComRec.framebuffer[Index]),pchar(S));
+    strcopy(pchar(@LCDComRec.framebuffer[Index]),Str);
     if ClientSocket.Connected then begin
       // send the displays' frame buffer
       ClientSocket.SendBuf(LCDComRec,sizeof(LCDComRec));
@@ -160,6 +145,11 @@ begin
       ClientSocket.SendBuf(NetworkCommand,sizeof(NetworkCommand));
   except
   end;
+end;
+
+function DISPLAYDLL_CustomCharIndex(Index : byte) : byte; stdcall;
+begin
+  DISPLAYDLL_CustomCharIndex := Index;
 end;
 
 procedure DISPLAYDLL_SetBrightness(Brightness : byte); stdcall;
@@ -296,6 +286,7 @@ end;
 exports
   DISPLAYDLL_SetBrightness,
   DISPLAYDLL_CustomChar,
+  DISPLAYDLL_CustomCharIndex,
   DISPLAYDLL_Write,
   DISPLAYDLL_SetPosition,
   DISPLAYDLL_DefaultParameters,

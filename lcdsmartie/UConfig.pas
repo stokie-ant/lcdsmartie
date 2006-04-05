@@ -19,7 +19,7 @@ unit UConfig;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UConfig.pas,v $
- *  $Revision: 1.51 $ $Date: 2006/03/19 16:18:59 $
+ *  $Revision: 1.52 $ $Date: 2006/04/05 03:37:09 $
  *****************************************************************************}
 
 interface
@@ -170,6 +170,7 @@ type
     DisplayDLLParameters : string;
     DLL_Contrast: integer;
     DLL_Brightness: integer;
+    EmulateLCD : boolean;
     function load: Boolean;
     procedure save;
     property ScreenSize: Integer read fScreenSize write SetScreenSize;
@@ -637,7 +638,7 @@ begin
   httpProxyPort := initFile.ReadInteger('Communication Settings',
     'HTTPProxyPort', 0);
   xremotehost := initFile.ReadString('Communication Settings', 'RemoteHost', 'localhost');
-  DisplayDLLName := initFile.ReadString('Communication Settings', 'DisplayDLLName', 'matrix.dll');
+  DisplayDLLName := initFile.ReadString('Communication Settings', 'DisplayDLLName', '');
   DisplayDLLParameters := initFile.ReadString('Communication Settings', 'DisplayDLLParameters', 'COM1,9600,8,N,1');
 
 
@@ -691,6 +692,7 @@ begin
   bHideOnStartup := initFile.ReadBool('General Settings', 'HideOnStartup', false);
   bAutoStart := initFile.ReadBool('General Settings', 'AutoStart', false);
   bAutoStartHide := initFile.ReadBool('General Settings', 'AutoStartHidden', false);
+  EmulateLCD := initFile.ReadBool('General Settings', 'EmulateLCD', false);
 
 
   // Pop accounts + ssl
@@ -855,6 +857,7 @@ begin
   initFile.WriteBool('General Settings', 'HideOnStartup', bHideOnStartup);
   initFile.WriteBool('General Settings', 'AutoStart', bAutoStart);
   initFile.WriteBool('General Settings', 'AutoStartHidden', bAutoStartHide);
+  initFile.WriteBool('General Settings', 'EmulateLCD', EmulateLCD);
 
   // Pop accounts + ssl
   for MailCount := 0 to MaxEmailAccounts-1 do

@@ -90,7 +90,7 @@ MaxStackSize=1048576
 ImageBase=4194304
 ExeDescription=
 [Directories]
-OutputDir=..\release-dir\displays
+OutputDir=..\displays
 UnitOutputDir=
 PackageDLLOutputDir=
 PackageDCPOutputDir=
@@ -139,6 +139,6 @@ Count=1
 Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
 [HistoryLists\hlOutputDirectorry]
 Count=3
-Item0=..\release-dir\displays
-Item1=..\release-dr\displays
-Item2=..\displays
+Item0=..\displays
+Item1=..\release-dir\displays
+Item2=..\release-dr\displays

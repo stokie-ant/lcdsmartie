@@ -77,11 +77,13 @@ begin
   OK^ := true;
   Result := PChar(DLLProjectName + ' ' + Version);
   fillchar(FrameBuffer,sizeof(FrameBuffer),$00);
+  MyX := 1;
+  MyY := 1;
   DisplayInitted := false;
   try
     Path := trim(string(StartupParameters));
     if (length(Path) > 0) then begin
-      Path := includetrailingbackslash(Path);
+      Path := includetrailingpathdelimiter(Path);
     end;
     IMONDLL := LoadLibrary(pchar(Path+'sg_vfd.dll'));
     if (IMONDLL = 0) then begin
@@ -121,6 +123,11 @@ begin
   end;
 end;
 
+function DISPLAYDLL_CustomCharIndex(Index : byte) : byte; stdcall;
+begin
+  DISPLAYDLL_CustomCharIndex := Index + 7; // 8-15
+end;
+
 procedure DISPLAYDLL_Write(Str : pchar); stdcall;
 // write string
 var
@@ -129,18 +136,10 @@ var
   B : byte;
 begin
   S := string(Str);
-  // characters 1-8 (custom chars) and 32-127 are the only valid on screen characters
   for Loop := 1 to length(S) do begin
     B := ord(S[Loop]);
-    if (B < 32) or (B > 127) then begin
-      case B of
-        Ord('°'): B := 8;
-        Ord('ž'): B := 1;
-        else B := ((B - 1) mod 8);
-      end; // case
-      if (B = 0) then B := 8;
-      S[Loop] := char(B);
-    end;
+    if ((B < 32) or (B > 254)) and ((B < 8) or (B > 15)) then
+      S[Loop] := ' ';
   end;
   strcopy(pchar(@FrameBuffer[MyY][MyX]),pchar(S));
   try
@@ -177,6 +176,7 @@ exports
   DISPLAYDLL_Write,
   DISPLAYDLL_SetPosition,
   DISPLAYDLL_DefaultParameters,
+  DISPLAYDLL_CustomCharIndex,
   DISPLAYDLL_Usage,
   DISPLAYDLL_DriverName,
   DISPLAYDLL_Done,

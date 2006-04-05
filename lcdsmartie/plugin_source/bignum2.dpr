@@ -6,6 +6,16 @@ uses
 {$R *.res}
 
 const
+// bad legacy to have weird characters like this defined
+  CC1 = #176;
+  CC2 = #158;
+  CC3 = #131;
+  CC4 = #132;
+  CC5 = #133;
+  CC6 = #134;
+  CC7 = #135;
+  CC8 = #136;
+
   CustomChar1 = '$CustomChar(1,31,16,16,16,16,16,16,16)';
   CustomChar2 = '$CustomChar(2,31,1,1,1,1,1,1,1)';
   CustomChar3 = '$CustomChar(3,16,16,16,16,16,16,16,31)';
@@ -64,32 +74,32 @@ begin
     if (Line = 1) then begin
       S2 := ' ';
       case B of
-        0 : S2 := #1#2;
-        1 : S2 := #2#32;
-        2 : S2 := #8#6;
-        3 : S2 := #8#6;
-        4 : S2 := #3#4;
-        5 : S2 := #5#8;
-        6 : S2 := #1#8;
-        7 : S2 := #8#2;
-        8 : S2 := #5#6;
-        9 : S2 := #5#6;
-        45 : S2 := #7;
+        0 : S2 := CC1+CC2;
+        1 : S2 := CC2+#32;
+        2 : S2 := CC8+CC6;
+        3 : S2 := CC8+CC6;
+        4 : S2 := CC3+CC4;
+        5 : S2 := CC5+CC8;
+        6 : S2 := CC1+CC8;
+        7 : S2 := CC8+CC2;
+        8 : S2 := CC5+CC6;
+        9 : S2 := CC5+CC6;
+        45 : S2 := CC7;
         58 : S2 := '.';
       end;
     end else if (Line = 2) then begin
       S2 := S[Index];
       case B of
-        0 : S2 := #3#4;
-        1 : S2 := #4#7;
-        2 : S2 := #5#7;
-        3 : S2 := #7#4;
-        4 : S2 := #32#2;
-        5 : S2 := #7#6;
-        6 : S2 := #5#6;
-        7 : S2 := #32#2;
-        8 : S2 := #3#4;
-        9 : S2 := #7#4;
+        0 : S2 := CC3+CC4;
+        1 : S2 := CC4+CC7;
+        2 : S2 := CC5+CC7;
+        3 : S2 := CC7+CC4;
+        4 : S2 := #32+CC2;
+        5 : S2 := CC7+CC6;
+        6 : S2 := CC5+CC6;
+        7 : S2 := #32+CC2;
+        8 : S2 := CC3+CC4;
+        9 : S2 := CC7+CC4;
         45 : S2 := ' ';
         58 : S2 := '.';
       end;

@@ -3,9 +3,9 @@ object LCDSmartieDisplayForm: TLCDSmartieDisplayForm
   Top = 240
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsToolWindow
-  Caption = 'LCD Smartie 5.3'
-  ClientHeight = 93
-  ClientWidth = 228
+  Caption = 'LCD Smartie 5.4 - PRERELEASE'
+  ClientHeight = 91
+  ClientWidth = 226
   Color = clBtnFace
   TransparentColorValue = clBtnFace
   Font.Charset = ANSI_CHARSET
@@ -197,7 +197,7 @@ object LCDSmartieDisplayForm: TLCDSmartieDisplayForm
     TabStop = False
     OnClick = SetupButtonClick
   end
-  object Line2Panel: TPanel
+  object xLine2Panel: TPanel
     Left = 32
     Top = 16
     Width = 161
@@ -215,8 +215,9 @@ object LCDSmartieDisplayForm: TLCDSmartieDisplayForm
     ParentShowHint = False
     ShowHint = True
     TabOrder = 2
+    Visible = False
   end
-  object Line3Panel: TPanel
+  object xLine3Panel: TPanel
     Left = 32
     Top = 32
     Width = 161
@@ -234,8 +235,9 @@ object LCDSmartieDisplayForm: TLCDSmartieDisplayForm
     ParentShowHint = False
     ShowHint = True
     TabOrder = 3
+    Visible = False
   end
-  object Line4Panel: TPanel
+  object xLine4Panel: TPanel
     Left = 32
     Top = 48
     Width = 161
@@ -253,6 +255,7 @@ object LCDSmartieDisplayForm: TLCDSmartieDisplayForm
     ParentShowHint = False
     ShowHint = True
     TabOrder = 4
+    Visible = False
   end
   object HideButton: TButton
     Left = 156
@@ -264,7 +267,7 @@ object LCDSmartieDisplayForm: TLCDSmartieDisplayForm
     TabStop = False
     OnClick = HideButtonClick
   end
-  object Line1Panel: TPanel
+  object xLine1Panel: TPanel
     Left = 32
     Top = 0
     Width = 161
@@ -283,6 +286,7 @@ object LCDSmartieDisplayForm: TLCDSmartieDisplayForm
     ParentShowHint = False
     ShowHint = True
     TabOrder = 6
+    Visible = False
   end
   object ScreenNumberPanel: TPanel
     Left = 84
@@ -320,6 +324,38 @@ object LCDSmartieDisplayForm: TLCDSmartieDisplayForm
     Caption = 'Next'
     TabOrder = 8
     OnClick = NextButtonClick
+  end
+  inline Line1LCDPanel: TLCDLineFrame
+    Left = 32
+    Top = 0
+    Width = 160
+    Height = 18
+    TabOrder = 9
+    Visible = False
+  end
+  inline Line2LCDPanel: TLCDLineFrame
+    Left = 32
+    Top = 16
+    Width = 160
+    Height = 18
+    TabOrder = 10
+    Visible = False
+  end
+  inline Line4LCDPanel: TLCDLineFrame
+    Left = 32
+    Top = 48
+    Width = 160
+    Height = 18
+    TabOrder = 11
+    Visible = False
+  end
+  inline Line3LCDPanel: TLCDLineFrame
+    Left = 32
+    Top = 32
+    Width = 160
+    Height = 18
+    TabOrder = 12
+    Visible = False
   end
   object TimerRefresh: TTimer
     Enabled = False

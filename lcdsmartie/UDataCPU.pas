@@ -42,6 +42,7 @@ begin
   try
     STCPUSpeed := IntToStr(cxCpu[0].Speed.RawSpeed.AsNumber);
   except
+    STCPUSpeed := '0';
     // BUGBUG: This has been reported as failing when with Range check error,
     // they reported that it only occured when they ran a slow 16 bit app
   end;

@@ -1419,7 +1419,7 @@ object SetupForm: TSetupForm
           166)
         object Label1: TLabel
           Left = 8
-          Top = 52
+          Top = 48
           Width = 134
           Height = 13
           Caption = 'Scroll interval (milliseconds):'
@@ -1458,7 +1458,7 @@ object SetupForm: TSetupForm
         end
         object Label6: TLabel
           Left = 8
-          Top = 84
+          Top = 72
           Width = 68
           Height = 13
           Caption = 'Color scheme:'
@@ -1497,7 +1497,7 @@ object SetupForm: TSetupForm
           ParentFont = False
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 3
+          TabOrder = 4
         end
         object WebProxyPortEdit: TEdit
           Left = 180
@@ -1515,12 +1515,12 @@ object SetupForm: TSetupForm
           ParentFont = False
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 4
+          TabOrder = 5
           Text = '0'
         end
         object ColorSchemeComboBox: TComboBox
           Left = 84
-          Top = 79
+          Top = 67
           Width = 177
           Height = 21
           Hint = 'The colors used in the virtual display.'
@@ -1567,7 +1567,7 @@ object SetupForm: TSetupForm
         end
         object ProgramScrollIntervalSpinEdit: TSpinEdit
           Left = 192
-          Top = 46
+          Top = 42
           Width = 69
           Height = 22
           Hint = 
@@ -1587,6 +1587,20 @@ object SetupForm: TSetupForm
           ShowHint = True
           TabOrder = 1
           Value = 200
+        end
+        object EmulateLCDCheckbox: TCheckBox
+          Left = 8
+          Top = 90
+          Width = 257
+          Height = 17
+          Caption = 'Emulate LCD  (more CPU intensive)'
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          ParentFont = False
+          TabOrder = 3
         end
       end
       object DisplayGroup2: TGroupBox
@@ -1731,7 +1745,7 @@ object SetupForm: TSetupForm
                 Font.Height = -11
                 Font.Name = 'Tahoma'
                 Font.Style = []
-                ItemHeight = 13
+                ItemHeight = 0
                 ParentFont = False
                 ParentShowHint = False
                 ShowHint = True
