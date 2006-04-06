@@ -28,7 +28,7 @@ type
 implementation
 
 uses
-  ActiveX,Windows;
+  ActiveX,Dialogs,SysUtils,Windows;
 
 constructor TDataThread.Create(AInterval : longint);
 begin
@@ -64,14 +64,20 @@ var
   WaitLoop : longint;
 begin
   if UsesCOMObjects then coinitialize(nil);  // required for XML COM object
-  while not Terminated do begin
-    DoUpdate;
-    fRefresh := false;
-    for WaitLoop := 1 to (fInterval div 10)-20 do begin
-      sleep(10);
-      if Terminated or fRefresh then break;
+  try
+    while not Terminated do begin
+      DoUpdate;
+      fRefresh := false;
+      for WaitLoop := 1 to (fInterval div 10)-20 do begin
+        sleep(10);
+        if Terminated or fRefresh then break;
+      end;
+      if not Terminated then sleep(200);  // minimum sleep interval upon external refresh call
     end;
-    if not Terminated then sleep(200);  // minimum sleep interval upon external refresh call
+  except
+    // trap EExiting exception when terminating thread
+    on E:Exception do ;
+//      MessageDlg('Exception in data thread: '+E.Message,mtError,[mbOK],0);
   end;
   if UsesCOMObjects then CoUninitialize;     // required for XML COM object
 end;
