@@ -19,7 +19,7 @@ unit UCredits;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UCredits.pas,v $
- *  $Revision: 1.6 $ $Date: 2006/04/10 12:31:38 $
+ *  $Revision: 1.7 $ $Date: 2006/04/10 19:48:13 $
  *****************************************************************************}
 
 interface
@@ -128,7 +128,7 @@ begin
     for Loop := 0 to CreditList.Count-1 do begin
       Y := (ScrollPanel.Height-YCoord)+(Loop*LineHeight);
       Rectangle(0,Y-1,ScrollPanel.Width,Y+LineHeight+2);
-      TextOut(5,(ScrollPanel.Height-YCoord)+(Loop*LineHeight),CreditList[Loop]);
+      TextOut(5,Y,CreditList[Loop]);
     end;
   end;
 end;

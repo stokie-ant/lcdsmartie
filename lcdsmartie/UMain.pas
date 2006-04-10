@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.84 $ $Date: 2006/04/10 12:35:10 $
+ *  $Revision: 1.85 $ $Date: 2006/04/10 19:48:13 $
  *****************************************************************************}
 
 interface
@@ -1527,10 +1527,22 @@ begin
 end;
 
 procedure TLCDSmartieDisplayForm.FiniLCD();
+var
+  Loop : longint;
+  S : string;
 begin
   timerRefresh.enabled := false;  // stop updates to lcd
   try
-    if (Lcd <> nil) Then Lcd.Destroy();
+    if assigned(Lcd) then begin
+      S := '';
+      for Loop := 1 to config.Width do
+        S := S + ' ';
+      for Loop := 1 to config.Height do begin
+        Lcd.setPosition(1, Loop);
+        Lcd.write(S);
+      end;
+      Lcd.Destroy();
+    end;
   except
   end;
   Lcd := nil;
