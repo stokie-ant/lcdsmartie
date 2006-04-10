@@ -19,7 +19,7 @@ unit UCredits;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UCredits.pas,v $
- *  $Revision: 1.5 $ $Date: 2006/03/20 22:24:57 $
+ *  $Revision: 1.6 $ $Date: 2006/04/10 12:31:38 $
  *****************************************************************************}
 
 interface
@@ -28,16 +28,25 @@ uses Forms, ExtCtrls, Classes, StdCtrls, Graphics, Controls;
 
 type
   TCreditsForm = class(TForm)
-    Label2: TLabel;
+    RootPanel: TPanel;
+    ScrollPanel: TPanel;
+    CreditPaintBox: TPaintBox;
+    ScrollCreditLabel: TLabel;
+    OrigLabel: TLabel;
     Image1: TImage;
-    Label1: TLabel;
-    Label3: TLabel;
-    Label4: TLabel;
-    Label5: TLabel;
+    Timer1: TTimer;
+    HTMLLabel: TLabel;
     procedure CloseClick(Sender: TObject);
-    procedure Label2Click(Sender: TObject);
+    procedure HTMLLabelClick(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
+    procedure FormClose(Sender: TObject; var Action: TCloseAction);
+    procedure Timer1Timer(Sender: TObject);
   private
     { Private declarations }
+    CreditList : TStringList;
+    YCoord : longint;
+    YMax : longint;
+    LineHeight : longint;
   public
     { Public declarations }
   end;
@@ -66,11 +75,62 @@ begin
   Close;
 end;
 
-procedure TCreditsForm.Label2Click(Sender: TObject);
+procedure TCreditsForm.HTMLLabelClick(Sender: TObject);
 
 begin
   ShellExecute(0, Nil, pchar('http://lcdsmartie.sourceforge.net/'), Nil, Nil,
     SW_NORMAL);
+end;
+
+procedure TCreditsForm.FormCreate(Sender: TObject);
+begin
+  CreditList := TStringList.Create;
+  with CreditList do begin    // add core developers here in alpha order
+    Add('Afonso Infante');
+    Add('Chris Lansley');
+    Add('Cristiano Vaccarini');
+    Add('Mike van Meeteren');
+  end;
+  with CreditPaintBox.Canvas do begin
+    with Brush do begin
+      Color := ScrollPanel.Color;
+      Style := bsSolid;
+    end;
+    with Pen do begin
+      Color := ScrollPanel.Color;
+      Style := psSolid;
+      Mode := pmCopy;
+    end;
+    LineHeight := TextHeight('X')*3 div 2;
+    YMax := LineHeight*CreditList.Count+ScrollPanel.Height;
+    YCoord := YMax;
+  end;
+end;
+
+procedure TCreditsForm.FormClose(Sender: TObject;
+  var Action: TCloseAction);
+begin
+  CreditList.Free;
+end;
+
+procedure TCreditsForm.Timer1Timer(Sender: TObject);
+var
+  Y,Loop : longint;
+begin
+  inc(YCoord);
+  if (YCoord > YMax) then begin
+    with CreditPaintBox.Canvas do begin
+      Rectangle(0,0,ScrollPanel.Width,ScrollPanel.Height);
+    end;
+    YCoord := 0;
+  end;
+  with CreditPaintBox.Canvas do begin
+    for Loop := 0 to CreditList.Count-1 do begin
+      Y := (ScrollPanel.Height-YCoord)+(Loop*LineHeight);
+      Rectangle(0,Y-1,ScrollPanel.Width,Y+LineHeight+2);
+      TextOut(5,(ScrollPanel.Height-YCoord)+(Loop*LineHeight),CreditList[Loop]);
+    end;
+  end;
 end;
 
 end.
