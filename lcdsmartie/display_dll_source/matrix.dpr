@@ -1,7 +1,7 @@
 library matrix;
 
 uses
-  Windows,SysUtils,SyncObjs,Registry,Classes,SERPORT,UMyThread;
+  Windows,SysUtils,SyncObjs,Registry,Classes,{USerial,}SERPORT,UMyThread;
 
 
 {$R *.res}
@@ -100,6 +100,7 @@ constructor TLCD_MO.CreateSerial(StartupParameters : string);
 begin
   GetLocaleFormatSettings(LOCALE_SYSTEM_DEFAULT, localeFormat);
   COMPort := TSerialPort.Create;
+//  COMPort := TSerial.AlternateCreate;
   StartupParameters := StartupParameters + ',8,N,1,$';
   StartupParameters := StartupParameters + IntToHex(SetRTSFlag+SetDTRFlag,8);
   COMPort.OpenSerialPort(StartupParameters);
@@ -623,6 +624,7 @@ begin
   begin
 
     if (COMPort.ReadByte(Byte(chr))) then gotdata:=true;
+//    if (COMPort.Read(Byte(chr))) then gotdata:=true;
 
   end;
 
