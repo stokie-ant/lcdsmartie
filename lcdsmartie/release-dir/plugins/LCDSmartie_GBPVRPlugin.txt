@@ -1,0 +1,45 @@
+LCDSmartie_GBPVRPlugin.dll Version 0.45 beta
+
+
+Configuration File
+---------------------------
+- Created after this plug-in is first started.
+- Located in your LCDSmartie directory.
+- Called LCDSmartie_GBPVRPlugin.dll.config.
+- Can be opened with a text editor (eg notepad).
+
+- You may edit the settings in there.
+- NOTE: DO NOT delete or change the order of the lines in the file.
+
+List and Description of Settings:
+- TCP_Address: IP address of the machine running the GBPVR LCD plugin. 
+  This defaults to your local machine (127.0.0.1) but can be changed if you wish to
+  connect to GBPVR on a remote computer.
+- TCP_Port: The port that this plug-in will communicate with GBPVR on. Default: 9826.
+- TCP_SendTimeout: Amount of time to wait for a reply from GBPVR.  Default is 200.  
+  If you receive an LCD Plugin Error, increase this value.
+- TCP_ReceiveTimeout: Similar to TCP_SendTimeout.  Default is 200.
+  Again, increase if you are getting LCD Plugin Error message.
+- TCP_NumTries: Number of times to try to connect to GBPVR LCD Plugin before giving Media
+  Centre Unavailable message.
+- LCD_NumLines: Number of lines on your LCD display.  Not yet used.
+- LCD_CharsPerLine: Number of characters per line on your LCD display.  Not yet used.
+- Default_Line1: Default Line1 message.
+- Default_Line2: Default Line2 message.
+- ErrorMessage_TCP: Here you can change the message displayed from LCD Plugin Error.
+- ErrorMessage_GBPVROff: This message will appear when the plugin cannot connect to GBPVR.
+  This will happen when GBPVR is off.
+
+
+
+HISTORY
+---------------------------
+
+Version 0.45 beta: tested to work with LCDSmartie 5.3 beta 3
+- Configuration file implemented (check LCDSmartie directory) to allow changing plug-in settings.
+- Allows connection to GBPVR on a remote machine by using a different IP/Port.
+- Allows changing various message strings.
+
+Version 0.4 beta
+- Initial release.
+

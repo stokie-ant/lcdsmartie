@@ -1,0 +1,10 @@
+This plugin simply reads a text file from the internet and returns the text inside.
+It will read the text file from the internet line by line inserting a CRLF between
+each line. It will then return the entire text of the file to LCDSmartie.
+
+Usage: 
+
+$dll(webtxt,1,<url>,[refresh time in seconds]#[line number])
+
+The refresh time in seconds defaults to 30. This is how often it will download the
+text file from the web and display it. The minimum refresh time is 1 second.

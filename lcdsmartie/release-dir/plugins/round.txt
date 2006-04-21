@@ -1,0 +1,77 @@
+round.dll plugin for LCD SMARTIE
+http://lcdsmartie.sourceforge.net/
+
+REQUIRES LCD Smartie 5.3 beta3 or newer
+
+
+
+INFORMATION
+-----------
+This dll rounds a decimal number
+
+
+
+Version 
+-------
+Beta 1
+
+
+Version Features
+----------------
+TWO functions available to use.
+
+  function1
+  returns the rounded number of the given value
+
+  function20
+  returns credits about the dll, version and other info.
+
+
+USAGE
+-----
+Simple as this $dll(round,1,decimal number, number of decimals to return)
+
+
+ Examples
+  $dll(round.dll,1,555.4579623,2)  returns 555,46
+  $dll(round.dll,1,45.2823,0)  returns 45
+  $dll(round.dll,1,37.6823,0)  returns 38
+
+
+Function 20 returns dll information regardless of the parameters just add $dll(round.dll,20,param1,param2) 
+and the credits screen will appear.
+
+
+
+    NOTE:  in all functions is available a short description of returned string that can be displayed by passing the 
+    "about" as param1 and "function" as param2.
+    e.g. $dll(round.dll,1,about,function) or $dll(round.dll,20,about,function)  
+
+
+
+KNOWN BUGS
+----------
+May experienced error when the decimal sing is comma (depending on system "LOCALE")
+
+Mail to lcdsmartie@walla.com
+
+
+
+
+
+CREDITS
+-------
+Creator: Limbo
+lcdsmartie@walla.com
+
+For more goto 
+http://limbo-online.8m.net
+
+2005 Limbo Software Solutions
+.net Powered
+
+
+
+
+
+

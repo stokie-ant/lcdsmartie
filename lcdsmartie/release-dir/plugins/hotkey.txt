@@ -1,0 +1,105 @@
+hotkey.dll - hotkey plugin for LCD Smartie
+
+V0.1 (2005-07-13)
+
+
+
+# introduction
+------------------------------------------------------------------------------
+This plugin implements "global" (*1) hotkeys for LCD Smartie. It is intended
+to be used with the "Actions" feature of LCD Smartie to trigger actions.
+
+(*1) "global" as in "system-wide" or "focus-independent"
+
+
+
+# installation
+------------------------------------------------------------------------------
+Copy the files "hotkey.dll" and "hotkey.ini" into the "plugins" folder of
+LCD Smartie.
+
+
+
+# configuration
+------------------------------------------------------------------------------
+Two steps have to be done:
+1. define key codes (hotkey.ini)
+2. define actions (LCD Smartie Setup - Actions tab)
+
+Detailed description of the two steps follows:
+
+1. define key codes (hotkey.ini)
+--------------------------------
+This step is optional.
+If the file "hotkey.ini" is not present in the "plugins" folder or if the
+original file from the distribution is used then these 3 keys are active:
+   default hotkeys
+   key #1 - Ctrl-F10
+   key #2 - Ctrl-F11
+   key #3 - Ctrl-F12
+You can edit the file "hotkey.ini" to define up to 19 hotkeys. Please read
+the comments in that file for the details.
+
+2. define actions (LCD Smartie Setup - Actions tab)
+---------------------------------------------------
+Open the setup window of LCD Smartie and go to the Actions tab. Add a new
+line for each hotkey you want to use:
+
+   (If)  $dll(hotkey,[key number],,)  >  0  (Then)  [action]
+
+[key number] is the number of the key in the "hotkey.ini" file
+[action] is the action to be performed
+
+For instance, the action
+   (If)  $dll(hotkey,1,,)  >  0  (Then)  NextScreen
+will switch to the next screen if hotkey #1 is pressed.
+
+
+
+# technical details
+------------------------------------------------------------------------------
+Functions 1 to 19 are used to poll the state of the respective hotkeys.
+They return "1" if the hotkey was pressed, otherwise they return "0". If "1"
+is returned then the internal counter for that hotkey is decremented, so that
+each key press is reported only once.
+
+Normal usage for actions (as described above) doesn't require any parameters.
+However, if the values "about" and "function" are given as param1 and param2
+then the functions return a text description like this:
+$dll(hotkey,1,about,function)   returns
+[hotkey.function1 (hotkey: mod=2,key=79) returns "1" if key was pressed,
+ otherwise "0"]
+
+Function 20 is not associated with a hotkey. It returns plugin version info.
+
+Function SmartieInit initializes the hotkeys:
+-open an invisible window (uses MFC because I know how to handle that)
+-read key codes from ini-file, if that fails use default key codes
+-register global hotkeys in Windows (as messages for the invisible window)
+
+Function SmartieFini removes the hotkeys:
+-unregister global hotkeys
+-close the invisible window
+
+Please note that the full source code (Visual C++ 6.0) is included.
+
+
+
+# license
+------------------------------------------------------------------------------
+hotkey.dll - hotkey plugin for LCD Smartie
+Copyright (C) 2005  Michael "Smack" Henke
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.

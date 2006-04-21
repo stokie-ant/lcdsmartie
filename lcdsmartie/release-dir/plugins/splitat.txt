@@ -1,0 +1,8 @@
+$dll(splitat,1,string,string config)
+
+String:  whatever you want to split up
+String Config: the way you want to split it up
+	ei:
+		,[delimiter];;[first token to display];;[last token to display]
+
+the first token in every string is 0	

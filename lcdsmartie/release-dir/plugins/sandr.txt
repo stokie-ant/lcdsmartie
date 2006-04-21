@@ -1,0 +1,143 @@
+sandr.dll plugin for LCD Smartie
+http://lcdsmartie.sourceforge.net/
+
+Requires LCD Smartie 5.3 or newer
+Requires .NET Framework
+
+Created By Limbo
+www.limbo-online.tk
+
+
+Important notice
+______________________________________
+Use the omit.ini packaged with.
+
+
+
+
+
+
+GENERAL INFO
+------------
+This plugin will search in strings and replace them given values.
+All search and replace commands are stored in a ini file.
+
+
+
+the structure of the compatible ini file must be as follows
+filename any valid ini filename
+
+
+
+[Search1] 
+1="aaaaa"
+2="bbbbbb"
+3="ccccccc"
+4="ddddddddd"
+
+[Replace1]
+1="aaaaa"
+2="bbbbbb"
+3="ccccccc"
+4="ddddddddd"
+
+[Search2] 
+1="aaaaa"
+2="bbbbbb"
+3="ccccccc"
+4="ddddddddd"
+
+[Replace2]
+1="aaaaa"
+2="bbbbbb"
+3="ccccccc"
+4="ddddddddd"
+
+
+The bracket encosed values can be  Search1, Search2, Replace1, Replace2.
+the integers identifining the lines must be valid integers from 1 to 20
+
+
+
+You have to remember to keep the strings paired.
+This means that the search string under the [Search1] location 5= will be replaced with the value under the [Replace1] location 5=
+if no value is under this specific loacation the string will be deleted.
+
+ 
+
+
+VERSION
+-------
+1.0
+
+
+
+Version Features
+----------------
+Five functions available to use.
+
+  function1
+  returns string replacing any search criteria located on Search1 with the paired Replace1
+
+
+  function2
+  returns string replacing any search criteria located on Search2 with the paired Replace2
+         
+           
+  function3
+  returns string replacing any search criteria located on Search1 with the paired Replace1 - No case sensitivity
+
+ 
+  function4
+  returns string replacing any search criteria located on Search2 with the paired Replace2 - No case sensitivity
+
+
+  function20
+  returns credits
+
+
+
+Syntax
+------
+
+$dll(sandr,1,xxxxxxxxxxxxxxxxxxxxxxxxxxxx,ppppppppppp)
+where xxxxxxxxxxxxxxxxxxxxxxxxxxxx is the string or variable containing any text and ppppppppppp is the optional path of the ini file
+The search criteria must be located under the [Search1] and replace criteria under the [Replace1].
+
+
+
+Note
+If no path provided the plugin will use the C:\omit.ini as path which is the default
+
+
+
+Examples
+$dll(sandr,1,plugin creator: me,)
+
+Use this example with the provided ini file and you will get the following output "Dll author: Limbo" 
+
+
+
+
+
+
+Function 20 returns dll information regardless of the parameters just add $dll(sandr,20,param1,param2) 
+and the credits screen will appear.
+
+    NOTE:  in all functions is available a short description of returned string that can be displayed by passing the 
+    "about" as param1 and "function" as param2.
+
+
+
+Limitations and bugs
+--------------------
+not known
+
+
+CREDITS
+-------
+Creator: Limbo
+lcdsmartie@walla.com
+
+2006 Limbo Software Solutions
+.net Powered

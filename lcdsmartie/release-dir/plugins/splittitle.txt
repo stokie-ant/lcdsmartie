@@ -1,0 +1,101 @@
+splittitle.dll plugin for LCD SMARTIE
+http://lcdsmartie.sourceforge.net/
+
+REQUIRES LCD Smartie 5.3 beta3 or newer
+
+
+
+
+
+
+
+INFORMATION
+-----------
+This dll was created to split the tracktitle returned by winamp to LCD Smartie.
+The plugin works by taking as first parameter the track title, seeking for the 
+dash (-) symbol or any other user defined symbol and returns the parts before and after the specific symbol.
+
+Version 
+-------
+0.1
+
+Version Features
+----------------
+Seven functions available to use.
+
+  function1
+  returns the first part of the title, the artist.
+
+
+  function2
+  returns the second part of the title, track title
+         
+         NOTE: in some tracks that have a dash symbol in their 
+         artists like (Kermit The Frog - Miss Piggy - See drives me crazy) 
+         here will appear the second artist 
+
+  
+  function3
+  returns the third part of the title
+
+         NOTE:  this is applicable only is your collection of mp3's haves 
+         dashes and you want to get the third part of the returned string and in the case
+         described in the note above.
+         For example if your track titles come with the following format "Limbo's Collection  - Simply red - Fairground"
+         to take the artist you must use the function2 and to take the track title the function 3
+
+
+  function11
+  as function1 but you can define your own seperator.
+
+
+  function12
+  as function2 but you can define your own seperator.
+
+
+  function13
+  as function3 but you can define your own seperator.
+
+
+  function20
+  returns credits about the dll, version and other info.
+
+
+USAGE
+-----
+For functions 1, 2, and 3 you must add the $dll function of LCD Smartie and pass as first parameter (param1) the $WinampTitle
+the second parameter will ignored. e.g. $dll(splittitle.dll,1,$WinampTitle,3)
+
+For functions 11, 12, and 13 you must add the $dll function of LCD Smartie and pass as first parameter (param1) the $WinampTitle
+and as second parameter the character you want to use as Artist/Title seperator. e.g. $dll(splittitle.dll,1,$WinampTitle,*)
+
+Function 20 returns dll information regardless of the parameters just add $dll(splittitle.dll,20,param1,param2) 
+and the credits screen will appear.
+
+    NOTE:  in all functions is available a short description of returned string that can be displayed by passing the 
+    "about" as param1 and "function" as param2.
+    e.g. $dll(splittitle.dll,1,about,function) or $dll(splittitle.dll,20,about,function)  
+
+
+
+KNOWN BUGS
+----------
+Not yet. Mail to lcdsmartie@walla.com
+
+
+
+
+
+CREDITS
+-------
+Creator: Limbo
+lcdsmartie@walla.com
+
+2005 Limbo Software Solutions
+.net Powered
+
+
+
+
+
+

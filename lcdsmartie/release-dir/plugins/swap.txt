@@ -1,0 +1,1 @@
+$dll(swap,1,string1#string2#string3...#stringN,time_in_seconds-1)

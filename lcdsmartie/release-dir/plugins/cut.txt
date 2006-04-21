@@ -1,0 +1,9 @@
+
+$dll(cut.dll,1,[start]#[length],Texthere)
+
+
+Example:
+
+$dll(cut.dll,1,2#4,abc123)
+
+returns bc12

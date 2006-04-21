@@ -1,0 +1,13 @@
+Countdown Plugin for LCD Smartie
+by Mark Sloat
+sloatbyte@comcast.net
+
+
+Setup
+
+Place Countdown.dll in smartie plugin directory.  Use $dll(Countdown.dll,1,date,message) in LCD Smartie.  The date can be for example 12/25/2005.
+The year must be writen with four digits not 05.  A working example would be $dll(Countdown.dll,1,12/25/2005,Merry Christmas Everyone!).
+This plugin will show days, hours, minutes, and seconds til date.  Once the time has been reached, the message will be displayed in its place.
+Like Merry Christmas Everyone! in the example given.  If you find a problem please email.
+
+Mark Sloat
