@@ -8,10 +8,23 @@ See: http://sourceforge.net/tracker/?func=browse&group_id=122330&atid=693136
 
 Changes
 =======
-5.3.3b3
+5.4 B3 beta
+	- Displays now use DLL drivers to enable easy future expandibility.  
+          New drivers include native iMON support, IRTrans support, and Seetron LCD support (untested).
+	- LCD screen emulator mode allows custom chars to be shown on main GUI
+	- SSL option for e-mail checking
+	- Built in data gathering functions now multithreaded to prevent one thread (like an HTTP fetch)
+          from hanging up all the other threads.
+
+5.3.2 final
+	- Added support for inpout32.dll (for 64-bit support)
+	- Fixed timer bug causing exceptions when using HD44780 on fast machines
+	- Added option to support KS0073 using the HD44780 module (different addressing, extra initialization)
+	- Considerable cleaning of code (in preparation for a major rewrite)
+5.3.2b3    
 	- Added support for IRTrans based displays
-        - Changed Interactions to Transition
-        - Default position for windows now centered on desktop
+              - Changed Interactions to Transition
+              - Default position for windows now centered on desktop
 	- Added patch to DNBridge to handle ANSI characters > 128
 	  [provided by Mike Brownlow of Axcis Pty Ltd]
 5.3.2b2
