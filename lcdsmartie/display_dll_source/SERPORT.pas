@@ -27,7 +27,7 @@ const
   ReservedFlagBitsMask = $FFFF8000;
 
 type
-  TSerialPort = class
+  TSerial = class
   private
     fCommHandle : THandle;
     function InitComPort(FComPortName : string; FComPortBaud : longint; Bits,bParity,Stop : byte; COMFlags : word) : boolean;
@@ -49,22 +49,25 @@ implementation
 uses
   SysUtils;
 
-constructor TSerialPort.Create;
+constructor TSerial.Create;
 begin
   fCommHandle := 0;
 end;
 
-destructor TSerialPort.Destroy;
+destructor TSerial.Destroy;
 begin
   CloseSerialPort;
 end;
 
-procedure TSerialPort.CloseSerialPort;
+procedure TSerial.CloseSerialPort;
 begin
-  if (fCommHandle > 0) then CloseHandle(fCommHandle);
+  if (fCommHandle > 0) then begin
+    FlushFileBuffers(fCommHandle);
+    CloseHandle(fCommHandle);
+  end;
 end;
 
-function TSerialPort.InitComPort(FComPortName : string; FComPortBaud : longint; Bits,bParity,Stop : byte; COMFlags : word) : boolean;
+function TSerial.InitComPort(FComPortName : string; FComPortBaud : longint; Bits,bParity,Stop : byte; COMFlags : word) : boolean;
       // 0-4=no,odd,even,mark,space
       // 0,1,2 = 1, 1.5, 2
 var
@@ -132,7 +135,7 @@ begin
   end;
 end;
 
-procedure TSerialPort.OpenSerialPort(S : string);
+procedure TSerial.OpenSerialPort(S : string);
 // COM1,9600,8,N,1,0  // flags in DECIMAL or HEX format
 var
   S2,PortName : string;
@@ -187,28 +190,28 @@ begin
   InitComPort(PortName,COMPortBaud,Bits,Parity,Stop,COMFlags);
 end;
 
-function TSerialPort.ReadByte(var B : byte) : boolean;
+function TSerial.ReadByte(var B : byte) : boolean;
 var
   Bytes : DWORD;
 begin
   ReadByte := ReadFile(fCommHandle,B,1,Bytes,nil) and (Bytes = 1);
 end;
 
-function TSerialPort.WriteByte(B : byte) : boolean;
+function TSerial.WriteByte(B : byte) : boolean;
 var
   Bytes : DWORD;
 begin
   WriteByte := WriteFile(fCommHandle,B,1,Bytes,nil) and (Bytes = 1);
 end;
 
-function TSerialPort.Write(Buf : pbyte; Len : DWORD) : boolean;
+function TSerial.Write(Buf : pbyte; Len : DWORD) : boolean;
 var
   Bytes : DWORD;
 begin
   Write := WriteFile(fCommHandle,Buf^,Len,Bytes,nil) and (Bytes = Len);
 end;
 
-function TSerialPort.Read(Buf : pbyte; Len : DWORD) : dword;
+function TSerial.Read(Buf : pbyte; Len : DWORD) : dword;
 var
   Bytes : DWORD;
 begin
