@@ -19,13 +19,14 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.61 $ $Date: 2006/04/16 13:24:27 $
+ *  $Revision: 1.62 $ $Date: 2006/04/21 15:16:51 $
  *****************************************************************************}
-
+{.DEFINE VCORP}
 interface
 
-uses Dialogs, Grids, StdCtrls, Controls, Spin, Buttons, ComCtrls, Classes,
-     Forms, ExtCtrls, FileCtrl, JvDriveCtrls;
+uses
+  Dialogs, Grids, StdCtrls, Controls, Spin, Buttons, ComCtrls, Classes,
+  Forms, ExtCtrls{$IFDEF VCORP}, FileCtrl, JvDriveCtrls{$ENDIF};
 
 const
   NoVariable = 'Variable: ';
@@ -202,14 +203,6 @@ type
     EmailSSLEdit: TEdit;
     Label2: TLabel;
     EmulateLCDCheckbox: TCheckBox;
-    TabSheet1: TTabSheet;
-    PluginListBox: TJvFileListBox;
-    Btn_PluginRefresh: TButton;
-    Panel2: TPanel;
-    Label9: TLabel;
-    pluginDotNetVer: TLabel;
-    Label10: TLabel;
-    PluginDotNetRequired: TLabel;
     procedure FormShow(Sender: TObject);
     procedure LCDSizeComboBoxChange(Sender: TObject);
     procedure ScreenSpinEditChange(Sender: TObject);
@@ -262,9 +255,11 @@ type
     procedure DisplayPluginListChange(Sender: TObject);
     procedure ContrastTrackBarChange(Sender: TObject);
     procedure BrightnessTrackBarChange(Sender: TObject);
+{$IFDEF VCORP}
     procedure Btn_PluginRefreshClick(Sender: TObject);
     procedure PluginListBoxDblClick(Sender: TObject);
     procedure PluginListBoxClick(Sender: TObject);
+{$ENDIF}
   private
     DLLPath : string;
     setupbutton: Integer;
@@ -1403,8 +1398,11 @@ begin
 end;
 
 procedure TSetupForm.FormCreate(Sender: TObject);
-var pathssl :string;
-    RG      :Tregistry;
+var
+  pathssl :string;
+{$IFDEF VCORP}
+  RG : Tregistry;
+{$ENDIF}
 begin
   pathssl := ExtractFilePath(ParamStr(0));
   ActionsStringGrid.RowCount := 0;
@@ -1417,35 +1415,27 @@ begin
   if not fileExists(pathssl+'libeay32.dll') or
      not fileExists(pathssl+'ssleay32.dll') then EmailSSLEdit.Enabled :=False ;
 
+{$IFDEF VCORP}
   //point ListBox to the plugin dirs
   PluginListBox.Directory := pathssl+'plugins\';
 
   //.net check (if installed
   RG := Tregistry.Create;
   RG.RootKey := HKEY_LOCAL_MACHINE;
-  if RG.OpenKey('SOFTWARE\Microsoft\NET Framework Setup\NDP\v1.0.3705\', FALSE)
-  then begin
-  if RG.ReadInteger('install') = 1 then pluginDotNetVer.Caption:='v1.0.3705';
+  if RG.OpenKey('SOFTWARE\Microsoft\NET Framework Setup\NDP\v1.0.3705\', FALSE) then begin
+    if RG.ReadInteger('install') = 1 then
+      pluginDotNetVer.Caption:='v1.0.3705';
+  end else if RG.OpenKey('SOFTWARE\Microsoft\NET Framework Setup\NDP\v1.1.4322\', FALSE) then begin
+    if RG.ReadInteger('install') = 1 then
+      pluginDotNetVer.Caption:='v1.1.4322';
+  end else if RG.OpenKey('SOFTWARE\Microsoft\NET Framework Setup\NDP\v2.0.50727\', FALSE) then begin
+    if RG.ReadInteger('install') = 1 then
+      pluginDotNetVer.Caption:='v2.0.50727';
   end else
-  begin
-
-  if RG.OpenKey('SOFTWARE\Microsoft\NET Framework Setup\NDP\v1.1.4322\', FALSE)
-  then begin
-  if RG.ReadInteger('install') = 1 then pluginDotNetVer.Caption:='v1.1.4322';
-  end else
-  begin
-
-  if RG.OpenKey('SOFTWARE\Microsoft\NET Framework Setup\NDP\v2.0.50727\', FALSE)
-  then begin
-  if RG.ReadInteger('install') = 1 then pluginDotNetVer.Caption:='v2.0.50727';
-  end else pluginDotNetVer.Caption:='none';
-
-  end;
-  end;
-
+    pluginDotNetVer.Caption:='none';
   RG.CloseKey;
   RG.Destroy;
-
+{$ENDIF}
 end;
 
 procedure TSetupForm.OutputListBoxClick(Sender: TObject);
@@ -1712,66 +1702,66 @@ begin
   LCDSmartieDisplayForm.lcd.setBrightness(BrightnessTrackBar.position);
 end;
 
+{$IFDEF VCORP}
 procedure TSetupForm.Btn_PluginRefreshClick(Sender: TObject);
 begin
-PluginListBox.Refresh;
+  PluginListBox.Refresh;
 end;
 
 procedure TSetupForm.PluginListBoxDblClick(Sender: TObject);
-var plugin_name :string;
+var
+  plugin_name :string;
 begin
-plugin_name := Lowercase(ExtractFileName(PluginListBox.FileName));
-plugin_name := copy(plugin_name,0,Length(plugin_name)-4)+'.txt';
-
-if FileExists(ExtractFilePath(ParamStr(0))+'plugins\'+plugin_name)
-then ShellExecute(0, Nil, pchar(plugin_name), Nil, Nil, SW_NORMAL)
-else ShowMessage('IL file : '+plugin_name+' non esiste');
+  plugin_name := Lowercase(ExtractFileName(PluginListBox.FileName));
+  plugin_name := copy(plugin_name,0,Length(plugin_name)-4)+'.txt';
+  if FileExists(ExtractFilePath(ParamStr(0))+'plugins\'+plugin_name) then
+    ShellExecute(0, Nil, pchar(plugin_name), Nil, Nil, SW_NORMAL)
+  else
+    ShowMessage('IL file : '+plugin_name+' non esiste');
 end;
 
 
 procedure TSetupForm.PluginListBoxClick(Sender: TObject);
 begin
-if Lowercase(ExtractFileName(PluginListBox.FileName)) = 'escalate.dll'
-then begin
-PluginDotNetRequired.Caption := 'yes';
-if pluginDotNetVer.Caption = 'none' then ShowMessage('.NET Framework is required')
+  if Lowercase(ExtractFileName(PluginListBox.FileName)) = 'escalate.dll' then begin
+    PluginDotNetRequired.Caption := 'yes';
+    if pluginDotNetVer.Caption = 'none' then
+      ShowMessage('.NET Framework is required')
+  end;
+
+  if Lowercase(ExtractFileName(PluginListBox.FileName)) = 'nvtemp.dll' then begin
+    PluginDotNetRequired.Caption := 'yes';
+    if pluginDotNetVer.Caption = 'none' then
+      ShowMessage('.NET Framework is required')
+  end;
+
+  if Lowercase(ExtractFileName(PLuginListBox.FileName)) = 'sandr.dll' then begin
+    PluginDotNetRequired.Caption := 'yes';
+    if pluginDotNetVer.Caption = 'none' then
+      ShowMessage('.NET Framework is required')
+  end;
+
+  if Lowercase(ExtractFileName(PluginListBox.FileName)) = 'mem.dll' then begin
+    VariableEdit.Text := '$dll(mem.dll,1,0,0)';
+    exit;
+  end else VariableEdit.text := NoVariable;
+
+  if Lowercase(ExtractFileName(PluginListBox.FileName)) = 'nvtemp.dll' then begin
+    VariableEdit.Text := '$dll(nvtemp.dll,1,0,1)';
+    exit;
+  end else VariableEdit.text := NoVariable;
+
+  if Lowercase(ExtractFileName(PluginListBox.FileName)) = 'wanip.dll' then begin
+    VariableEdit.Text := '$dll(wanip.dll,1,0,0)';
+    exit;
+  end else VariableEdit.text := NoVariable;
+
+  if (Lowercase(ExtractFileName(PluginListBox.FileName)) <> 'escalate.dll') and
+     (Lowercase(ExtractFileName(PluginListBox.FileName)) <> 'sandr.dll') and
+     (Lowercase(ExtractFileName(PluginListBox.FileName)) <> 'nvtemp.dll') then
+    PluginDotNetRequired.Caption := 'no';
 end;
-
-if Lowercase(ExtractFileName(PluginListBox.FileName)) = 'nvtemp.dll'
-then begin
-PluginDotNetRequired.Caption := 'yes';
-if pluginDotNetVer.Caption = 'none' then ShowMessage('.NET Framework is required')
-end;
-
-if Lowercase(ExtractFileName(PLuginListBox.FileName)) = 'sandr.dll'
-then begin
-PluginDotNetRequired.Caption := 'yes';
-if pluginDotNetVer.Caption = 'none' then ShowMessage('.NET Framework is required')
-end;
-
-if Lowercase(ExtractFileName(PluginListBox.FileName)) = 'mem.dll'
-then begin
-VariableEdit.Text := '$dll(mem.dll,1,0,0)';
-exit;
-end else VariableEdit.text := 'Variable: ';
-
-if Lowercase(ExtractFileName(PluginListBox.FileName)) = 'nvtemp.dll'
-then begin
-VariableEdit.Text := '$dll(nvtemp.dll,1,0,1)';
-exit;
-end else VariableEdit.text := 'Variable: ';
-
-if Lowercase(ExtractFileName(PluginListBox.FileName)) = 'wanip.dll'
-then begin
-VariableEdit.Text := '$dll(wanip.dll,1,0,0)';
-exit;
-end else VariableEdit.text := 'Variable: ';
-
-if (Lowercase(ExtractFileName(PluginListBox.FileName)) <> 'escalate.dll') and
-   (Lowercase(ExtractFileName(PluginListBox.FileName)) <> 'sandr.dll')    and
-   (Lowercase(ExtractFileName(PluginListBox.FileName)) <> 'nvtemp.dll')
-then PluginDotNetRequired.Caption := 'no';
-end;
+{$ENDIF}
 
 end.
 
