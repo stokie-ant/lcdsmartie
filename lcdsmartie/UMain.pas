@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.85 $ $Date: 2006/04/10 19:48:13 $
+ *  $Revision: 1.86 $ $Date: 2006/04/21 19:12:41 $
  *****************************************************************************}
 
 interface
@@ -34,7 +34,7 @@ const
   OurVersMaj = 5;
   OurVersMin = 4;
   OurVersRel = 0;
-  OurVersBuild = 2;
+  OurVersBuild = 3;
 
 type
   PObject = ^TObject;
