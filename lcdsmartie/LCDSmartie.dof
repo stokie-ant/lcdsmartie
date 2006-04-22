@@ -115,8 +115,8 @@ AutoIncBuild=0
 MajorVer=5
 MinorVer=4
 Release=0
-Build=2
-Debug=0
+Build=3
+Debug=1
 PreRelease=1
 Special=0
 Private=1
@@ -126,13 +126,13 @@ CodePage=1252
 [Version Info Keys]
 CompanyName=SourceForge.net
 FileDescription=LCD Smartie
-FileVersion=5.4.0.2
+FileVersion=5.4.0.3
 InternalName=LCD Smartie
 LegalCopyright=GPL
 LegalTrademarks=
 OriginalFilename=Smartie.exe
 ProductName=LCD Smartie
-ProductVersion=5.4 PR
+ProductVersion=5.4 B3 
 PrivateBuild=
 [HistoryLists\hlConditionals]
 Count=1
