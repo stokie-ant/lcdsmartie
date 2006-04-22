@@ -446,7 +446,7 @@ object LCDSmartieDisplayForm: TLCDSmartieDisplayForm
   end
   object CoolTrayIcon1: TCoolTrayIcon
     CycleInterval = 0
-    Hint = 'LCD Smartie 5.3'
+    Hint = 'LCD Smartie 5.4'
     Icon.Data = {
       0000010001002020000000000000A80800001600000028000000200000004000
       0000010008000000000080040000000000000000000000010000000000000000

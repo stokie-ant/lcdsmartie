@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.86 $ $Date: 2006/04/21 19:12:41 $
+ *  $Revision: 1.87 $ $Date: 2006/04/22 08:53:34 $
  *****************************************************************************}
 
 interface
@@ -186,6 +186,7 @@ type
     procedure NextScreenImageClick(Sender: TObject);
     procedure TransitionTimerTimer(Sender: TObject);
     procedure ScrollFlashTimerTimer(Sender: TObject);
+    procedure WMQueryEndSession (var M: TWMQueryEndSession); message WM_QUERYENDSESSION;
     procedure WMPowerBroadcast (var M: TMessage); message WM_POWERBROADCAST;
     procedure SetupButtonClick(Sender: TObject);
     procedure PreviousButtonClick(Sender: TObject);
@@ -682,6 +683,12 @@ begin
     ScreenNumberPanel.width := 33;
     ScreenNumberPanel.Caption := IntToStr(activetheme + 1) + ' | ' + IntToStr(activeScreen);
   end;
+end;
+
+procedure TLCDSmartieDisplayForm.WMQueryEndSession (var M: TWMQueryEndSession);
+begin
+  inherited;
+  LCDSmartieDisplayForm.Close;
 end;
 
 procedure TLCDSmartieDisplayForm.WMPowerBroadcast (var M: TMessage);
