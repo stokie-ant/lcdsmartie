@@ -21,4 +21,9 @@ madCollection (v2.1.5.0):
       used for non-commercial purpose only."
    We use the madExcept parts of the package.
 
+JCL and JVCL
+How to:
+Open jcl directory and click on install
+Open jvcl directory and click on install
+Thats all!!!
 
