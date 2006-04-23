@@ -5,7 +5,7 @@ object SetupForm: TSetupForm
   BiDiMode = bdLeftToRight
   BorderIcons = []
   BorderStyle = bsToolWindow
-  Caption = 'LCD Smartie 5.3 Setup'
+  Caption = 'LCD Smartie 5.4 Setup'
   ClientHeight = 412
   ClientWidth = 813
   Color = clBtnFace
