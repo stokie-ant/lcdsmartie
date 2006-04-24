@@ -4,7 +4,7 @@ object CreditsForm: TCreditsForm
   BorderIcons = []
   BorderStyle = bsNone
   Caption = 'LCD Smartie Info'
-  ClientHeight = 338
+  ClientHeight = 420
   ClientWidth = 285
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -23,7 +23,7 @@ object CreditsForm: TCreditsForm
     Left = 0
     Top = 0
     Width = 285
-    Height = 338
+    Height = 420
     Align = alClient
     BevelInner = bvRaised
     TabOrder = 0
@@ -3352,13 +3352,13 @@ object CreditsForm: TCreditsForm
       OnClick = CloseClick
     end
     object HTMLLabel: TLabel
-      Left = 46
-      Top = 312
-      Width = 185
+      Left = 22
+      Top = 376
+      Width = 100
       Height = 13
       Cursor = crHandPoint
       Hint = 'http://lcdsmartie.sourceforge.net'
-      Caption = 'Click here to go to the Smartie website'
+      Caption = 'LCD Smartie Website'
       Font.Charset = ANSI_CHARSET
       Font.Color = clBlue
       Font.Height = -11
@@ -3368,6 +3368,80 @@ object CreditsForm: TCreditsForm
       ParentShowHint = False
       ShowHint = True
       OnClick = HTMLLabelClick
+    end
+    object Label1: TLabel
+      Left = 16
+      Top = 308
+      Width = 99
+      Height = 13
+      Caption = 'Program Support:'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -11
+      Font.Name = 'MS Sans Serif'
+      Font.Style = [fsBold]
+      ParentFont = False
+      OnClick = CloseClick
+    end
+    object Label2: TLabel
+      Left = 22
+      Top = 392
+      Width = 96
+      Height = 13
+      Cursor = crHandPoint
+      Hint = 'http://www.lansley.co.uk/forum/phpBB2/'
+      Caption = 'LCD Smartie Forums'
+      Font.Charset = ANSI_CHARSET
+      Font.Color = clBlue
+      Font.Height = -11
+      Font.Name = 'Tahoma'
+      Font.Style = [fsUnderline]
+      ParentFont = False
+      ParentShowHint = False
+      ShowHint = True
+      OnClick = HTMLLabelClick
+    end
+    object Label3: TLabel
+      Left = 16
+      Top = 364
+      Width = 35
+      Height = 13
+      Caption = 'Links:'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -11
+      Font.Name = 'MS Sans Serif'
+      Font.Style = [fsBold]
+      ParentFont = False
+      OnClick = CloseClick
+    end
+    object Label4: TLabel
+      Left = 16
+      Top = 324
+      Width = 145
+      Height = 13
+      Caption = 'Nikos Georgousis (Limbo)'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -11
+      Font.Name = 'MS Sans Serif'
+      Font.Style = [fsBold]
+      ParentFont = False
+      OnClick = CloseClick
+    end
+    object Label5: TLabel
+      Left = 16
+      Top = 340
+      Width = 84
+      Height = 13
+      Caption = 'Jay (X7JAY7X)'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -11
+      Font.Name = 'MS Sans Serif'
+      Font.Style = [fsBold]
+      ParentFont = False
+      OnClick = CloseClick
     end
     object ScrollPanel: TPanel
       Left = 16

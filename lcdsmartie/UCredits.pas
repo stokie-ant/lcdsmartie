@@ -19,7 +19,7 @@ unit UCredits;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UCredits.pas,v $
- *  $Revision: 1.7 $ $Date: 2006/04/10 19:48:13 $
+ *  $Revision: 1.8 $ $Date: 2006/04/24 18:48:00 $
  *****************************************************************************}
 
 interface
@@ -36,6 +36,11 @@ type
     Image1: TImage;
     Timer1: TTimer;
     HTMLLabel: TLabel;
+    Label1: TLabel;
+    Label2: TLabel;
+    Label3: TLabel;
+    Label4: TLabel;
+    Label5: TLabel;
     procedure CloseClick(Sender: TObject);
     procedure HTMLLabelClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
