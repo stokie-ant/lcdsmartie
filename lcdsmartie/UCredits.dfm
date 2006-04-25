@@ -4,7 +4,7 @@ object CreditsForm: TCreditsForm
   BorderIcons = []
   BorderStyle = bsNone
   Caption = 'LCD Smartie Info'
-  ClientHeight = 420
+  ClientHeight = 323
   ClientWidth = 285
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -23,25 +23,11 @@ object CreditsForm: TCreditsForm
     Left = 0
     Top = 0
     Width = 285
-    Height = 420
+    Height = 323
     Align = alClient
     BevelInner = bvRaised
     TabOrder = 0
     OnClick = CloseClick
-    object ScrollCreditLabel: TLabel
-      Left = 16
-      Top = 196
-      Width = 109
-      Height = 13
-      Caption = 'Core Development:'
-      Font.Charset = DEFAULT_CHARSET
-      Font.Color = clWindowText
-      Font.Height = -11
-      Font.Name = 'MS Sans Serif'
-      Font.Style = [fsBold]
-      ParentFont = False
-      OnClick = CloseClick
-    end
     object OrigLabel: TLabel
       Left = 16
       Top = 176
@@ -3352,8 +3338,8 @@ object CreditsForm: TCreditsForm
       OnClick = CloseClick
     end
     object HTMLLabel: TLabel
-      Left = 22
-      Top = 376
+      Left = 18
+      Top = 304
       Width = 100
       Height = 13
       Cursor = crHandPoint
@@ -3369,23 +3355,9 @@ object CreditsForm: TCreditsForm
       ShowHint = True
       OnClick = HTMLLabelClick
     end
-    object Label1: TLabel
-      Left = 16
-      Top = 308
-      Width = 99
-      Height = 13
-      Caption = 'Program Support:'
-      Font.Charset = DEFAULT_CHARSET
-      Font.Color = clWindowText
-      Font.Height = -11
-      Font.Name = 'MS Sans Serif'
-      Font.Style = [fsBold]
-      ParentFont = False
-      OnClick = CloseClick
-    end
-    object Label2: TLabel
-      Left = 22
-      Top = 392
+    object ForumLabel: TLabel
+      Left = 174
+      Top = 304
       Width = 96
       Height = 13
       Cursor = crHandPoint
@@ -3399,11 +3371,11 @@ object CreditsForm: TCreditsForm
       ParentFont = False
       ParentShowHint = False
       ShowHint = True
-      OnClick = HTMLLabelClick
+      OnClick = ForumLabelClick
     end
     object Label3: TLabel
       Left = 16
-      Top = 364
+      Top = 292
       Width = 35
       Height = 13
       Caption = 'Links:'
@@ -3415,37 +3387,9 @@ object CreditsForm: TCreditsForm
       ParentFont = False
       OnClick = CloseClick
     end
-    object Label4: TLabel
-      Left = 16
-      Top = 324
-      Width = 145
-      Height = 13
-      Caption = 'Nikos Georgousis (Limbo)'
-      Font.Charset = DEFAULT_CHARSET
-      Font.Color = clWindowText
-      Font.Height = -11
-      Font.Name = 'MS Sans Serif'
-      Font.Style = [fsBold]
-      ParentFont = False
-      OnClick = CloseClick
-    end
-    object Label5: TLabel
-      Left = 16
-      Top = 340
-      Width = 84
-      Height = 13
-      Caption = 'Jay (X7JAY7X)'
-      Font.Charset = DEFAULT_CHARSET
-      Font.Color = clWindowText
-      Font.Height = -11
-      Font.Name = 'MS Sans Serif'
-      Font.Style = [fsBold]
-      ParentFont = False
-      OnClick = CloseClick
-    end
     object ScrollPanel: TPanel
       Left = 16
-      Top = 212
+      Top = 195
       Width = 253
       Height = 93
       TabOrder = 0
@@ -3457,7 +3401,7 @@ object CreditsForm: TCreditsForm
         Align = alClient
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
-        Font.Height = -13
+        Font.Height = -11
         Font.Name = 'MS Sans Serif'
         Font.Style = [fsBold]
         ParentFont = False
@@ -3469,6 +3413,6 @@ object CreditsForm: TCreditsForm
     Interval = 50
     OnTimer = Timer1Timer
     Left = 240
-    Top = 172
+    Top = 164
   end
 end
