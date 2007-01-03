@@ -2,12 +2,22 @@ library crystal;
 
 {$R *.res}
 
+(*
+
+ revhist
+
+1.0 initial driver
+1.1 removed clearscreen on shutdown to allow custom shutdown message
+
+*)
+
 uses
   Windows,SysUtils,StrUtils,SyncObjs,SERPORT;
 
 const
   DLLProjectName = 'Crystal Fontz Display DLL';
-  Version = 'v1.0';
+  Version = 'v1.1';
+
 type
   pboolean = ^boolean;
   TCustomArray = array[0..7] of byte;
@@ -364,7 +374,7 @@ begin
   if (Assigned(COMPort)) then
   begin
     setbacklight(false);
-    ClearScreen;
+//  ClearScreen;
     COMPort.Destroy;
 
     if Assigned(csKeys) then csKeys.Free;
