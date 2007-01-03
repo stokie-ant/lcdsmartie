@@ -19,7 +19,7 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.62 $ $Date: 2006/04/21 15:16:51 $
+ *  $Revision: 1.63 $ $Date: 2007/01/03 22:48:31 $
  *****************************************************************************}
 {.DEFINE VCORP}
 interface
@@ -203,6 +203,11 @@ type
     EmailSSLEdit: TEdit;
     Label2: TLabel;
     EmulateLCDCheckbox: TCheckBox;
+    ShutdownMessageGroup: TGroupBox;
+    ShutdownEdit1: TEdit;
+    ShutdownEdit2: TEdit;
+    ShutdownEdit3: TEdit;
+    ShutdownEdit4: TEdit;
     procedure FormShow(Sender: TObject);
     procedure LCDSizeComboBoxChange(Sender: TObject);
     procedure ScreenSpinEditChange(Sender: TObject);
@@ -396,6 +401,11 @@ begin
   AutoStart.Checked := config.bAutoStart;
   AutoStartHide.Checked := config.bAutoStartHide;
   EmulateLCDCheckbox.Checked := config.EmulateLCD;
+  HideOnStartup.Checked := config.bHideOnStartup;
+  ShutdownEdit1.Text := config.ShutdownMessage[1];
+  ShutdownEdit2.Text := config.ShutdownMessage[2];
+  ShutdownEdit3.Text := config.ShutdownMessage[3];
+  ShutdownEdit4.Text := config.ShutdownMessage[4];
 
   WebProxyServerEdit.text := config.httpProxy;
   WebProxyPortEdit.text := IntToStr(config.httpProxyPort);
@@ -538,6 +548,9 @@ begin
     Line2Edit.Visible := false;
     Line3Edit.Visible := false;
     Line4Edit.Visible := false;
+    ShutdownEdit2.Visible := false;
+    ShutdownEdit3.Visible := false;
+    ShutdownEdit4.Visible := false;
     DontScrollLine2CheckBox.Visible := false;
     DontScrollLine3CheckBox.Visible := false;
     DontScrollLine4CheckBox.Visible := false;
@@ -554,6 +567,9 @@ begin
     ContinueLine2CheckBox.checked := false;
     Line3Edit.Visible := false;
     Line4Edit.Visible := false;
+    ShutdownEdit2.Visible := true;
+    ShutdownEdit3.Visible := false;
+    ShutdownEdit4.Visible := false;
     DontScrollLine2CheckBox.Visible := true;
     DontScrollLine3CheckBox.Visible := false;
     DontScrollLine4CheckBox.Visible := false;
@@ -569,6 +585,9 @@ begin
     if ContinueLine1CheckBox.checked = false then Line2Edit.Visible := true;
     if ContinueLine2CheckBox.checked = false then Line3Edit.Visible := true;
     if ContinueLine3CheckBox.checked = false then Line4Edit.Visible := true;
+    ShutdownEdit2.Visible := true;
+    ShutdownEdit3.Visible := true;
+    ShutdownEdit4.Visible := true;
     DontScrollLine2CheckBox.Visible := true;
     DontScrollLine3CheckBox.Visible := true;
     DontScrollLine4CheckBox.Visible := true;
@@ -1356,6 +1375,10 @@ begin
   config.bAutoStart := AutoStart.checked;
   config.bAutoStartHide := AutoStartHide.checked;
   config.EmulateLCD := EmulateLCDCheckbox.Checked;
+  config.ShutdownMessage[1] := ShutdownEdit1.Text;
+  config.ShutdownMessage[2] := ShutdownEdit2.Text;
+  config.ShutdownMessage[3] := ShutdownEdit3.Text;
+  config.ShutdownMessage[4] := ShutdownEdit4.Text;
 
   config.DLL_contrast := ContrastTrackBar.position;
   config.DLL_brightness := BrightnessTrackBar.position;

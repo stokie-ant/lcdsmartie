@@ -3,7 +3,7 @@ object LCDSmartieDisplayForm: TLCDSmartieDisplayForm
   Top = 240
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsToolWindow
-  Caption = 'LCD Smartie 5.4 - Beta Build 3'
+  Caption = 'LCD Smartie 5.4 - RC1'
   ClientHeight = 91
   ClientWidth = 226
   Color = clBtnFace

@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.87 $ $Date: 2006/04/22 08:53:34 $
+ *  $Revision: 1.88 $ $Date: 2007/01/03 22:48:31 $
  *****************************************************************************}
 
 interface
@@ -34,7 +34,7 @@ const
   OurVersMaj = 5;
   OurVersMin = 4;
   OurVersRel = 0;
-  OurVersBuild = 3;
+  OurVersBuild = 4;
 
 type
   PObject = ^TObject;
@@ -241,7 +241,7 @@ type
     procedure SendCustomChars;
     procedure ProcessAction(bDoAction: Boolean; sAction: String);
     procedure InitLCD();
-    procedure FiniLCD();
+    procedure FiniLCD(WriteShutdownMessage : boolean);
     procedure ResizeHeight;
     procedure ResizeWidth;
     procedure LoadSkin;
@@ -529,7 +529,7 @@ begin
   while ScrollFlashTimer.enabled = true do ScrollFlashTimer.enabled := false;
   while TransitionTimer.enabled = true do TransitionTimer.enabled := false;
 
-  FiniLCD();
+  FiniLCD(true);
 
   if (Data <> nil) then
   begin
@@ -708,7 +708,7 @@ begin
   end
   else if (M.WParam = PBT_APMSUSPEND) or (M.WParam = PBT_APMSTANDBY) then
   begin
-    FiniLCD();
+    FiniLCD(true);
     Lcd := TLCD.Create(); // replace with a dummy driver.
   end;
 end;
@@ -1533,18 +1533,18 @@ begin
   UpdateTimersState(PerformingSetup);
 end;
 
-procedure TLCDSmartieDisplayForm.FiniLCD();
+procedure TLCDSmartieDisplayForm.FiniLCD(WriteShutdownMessage : boolean);
 var
-  Loop : longint;
+  Loop,Loop2 : longint;
   S : string;
 begin
   timerRefresh.enabled := false;  // stop updates to lcd
   try
-    if assigned(Lcd) then begin
-      S := '';
-      for Loop := 1 to config.Width do
-        S := S + ' ';
+    if assigned(Lcd) and WriteShutdownMessage then begin
       for Loop := 1 to config.Height do begin
+        S := Config.ShutdownMessage[Loop];
+        for Loop2 := length(S)+1 to config.Width do
+          S := S + ' ';
         Lcd.setPosition(1, Loop);
         Lcd.write(S);
       end;
@@ -1557,7 +1557,7 @@ end;
 
 procedure TLCDSmartieDisplayForm.ReInitLCD();
 begin
-  FiniLCD();
+  FiniLCD(false);
   InitLCD();
 end;
 

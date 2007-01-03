@@ -19,7 +19,7 @@ unit UConfig;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UConfig.pas,v $
- *  $Revision: 1.52 $ $Date: 2006/04/05 03:37:09 $
+ *  $Revision: 1.53 $ $Date: 2007/01/03 22:48:31 $
  *****************************************************************************}
 
 interface
@@ -142,6 +142,7 @@ type
     checkUpdates: Boolean;
     distLog: String;
     screen: Array[1..MaxScreens] of Array[1..MaxLines] of TScreenLine;
+    ShutdownMessage: Array[1..MaxLines] of string;
     winampLocation: String;
     setiEmail: String;
     actionsArray: Array[1..MaxActions, 1..4] of String;
@@ -693,6 +694,10 @@ begin
   bAutoStart := initFile.ReadBool('General Settings', 'AutoStart', false);
   bAutoStartHide := initFile.ReadBool('General Settings', 'AutoStartHidden', false);
   EmulateLCD := initFile.ReadBool('General Settings', 'EmulateLCD', false);
+  for LineCount := 1 to MaxLines do
+  begin
+    ShutdownMessage[LineCount] := initFile.ReadString('General Settings' , 'ShutdownLine' + IntToStr(LineCount) , '');
+  end;
 
 
   // Pop accounts + ssl
@@ -858,6 +863,11 @@ begin
   initFile.WriteBool('General Settings', 'AutoStart', bAutoStart);
   initFile.WriteBool('General Settings', 'AutoStartHidden', bAutoStartHide);
   initFile.WriteBool('General Settings', 'EmulateLCD', EmulateLCD);
+
+  for LineCount := 1 to MaxLines do
+  begin
+    initFile.WriteString('General Settings', 'ShutdownLine' + IntToStr(LineCount), ShutdownMessage[LineCount]);
+  end;
 
   // Pop accounts + ssl
   for MailCount := 0 to MaxEmailAccounts-1 do

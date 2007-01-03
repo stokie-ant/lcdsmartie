@@ -27,7 +27,7 @@ object SetupForm: TSetupForm
     Top = 0
     Width = 233
     Height = 409
-    ActivePage = EmailTabSheet
+    ActivePage = WinampTabSheet
     Font.Charset = ANSI_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
@@ -829,7 +829,7 @@ object SetupForm: TSetupForm
     Top = 0
     Width = 577
     Height = 377
-    ActivePage = ScreensTabSheet
+    ActivePage = StartupTabSheet
     TabOrder = 0
     TabStop = False
     OnChange = MainPageControlChange
@@ -1745,7 +1745,7 @@ object SetupForm: TSetupForm
                 Font.Height = -11
                 Font.Name = 'Tahoma'
                 Font.Style = []
-                ItemHeight = 0
+                ItemHeight = 13
                 ParentFont = False
                 ParentShowHint = False
                 ShowHint = True
@@ -1969,8 +1969,11 @@ object SetupForm: TSetupForm
       end
     end
     object StartupTabSheet: TTabSheet
-      Caption = 'Startup'
+      Caption = 'Startup/Shutdown'
       ImageIndex = 2
+      DesignSize = (
+        569
+        349)
       object GroupBox7: TGroupBox
         Left = 8
         Top = 16
@@ -2061,6 +2064,90 @@ object SetupForm: TSetupForm
           Font.Style = []
           ParentFont = False
           TabOrder = 0
+        end
+      end
+      object ShutdownMessageGroup: TGroupBox
+        Left = 8
+        Top = 164
+        Width = 433
+        Height = 117
+        Hint = 'Custom message to be displayed when LCD Smartie is shut down.'
+        Anchors = [akLeft, akTop, akRight]
+        Caption = 'Shut down message'
+        Font.Charset = ANSI_CHARSET
+        Font.Color = clBlack
+        Font.Height = -11
+        Font.Name = 'Tahoma'
+        Font.Style = [fsBold]
+        ParentFont = False
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 2
+        object ShutdownEdit1: TEdit
+          Left = 8
+          Top = 14
+          Width = 417
+          Height = 23
+          BevelEdges = []
+          Color = clWhite
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clBlack
+          Font.Height = -12
+          Font.Name = 'Fixedsys'
+          Font.Style = []
+          ParentFont = False
+          TabOrder = 0
+          OnEnter = Line1EditEnter
+          OnKeyDown = Line1EditKeyDown
+        end
+        object ShutdownEdit2: TEdit
+          Left = 8
+          Top = 38
+          Width = 417
+          Height = 23
+          BevelEdges = []
+          Color = clWhite
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clBlack
+          Font.Height = -12
+          Font.Name = 'Fixedsys'
+          Font.Style = []
+          ParentFont = False
+          TabOrder = 1
+          OnEnter = Line2EditEnter
+          OnKeyDown = Line2EditKeyDown
+        end
+        object ShutdownEdit3: TEdit
+          Left = 8
+          Top = 62
+          Width = 417
+          Height = 23
+          BevelEdges = []
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clBlack
+          Font.Height = -12
+          Font.Name = 'Fixedsys'
+          Font.Style = []
+          ParentFont = False
+          TabOrder = 2
+          OnEnter = Line3EditEnter
+          OnKeyDown = Line3EditKeyDown
+        end
+        object ShutdownEdit4: TEdit
+          Left = 8
+          Top = 86
+          Width = 417
+          Height = 23
+          BevelEdges = []
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clBlack
+          Font.Height = -12
+          Font.Name = 'Fixedsys'
+          Font.Style = []
+          ParentFont = False
+          TabOrder = 3
+          OnEnter = Line4EditEnter
+          OnKeyDown = Line4EditKeyDown
         end
       end
     end
