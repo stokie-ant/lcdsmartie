@@ -5,9 +5,18 @@ library seetron;
 uses
   Windows,SysUtils,StrUtils,SyncObjs,Math,SERPORT;
 
+(*
+
+ revhist
+
+1.0 initial driver
+1.1 added backlight off on shutdown
+
+*)
+
 const
   DLLProjectName = 'Seetron Display DLL';
-  Version = 'v1.0';
+  Version = 'v1.1';
 type
   pboolean = ^boolean;
   TCustomArray = array[0..7] of byte;
@@ -218,6 +227,7 @@ procedure DISPLAYDLL_Done(); stdcall;
 // close port
 begin
   try
+    DISPLAYDLL_SetBacklight(false);
     if assigned(COMPort) then begin
       COMPort.Free;
       COMPort := nil;
