@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.71 $ $Date: 2006/03/20 20:40:54 $
+ *  $Revision: 1.72 $ $Date: 2007/01/03 23:45:08 $
  *****************************************************************************}
 
 
@@ -65,7 +65,6 @@ type
     // email thread
     EmailThread : TEmailDataThread;  // keep a copy for mainline "GotMail"
     MBMThread : TMBMDataThread;  // for finding MBM cpu speed
-    LCDSmartieUpdateThread : TSmartieDataThread;  // IsConnected call
     DataThreads : TList;  // of TDataThread
 
     // other variables
@@ -79,8 +78,10 @@ type
     procedure LoadPlugin(sDllName: String; bDotNet: Boolean = false);
     procedure ResolvePluginVariables(var line: String; qstattemp: Integer;
       bCacheResults: Boolean);
+{
     // Connected (using LCDSmartie connection)
     function  GetIsConnected : boolean;
+}
     function  GetLCDSmartieUpdate : boolean;
     function  GetLCDSmartieUpdateText : string;
     // MBM stats
@@ -89,6 +90,7 @@ type
     function  GetGotEmail : boolean;
   public
     cLastKeyPressed: Char;
+    LCDSmartieUpdateThread : TSmartieDataThread;  // IsConnected call
     procedure ScreenStart;
     procedure ScreenEnd;
     procedure NewScreen(bYes: Boolean);
@@ -104,7 +106,9 @@ type
     //
     property GotEmail : boolean read GetGotEmail;
     property MBMActive : boolean read GetMBMActive;
+{
     property IsConnected : boolean read GetIsConnected;
+}
     property LCDSmartieUpdate : boolean read GetLCDSmartieUpdate;
     property LCDSmartieUpdateText : string read GetLCDSmartieUpdateText;
   end;
@@ -361,12 +365,14 @@ end;
 ///////////////////////////////////////////////////////////////////////////////
 
 
+{
 function TData.GetIsConnected : boolean;
 begin
   Result := false;
   if assigned(LCDSmartieUpdateThread) then
     Result := LCDSmartieUpdateThread.IsConnected;
 end;
+}
 
 function TData.GetLCDSmartieUpdate : boolean;
 begin
@@ -1005,3 +1011,4 @@ begin
 end;
 
 end.
+

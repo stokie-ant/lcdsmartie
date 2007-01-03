@@ -5,12 +5,17 @@ interface
 uses
   SysUtils,URLThread;
 
+const
+  DefaultLCDSmartieVersionURL = 'http://lcdsmartie.sourceforge.net/version2.txt';
+
 type
   TSmartieDataThread = class(TURLThread)
   private
     fIsConnected : boolean;
     fLCDSmartieUpdate : boolean;
     fLCDSmartieUpdateText : string;
+    fRemoteVersionURL : string;
+    procedure GetHTTPUpdateNow;
     function GetLCDSmartieUpdate : boolean;
     function GetLCDSmartieUpdateText : string;
   protected
@@ -22,6 +27,7 @@ type
     property IsConnected : boolean read fIsConnected;
     property LCDSmartieUpdate : boolean read GetLCDSmartieUpdate;
     property LCDSmartieUpdateText : string read GetLCDSmartieUpdateText;
+    property RemoteVersionURL : string read fRemoteVersionURL write fRemoteVersionURL;
   end;
 
 implementation
@@ -34,6 +40,7 @@ begin
   fIsConnected := false;
   fLCDSmartieUpdate := false;
   fLCDSmartieUpdateText := '';
+  fRemoteVersionURL := DefaultLCDSmartieVersionURL;
   inherited Create(config.newsRefresh*60000);
 end;
 
@@ -48,6 +55,7 @@ end;
 
 function TSmartieDataThread.GetLCDSmartieUpdate : boolean;
 begin
+  GetHTTPUpdateNow;
   fDataLock.Enter;
   GetLCDSmartieUpdate := fLCDSmartieUpdate;
   fDataLock.Leave;
@@ -60,7 +68,7 @@ begin
   fDataLock.Leave;
 end;
 
-procedure TSmartieDataThread.DoUpdate;
+procedure TSmartieDataThread.GetHTTPUpdateNow;
 var
   iPos1, iPosPoint1, iPosPoint2, iPosPoint3: Integer;
   iVersMaj, iVersMin, iVersRel, iVersBuild: Integer;
@@ -70,7 +78,7 @@ var
 begin
   if not config.checkUpdates then exit;
   try
-    sFilename := getUrl('http://lcdsmartie.sourceforge.net/version2.txt',96*60);
+    sFilename := getUrl(RemoteVersionURL);
     versionline := FileToString(sFilename);
   except
     on E: EExiting do raise;
@@ -140,6 +148,12 @@ begin
       end;
     end;
   end;
+end;
+
+procedure TSmartieDataThread.DoUpdate;
+begin
+  // stub call, never do this without users request (sourceforge policy)
+  // GetHTTPUpdateNow;
 end;
 
 end.

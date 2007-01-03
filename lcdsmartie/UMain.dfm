@@ -367,7 +367,6 @@ object LCDSmartieDisplayForm: TLCDSmartieDisplayForm
   object LCDSmartieCheckUpdateTimer: TTimer
     Enabled = False
     Interval = 10000
-    OnTimer = LCDSmartieCheckUpdateTimerTimer
     Left = 100
     Top = 112
   end
@@ -410,6 +409,10 @@ object LCDSmartieDisplayForm: TLCDSmartieDisplayForm
     object Configure1: TMenuItem
       Caption = 'Configure'
       OnClick = SetupButtonClick
+    end
+    object CheckforUpdates1: TMenuItem
+      Caption = 'Check for Updates'
+      OnClick = CheckforUpdates1Click
     end
     object ShowWindow1: TMenuItem
       Caption = '&Show main'

@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.88 $ $Date: 2007/01/03 22:48:31 $
+ *  $Revision: 1.89 $ $Date: 2007/01/03 23:45:08 $
  *****************************************************************************}
 
 interface
@@ -114,6 +114,7 @@ type
     Line2LCDPanel: TLCDLineFrame;
     Line4LCDPanel: TLCDLineFrame;
     Line3LCDPanel: TLCDLineFrame;
+    CheckforUpdates1: TMenuItem;
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure ShowWindow1Click(Sender: TObject);
@@ -123,7 +124,7 @@ type
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure BacklightOn1Click(Sender: TObject);
     procedure TimerRefreshTimer(Sender: TObject);
-    procedure LCDSmartieCheckUpdateTimerTimer(Sender: TObject);
+//  procedure LCDSmartieCheckUpdateTimerTimer(Sender: TObject);
     procedure ActionsTimerTimer(Sender: TObject);
     procedure LeftManualScrollTimerTimer(Sender: TObject);
     procedure RightManualScrollTimerTimer(Sender: TObject);
@@ -192,6 +193,7 @@ type
     procedure PreviousButtonClick(Sender: TObject);
     procedure NextButtonClick(Sender: TObject);
     procedure PopupMenu1Popup(Sender: TObject);
+    procedure CheckforUpdates1Click(Sender: TObject);
   private
     InitialWindowState: TInitialWindowState;
     ScreenLCD: Array[1..MaxLines] of TOnScreenLineWrapper;
@@ -273,7 +275,7 @@ implementation
 
 uses
   Windows, SysUtils, Dialogs, ShellAPI, mmsystem, StrUtils,
-  USetup, UCredits, ULCD_DLL, ExtActns, UUtils, FONTMGR;
+  USetup, UCredits, ULCD_DLL, ExtActns, UUtils, UDataSmartie, FONTMGR;
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -730,6 +732,10 @@ end;
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
+{
+
+// DO NOT UNCOMMENT THIS!  IT WILL HAMMER THE SOURCEFORGE WEBSITE
+
 var
   DidUpdateWarning : boolean = false;
 
@@ -750,6 +756,32 @@ begin
     if (bTerminating) then Exit;
   end;
 end;
+}
+
+procedure TLCDSmartieDisplayForm.CheckforUpdates1Click(Sender: TObject);
+var
+  InputURL : string;
+begin
+  InputURL := Data.LCDSmartieUpdateThread.RemoteVersionURL;
+  if InputQuery('Check for updates...','URL for current version number:',InputURL) then
+  begin
+    Data.LCDSmartieUpdateThread.RemoteVersionURL := InputURL;
+
+    if (data.LCDSmartieUpdate) then
+    begin
+      if MessageDlg('A new version of LCD Smartie is detected. ' + chr(13) +
+        data.LCDSmartieUpdateText + chr(13) + 'Go to LCD Smartie website?',
+        mtConfirmation, [mbYes, mbNo], 0) = mrYes then
+      begin
+        ShellExecute(0, Nil, pchar('http://lcdsmartie.sourceforge.net/'), Nil,
+          Nil, SW_NORMAL);
+      end;
+
+      if (bTerminating) then Exit;
+    end;
+  end;
+end;
+
 
 procedure TLCDSmartieDisplayForm.TransitionTimerTimer(Sender: TObject);
 begin
@@ -961,8 +993,10 @@ begin
       4 : FindAnotherScreen := (Data.mbmactive);
       5 : FindAnotherScreen := (not Data.gotEmail);
       6 : FindAnotherScreen := (Data.gotEmail);
+{
       7 : FindAnotherScreen := (not Data.isconnected);
       8 : FindAnotherScreen := (Data.isconnected);
+}
       else FindAnotherScreen := false;
     end;
     if (ascreen.theme <> activetheme) then FindAnotherScreen := true;

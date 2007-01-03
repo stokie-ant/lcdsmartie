@@ -27,7 +27,7 @@ object SetupForm: TSetupForm
     Top = 0
     Width = 233
     Height = 409
-    ActivePage = WinampTabSheet
+    ActivePage = InternetTabSheet
     Font.Charset = ANSI_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
@@ -367,6 +367,7 @@ object SetupForm: TSetupForm
         Height = 17
         Caption = 'Check for LCD Smartie updates'
         TabOrder = 2
+        Visible = False
       end
     end
     object SetiAtHomeTabSheet: TTabSheet
@@ -829,7 +830,7 @@ object SetupForm: TSetupForm
     Top = 0
     Width = 577
     Height = 377
-    ActivePage = StartupTabSheet
+    ActivePage = ScreensTabSheet
     TabOrder = 0
     TabStop = False
     OnChange = MainPageControlChange
@@ -1273,9 +1274,7 @@ object SetupForm: TSetupForm
             'MBM is inactive'
             'MBM is active'
             'There is no new E-Mail'
-            'There is new E-Mail'
-            'Not connected'
-            'Connected')
+            'There is new E-Mail')
         end
         object ScreenEnabledCheckBox: TCheckBox
           Left = 128
