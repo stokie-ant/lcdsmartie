@@ -1,11 +1,40 @@
-theatertek.dll
+FAST START GUIDE
 
-A theatertek interface for displaying DVD statistics using LCD Smartie.  
+If you hate reading instructions then here's the fast start guide:
 
-Works with TT v2.3 and later only.
+    * Download zip file
+    * Exit Smartie
+    * Extract theatertek.dll to smartie's plugins sub-directory
+    * Extract config-theatertek.ini to smartie's top directory
+    * Rename the existing config.ini to config.ini.bak
+    * Rename config-theatertek.ini to config.ini
+    * Start Smartie, see demo screens
+    * Edit/Copy demo screens
 
+Introduction
 
-  DLL functions:
+This is a plugin that makes it possible to display DVD player statistics from
+Theatertek DVD player software.
+
+Limitations
+
+This plugin redefines the custom characters when using the play state graphic,
+so no graphs can be displayed on the same screen.
+
+Install
+
+To install this plugin copy the theatertek.dll into the plugins directory of LCD
+Smartie.  [Only the 5.3 and above builds are supported.]
+
+The zip file also includes a config-theatertek.ini file which shows how the
+plugin can be used - backup your config.ini file before renaming this as
+config.ini.
+
+Usage
+
+To use the plugin you will need to insert commands into the your screens.
+
+The command takes the following form: $dll(theatertek,function,param1,param2)
 
   Function 1:  first param = which value  second param = ignored
 
@@ -39,7 +68,25 @@ Works with TT v2.3 and later only.
 
   Function 4: both params ignored
 
-     theatertek active (1) or not active (0)  used for actions screen to skip
-     theatertek screen in LCD Smartie setup
+     Theatertek run state, returns 1 if Theatertek is active, 0 if it 
+     Theatertek is not active.
+
+Examples:
+
+    * $dll(theatertek,1,1,0)
+    * $dll(theatertek,1,7,0)
+    * $dll(theatertek,3,0,0)
+    * $dll(theatertek,2,0,hh:nn:ss)   
+
+Skipping the Theatertek screen when Theatertek is not running:
+
+1) set the Theatertek screen no disabled by unchecking the enabled box.
+2) add the following two functions to the actions screen:
+
+   if $dll(theatertek.dll,4,0,0) = 1 enablescreen(1)
+   if $dll(theatertek.dll,4,0,0) = 0 disablescreen(1) 
+
+Change the screen number to the appropriate number for whatever screen
+you are using.
 
 
