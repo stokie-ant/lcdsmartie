@@ -19,7 +19,7 @@ unit UCredits;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UCredits.pas,v $
- *  $Revision: 1.9 $ $Date: 2006/04/25 18:43:16 $
+ *  $Revision: 1.10 $ $Date: 2007/01/04 13:03:36 $
  *****************************************************************************}
 
 interface
@@ -85,7 +85,7 @@ end;
 
 procedure TCreditsForm.ForumLabelClick(Sender: TObject);
 begin
-  ShellExecute(0, Nil, pchar('http://www.lansley.co.uk/forum/phpBB2/'), Nil, Nil,
+  ShellExecute(0, Nil, pchar('http://www.lcdsmartie.org/'), Nil, Nil,
     SW_NORMAL);
 end;
 

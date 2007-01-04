@@ -3361,7 +3361,7 @@ object CreditsForm: TCreditsForm
       Width = 96
       Height = 13
       Cursor = crHandPoint
-      Hint = 'http://www.lansley.co.uk/forum/phpBB2/'
+      Hint = 'http://www.lcdsmartie.org/'
       Caption = 'LCD Smartie Forums'
       Font.Charset = ANSI_CHARSET
       Font.Color = clBlue
