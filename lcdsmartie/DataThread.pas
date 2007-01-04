@@ -13,6 +13,7 @@ type
     fActive : boolean;
   protected
     fDataLock : TCriticalSection;  // Protects mail, data + main thread
+    function AllowRefresh : boolean; virtual;
     procedure  DoUpdate; virtual;
     procedure SetActive(Value : boolean); virtual;
     function UsesCOMObjects : boolean; virtual;
@@ -49,6 +50,12 @@ begin
   result := false;
 end;
 
+function TDataThread.AllowRefresh : boolean;
+begin
+  Result := (fInterval < 10000);
+  // if it's less than 10 seconds we can hit it once in a while when the screen changes
+end;
+
 procedure TDataThread.SetActive(Value : boolean);
 begin
   fActive := Value;
@@ -56,7 +63,8 @@ end;
 
 procedure TDataThread.Refresh;
 begin
-  fRefresh := true;
+  if AllowRefresh then
+    fRefresh := true;
 end;
 
 procedure TDataThread.Execute;
