@@ -22,6 +22,7 @@ type
     destructor Destroy; override;
     procedure  Execute; override;
     procedure  Refresh;
+    procedure  ForceRefresh;
     procedure  ResolveVariables(var Line : string); virtual;
     property Active : boolean read fActive write SetActive;
   end;
@@ -52,8 +53,7 @@ end;
 
 function TDataThread.AllowRefresh : boolean;
 begin
-  Result := (fInterval < 10000);
-  // if it's less than 10 seconds we can hit it once in a while when the screen changes
+  Result := false;
 end;
 
 procedure TDataThread.SetActive(Value : boolean);
@@ -65,6 +65,11 @@ procedure TDataThread.Refresh;
 begin
   if AllowRefresh then
     fRefresh := true;
+end;
+
+procedure TDataThread.ForceRefresh;
+begin
+  fRefresh := true;
 end;
 
 procedure TDataThread.Execute;

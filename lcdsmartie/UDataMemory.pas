@@ -29,6 +29,7 @@ type
     STPageFree, STPageTotal: Int64;
     STMemFree, STMemTotal: Int64;
   protected
+    function AllowRefresh : boolean; override;
     procedure  DoUpdate; override;
   public
     constructor Create;
@@ -53,6 +54,11 @@ destructor TMemoryDataThread.Destroy;
 begin
   inherited;
   System1.Free;
+end;
+
+function TMemoryDataThread.AllowRefresh : boolean;
+begin
+  Result := true;
 end;
 
 procedure TMemoryDataThread.DoUpdate;

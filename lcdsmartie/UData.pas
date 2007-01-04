@@ -19,7 +19,7 @@ unit UData;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UData.pas,v $
- *  $Revision: 1.72 $ $Date: 2007/01/03 23:45:08 $
+ *  $Revision: 1.73 $ $Date: 2007/01/04 11:37:03 $
  *****************************************************************************}
 
 
@@ -253,13 +253,12 @@ begin
   inherited;
 end;
 
-
 procedure TData.RefreshDataThreads;
 var
   Loop : longint;
 begin
   for Loop := 0 to DataThreads.Count-1 do begin
-    TDataThread(DataThreads[Loop]).Refresh;
+    TDataThread(DataThreads[Loop]).ForceRefresh;
   end;
 end;
 

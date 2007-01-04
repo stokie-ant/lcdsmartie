@@ -23,6 +23,7 @@ type
     iLastUptime: Cardinal;                //cpu thread only
     uptimereg, uptimeregs: String;        // Guarded by dataCs, cpu + main thread
   protected
+    function AllowRefresh : boolean; override;
     procedure  DoUpdate; override;
     procedure SetActive(Value : boolean); override;
   public
@@ -55,6 +56,11 @@ end;
 destructor TCPUDataThread.Destroy;
 begin
   inherited;
+end;
+
+function TCPUDataThread.AllowRefresh : boolean;
+begin
+  Result := true;
 end;
 
 procedure TCPUDataThread.SetActive(Value : boolean);

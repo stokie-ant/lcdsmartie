@@ -101,6 +101,7 @@ type
     ipaddress: String;                     //Guarded by dataCs, cpu + main thread
     procedure ResolveNetVariable(Variable : TNetworkStatistics; var Line : string);
   protected
+    function AllowRefresh : boolean; override;
     procedure  DoUpdate; override;
   public
     constructor Create;
@@ -121,6 +122,11 @@ end;
 destructor TNetworkDataThread.Destroy;
 begin
   inherited;
+end;
+
+function TNetworkDataThread.AllowRefresh : boolean;
+begin
+  Result := true;
 end;
 
 procedure  TNetworkDataThread.DoUpdate;

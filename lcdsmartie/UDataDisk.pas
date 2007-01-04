@@ -39,6 +39,7 @@ type
     System1: Tsystem;
     procedure ResolveDiskSpaceVariable(HDStat : THardDriveStats; var Line : string);
   protected
+    function AllowRefresh : boolean; override;
     procedure  DoUpdate; override;
   public
     constructor Create;
@@ -61,6 +62,11 @@ destructor TDiskDataThread.Destroy;
 begin
   inherited;
   System1.Free;
+end;
+
+function TDiskDataThread.AllowRefresh : boolean;
+begin
+  Result := true;
 end;
 
 procedure TDiskDataThread.ResolveDiskSpaceVariable(HDStat : THardDriveStats; var Line : string);
