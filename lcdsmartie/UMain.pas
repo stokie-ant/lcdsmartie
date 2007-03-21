@@ -19,7 +19,7 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.91 $ $Date: 2007/03/18 13:17:36 $
+ *  $Revision: 1.92 $ $Date: 2007/03/21 12:38:00 $
  *****************************************************************************}
 
 interface
@@ -1574,13 +1574,15 @@ var
 begin
   timerRefresh.enabled := false;  // stop updates to lcd
   try
-    if assigned(Lcd) and WriteShutdownMessage then begin
-      for Loop := 1 to config.Height do begin
-        S := Config.ShutdownMessage[Loop];
-        for Loop2 := length(S)+1 to config.Width do
-          S := S + ' ';
-        Lcd.setPosition(1, Loop);
-        Lcd.write(S);
+    if assigned(Lcd) then begin
+      if WriteShutdownMessage then begin
+        for Loop := 1 to config.Height do begin
+          S := Config.ShutdownMessage[Loop];
+          for Loop2 := length(S)+1 to config.Width do
+            S := S + ' ';
+          Lcd.setPosition(1, Loop);
+          Lcd.write(S);
+        end;
       end;
       Lcd.Destroy();
     end;
