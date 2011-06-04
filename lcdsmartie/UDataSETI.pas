@@ -70,7 +70,7 @@ var
   XMLDoc : IXMLDocument;
   Filename: String;
 begin
-  // Fetch the Rss data  (but not more oftern than 24 hours)
+  // Fetch the Rss data  (but not more often than 24 hours)
   try
     FileName := getUrl(
       'http://setiathome2.ssl.berkeley.edu/fcgi-bin/fcgi?cmd=user_xml&email='
@@ -108,6 +108,7 @@ begin
         setiRank := ANode.ChildNodes['rank'].Text;
         setiShareRank := ANode.ChildNodes['num_samerank'].Text;
         // SETI provides floats not dependent on user's locale, but always in US format
+
         setiMoreWU := FloatToStr(
           100-StrToFloat(ANode.ChildNodes['top_rankpct'].Text, usFormat),
           localeFormat);

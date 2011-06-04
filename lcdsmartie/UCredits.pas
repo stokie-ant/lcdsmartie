@@ -19,7 +19,7 @@ unit UCredits;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UCredits.pas,v $
- *  $Revision: 1.11 $ $Date: 2007/03/18 13:17:35 $
+ *  $Revision: 1.12 $ $Date: 2011/06/04 16:48:30 $
  *****************************************************************************}
 
 interface
@@ -95,13 +95,14 @@ begin
   with CreditList do begin    // add core developers here in alpha order
     Add('Core Development:');
     Add('Afonso Infante');
+    Add('Carlo Adami');
     Add('Chris Lansley');
     Add('Cristiano Vaccarini');
     Add('Mike van Meeteren');
     Add(' ');
     Add('Program Support:');
     Add('Nikos Georgousis (Limbo)');
-    Add('Jay (X7JAY7X)');
+    Add('Jason Jacobs (X7JAY7X)');
   end;
   with CreditPaintBox.Canvas do begin
     with Brush do begin

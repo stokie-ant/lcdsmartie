@@ -149,12 +149,24 @@ procedure TLCDLineFrame.ScreenWrite(S : string);
 var
   C : byte;
   Loop : integer;
+  Index : integer;
+  bAmpersand : boolean;
 begin
   fCaption := S;
   S := copy(S+'                                        ', 1, fLineWidth);
+  bAmpersand := false;
+  Index:=1;
   for Loop := 1 to length(S) do begin
     C := ord(S[Loop]);
-    SendChar(C,Loop);
+// filter out double ampersands
+    if (not bAmpersand) then
+      begin
+        SendChar(C, Index);
+        Inc(Index);
+        bAmpersand := (C = $26);
+      end
+    else
+      bAmpersand := false;
   end;
   PaintBoxPaint(nil);
 end;

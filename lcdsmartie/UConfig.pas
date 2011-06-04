@@ -19,7 +19,7 @@ unit UConfig;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UConfig.pas,v $
- *  $Revision: 1.53 $ $Date: 2007/01/03 22:48:31 $
+ *  $Revision: 1.54 $ $Date: 2011/06/04 16:48:30 $
  *****************************************************************************}
 
 interface
@@ -116,6 +116,10 @@ type
     procedure ConvertToDisplayDLL;
   public
     sSkinPath: String;
+    sTrayIcon: String;
+    LastTabIndex: Integer; // last config tab index
+    bShowMBM: Boolean;
+
     localeFormat: TFormatSettings;
     bHideOnStartup: Boolean;
     bAutoStart, bAutoStartHide: Boolean;
@@ -553,6 +557,13 @@ begin
 
   sSkinPath := initfile.ReadString('General Settings', 'SkinPath', 'images\');
   sSkinPath := IncludeTrailingPathDelimiter(sSkinPath);
+
+  sTrayIcon := initfile.ReadString('General Settings', 'TrayIcon', 'smartie.ico');
+
+  LastTabIndex := initfile.ReadInteger('General Settings', 'LastTab',0);
+  bShowMBM := initfile.ReadBool('General Settings','ShowMBM',false);
+
+
   baudrate := initfile.ReadInteger('Communication Settings', 'Baudrate', 8);
   comPort := initfile.ReadInteger('Communication Settings', 'COMPort', 1);
 
@@ -626,12 +637,10 @@ begin
     end;
   end;
 
-  distLog := initfile.ReadString('General Settings', 'DistLog',
-    'C:\repllog.txt');
+  distLog := initfile.ReadString('General Settings', 'DistLog', 'C:\repllog.txt');
   emailPeriod := initfile.ReadInteger('General Settings', 'EmailPeriod', 10);
   dllPeriod := initfile.ReadInteger('General Settings', 'DLLPeriod', 250);
-  scrollPeriod := initfile.ReadInteger('General Settings', 'ScrollPeriod',
-    200);
+  scrollPeriod := initfile.ReadInteger('General Settings', 'ScrollPeriod', 200);
 
   alwaysOnTop := initFile.ReadBool('General Settings', 'AlwaysOnTop', false);
 
@@ -694,6 +703,7 @@ begin
   bAutoStart := initFile.ReadBool('General Settings', 'AutoStart', false);
   bAutoStartHide := initFile.ReadBool('General Settings', 'AutoStartHidden', false);
   EmulateLCD := initFile.ReadBool('General Settings', 'EmulateLCD', false);
+
   for LineCount := 1 to MaxLines do
   begin
     ShutdownMessage[LineCount] := initFile.ReadString('General Settings' , 'ShutdownLine' + IntToStr(LineCount) , '');
@@ -748,6 +758,7 @@ begin
 end;
 
 
+// save configuration
 procedure TConfig.saveINI;
 var
   initfile : TMemINIFile;
@@ -764,11 +775,14 @@ begin
     sMyScreenTextSyntaxVersion);
 
   initfile.WriteString('General Settings', 'SkinPath', sSkinPath);
+  initfile.WriteInteger('General Settings', 'LastTab',LastTabIndex);
+  initfile.WriteString('General Settings', 'TrayIcon', sTrayIcon);
+  initfile.WriteBool('General Settings', 'ShowMBM', bShowMBM);
+
   initfile.WriteInteger('Communication Settings', 'Baudrate', baudrate);
   initfile.WriteInteger('Communication Settings', 'COMPort', comPort);
-  if (isUsbPalm) then initfile.WriteInteger('Communication Settings',
-    'USBPalm', 1)
-  else initfile.WriteInteger('Communication Settings', 'USBPalm', 0);
+
+  initfile.WriteBool('Communication Settings', 'USBPalm', isUsbPalm);
 
   initfile.WriteInteger('Communication Settings', 'ParallelPort',
     xparallelPort);
@@ -866,7 +880,7 @@ begin
 
   for LineCount := 1 to MaxLines do
   begin
-    initFile.WriteString('General Settings', 'ShutdownLine' + IntToStr(LineCount), ShutdownMessage[LineCount]);
+    initFile.WriteString('General Settings', 'ShutdownLine' + IntToStr(LineCount), '"' + ShutdownMessage[LineCount]+ '"');
   end;
 
   // Pop accounts + ssl

@@ -19,22 +19,20 @@ unit UMain;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/UMain.pas,v $
- *  $Revision: 1.92 $ $Date: 2007/03/21 12:38:00 $
+ *  $Revision: 1.93 $ $Date: 2011/06/04 16:48:30 $
  *****************************************************************************}
 
 interface
 
 uses
   Messages, CoolTrayIcon, Menus, Graphics,
-  WinampCtrl, ExtCtrls, Controls, StdCtrls, Buttons, Classes, Forms, UConfig,
-  ULCD, UData, lcdline;
+  WinampCtrl, ExtCtrls, Controls, StdCtrls, Buttons, Classes,
+  Forms,
+  UConfig, ULCD, UData, lcdline;
 
 const
   WM_ICONTRAY = WM_USER + 1;   // User-defined message
-  OurVersMaj = 5;
-  OurVersMin = 4;
-  OurVersRel = 0;
-  OurVersBuild = 6;
+
 
 type
   PObject = ^TObject;
@@ -60,6 +58,8 @@ type
     destructor Destroy; override;
   end;
 
+
+
   TInitialWindowState = (NoChange, HideMainForm, TotalHideMainForm);
 
   TLCDSmartieDisplayForm = class(TForm)
@@ -71,9 +71,7 @@ type
     PopupMenu1: TPopupMenu;
     ShowWindow1: TMenuItem;
     Close1: TMenuItem;
-    SetupButton: TButton;
     LogoImage: TImage;
-    HideButton: TButton;
     CoolTrayIcon1: TCoolTrayIcon;
     Configure1: TMenuItem;
     BacklightOn1: TMenuItem;
@@ -104,8 +102,6 @@ type
     LeftManualScrollTimer: TTimer;
     RightManualScrollTimer: TTimer;
     TimerRefresh: TTimer;
-    PreviousButton: TButton;
-    NextButton: TButton;
     xLine1Panel: TPanel;
     xLine2Panel: TPanel;
     xLine3Panel: TPanel;
@@ -115,6 +111,7 @@ type
     Line4LCDPanel: TLCDLineFrame;
     Line3LCDPanel: TLCDLineFrame;
     CheckforUpdates1: TMenuItem;
+
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure ShowWindow1Click(Sender: TObject);
@@ -190,10 +187,11 @@ type
     procedure WMQueryEndSession (var M: TWMQueryEndSession); message WM_QUERYENDSESSION;
     procedure WMPowerBroadcast (var M: TMessage); message WM_POWERBROADCAST;
     procedure SetupButtonClick(Sender: TObject);
-    procedure PreviousButtonClick(Sender: TObject);
-    procedure NextButtonClick(Sender: TObject);
     procedure PopupMenu1Popup(Sender: TObject);
     procedure CheckforUpdates1Click(Sender: TObject);
+    procedure LoadSkin;
+    procedure LoadColors;
+
   private
     InitialWindowState: TInitialWindowState;
     ScreenLCD: Array[1..MaxLines] of TOnScreenLineWrapper;
@@ -246,8 +244,7 @@ type
     procedure FiniLCD(WriteShutdownMessage : boolean);
     procedure ResizeHeight;
     procedure ResizeWidth;
-    procedure LoadSkin;
-    procedure LoadColors;
+
     procedure ProcessCommandLineParams;
     procedure AssignOnscreenDisplay(TrueLCD : boolean);
   public
@@ -262,12 +259,19 @@ type
     procedure ReInitLCD();
     procedure customchar(fline: String);
     property ShowTrueLCD : boolean write AssignOnscreenDisplay;
+
   end;
 
+  function GetFmtFileVersion(const FileName: String = '';  const Fmt: String = '%d.%d.%d.%d'): String;
+
 var
-  LCDSmartieDisplayForm: TLCDSmartieDisplayForm;
   activeScreen : Integer;
+  LCDSmartieDisplayForm: TLCDSmartieDisplayForm;
   bTerminating: Boolean;
+  OurVersMaj : integer;
+  OurVersMin : integer;
+  OurVersRel : integer;
+  OurVersBuild : integer;
 
 implementation
 
@@ -275,7 +279,8 @@ implementation
 
 uses
   Windows, SysUtils, Dialogs, ShellAPI, mmsystem, StrUtils,
-  USetup, UCredits, ULCD_DLL, ExtActns, UUtils, UDataSmartie, FONTMGR;
+  UCredits, ULCD_DLL, ExtActns, UUtils,
+  UDataSmartie, FONTMGR, UIconUtils, USetup, UFormPos;
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -379,7 +384,13 @@ end;
 
 
 procedure TLCDSmartieDisplayForm.FormCreate(Sender: TObject);
+var
+  oPos : TFormPos;
 begin
+
+  LCDSmartieDisplayForm.Caption := 'LCD Smartie ' + GetFmtFileVersion();
+  CoolTrayIcon1.Hint := LCDSmartieDisplayForm.Caption;
+
   fillchar(ScreenLCD,sizeof(ScreenLCD),$00);
   bTerminating := false;
   Randomize;
@@ -388,6 +399,7 @@ begin
   CreateDirectory('cache', nil);
   CreateDirectory('plugins', nil);
   CreateDirectory('displays', nil);
+
   AddPluginsToPath();
 
   ConfigFileName := 'config.ini';
@@ -424,16 +436,28 @@ begin
   SetOnscreenBacklight();
 
   InitLCD();
-
   ChangeScreen(1);
+
+// restore last form position
+  oPos := TFormPos.Create('forms.ini');
+  oPos.Tag := 'main';
+  oPos.load;
+  if ((oPos.Top <> -1) and (oPos.Left <> -1)) then
+  begin
+    LCDSmartieDisplayForm.Top  := oPos.Top;
+    LCDSmartieDisplayForm.Left := oPos.Left;
+  end;
+
 end;
 
 procedure TLCDSmartieDisplayForm.LoadSkin;
 var
   sSkinPath: String;
+  hIcon: TIcon;
 begin
   try
     sSkinPath := extractfilepath(application.exename) + config.sSkinPath;
+
     LogoImage.picture.LoadFromFile(sSkinPath + 'logo.bmp');
     Line1RightScrollImage.picture.LoadFromFile(sSkinPath + 'small_arrow_left_up1.bmp');
     Line2RightScrollImage.picture.LoadFromFile(sSkinPath + 'small_arrow_left_up2.bmp');
@@ -450,9 +474,16 @@ begin
     BarMiddleImage.picture.LoadFromFile(sSkinPath + 'bar_middle.bmp');
     SetupImage.picture.LoadFromFile(sSkinPath + 'setup_up.bmp');
     HideImage.picture.LoadFromFile(sSkinPath + 'hide_up.bmp');
-    CoolTrayIcon1.Icon.LoadFromFile(sSkinPath + 'smartie.ico');
+
+//    CoolTrayIcon1.Icon.LoadFromFile(sSkinPath + config.sTrayIcon);
     application.Icon.LoadFromFile(sSkinPath + 'smartie.ico');
+
+    hIcon := TIcon.Create;
+    GetIconFromFile(sSkinPath + config.sTrayIcon, hIcon, SHIL_SMALL);
+    CoolTrayIcon1.Icon.Assign(hIcon);
+    hIcon.Destroy;
     CoolTrayIcon1.Refresh;
+
   except
     on E: Exception do
     begin
@@ -509,16 +540,19 @@ begin
       InitialWindowState := HideMainForm
     else if (parameter = '-totalhide') then
       InitialWindowState := TotalHideMainForm
-    else if (parameter = '-config') then
-    begin
-      Inc(i);
-      ConfigFileName := ParamStr(i);  // will give '' if out of range
-    end;
+    else
+      if (parameter = '-config') then
+        begin
+          Inc(i);
+          ConfigFileName := ParamStr(i);  // will give '' if out of range
+        end;
     Inc(i);
   end;
 end;
 
 procedure TLCDSmartieDisplayForm.FormClose(Sender: TObject; var Action: TCloseAction);
+var
+  oPos:TFormPos;
 begin
   bTerminating := true;
 
@@ -530,6 +564,12 @@ begin
   while NextScreenTimer.enabled = true do NextScreenTimer.enabled := false;
   while ScrollFlashTimer.enabled = true do ScrollFlashTimer.enabled := false;
   while TransitionTimer.enabled = true do TransitionTimer.enabled := false;
+
+  oPos := TFormPos.Create('forms.ini');
+  oPos.Tag := 'main';
+  oPos.Top := LCDSmartieDisplayForm.Top;
+  oPos.Left := LCDSmartieDisplayForm.Left;
+  oPos.savePos;
 
   FiniLCD(true);
 
@@ -552,7 +592,7 @@ procedure TLCDSmartieDisplayForm.FormShow(Sender: TObject);
 begin
   timerRefresh.Interval := 0; // reset timer
   timerRefresh.Interval := 1; // make it short in case minimized has been selected.
-  CoolTrayIcon1.IconVisible := false;
+//  CoolTrayIcon1.IconVisible := false;
 end;
 
 procedure TLCDSmartieDisplayForm.FormKeyPress(Sender: TObject; var Key: Char);
@@ -578,8 +618,19 @@ begin
     frozen := true;
     freeze();
   end;
-  if upcase(key)=',' then PreviousButton.click();
-  if upcase(key)='.' then NextButton.click();
+  if upcase(key)=',' then
+    begin
+      NumberOfScreensToShift := -1;
+      frozen := true;
+      freeze();
+    end;
+  if upcase(key)='.' then
+    begin
+      NumberOfScreensToShift := 1;
+      frozen := true;
+      freeze();
+    end;
+
   if (upcase(key)='?') or (upcase(key)='/') then
   begin
     Data.RefreshDataThreads;
@@ -693,35 +744,48 @@ begin
   LCDSmartieDisplayForm.Close;
 end;
 
+//
+// Good article on Power related OS events
+// http://www.codeproject.com/KB/system/OSEvents.aspx
+//
 procedure TLCDSmartieDisplayForm.WMPowerBroadcast (var M: TMessage);
 const
+
   PBT_APMSUSPEND = 4;
   PBT_APMSTANDBY = 5;
+
   PBT_APMRESUMECRITICAL = 6;
   PBT_APMRESUMESUSPEND = 7;
   PBT_APMRESUMESTANDBY = 8;
   PBT_APMRESUMEAUTOMATIC = $012;
+
 begin
-  if (M.WParam = PBT_APMRESUMEAUTOMATIC) or (M.WParam = PBT_APMRESUMECRITICAL)
-    or (M.WParam = PBT_APMRESUMESTANDBY) or (M.WParam = PBT_APMRESUMESUSPEND)
+// wake up from hibernate / suspend
+  if (M.WParam = PBT_APMRESUMEAUTOMATIC) or
+     (M.WParam = PBT_APMRESUMECRITICAL) or
+     (M.WParam = PBT_APMRESUMESTANDBY) or
+     (M.WParam = PBT_APMRESUMESUSPEND)
     then
-  begin
-    ReInitLCD();
-  end
-  else if (M.WParam = PBT_APMSUSPEND) or (M.WParam = PBT_APMSTANDBY) then
-  begin
-    FiniLCD(true);
-    Lcd := TLCD.Create(); // replace with a dummy driver.
-  end;
+    begin
+      ReInitLCD();
+    end
+  else
+// time to go to sleep
+    if (M.WParam = PBT_APMSUSPEND) or
+       (M.WParam = PBT_APMSTANDBY) then
+    begin
+      FiniLCD(true);
+      Lcd := TLCD.Create(); // replace with a dummy driver.
+    end;
 end;
 
 
 procedure TLCDSmartieDisplayForm.PopupMenu1Popup(Sender: TObject);
 begin
   if Visible then
-    ShowWindow1.caption := '&Minimize'
+    ShowWindow1.caption := 'Hide'
   else
-    ShowWindow1.caption := 'Show Main';
+    ShowWindow1.caption := 'Show';
 end;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1145,8 +1209,7 @@ begin
     for counter := 1 to config.height do
     begin
       if (not config.screen[activeScreen][counter].noscroll) then
-        ScreenLCD[counter].Caption := EscapeAmp(scroll(parsedLine[counter],
-          counter, scrollcount))
+        ScreenLCD[counter].Caption := EscapeAmp(scroll(parsedLine[counter], counter, scrollcount))
       else
         if (scrollPos[counter]>1) then     // maintain manual scroll postion
           ScreenLCD[counter].Caption := EscapeAmp(scroll(parsedLine[counter], counter, 0))
@@ -1246,22 +1309,12 @@ end;
 
 procedure TLCDSmartieDisplayForm.PreviousImageClick(Sender: TObject);
 begin
-  PreviousButton.click;
-end;
-
-procedure TLCDSmartieDisplayForm.PreviousButtonClick(Sender: TObject);
-begin
   NumberOfScreensToShift := -1;
   frozen := true;
   freeze();
 end;
 
 procedure TLCDSmartieDisplayForm.NextScreenImageClick(Sender: TObject);
-begin
-  NextButton.click;
-end;
-
-procedure TLCDSmartieDisplayForm.NextButtonClick(Sender: TObject);
 begin
   NumberOfScreensToShift := 1;
   frozen := true;
@@ -1554,7 +1607,7 @@ begin
     end;
   end;
 
-  customchar('1, 12, 18, 18, 12, 0, 0, 0, 0');
+  customchar('1, 12, 18, 18, 12, 0,   0,  0,  0');
   customchar('2, 31, 31, 31, 31, 31, 31, 31, 31');
   customchar('3, 16, 16, 16, 16, 16, 16, 31, 16');
   customchar('4, 28, 28, 28, 28, 28, 28, 31, 28');
@@ -1569,24 +1622,44 @@ end;
 
 procedure TLCDSmartieDisplayForm.FiniLCD(WriteShutdownMessage : boolean);
 var
-  Loop,Loop2 : longint;
-  S : string;
+  h,x : integer;
+  row : string;
+  //i: cardinal;
 begin
+
   timerRefresh.enabled := false;  // stop updates to lcd
+
   try
     if assigned(Lcd) then begin
       if WriteShutdownMessage then begin
-        for Loop := 1 to config.Height do begin
-          S := Config.ShutdownMessage[Loop];
-          for Loop2 := length(S)+1 to config.Width do
-            S := S + ' ';
-          Lcd.setPosition(1, Loop);
-          Lcd.write(S);
-        end;
+
+        for h := 1 to config.Height do
+          begin
+            row := Config.ShutdownMessage[h];
+
+            for x := length(row)+1 to config.Width do
+              row := row + ' ';
+
+            Lcd.setPosition(1, h);
+            Lcd.write(row);
+            Sleep(20);
+
+            {for i:= 1 to Length(row) do
+            begin
+              Lcd.write(row[i]);
+              Sleep(1);
+            end;
+            }
+          end;
+          Lcd.setbacklight(false);
       end;
       Lcd.Destroy();
     end;
   except
+  on E: Exception do
+    begin
+      showmessage('Exception: ' + E.Message);
+    end;
   end;
   Lcd := nil;
 end;
@@ -2462,7 +2535,79 @@ begin
   bDelete := not (config.bAutoStart or config.bAutoStartHide);
 
   CreateShortcut(sShortCutName, application.exename, sParameters, bDelete);
+
 end;
 
+/// <summary>
+///   This function reads the file resource of "FileName" and returns
+///   the version number as formatted text.</summary>
+/// <example>
+///   Sto_GetFmtFileVersion() = '4.13.128.0'
+///   Sto_GetFmtFileVersion('', '%.2d-%.2d-%.2d') = '04-13-128'
+/// </example>
+/// <remarks>If "Fmt" is invalid, the function may raise an
+///   EConvertError exception.</remarks>
+/// <param name="FileName">Full path to exe or dll. If an empty
+///   string is passed, the function uses the filename of the
+///   running exe or dll.</param>
+/// <param name="Fmt">Format string, you can use at most four integer
+///   values.</param>
+/// <returns>Formatted version number of file, '' if no version
+///   resource found.</returns>
+function GetFmtFileVersion(const FileName: String = '';
+  const Fmt: String = '%d.%d.%d.%d'): String;
+var
+  sFileName: String;
+  iBufferSize: DWORD;
+  iDummy: DWORD;
+  pBuffer: Pointer;
+  pFileInfo: Pointer;
+  iVer: array[1..4] of Word;
+begin
+  // set default value
+  Result := '';
+  // get filename of exe/dll if no filename is specified
+  sFileName := FileName;
+  if (sFileName = '') then
+  begin
+    // prepare buffer for path and terminating #0
+    SetLength(sFileName, MAX_PATH + 1);
+    SetLength(sFileName,
+      GetModuleFileName(hInstance, PChar(sFileName), MAX_PATH + 1));
+  end;
+  // get size of version info (0 if no version info exists)
+  iBufferSize := GetFileVersionInfoSize(PChar(sFileName), iDummy);
+  if (iBufferSize > 0) then
+  begin
+    GetMem(pBuffer, iBufferSize);
+    try
+    // get fixed file info (language independent)
+    GetFileVersionInfo(PChar(sFileName), 0, iBufferSize, pBuffer);
+    VerQueryValue(pBuffer, '\', pFileInfo, iDummy);
+    // read version blocks
+    iVer[1] := HiWord(PVSFixedFileInfo(pFileInfo)^.dwFileVersionMS);
+    iVer[2] := LoWord(PVSFixedFileInfo(pFileInfo)^.dwFileVersionMS);
+    iVer[3] := HiWord(PVSFixedFileInfo(pFileInfo)^.dwFileVersionLS);
+    iVer[4] := LoWord(PVSFixedFileInfo(pFileInfo)^.dwFileVersionLS);
+
+    OurVersMaj := iVer[1];
+    OurVersMin := iVer[2];
+    OurVersRel := iVer[3];
+    OurVersBuild := iVer[4];
+
+    finally
+      FreeMem(pBuffer);
+    end;
+    // format result string
+    Result := Format(Fmt, [iVer[1], iVer[2], iVer[3], iVer[4]]);
+  end;
+end;
+
+
 end.
+
+
+
+
+
 

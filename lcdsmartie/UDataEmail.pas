@@ -106,27 +106,34 @@ begin
           pop3.ReadTimeout := 15000;   //15 seconds
           pop3.username := config.pop[AccountLoop].user;
           pop3.Password := config.pop[AccountLoop].pword;
+          pop3.AutoLogin := true;
 
           //SSL Control and port assignement
-          if config.pop[AccountLoop].port_ssl <> ''
-          then begin
-          SSLHandler.MaxLineAction := maException;
-          SSLHandler.ConnectTimeout := 15000;
-          SSLHandler.SSLOptions.Method := sslvSSLv2;
-          SSLHandler.SSLOptions.Mode := sslmUnassigned;
-          SSLHandler.SSLOptions.VerifyMode := [];
-          SSLHandler.SSLOptions.VerifyDepth := 0;
-          pop3.IOHandler := SSLHandler;
-          pop3.UseTLS := utUseImplicitTLS;
-          pop3.Port := StrToInt(config.pop[AccountLoop].port_ssl);
-          SSLHandler.Host := config.pop[AccountLoop].server;
-          SSLHandler.Port := StrToInt(config.pop[AccountLoop].port_ssl);
-          end else
+          if config.pop[AccountLoop].port_ssl <> '' then
           begin
-          pop3.IOHandler := nil;
-          pop3.UseTLS := utNoTLSSupport;
-          pop3.Port := 110;
-          end;
+            pop3.IOHandler := SSLHandler;
+            pop3.UseTLS := utUseImplicitTLS;
+            pop3.Port := StrToInt(config.pop[AccountLoop].port_ssl);
+//            pop3.AuthType :=
+            SSLHandler.Destination := config.pop[AccountLoop].server + ':' + config.pop[AccountLoop].port_ssl;
+            SSLHandler.Host := config.pop[AccountLoop].server;
+            SSLHandler.Port := StrToInt(config.pop[AccountLoop].port_ssl);
+            SSLHandler.DefaultPort := 0;
+            SSLHandler.MaxLineAction := maException;
+            SSLHandler.ConnectTimeout := 15000;
+
+            SSLHandler.SSLOptions.Method := sslvSSLv3;
+            SSLHandler.SSLOptions.Mode := sslmUnassigned;
+            SSLHandler.SSLOptions.VerifyMode := [];
+            SSLHandler.SSLOptions.VerifyDepth := 0;
+
+            end
+          else
+            begin
+              pop3.IOHandler := nil;
+              pop3.UseTLS := utNoTLSSupport;
+              pop3.Port := 110;
+            end;
 
           try
             fPOP3Copy := @pop3;

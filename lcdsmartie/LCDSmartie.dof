@@ -35,7 +35,7 @@ SymbolDeprecated=1
 SymbolLibrary=1
 SymbolPlatform=1
 UnitLibrary=1
-UnitPlatform=1
+UnitPlatform=0
 UnitDeprecated=1
 HResultCompat=1
 HidingMember=1
@@ -105,17 +105,13 @@ HostApplication=
 Launcher=
 UseLauncher=0
 DebugCWD=
-[Language]
-ActiveLang=
-ProjectLang=
-RootDir=
 [Version Info]
 IncludeVerInfo=1
-AutoIncBuild=0
+AutoIncBuild=1
 MajorVer=5
 MinorVer=4
-Release=1
-Build=7
+Release=2
+Build=92
 Debug=1
 PreRelease=1
 Special=0
@@ -126,32 +122,10 @@ CodePage=1252
 [Version Info Keys]
 CompanyName=SourceForge.net
 FileDescription=LCD Smartie
-FileVersion=5.4.1.7
+FileVersion=5.4.2.92
 InternalName=LCD Smartie
 LegalCopyright=GPL
 LegalTrademarks=
 OriginalFilename=Smartie.exe
 ProductName=LCD Smartie
 ProductVersion=5.4.1
-[HistoryLists\hlConditionals]
-Count=1
-Item0=madExcept
-[HistoryLists\hlUnitAliases]
-Count=1
-Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
-[HistoryLists\hlSearchPath]
-Count=7
-Item0=components\CoolTrayIcon;components\WinampCtrl;
-Item1=components\CoolTrayIcon;components\WinampCtrl;D:\Dcomp\Delphi7\CoolTrayIcon;
-Item2=components\CoolTrayIcon;components\WinampCtrl;D:\Dcomp\Delphi7\CoolTrayIcon;D:\Dcomp\Delphi7\WinampCtrl
-Item3=components\CoolTrayIcon;components\WinampCtrl
-Item4=$(DELPHI)\Lib\Debug;components\CoolTrayIcon;components\WinampCtrl
-Item5=components\CoolTrayIcon;components\TMSAsync32\d7;components\WinampCtrl
-Item6=$(DELPHI)\Lib\Debug;components\CoolTrayIcon;components\TMSAsync32\d7;components\WinampCtrl
-[HistoryLists\hlUnitOutputDirectory]
-Count=1
-Item0=dcu
-[HistoryLists\hlOutputDirectorry]
-Count=2
-Item0=release-dir
-Item1=exe

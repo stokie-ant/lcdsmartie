@@ -12,7 +12,7 @@ uses
 begin
   Application.Initialize;
   Application.Title := 'LCD Smartie';
-  Application.HelpFile := 'README.txt';
+  Application.HelpFile := 'readme.txt';
   Application.CreateForm(TLCDSmartieDisplayForm, LCDSmartieDisplayForm);
   Application.Run;
 end.

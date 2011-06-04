@@ -19,17 +19,21 @@ unit USetup;
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
  *  $Source: /root/lcdsmartie-cvsbackup/lcdsmartie/USetup.pas,v $
- *  $Revision: 1.63 $ $Date: 2007/01/03 22:48:31 $
+ *  $Revision: 1.64 $ $Date: 2011/06/04 16:48:30 $
  *****************************************************************************}
 {.DEFINE VCORP}
 interface
 
 uses
+  Commctrl, ShlObj,
   Dialogs, Grids, StdCtrls, Controls, Spin, Buttons, ComCtrls, Classes,
-  Forms, ExtCtrls{$IFDEF VCORP}, FileCtrl, JvDriveCtrls{$ENDIF};
+  Forms, ExtCtrls,
+  {$IFDEF VCORP} FileCtrl, JvDriveCtrls, {$ENDIF}
+  ExtDlgs, Mask, JvExMask, JvToolEdit;
 
 const
   NoVariable = 'Variable: ';
+
 
 type
   TSetupForm = class(TForm)
@@ -54,10 +58,7 @@ type
     Label13: TLabel;
     Label15: TLabel;
     QStatLabel: TLabel;
-    DistributedNetBrowseButton: TSpeedButton;
     OpenDialog2: TOpenDialog;
-    DistributedNetLogfileEdit: TEdit;
-    Label34: TLabel;
     GameTypeComboBox: TComboBox;
     InsertButton: TButton;
     InternetRefreshTimeSpinEdit: TSpinEdit;
@@ -163,11 +164,8 @@ type
     Label57: TLabel;
     Operand2Edit: TEdit;
     Label6: TLabel;
-    RandomizeScreensCheckBox: TCheckBox;
     StayOnTopCheckBox: TCheckBox;
     TransitionButton: TButton;
-    Label58: TLabel;
-    DLLCheckIntervalSpinEdit: TSpinEdit;
     ProgramScrollIntervalSpinEdit: TSpinEdit;
     Label59: TLabel;
     Label28: TLabel;
@@ -208,6 +206,25 @@ type
     ShutdownEdit2: TEdit;
     ShutdownEdit3: TEdit;
     ShutdownEdit4: TEdit;
+    MyTabSheet: TTabSheet;
+    TrayIcon: TEdit;
+    Label9: TLabel;
+    TrayIconPreview32: TImage;
+    OpenIco: TOpenPictureDialog;
+    TrayIconBrowseButton: TSpeedButton;
+    TrayIconPreview16: TImage;
+    RandomizeScreensCheckBox: TCheckBox;
+    Label10: TLabel;
+    SkinPath: TEdit;
+    SkinPathBrowseButton: TSpeedButton;
+    DistributedNetLogfileEdit: TEdit;
+    DistributedNetBrowseButton: TSpeedButton;
+    Label34: TLabel;
+    DLLCheckIntervalSpinEdit: TSpinEdit;
+    Label58: TLabel;
+//    pluginListBox: TFileListBox;
+//    pluginDotNetVer: TLabel;
+//    PluginDotNetRequired: TLabel;
     procedure FormShow(Sender: TObject);
     procedure LCDSizeComboBoxChange(Sender: TObject);
     procedure ScreenSpinEditChange(Sender: TObject);
@@ -265,6 +282,21 @@ type
     procedure PluginListBoxDblClick(Sender: TObject);
     procedure PluginListBoxClick(Sender: TObject);
 {$ENDIF}
+  procedure ShutdownEditEnter(Sender: TObject);
+
+  procedure ShutdownEdit1KeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
+  procedure ShutdownEdit2KeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
+  procedure ShutdownEdit3KeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
+  procedure ShutdownEdit4KeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
+
+  procedure TrayIconBrowseButtonClick(Sender: TObject);
+
+  procedure DrawPreviewIcons(const sIconFileName: string);
+
+  procedure SkinPathBrowseButtonClick(Sender: TObject);
+  procedure LineEditClick(Sender: TObject);
+    procedure OpeIcoFolderChange(Sender: TObject);
+
   private
     DLLPath : string;
     setupbutton: Integer;
@@ -276,26 +308,33 @@ type
     procedure LoadHint(DisplayDLLName : string);
   end;
 
-function DoSetupForm : boolean;
-procedure UpdateSetupForm(cKey : char);
-function PerformingSetup : boolean;
+  function DoSetupForm : boolean;
+  procedure UpdateSetupForm(cKey : char);
+  function PerformingSetup : boolean;
 
 implementation
 
 uses
   Math, Windows, ShellApi, graphics, sysutils, Registry, StrUtils,
   UMain, UInteract, UConfig, UDataEmail, UDataNetwork, UDataWinamp,
-  UDataMBM;
+  UDataMBM, UIconUtils, FileCtrl, UEditLine, UFormPos;
 
 {$R *.DFM}
 
 var
   SetupForm : TSetupForm = nil;
+  oEditForm : TFormEdit = nil;
 
 function DoSetupForm : boolean;
 begin
   SetupForm := TSetupForm.Create(nil);
   with SetupForm do begin
+    if not config.bShowMBM then
+    begin
+      SkipScreenComboBox.Items[3] := '(reserved)';
+      SkipScreenComboBox.Items[4] := '(reserved)';
+    end;
+
     ShowModal;
     Result := (ModalResult = mrOK);
     LCDSmartieDisplayForm.NextScreenTimer.interval := 0;
@@ -324,11 +363,13 @@ begin
         if assigned(UsageFunc) then
           UsageLabel.Caption := string(UsageFunc);
         UsageFunc := GetProcAddress(MyDLL,pchar('DISPLAYDLL_DriverName'));
+        
         if assigned(UsageFunc) then
           IDLabel.Caption := string(UsageFunc);
         UsageFunc := GetProcAddress(MyDLL,pchar('DISPLAYDLL_DefaultParameters'));
         if assigned(UsageFunc) then
           ParametersEdit.Text := string(UsageFunc);
+
         FreeLibrary(MyDLL);
       end;
     except
@@ -346,9 +387,12 @@ var
   MBMStat : TMBMStat;
 begin
   MainPageControl.ActivePage := ScreensTabSheet;
+  LeftPageControl.ActivePageIndex := config.LastTabIndex;
+
   //if pagecontrol1.activepage = tabsheet13 then pagecontrol1.ActivePage :=
    // tabsheet1;
   //tabsheet13.Enabled := false;
+
   LCDFeaturesTabSheet.Enabled := true;
 
   setupbutton := 1;
@@ -379,12 +423,19 @@ begin
   ScreenSpinEdit.MaxValue := MaxScreens;
   ScreenSpinEdit.Value := 1;
   CurrentScreen := 1;
+  //CurrentScreen :=  activescreen;
+  //ScreenSpinEdit.Value := activescreen;
+
   LoadScreen( CurrentScreen );   // setup screen in setup form
   LCDSmartieDisplayForm.ChangeScreen(CurrentScreen);   // setup screen in main form
 
   ProgramRefreshIntervalSpinEdit.Value := config.refreshRate;
   WinampLocationEdit.text := config.winampLocation;
   ColorSchemeComboBox.itemindex := config.colorOption;
+
+  TrayIcon.Text := config.sTrayIcon;
+  SkinPath.Text := config.sSkinPath;
+  DrawPreviewIcons(TrayIcon.Text);
 
 
   SetiAtHomeEmailEdit.text := config.setiEmail;
@@ -452,6 +503,7 @@ begin
   // put display plugin settings on screen
   ContrastTrackBar.position := config.DLL_contrast;
   BrightnessTrackBar.position := config.DLL_brightness;
+
   DisplayPluginList.Items.Clear;
   DisplayPluginList.Items.Add('None');
   DLLPath := extractfilepath(paramstr(0))+'displays\';
@@ -476,6 +528,8 @@ begin
   FoldingAtHomeEmailEdit.text := config.foldUsername;
   MBMRefreshTimeSpinEdit.Value := config.mbmRefresh;
   LCDSmartieUpdateCheckBox.checked := config.checkUpdates;
+
+  MBMTabSheet.TabVisible := config.bShowMBM;
 
 
 
@@ -1074,8 +1128,8 @@ end;
 procedure TSetupForm.DistributedNetBrowseButtonClick(Sender: TObject);
 var
   line, line2: String;
-
 begin
+// remove duplicate backslash
   line := DistributedNetLogfileEdit.text;
   line2 := '';
   while pos('\', line) <> 0 do
@@ -1316,11 +1370,13 @@ end;
 // Apply pressed.
 procedure TSetupForm.ApplyButtonClick(Sender: TObject);
 var
-  relood: Boolean;
+  ReinitLCD, ReloadSkin: Boolean;
   x: Integer;
   iMaxUsedRow: Integer;
 begin
-  relood := false;
+  ReinitLCD := false;
+  ReloadSkin := false;
+
   iMaxUsedRow := -1;
   for x := 0 to ActionsStringGrid.RowCount-1 do
   begin
@@ -1350,8 +1406,9 @@ begin
   config.totalactions := iMaxUsedRow + 1;
 
   // Check if Com settings have changed.
-  if (config.DisplayDLLParameters <> ParametersEdit.Text) then relood := true;
-  if (config.DisplayDLLName <> DisplayPluginList.Text) then relood := true;
+
+  // if (config.DisplayDLLParameters <> ParametersEdit.Text) then ReinitLCD := true;
+  // if (config.DisplayDLLName <> DisplayPluginList.Text) then ReinitLCD := true;
 
   LCDSmartieDisplayForm.WinampCtrl1.WinampLocation := WinampLocationEdit.text;
   config.winampLocation := WinampLocationEdit.text;
@@ -1384,6 +1441,7 @@ begin
   config.DLL_brightness := BrightnessTrackBar.position;
   config.DisplayDLLParameters := ParametersEdit.Text;
   config.DisplayDLLName := DisplayPluginList.Text;
+
   if (config.DisplayDLLName = 'None') then
     config.DisplayDLLName := '';
 
@@ -1396,6 +1454,7 @@ begin
   config.pop[(EmailAccountComboBox.itemindex + 1) mod MaxEmailAccounts].port_ssl := EmailSSLEdit.text;
 
 
+
   if (WebProxyPortEdit.text = '') then WebProxyPortEdit.text := '0';
   config.httpProxy := WebProxyServerEdit.text;
   config.httpProxyPort := StrToInt(WebProxyPortEdit.text);
@@ -1404,9 +1463,20 @@ begin
   LCDSmartieDisplayForm.ScrollFlashTimer.interval := config.scrollPeriod;
   LCDSmartieDisplayForm.Data.RefreshDataThreads;
 
+  config.LastTabIndex := LeftPageControl.ActivePageIndex;
+  if config.sSkinPath <> SkinPath.Text then ReloadSkin := true;
+  if config.sTrayIcon <> TrayIcon.Text then ReloadSkin := true;
+  config.sSkinPath :=  SkinPath.Text;
+  config.sTrayIcon := TrayIcon.Text;
+  if ReloadSkin then
+  begin
+    LCDSmartieDisplayForm.LoadSkin();
+    LCDSmartieDisplayForm.LoadColors();
+  end;
+
   config.save();
 
-  if relood = true then
+  if ReinitLCD = true then
   begin
     LCDSmartieDisplayForm.ReInitLCD();
   end;
@@ -1428,6 +1498,7 @@ var
 {$ENDIF}
 begin
   pathssl := ExtractFilePath(ParamStr(0));
+// setup table column widths
   ActionsStringGrid.RowCount := 0;
   ActionsStringGrid.ColWidths[0] := 116;
   ActionsStringGrid.ColWidths[1] := 20;
@@ -1437,6 +1508,12 @@ begin
  // check if ssl dll exists , if not block the ssl edit !!!
   if not fileExists(pathssl+'libeay32.dll') or
      not fileExists(pathssl+'ssleay32.dll') then EmailSSLEdit.Enabled :=False ;
+
+  if config.bShowMBM then
+  begin
+
+  end;
+
 
 {$IFDEF VCORP}
   //point ListBox to the plugin dirs
@@ -1725,6 +1802,86 @@ begin
   LCDSmartieDisplayForm.lcd.setBrightness(BrightnessTrackBar.position);
 end;
 
+procedure TSetupForm.ShutdownEditEnter(Sender: TObject);
+var
+  oEdit: TEdit;
+begin
+
+  oEdit := Sender As TEdit;
+  oEdit.Color := $00A1D7A4;
+
+  if (ShutdownEdit1 <> Sender) And ShutdownEdit1.Enabled = true then
+    ShutdownEdit1.color := clWhite
+  else
+    ShutdownEdit1.color := $00BBBBFF;
+
+  if (ShutdownEdit2 <> Sender) And ShutdownEdit2.enabled = true then
+    ShutdownEdit2.color := clWhite
+  else
+    ShutdownEdit2.color := $00BBBBFF;
+
+  if (ShutdownEdit3 <> Sender) And ShutdownEdit3.enabled = true then
+    ShutdownEdit3.color := clWhite
+  else
+    ShutdownEdit3.color := $00BBBBFF;
+
+  if (ShutdownEdit4 <> Sender) And ShutdownEdit4.enabled = true then
+    ShutdownEdit4.color := clWhite
+  else
+    ShutdownEdit4.color := $00BBBBFF;
+end;
+
+
+procedure TSetupForm.ShutdownEdit1KeyDown(Sender: TObject; var Key: Word; Shift:
+  TShiftState);
+begin
+  if ord(key) = VK_UP then
+  begin
+    // select bottom row
+    if (ShutdownEdit4.Enabled) and (ShutdownEdit4.Visible) then ShutdownEdit4.SetFocus
+    else if (ShutdownEdit3.Enabled) and (ShutdownEdit3.Visible) then ShutdownEdit3.SetFocus
+    else if (ShutdownEdit2.Enabled) and (ShutdownEdit2.Visible) then ShutdownEdit2.SetFocus;
+  end
+  else if ord(key) = VK_DOWN then
+  begin
+    // Select next row if used.
+    if (ShutdownEdit2.Enabled) and (ShutdownEdit2.Visible) then ShutdownEdit2.SetFocus;
+  end;
+end;
+
+procedure TSetupForm.ShutdownEdit2KeyDown(Sender: TObject; var Key: Word; Shift:
+  TShiftState);
+begin
+  if ord(key) = VK_UP then ShutdownEdit1.SetFocus
+  else if ord(key) = VK_DOWN then
+  begin
+    // Select next row if used otherwise go to top.
+    if (ShutdownEdit3.Enabled) and (ShutdownEdit3.Visible) then ShutdownEdit3.SetFocus
+    else ShutdownEdit1.SetFocus;
+  end;
+end;
+
+procedure TSetupForm.ShutdownEdit3KeyDown(Sender: TObject; var Key: Word; Shift:
+  TShiftState);
+begin
+  if ord(key) = VK_UP then ShutdownEdit2.SetFocus
+  else if ord(key) = VK_DOWN then
+  begin
+    // Select next row if used otherwise go to top.
+    if (ShutdownEdit4.Enabled) and (ShutdownEdit4.Visible) then ShutdownEdit4.SetFocus
+    else ShutdownEdit1.SetFocus;
+  end;
+end;
+
+procedure TSetupForm.ShutdownEdit4KeyDown(Sender: TObject; var Key: Word; Shift:
+  TShiftState);
+begin
+  if ord(key) = VK_UP then ShutdownEdit3.SetFocus;
+  if ord(key) = VK_DOWN then ShutdownEdit1.SetFocus;
+end;
+
+
+
 {$IFDEF VCORP}
 procedure TSetupForm.Btn_PluginRefreshClick(Sender: TObject);
 begin
@@ -1740,7 +1897,7 @@ begin
   if FileExists(ExtractFilePath(ParamStr(0))+'plugins\'+plugin_name) then
     ShellExecute(0, Nil, pchar(plugin_name), Nil, Nil, SW_NORMAL)
   else
-    ShowMessage('IL file : '+plugin_name+' non esiste');
+    ShowMessage('File : '+plugin_name+' does not exist');
 end;
 
 
@@ -1785,6 +1942,139 @@ begin
     PluginDotNetRequired.Caption := 'no';
 end;
 {$ENDIF}
+
+procedure TSetupForm.TrayIconBrowseButtonClick(Sender: TObject);
+var
+  bEnd: bool;
+  s : string;
+begin
+  bEnd:=False;
+  repeat
+  begin
+    OpenIco.InitialDir := ExtractFilePath(application.exename) + SkinPath.Text;
+    OpenIco.FileName := TrayIcon.Text;
+
+    if OpenIco.Execute() then
+      begin
+      s := ExtractFilePath(OpenIco.FileName);
+      if ExcludeTrailingPathDelimiter(s) = OpenIco.InitialDir then
+        bEnd := True
+      else
+        ShowMessage('Error'+ sLineBreak +
+                    'Tray Icon can be only in the current selected Skin path')
+      end
+    else
+      bEnd:=True;
+  end
+  until bEnd;
+
+  TrayIcon.Text := extractfilename(OpenIco.FileName);
+  DrawPreviewIcons(TrayIcon.Text);
+end;
+
+procedure TSetupForm.OpeIcoFolderChange(Sender: TObject);
+begin
+  OpenIco.InitialDir := ExtractFilePath(application.exename) + SkinPath.Text;
+end;
+
+
+procedure TSetupForm.DrawPreviewIcons(const sIconFileName: String);
+var
+hIcon: tIcon;
+IconPathName: string;
+begin
+  hIcon := TIcon.Create;
+  IconPathName := extractfilepath(application.exename) + SkinPath.Text + sIconFileName;
+  try
+    GetIconFromFile(IconPathName, hIcon, SHIL_SMALL);
+    TrayIconPreview16.Picture.Icon.Assign(hIcon);
+
+    GetIconFromFile(IconPathName, hIcon, SHIL_LARGE);
+    TrayIconPreview32.Picture.Icon.Assign(hIcon);
+  except
+    on E: Exception do
+    begin
+      showmessage('Error' + sLineBreak + 'Unable to load Tray Icon from Skin path, ' +
+        SkinPath.Text + sIconFileName + ': ' + E.Message);
+    end;
+  end;
+  hIcon.Destroy;
+end;
+
+Function MyFileExists(const FileName: string): Boolean;
+var
+  Handle: THandle;
+  FindData: TWin32FindData;
+begin
+  Handle := FindFirstFile(PChar(FileName), FindData);
+  if Handle <> INVALID_HANDLE_VALUE then
+    begin
+      Windows.FindClose(Handle);
+      if (FindData.dwFileAttributes and FILE_ATTRIBUTE_DIRECTORY)=0 then
+        Result:=true
+      else
+        Result:=false;
+    end
+  else Result:=false;
+end;
+
+procedure TSetupForm.SkinPathBrowseButtonClick(Sender: TObject);
+var
+  b,f,s,x: string;
+begin
+  b := ExtractFilePath(application.exename);
+  if SelectDirectory('Select a skin directory', b, f)
+  then
+    begin
+      x := f + '\colors.cfg';
+      if MyFileExists(x) then
+        begin
+          s := ExtractRelativePath(b, f);
+          SkinPath.Text := s + '\';
+        end
+      else
+        ShowMessage('Selected directory does not contain a valid skin');
+    end;
+end;
+
+
+procedure TSetupForm.LineEditClick(Sender: TObject);
+var
+  oEdit : TEdit;
+  oPoint : TPoint;
+  oPos : TFormPos;
+begin
+  oEdit := Sender as TEdit;
+
+  oEditForm := TFormEdit.Create(nil);  
+  with oEditForm do begin
+    Memo1.Text := oEdit.Text;
+
+    oPoint.X :=0;
+    oPoint.Y :=0;
+    oPoint := oEdit.ClientToScreen(oPoint);
+
+    oPos := TFormPos.Create('forms.ini');
+    oPos.Tag := 'edit';
+    oPos.load;
+
+    Top := oPoint.Y;
+    Left := oPoint.X + oEdit.Width;
+    Width := oPos.Width;
+    Height := oPos.Height;
+
+    ShowModal;
+
+    if ModalResult = mrOk then
+      oEdit.Text := TrimRight(Memo1.Text);
+
+    oEdit.SelLength :=0 ;
+
+    Free;
+  end;
+  oEditForm := nil;
+end;
+
 
 end.
 

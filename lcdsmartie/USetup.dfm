@@ -1,13 +1,13 @@
 object SetupForm: TSetupForm
-  Left = 228
-  Top = 330
+  Left = 356
+  Top = 331
   Anchors = []
   BiDiMode = bdLeftToRight
   BorderIcons = []
   BorderStyle = bsToolWindow
-  Caption = 'LCD Smartie 5.4 Setup'
-  ClientHeight = 412
-  ClientWidth = 813
+  Caption = 'LCD Smartie 5.x Setup'
+  ClientHeight = 411
+  ClientWidth = 815
   Color = clBtnFace
   Font.Charset = ANSI_CHARSET
   Font.Color = clBlack
@@ -27,7 +27,7 @@ object SetupForm: TSetupForm
     Top = 0
     Width = 233
     Height = 409
-    ActivePage = WinampTabSheet
+    ActivePage = FoldingAtHomeTabSheet
     Font.Charset = ANSI_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
@@ -37,7 +37,7 @@ object SetupForm: TSetupForm
     ParentFont = False
     ParentShowHint = False
     ShowHint = False
-    TabOrder = 1
+    TabOrder = 3
     TabPosition = tpRight
     TabStop = False
     OnChange = LeftPageControlChange
@@ -563,7 +563,7 @@ object SetupForm: TSetupForm
         Height = 21
         Style = csDropDownList
         DropDownCount = 10
-        ItemHeight = 0
+        ItemHeight = 13
         TabOrder = 1
         OnChange = EmailAccountComboBoxChange
       end
@@ -596,41 +596,11 @@ object SetupForm: TSetupForm
     object MiscTabSheet: TTabSheet
       Caption = 'Misc.'
       ImageIndex = 6
-      object DistributedNetBrowseButton: TSpeedButton
-        Left = 160
-        Top = 328
-        Width = 23
-        Height = 22
-        Glyph.Data = {
-          F6000000424DF600000000000000760000002800000010000000100000000100
-          0400000000008000000000000000000000001000000000000000000000000000
-          8000008000000080800080000000800080008080000080808000C0C0C0000000
-          FF0000FF000000FFFF00FF000000FF00FF00FFFF0000FFFFFF00888888888888
-          88888888888888888888000000000008888800333333333088880B0333333333
-          08880FB03333333330880BFB0333333333080FBFB000000000000BFBFBFBFB08
-          88880FBFBFBFBF0888880BFB0000000888888000888888880008888888888888
-          8008888888880888080888888888800088888888888888888888}
-        OnClick = DistributedNetBrowseButtonClick
-      end
-      object Label34: TLabel
-        Left = 8
-        Top = 312
-        Width = 107
-        Height = 13
-        Caption = 'Distributed.net logfile:'
-      end
-      object Label58: TLabel
-        Left = 8
-        Top = 284
-        Width = 114
-        Height = 13
-        Caption = 'DLL check interval (ms):'
-      end
       object MiscListBox: TListBox
         Left = 0
         Top = 0
         Width = 180
-        Height = 265
+        Height = 317
         Font.Charset = ANSI_CHARSET
         Font.Color = clWindowText
         Font.Height = -12
@@ -663,30 +633,6 @@ object SetupForm: TSetupForm
         TabOrder = 0
         OnClick = MiscListBoxClick
         OnDblClick = InsertButtonClick
-      end
-      object DistributedNetLogfileEdit: TEdit
-        Left = 4
-        Top = 328
-        Width = 153
-        Height = 21
-        TabOrder = 2
-      end
-      object DLLCheckIntervalSpinEdit: TSpinEdit
-        Left = 128
-        Top = 280
-        Width = 49
-        Height = 22
-        Font.Charset = ANSI_CHARSET
-        Font.Color = clWindowText
-        Font.Height = -11
-        Font.Name = 'Tahoma'
-        Font.Style = []
-        MaxLength = 4
-        MaxValue = 1000
-        MinValue = 5
-        ParentFont = False
-        TabOrder = 1
-        Value = 200
       end
     end
     object LCDFeaturesTabSheet: TTabSheet
@@ -752,7 +698,7 @@ object SetupForm: TSetupForm
     end
   end
   object OKButton: TButton
-    Left = 576
+    Left = 572
     Top = 384
     Width = 75
     Height = 25
@@ -765,11 +711,11 @@ object SetupForm: TSetupForm
     Font.Style = []
     ModalResult = 1
     ParentFont = False
-    TabOrder = 5
+    TabOrder = 4
     OnClick = OKButtonClick
   end
   object CancelButton: TButton
-    Left = 656
+    Left = 652
     Top = 384
     Width = 75
     Height = 25
@@ -782,24 +728,26 @@ object SetupForm: TSetupForm
     Font.Style = []
     ModalResult = 2
     ParentFont = False
-    TabOrder = 6
+    TabOrder = 5
   end
   object VariableEdit: TEdit
     Left = 8
-    Top = 376
+    Top = 372
     Width = 121
     Height = 17
     TabStop = False
     BorderStyle = bsNone
     Color = clBtnFace
+    Ctl3D = True
     Enabled = False
     Font.Charset = ANSI_CHARSET
     Font.Color = clBlack
     Font.Height = -12
     Font.Name = 'MS Sans Serif'
     Font.Style = []
+    ParentCtl3D = False
     ParentFont = False
-    TabOrder = 8
+    TabOrder = 2
     Text = '[Variable]'
   end
   object InsertButton: TButton
@@ -813,24 +761,24 @@ object SetupForm: TSetupForm
     Caption = '&Insert -->'
     ParentShowHint = False
     ShowHint = True
-    TabOrder = 2
+    TabOrder = 1
     OnClick = InsertButtonClick
   end
   object ApplyButton: TButton
-    Left = 736
+    Left = 732
     Top = 384
     Width = 75
     Height = 25
     Caption = '&Apply'
-    TabOrder = 7
+    TabOrder = 6
     OnClick = ApplyButtonClick
   end
   object MainPageControl: TPageControl
     Left = 232
     Top = 0
-    Width = 577
-    Height = 377
-    ActivePage = ScreensTabSheet
+    Width = 581
+    Height = 381
+    ActivePage = MyTabSheet
     TabOrder = 0
     TabStop = False
     OnChange = MainPageControlChange
@@ -850,7 +798,7 @@ object SetupForm: TSetupForm
         Font.Style = [fsBold]
         ParentBiDiMode = False
         ParentFont = False
-        TabOrder = 0
+        TabOrder = 2
         object Label5: TLabel
           Left = 9
           Top = 46
@@ -1055,7 +1003,7 @@ object SetupForm: TSetupForm
           Caption = ' '
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 6
+          TabOrder = 8
         end
         object DontScrollLine2CheckBox: TCheckBox
           Left = 436
@@ -1066,7 +1014,7 @@ object SetupForm: TSetupForm
           Caption = ' '
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 10
+          TabOrder = 12
         end
         object DontScrollLine3CheckBox: TCheckBox
           Left = 436
@@ -1077,7 +1025,7 @@ object SetupForm: TSetupForm
           Caption = ' '
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 14
+          TabOrder = 16
         end
         object DontScrollLine4CheckBox: TCheckBox
           Left = 436
@@ -1088,7 +1036,7 @@ object SetupForm: TSetupForm
           Caption = ' '
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 18
+          TabOrder = 20
         end
         object GroupBox4: TGroupBox
           Left = 464
@@ -1096,7 +1044,7 @@ object SetupForm: TSetupForm
           Width = 2
           Height = 161
           Enabled = False
-          TabOrder = 21
+          TabOrder = 22
         end
         object ContinueLine1CheckBox: TCheckBox
           Left = 480
@@ -1107,7 +1055,7 @@ object SetupForm: TSetupForm
           Caption = ' '
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 7
+          TabOrder = 9
           OnClick = ContinueLine1CheckBoxClick
         end
         object ContinueLine2CheckBox: TCheckBox
@@ -1119,7 +1067,7 @@ object SetupForm: TSetupForm
           Caption = ' '
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 11
+          TabOrder = 13
           OnClick = ContinueLine2CheckBoxClick
         end
         object ContinueLine3CheckBox: TCheckBox
@@ -1131,7 +1079,7 @@ object SetupForm: TSetupForm
           Caption = ' '
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 15
+          TabOrder = 17
           OnClick = ContinueLine3CheckBoxClick
         end
         object GroupBox5: TGroupBox
@@ -1140,7 +1088,7 @@ object SetupForm: TSetupForm
           Width = 2
           Height = 161
           Enabled = False
-          TabOrder = 22
+          TabOrder = 23
         end
         object CenterLine1CheckBox: TCheckBox
           Left = 528
@@ -1151,7 +1099,7 @@ object SetupForm: TSetupForm
           Caption = ' '
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 8
+          TabOrder = 10
         end
         object CenterLine2CheckBox: TCheckBox
           Left = 528
@@ -1162,7 +1110,7 @@ object SetupForm: TSetupForm
           Caption = ' '
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 12
+          TabOrder = 14
         end
         object CenterLine3CheckBox: TCheckBox
           Left = 528
@@ -1173,7 +1121,7 @@ object SetupForm: TSetupForm
           Caption = ' '
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 16
+          TabOrder = 18
         end
         object CenterLine4CheckBox: TCheckBox
           Left = 528
@@ -1184,7 +1132,7 @@ object SetupForm: TSetupForm
           Caption = ' '
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 19
+          TabOrder = 21
         end
         object GroupBox6: TGroupBox
           Left = 424
@@ -1192,7 +1140,7 @@ object SetupForm: TSetupForm
           Width = 2
           Height = 57
           Enabled = False
-          TabOrder = 23
+          TabOrder = 24
         end
         object ThemeNumberSpinEdit: TSpinEdit
           Left = 256
@@ -1208,7 +1156,7 @@ object SetupForm: TSetupForm
           MaxValue = 10
           MinValue = 1
           ParentFont = False
-          TabOrder = 0
+          TabOrder = 2
           Value = 1
         end
         object TransitionButton: TButton
@@ -1226,7 +1174,7 @@ object SetupForm: TSetupForm
           ParentFont = False
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 1
+          TabOrder = 3
           OnClick = TransitionButtonClick
         end
         object StickyCheckbox: TCheckBox
@@ -1244,7 +1192,7 @@ object SetupForm: TSetupForm
           ParentFont = False
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 3
+          TabOrder = 5
           OnClick = StickyCheckboxClick
         end
         object SkipScreenComboBox: TComboBox
@@ -1265,7 +1213,7 @@ object SetupForm: TSetupForm
           ParentFont = False
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 4
+          TabOrder = 6
           OnChange = SkipScreenComboBoxChange
           Items.Strings = (
             'Don'#39't skip'
@@ -1291,7 +1239,7 @@ object SetupForm: TSetupForm
           ParentFont = False
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 20
+          TabOrder = 1
         end
         object TimeToShowSpinEdit: TSpinEdit
           Left = 77
@@ -1312,7 +1260,7 @@ object SetupForm: TSetupForm
           ParentFont = False
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 2
+          TabOrder = 4
           Value = 3
         end
         object Line1Edit: TEdit
@@ -1320,6 +1268,7 @@ object SetupForm: TSetupForm
           Top = 74
           Width = 417
           Height = 23
+          Hint = 'double click to open edit window'
           BevelEdges = []
           Color = 10606500
           Font.Charset = ANSI_CHARSET
@@ -1328,7 +1277,10 @@ object SetupForm: TSetupForm
           Font.Name = 'Fixedsys'
           Font.Style = []
           ParentFont = False
-          TabOrder = 5
+          ParentShowHint = False
+          ShowHint = True
+          TabOrder = 7
+          OnDblClick = LineEditClick
           OnEnter = Line1EditEnter
           OnKeyDown = Line1EditKeyDown
         end
@@ -1337,6 +1289,7 @@ object SetupForm: TSetupForm
           Top = 98
           Width = 417
           Height = 23
+          Hint = 'double click to open edit window'
           BevelEdges = []
           Color = clWhite
           Font.Charset = ANSI_CHARSET
@@ -1345,7 +1298,10 @@ object SetupForm: TSetupForm
           Font.Name = 'Fixedsys'
           Font.Style = []
           ParentFont = False
-          TabOrder = 9
+          ParentShowHint = False
+          ShowHint = True
+          TabOrder = 11
+          OnDblClick = LineEditClick
           OnEnter = Line2EditEnter
           OnKeyDown = Line2EditKeyDown
         end
@@ -1354,6 +1310,7 @@ object SetupForm: TSetupForm
           Top = 122
           Width = 417
           Height = 23
+          Hint = 'double click to open edit window'
           BevelEdges = []
           Font.Charset = ANSI_CHARSET
           Font.Color = clBlack
@@ -1361,7 +1318,10 @@ object SetupForm: TSetupForm
           Font.Name = 'Fixedsys'
           Font.Style = []
           ParentFont = False
-          TabOrder = 13
+          ParentShowHint = False
+          ShowHint = True
+          TabOrder = 15
+          OnDblClick = LineEditClick
           OnEnter = Line3EditEnter
           OnKeyDown = Line3EditKeyDown
         end
@@ -1370,6 +1330,7 @@ object SetupForm: TSetupForm
           Top = 146
           Width = 417
           Height = 23
+          Hint = 'double click to open edit window'
           BevelEdges = []
           Font.Charset = ANSI_CHARSET
           Font.Color = clBlack
@@ -1377,7 +1338,10 @@ object SetupForm: TSetupForm
           Font.Name = 'Fixedsys'
           Font.Style = []
           ParentFont = False
-          TabOrder = 17
+          ParentShowHint = False
+          ShowHint = True
+          TabOrder = 19
+          OnDblClick = LineEditClick
           OnEnter = Line4EditEnter
           OnKeyDown = Line4EditKeyDown
         end
@@ -1395,7 +1359,7 @@ object SetupForm: TSetupForm
           MaxValue = 20
           MinValue = 1
           ParentFont = False
-          TabOrder = 24
+          TabOrder = 0
           Value = 1
           OnChange = ScreenSpinEditChange
         end
@@ -1412,7 +1376,7 @@ object SetupForm: TSetupForm
         Font.Name = 'Tahoma'
         Font.Style = [fsBold]
         ParentFont = False
-        TabOrder = 1
+        TabOrder = 0
         DesignSize = (
           270
           166)
@@ -1614,7 +1578,7 @@ object SetupForm: TSetupForm
         Font.Name = 'Tahoma'
         Font.Style = [fsBold]
         ParentFont = False
-        TabOrder = 2
+        TabOrder = 1
         object Panel1: TPanel
           Left = 2
           Top = 15
@@ -1629,7 +1593,7 @@ object SetupForm: TSetupForm
             Top = 3
             Width = 275
             Height = 142
-            ActivePage = PluginTabsheet
+            ActivePage = ScreenTabsheet
             Align = alClient
             Font.Charset = ANSI_CHARSET
             Font.Color = clBlack
@@ -1744,7 +1708,7 @@ object SetupForm: TSetupForm
                 Font.Height = -11
                 Font.Name = 'Tahoma'
                 Font.Style = []
-                ItemHeight = 0
+                ItemHeight = 13
                 ParentFont = False
                 ParentShowHint = False
                 ShowHint = True
@@ -1971,8 +1935,8 @@ object SetupForm: TSetupForm
       Caption = 'Startup/Shutdown'
       ImageIndex = 2
       DesignSize = (
-        569
-        349)
+        573
+        353)
       object GroupBox7: TGroupBox
         Left = 8
         Top = 16
@@ -2068,7 +2032,7 @@ object SetupForm: TSetupForm
       object ShutdownMessageGroup: TGroupBox
         Left = 8
         Top = 164
-        Width = 433
+        Width = 437
         Height = 117
         Hint = 'Custom message to be displayed when LCD Smartie is shut down.'
         Anchors = [akLeft, akTop, akRight]
@@ -2096,8 +2060,8 @@ object SetupForm: TSetupForm
           Font.Style = []
           ParentFont = False
           TabOrder = 0
-          OnEnter = Line1EditEnter
-          OnKeyDown = Line1EditKeyDown
+          OnEnter = ShutdownEditEnter
+          OnKeyDown = ShutdownEdit1KeyDown
         end
         object ShutdownEdit2: TEdit
           Left = 8
@@ -2113,8 +2077,8 @@ object SetupForm: TSetupForm
           Font.Style = []
           ParentFont = False
           TabOrder = 1
-          OnEnter = Line2EditEnter
-          OnKeyDown = Line2EditKeyDown
+          OnEnter = ShutdownEditEnter
+          OnKeyDown = ShutdownEdit2KeyDown
         end
         object ShutdownEdit3: TEdit
           Left = 8
@@ -2129,8 +2093,8 @@ object SetupForm: TSetupForm
           Font.Style = []
           ParentFont = False
           TabOrder = 2
-          OnEnter = Line3EditEnter
-          OnKeyDown = Line3EditKeyDown
+          OnEnter = ShutdownEditEnter
+          OnKeyDown = ShutdownEdit3KeyDown
         end
         object ShutdownEdit4: TEdit
           Left = 8
@@ -2145,44 +2109,208 @@ object SetupForm: TSetupForm
           Font.Style = []
           ParentFont = False
           TabOrder = 3
-          OnEnter = Line4EditEnter
-          OnKeyDown = Line4EditKeyDown
+          OnEnter = ShutdownEditEnter
+          OnKeyDown = ShutdownEdit4KeyDown
         end
       end
     end
-  end
-  object RandomizeScreensCheckBox: TCheckBox
-    Left = 384
-    Top = 384
-    Width = 113
-    Height = 17
-    Hint = 
-      'Rather than automatically selecting in sequence, chose them rand' +
-      'omly.'
-    Caption = '&Randomize screens'
-    Font.Charset = ANSI_CHARSET
-    Font.Color = clWindowText
-    Font.Height = -11
-    Font.Name = 'Tahoma'
-    Font.Style = []
-    ParentFont = False
-    ParentShowHint = False
-    ShowHint = True
-    TabOrder = 4
-  end
-  object StayOnTopCheckBox: TCheckBox
-    Left = 240
-    Top = 384
-    Width = 81
-    Height = 17
-    Caption = '&Stay on top'
-    Font.Charset = ANSI_CHARSET
-    Font.Color = clWindowText
-    Font.Height = -11
-    Font.Name = 'Tahoma'
-    Font.Style = []
-    ParentFont = False
-    TabOrder = 3
+    object MyTabSheet: TTabSheet
+      Caption = 'Miscellaneous'
+      ImageIndex = 3
+      DesignSize = (
+        573
+        353)
+      object Label9: TLabel
+        Left = 16
+        Top = 83
+        Width = 50
+        Height = 13
+        Caption = 'Tray Icon:'
+      end
+      object TrayIconPreview32: TImage
+        Left = 272
+        Top = 96
+        Width = 32
+        Height = 32
+        AutoSize = True
+      end
+      object TrayIconBrowseButton: TSpeedButton
+        Left = 232
+        Top = 103
+        Width = 23
+        Height = 22
+        Hint = 'Click to choose the tray icon for this program instance.'
+        Glyph.Data = {
+          F6000000424DF600000000000000760000002800000010000000100000000100
+          0400000000008000000000000000000000001000000000000000000000000000
+          8000008000000080800080000000800080008080000080808000C0C0C0000000
+          FF0000FF000000FFFF00FF000000FF00FF00FFFF0000FFFFFF00888888888888
+          88888888888888888888000000000008888800333333333088880B0333333333
+          08880FB03333333330880BFB0333333333080FBFB000000000000BFBFBFBFB08
+          88880FBFBFBFBF0888880BFB0000000888888000888888880008888888888888
+          8008888888880888080888888888800088888888888888888888}
+        ParentShowHint = False
+        ShowHint = True
+        OnClick = TrayIconBrowseButtonClick
+      end
+      object TrayIconPreview16: TImage
+        Left = 312
+        Top = 112
+        Width = 16
+        Height = 16
+        Anchors = [akLeft, akBottom]
+        AutoSize = True
+      end
+      object Label10: TLabel
+        Left = 16
+        Top = 27
+        Width = 48
+        Height = 13
+        Caption = 'Skin Path:'
+      end
+      object SkinPathBrowseButton: TSpeedButton
+        Left = 232
+        Top = 47
+        Width = 23
+        Height = 22
+        Hint = 'Click to choose skin path for this program instance.'
+        Glyph.Data = {
+          F6000000424DF600000000000000760000002800000010000000100000000100
+          0400000000008000000000000000000000001000000000000000000000000000
+          8000008000000080800080000000800080008080000080808000C0C0C0000000
+          FF0000FF000000FFFF00FF000000FF00FF00FFFF0000FFFFFF00888888888888
+          88888888888888888888000000000008888800333333333088880B0333333333
+          08880FB03333333330880BFB0333333333080FBFB000000000000BFBFBFBFB08
+          88880FBFBFBFBF0888880BFB0000000888888000888888880008888888888888
+          8008888888880888080888888888800088888888888888888888}
+        ParentShowHint = False
+        ShowHint = True
+        OnClick = SkinPathBrowseButtonClick
+      end
+      object DistributedNetBrowseButton: TSpeedButton
+        Left = 232
+        Top = 260
+        Width = 23
+        Height = 22
+        Glyph.Data = {
+          F6000000424DF600000000000000760000002800000010000000100000000100
+          0400000000008000000000000000000000001000000000000000000000000000
+          8000008000000080800080000000800080008080000080808000C0C0C0000000
+          FF0000FF000000FFFF00FF000000FF00FF00FFFF0000FFFFFF00888888888888
+          88888888888888888888000000000008888800333333333088880B0333333333
+          08880FB03333333330880BFB0333333333080FBFB000000000000BFBFBFBFB08
+          88880FBFBFBFBF0888880BFB0000000888888000888888880008888888888888
+          8008888888880888080888888888800088888888888888888888}
+        OnClick = DistributedNetBrowseButtonClick
+      end
+      object Label34: TLabel
+        Left = 20
+        Top = 244
+        Width = 107
+        Height = 13
+        Caption = 'Distributed.net logfile:'
+      end
+      object Label58: TLabel
+        Left = 20
+        Top = 216
+        Width = 114
+        Height = 13
+        Caption = 'DLL check interval (ms):'
+      end
+      object TrayIcon: TEdit
+        Left = 16
+        Top = 102
+        Width = 217
+        Height = 21
+        BevelEdges = []
+        Color = clWhite
+        Font.Charset = ANSI_CHARSET
+        Font.Color = clBlack
+        Font.Height = -11
+        Font.Name = 'Tahoma'
+        Font.Style = []
+        ParentFont = False
+        ParentShowHint = False
+        ReadOnly = True
+        ShowHint = False
+        TabOrder = 1
+      end
+      object StayOnTopCheckBox: TCheckBox
+        Left = 16
+        Top = 148
+        Width = 81
+        Height = 17
+        Caption = '&Stay on top'
+        Font.Charset = ANSI_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -11
+        Font.Name = 'Tahoma'
+        Font.Style = []
+        ParentFont = False
+        TabOrder = 2
+      end
+      object RandomizeScreensCheckBox: TCheckBox
+        Left = 16
+        Top = 180
+        Width = 113
+        Height = 17
+        Hint = 
+          'Rather than automatically selecting in sequence, chose them rand' +
+          'omly.'
+        Caption = '&Randomize screens'
+        Font.Charset = ANSI_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -11
+        Font.Name = 'Tahoma'
+        Font.Style = []
+        ParentFont = False
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 3
+      end
+      object SkinPath: TEdit
+        Left = 16
+        Top = 46
+        Width = 217
+        Height = 21
+        BevelEdges = []
+        Color = clWhite
+        Font.Charset = ANSI_CHARSET
+        Font.Color = clBlack
+        Font.Height = -11
+        Font.Name = 'Tahoma'
+        Font.Style = []
+        ParentFont = False
+        ParentShowHint = False
+        ReadOnly = True
+        ShowHint = False
+        TabOrder = 0
+      end
+      object DistributedNetLogfileEdit: TEdit
+        Left = 16
+        Top = 260
+        Width = 217
+        Height = 21
+        TabOrder = 5
+      end
+      object DLLCheckIntervalSpinEdit: TSpinEdit
+        Left = 140
+        Top = 212
+        Width = 49
+        Height = 22
+        Font.Charset = ANSI_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -11
+        Font.Name = 'Tahoma'
+        Font.Style = []
+        MaxLength = 4
+        MaxValue = 1000
+        MinValue = 5
+        ParentFont = False
+        TabOrder = 4
+        Value = 200
+      end
+    end
   end
   object OpenDialog2: TOpenDialog
     DefaultExt = '*.*'
@@ -2200,6 +2328,16 @@ object SetupForm: TSetupForm
     Filter = 'Executables (*.exe)|*.exe|All Files (*.*)|*.*'
     InitialDir = 'C:\program files\winamp'
     Left = 540
+    Top = 384
+  end
+  object OpenIco: TOpenPictureDialog
+    DefaultExt = 'ico'
+    Filter = 'Icons (*.ico)|*.ico'
+    Options = [ofHideReadOnly, ofExtensionDifferent, ofPathMustExist, ofFileMustExist, ofNoNetworkButton, ofEnableSizing]
+    OptionsEx = [ofExNoPlacesBar]
+    Title = 'Choose Icon for Tray Area'
+    OnFolderChange = OpeIcoFolderChange
+    Left = 480
     Top = 384
   end
 end

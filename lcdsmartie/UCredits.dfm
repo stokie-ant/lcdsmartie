@@ -1,6 +1,6 @@
 object CreditsForm: TCreditsForm
-  Left = 414
-  Top = 174
+  Left = 290
+  Top = 213
   BorderIcons = []
   BorderStyle = bsNone
   Caption = 'LCD Smartie Info'
