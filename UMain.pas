@@ -112,6 +112,7 @@ type
     Line3LCDPanel: TLCDLineFrame;
     CheckforUpdates1: TMenuItem;
 
+
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure ShowWindow1Click(Sender: TObject);
@@ -193,7 +194,7 @@ type
     procedure LoadColors;
 
   private
-    InitialWindowState: TInitialWindowState;
+//    InitialWindowState: TInitialWindowState;
     ScreenLCD: Array[1..MaxLines] of TOnScreenLineWrapper;
     parsedLine: Array[1..MaxLines] of String;
     scrollPos: Array[1..MaxLines] of Integer;
@@ -272,6 +273,7 @@ var
   OurVersMin : integer;
   OurVersRel : integer;
   OurVersBuild : integer;
+  ShowWindowFlag: Boolean;
 
 implementation
 
@@ -421,8 +423,8 @@ begin
   NumberOfScreensToShift := 1;
   LoadColors;
 
-  if (config.bHideOnStartup) then
-    InitialWindowState := HideMainForm;
+  //if (config.bHideOnStartup) then
+  //  InitialWindowState := HideMainForm;
 
   // delete/create startup shortcut as required.
   SetupAutoStart();
@@ -447,7 +449,8 @@ begin
     LCDSmartieDisplayForm.Top  := oPos.Top;
     LCDSmartieDisplayForm.Left := oPos.Left;
   end;
-
+  if not (config.bHideOnStartup) and (ShowWindowFlag) then
+    LCDSmartieDisplayForm.Show;
 end;
 
 procedure TLCDSmartieDisplayForm.LoadSkin;
@@ -527,25 +530,26 @@ end;
 
 procedure TLCDSmartieDisplayForm.ProcessCommandLineParams;
 var
-  I : integer;
+  I: integer;
   parameter: String;
 begin
-  InitialWindowState := NoChange;
+  ShowWindowFlag := True;
   i := 1;
   while (i <= ParamCount) do
   begin
-    parameter :=  lowercase(ParamStr(i));
+    parameter := LowerCase(ParamStr(i));
 
     if (parameter = '-hide') then
-      InitialWindowState := HideMainForm
-    else if (parameter = '-totalhide') then
-      InitialWindowState := TotalHideMainForm
-    else
-      if (parameter = '-config') then
-        begin
-          Inc(i);
-          ConfigFileName := ParamStr(i);  // will give '' if out of range
-        end;
+      ShowWindowFlag := False;
+
+    if (parameter = '-totalhide') then
+      ShowWindowFlag := False;
+
+    if (parameter = '-config') then
+    begin
+      Inc(i);
+      ConfigFileName := ParamStr(i);  // will give '' if out of range
+    end;
     Inc(i);
   end;
 end;
@@ -1088,14 +1092,14 @@ begin
 
   // This code can't go in FormCreate or FormShow because it either
   // doesn't work (FormCreate) or causes an exception (FormShow).
-  if (InitialWindowState <> NoChange) then
-  begin
-    case InitialWindowState of
-      HideMainForm : Application.Minimize;
-      TotalHideMainForm : CoolTrayIcon1.HideMainForm;
-    end;
-    InitialWindowState := NoChange;
-  end;
+//  if (InitialWindowState <> NoChange) then
+//  begin
+//    case InitialWindowState of
+//      HideMainForm : Application.Minimize;
+//      TotalHideMainForm : CoolTrayIcon1.HideMainForm;
+//    end;
+//    InitialWindowState := NoChange;
+//  end;
 
   if ((gotnewlines = false) OR (TransitionTimer.enabled = false))then
   begin

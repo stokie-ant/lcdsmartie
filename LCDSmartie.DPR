@@ -1,6 +1,7 @@
 program LCDSmartie;
 
 uses
+
   madExcept,
   madLinkDisAsm,
   Forms,
@@ -13,6 +14,7 @@ begin
   Application.Initialize;
   Application.Title := 'LCD Smartie';
   Application.HelpFile := 'readme.txt';
+  Application.ShowMainForm := False;
   Application.CreateForm(TLCDSmartieDisplayForm, LCDSmartieDisplayForm);
   Application.Run;
 end.

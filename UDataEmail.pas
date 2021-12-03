@@ -10,10 +10,10 @@ uses
 
 const
   EmailKeyPrefix = '$Email';
-  EmailCountKey = EmailKeyPrefix;
-  EmailSubjectKey = EmailKeyPrefix + 'Sub';
-  EmailFromKey = EmailKeyPrefix + 'From';
-
+  EmailCountKey = EmailKeyPrefix + '(';
+  EmailSubjectKey = EmailKeyPrefix + 'Sub(';
+  EmailFromKey = EmailKeyPrefix + 'From(';
+	EmailKeyPostfix = ')';
 type
   PPop3 = ^TIdPop3;
 
@@ -27,7 +27,7 @@ type
   private
     fGotEmail : boolean; // data+main threads
     fPOP3Copy : PPop3;   // so we can cancel the request. Guarded by httpCs
-    fMail : array [0..MaxEmailAccounts-1] of TEmail; // Guarded by mailCs, data+main thread
+    fMail : array [1..MaxEmailAccounts] of TEmail; // Guarded by mailCs, data+main thread
   protected
     procedure  DoUpdate; override;
   public
@@ -58,7 +58,7 @@ end;
 
 procedure TEmailDataThread.DoUpdate;
 var
-  CheckForMail: array[0..MaxEmailAccounts-1] of boolean;
+  CheckForMail: array[1..MaxEmailAccounts] of boolean;
   AccountLoop,ScreenLoop,LineLoop : integer;
   screenline: String;
   pop3: TIdPOP3;
@@ -76,11 +76,11 @@ begin
     for LineLoop := 1 to config.height do
     begin
       screenline := config.screen[ScreenLoop][LineLoop].text;
-      for AccountLoop := 0 to MaxEmailAccounts-1 do
+      for AccountLoop := 1 to MaxEmailAccounts do
       begin
-        if (pos(EmailCountKey + IntToStr(AccountLoop), screenline) <> 0)
-          or (pos(EmailSubjectKey + IntToStr(AccountLoop), screenline) <> 0)
-          or (pos(EmailFromKey + IntToStr(AccountLoop), screenline) <> 0) then
+        if (pos(EmailCountKey + IntToStr(AccountLoop) + EmailKeyPostfix, screenline) <> 0)
+          or (pos(EmailSubjectKey + IntToStr(AccountLoop) + EmailKeyPostfix, screenline) <> 0)
+          or (pos(EmailFromKey + IntToStr(AccountLoop) + EmailKeyPostfix, screenline) <> 0) then
         begin
           CheckForMail[AccountLoop] := true;
         end;
@@ -90,7 +90,7 @@ begin
 
   myGotEmail := False;
   // now go check the active accounts
-  for AccountLoop := 0 to MaxEmailAccounts-1 do
+  for AccountLoop := 1 to MaxEmailAccounts do
   begin
     if CheckForMail[AccountLoop] then
     begin
@@ -122,7 +122,7 @@ begin
             SSLHandler.MaxLineAction := maException;
             SSLHandler.ConnectTimeout := 15000;
 
-            SSLHandler.SSLOptions.Method := sslvSSLv3;
+            SSLHandler.SSLOptions.Method := sslvSSLv23;
             SSLHandler.SSLOptions.Mode := sslmUnassigned;
             SSLHandler.SSLOptions.VerifyMode := [];
             SSLHandler.SSLOptions.VerifyDepth := 0;
@@ -200,13 +200,13 @@ begin
   begin
     fDataLock.Enter();
     try
-      for AccountLoop := 0 to MaxEmailAccounts-1 do
+      for AccountLoop := 1 to MaxEmailAccounts do
       begin
-        line := StringReplace(line, EmailCountKey + IntToStr(AccountLoop),
+        line := StringReplace(line, EmailCountKey + IntToStr(AccountLoop) + EmailKeyPostfix,
           IntToStr(fMail[AccountLoop].messages), [rfReplaceAll]);
-        line := StringReplace(line, EmailSubjectKey + IntToStr(AccountLoop),
+        line := StringReplace(line, EmailSubjectKey + IntToStr(AccountLoop) + EmailKeyPostfix,
           fMail[AccountLoop].lastSubject, [rfReplaceAll]);
-        line := StringReplace(line, EmailFromKey + IntToStr(AccountLoop),
+        line := StringReplace(line, EmailFromKey + IntToStr(AccountLoop) + EmailKeyPostfix,
           fMail[AccountLoop].lastFrom, [rfReplaceAll]);
       end;
     finally

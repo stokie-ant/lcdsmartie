@@ -79,7 +79,7 @@ const
   LastNetworkStat = nsNetSpUpM;
 
 const
-  MAXNETSTATS = 10;
+  MAXNETSTATS = 99;
 
 type
   TNetworkAdapterStats = record

@@ -1,6 +1,6 @@
 object SetupForm: TSetupForm
-  Left = 356
-  Top = 331
+  Left = 908
+  Top = 551
   Anchors = []
   BiDiMode = bdLeftToRight
   BorderIcons = []
@@ -27,7 +27,7 @@ object SetupForm: TSetupForm
     Top = 0
     Width = 233
     Height = 409
-    ActivePage = FoldingAtHomeTabSheet
+    ActivePage = EmailTabSheet
     Font.Charset = ANSI_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
@@ -778,7 +778,7 @@ object SetupForm: TSetupForm
     Top = 0
     Width = 581
     Height = 381
-    ActivePage = MyTabSheet
+    ActivePage = ScreensTabSheet
     TabOrder = 0
     TabStop = False
     OnChange = MainPageControlChange
@@ -1663,7 +1663,7 @@ object SetupForm: TSetupForm
                 Height = 21
                 Style = csDropDownList
                 Anchors = [akLeft, akTop, akRight]
-                ItemHeight = 13
+                ItemHeight = 0
                 TabOrder = 0
                 OnChange = DisplayPluginListChange
               end
@@ -1830,7 +1830,7 @@ object SetupForm: TSetupForm
         FixedCols = 0
         RowCount = 1
         FixedRows = 0
-        Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goRowSelect]
+        Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRowSelect]
         TabOrder = 7
         OnClick = ActionsStringGridClick
       end
@@ -1902,7 +1902,6 @@ object SetupForm: TSetupForm
         Width = 113
         Height = 21
         TabOrder = 3
-        Text = 'Backlight(1)'
       end
       object ActionAddButton: TButton
         Left = 312
@@ -1928,7 +1927,6 @@ object SetupForm: TSetupForm
         Width = 73
         Height = 21
         TabOrder = 2
-        Text = 'Operand2Edit'
       end
     end
     object StartupTabSheet: TTabSheet

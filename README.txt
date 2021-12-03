@@ -19,11 +19,7 @@ the projects path:
  - indy SSL library
  - MadExcepts
 
-All of these components can be found in the components sub-directory or here:
-
-http://www.vcorp.it/downloads/indy10.1.5_d7.exe
-http://www.vcorp.it/downloads/indy_OpenSSL096m.zip
-
+All of these components can be found in the components sub-directory
 
 Install all components before loading the LCD Smartie project.
 

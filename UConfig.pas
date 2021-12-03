@@ -30,13 +30,13 @@ const
   sMyConfigFileFormatVersion = '1.0';
   sMyScreenTextSyntaxVersion = '1.0';
 
-  MaxScreens = 20;
+  MaxScreens = 99;
   MaxLines = 4;
   MaxCols = 40;
-  MaxThemes = 10;
+  MaxThemes = 99;
   MaxActions = 99;
   MaxScreenSizes = 12;
-  MaxEmailAccounts = 10;
+  MaxEmailAccounts = 99;
 
 type
   TScreenSize = record
@@ -126,7 +126,7 @@ type
     testDriver: TTestDriverSettings;
     isUsbPalm: Boolean;
     gameServer: Array[1..MaxScreens, 1..MaxLines] of String;
-    pop: Array [0..MaxEmailAccounts-1] of TPopAccount;
+    pop: Array [1..MaxEmailAccounts] of TPopAccount;
     comPort: Integer;
     baudrate: Integer;
     refreshRate: Integer;
@@ -368,8 +368,8 @@ begin
 
   httpProxy := configArray[93];
   httpProxyPort := StrToInt(configArray[94]);
-
-  // Pop accounts + ssl
+// dont think we need this any more and it conflicts with the new email code
+{  // Pop accounts + ssl
   pop[1].server := copy(configArray[95], 1, pos('¿0', configArray[95])-1);
   pop[1].user := copy(configArray[96], 1, pos('¿0', configArray[96])-1);
   pop[1].pword := copy(configArray[97], 1, pos('¿0', configArray[97])-1);
@@ -455,7 +455,7 @@ begin
     pos('¿9', configArray[97])-pos('¿8', configArray[97])-2);
   pop[0].port_ssl := copy(configArray[101], pos('¿8', configArray[101]) + 2,
     pos('¿9', configArray[101])-pos('¿8', configArray[101])-2);    
-
+}
   xScreenType := TScreenType(StrToInt(configArray[98]));
   comPort := StrToInt(configArray[99]);
   baudrate := StrToInt(configArray[100]);
@@ -711,7 +711,7 @@ begin
 
 
   // Pop accounts + ssl
-  for MailCount := 0 to MaxEmailAccounts-1 do
+  for MailCount := 1 to MaxEmailAccounts do
   begin
     sPOPAccount := Format('%.2u', [MailCount], localeFormat);
     pop[MailCount].server := initFile.ReadString('POP Accounts', 'Server' +
@@ -884,7 +884,7 @@ begin
   end;
 
   // Pop accounts + ssl
-  for MailCount := 0 to MaxEmailAccounts-1 do
+  for MailCount := 1 to MaxEmailAccounts do
   begin
     sPOPAccount := Format('%.2u', [MailCount], localeFormat);
     initFile.WriteString('POP Accounts', 'Server' + sPOPAccount,
@@ -938,4 +938,3 @@ end;
 
 
 end.
-

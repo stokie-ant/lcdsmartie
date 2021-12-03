@@ -418,16 +418,16 @@ begin
       ActionAddButton.click;
   end;
 
+  ActionsStringGridClick(nil); // load first row to edit fields instead of leaving last one with selected first row
+
   //application.ProcessMessages;
 
   ScreenSpinEdit.MaxValue := MaxScreens;
-  ScreenSpinEdit.Value := 1;
-  CurrentScreen := 1;
-  //CurrentScreen :=  activescreen;
-  //ScreenSpinEdit.Value := activescreen;
+  CurrentScreen :=  0;
+  ScreenSpinEdit.Value := activeScreen;
 
-  LoadScreen( CurrentScreen );   // setup screen in setup form
-  LCDSmartieDisplayForm.ChangeScreen(CurrentScreen);   // setup screen in main form
+  LoadScreen(activeScreen);   // setup screen in setup form
+  LCDSmartieDisplayForm.ChangeScreen(activeScreen);   // setup screen in main form
 
   ProgramRefreshIntervalSpinEdit.Value := config.refreshRate;
   WinampLocationEdit.text := config.winampLocation;
@@ -659,7 +659,7 @@ var
   y: Integer;
 
 begin
-
+  if scr = 0 then Exit;
   config.screen[scr][1].text := Line1Edit.text;
   config.screen[scr][2].text := Line2Edit.text;
   config.screen[scr][3].text := Line3Edit.text;
@@ -1147,9 +1147,9 @@ procedure TSetupForm.EmailListBoxClick(Sender: TObject);
 begin
   if (EmailListBox.itemindex >= 0) and (EmailListBox.itemindex < MaxEmailAccounts*3) then begin
     case EmailListBox.itemindex mod 3 of
-      0: VariableEdit.Text := EmailCountKey+IntToStr((EmailListBox.itemindex div 3 + 1) mod MaxEmailAccounts);
-      1: VariableEdit.Text := EmailSubjectKey+IntToStr((EmailListBox.itemindex div 3 + 1) mod MaxEmailAccounts);
-      2: VariableEdit.Text := EmailFromKey+IntToStr((EmailListBox.itemindex div 3 + 1) mod MaxEmailAccounts);
+      0: VariableEdit.Text := EmailCountKey+IntToStr((EmailListBox.itemindex div 3+1))+EmailKeyPostfix;
+      1: VariableEdit.Text := EmailSubjectKey+IntToStr((EmailListBox.itemindex div 3+1))+EmailKeyPostfix;
+      2: VariableEdit.Text := EmailFromKey+IntToStr((EmailListBox.itemindex div 3+1))+EmailKeyPostfix;
     end;
   end else
     VariableEdit.Text := NoVariable;
@@ -1676,12 +1676,12 @@ var
   Time : byte;
   Loop : byte;
 begin
-  Style := config.screen[CurrentScreen][1].TransitionStyle;
-  Time := config.screen[CurrentScreen][1].TransitionTime;
+  Style := config.screen[ActiveScreen][1].TransitionStyle;
+  Time := config.screen[ActiveScreen][1].TransitionTime;
   if DoTransitionConfigForm(Style,Time) then begin
     for Loop := 1 to MaxLines do begin
-      config.screen[CurrentScreen][Loop].TransitionStyle := Style;
-      config.screen[CurrentScreen][Loop].TransitionTime := Time;
+      config.screen[ActiveScreen][Loop].TransitionStyle := Style;
+      config.screen[ActiveScreen][Loop].TransitionTime := Time;
     end;
   end;
 end;
