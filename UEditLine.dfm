@@ -1,8 +1,8 @@
 object FormEdit: TFormEdit
   Left = 696
   Top = 643
-  Width = 274
-  Height = 176
+  Width = 294
+  Height = 180
   BorderStyle = bsSizeToolWin
   Caption = 'Edit LCD line'
   Color = clBtnFace
@@ -14,14 +14,14 @@ object FormEdit: TFormEdit
   OldCreateOrder = False
   OnClose = EditClose
   DesignSize = (
-    266
-    142)
+    278
+    141)
   PixelsPerInch = 96
   TextHeight = 13
   object Memo1: TMemo
     Left = 0
     Top = 0
-    Width = 266
+    Width = 286
     Height = 116
     Anchors = [akLeft, akTop, akRight, akBottom]
     BevelInner = bvNone
@@ -37,8 +37,8 @@ object FormEdit: TFormEdit
     TabOrder = 0
   end
   object BtnOk: TButton
-    Left = 127
-    Top = 120
+    Left = 147
+    Top = 116
     Width = 65
     Height = 23
     Anchors = [akRight, akBottom]
@@ -47,8 +47,8 @@ object FormEdit: TFormEdit
     TabOrder = 1
   end
   object BtnCancel: TButton
-    Left = 194
-    Top = 120
+    Left = 214
+    Top = 116
     Width = 64
     Height = 23
     Anchors = [akRight, akBottom]

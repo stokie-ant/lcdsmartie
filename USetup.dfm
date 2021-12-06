@@ -1,13 +1,14 @@
 object SetupForm: TSetupForm
-  Left = 908
-  Top = 551
+  Left = 1003
+  Top = 490
+  ActiveControl = LeftPageControl
   Anchors = []
   BiDiMode = bdLeftToRight
   BorderIcons = []
   BorderStyle = bsToolWindow
   Caption = 'LCD Smartie 5.x Setup'
   ClientHeight = 411
-  ClientWidth = 815
+  ClientWidth = 849
   Color = clBtnFace
   Font.Charset = ANSI_CHARSET
   Font.Color = clBlack
@@ -25,9 +26,9 @@ object SetupForm: TSetupForm
   object LeftPageControl: TPageControl
     Left = 0
     Top = 0
-    Width = 233
+    Width = 265
     Height = 409
-    ActivePage = EmailTabSheet
+    ActivePage = CCharTabSheet
     Font.Charset = ANSI_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
@@ -45,7 +46,7 @@ object SetupForm: TSetupForm
       Caption = 'Winamp'
       object WinampLocationBrowseButton: TSpeedButton
         Left = 160
-        Top = 328
+        Top = 320
         Width = 23
         Height = 22
         Glyph.Data = {
@@ -61,7 +62,7 @@ object SetupForm: TSetupForm
       end
       object WinampLocationLabel: TLabel
         Left = 8
-        Top = 312
+        Top = 304
         Width = 104
         Height = 13
         Caption = 'Winamp.exe location:'
@@ -78,7 +79,7 @@ object SetupForm: TSetupForm
       end
       object WinampLocationEdit: TEdit
         Left = 8
-        Top = 328
+        Top = 320
         Width = 153
         Height = 21
         TabOrder = 1
@@ -138,7 +139,7 @@ object SetupForm: TSetupForm
       ShowHint = True
       object RefreshTimeLabel: TLabel
         Left = 8
-        Top = 332
+        Top = 324
         Width = 97
         Height = 13
         Caption = 'Refresh time (secs):'
@@ -147,7 +148,7 @@ object SetupForm: TSetupForm
         Left = 0
         Top = 0
         Width = 181
-        Height = 321
+        Height = 313
         ItemHeight = 13
         TabOrder = 0
         OnClick = MBMListBoxClick
@@ -155,7 +156,7 @@ object SetupForm: TSetupForm
       end
       object MBMRefreshTimeSpinEdit: TSpinEdit
         Left = 120
-        Top = 328
+        Top = 320
         Width = 55
         Height = 22
         Font.Charset = ANSI_CHARSET
@@ -178,7 +179,7 @@ object SetupForm: TSetupForm
       ImageIndex = 4
       object Label11: TLabel
         Left = 8
-        Top = 312
+        Top = 304
         Width = 36
         Height = 13
         Caption = 'Server:'
@@ -234,14 +235,14 @@ object SetupForm: TSetupForm
       end
       object Label40: TLabel
         Left = 8
-        Top = 272
+        Top = 264
         Width = 56
         Height = 13
         Caption = 'Game type:'
       end
       object GameServerEdit: TEdit
         Left = 16
-        Top = 328
+        Top = 320
         Width = 161
         Height = 21
         Hint = 'servername:portnumber portnumber is optional.'
@@ -253,7 +254,7 @@ object SetupForm: TSetupForm
       end
       object GameTypeComboBox: TComboBox
         Left = 16
-        Top = 288
+        Top = 280
         Width = 161
         Height = 21
         Style = csDropDownList
@@ -362,7 +363,7 @@ object SetupForm: TSetupForm
       end
       object LCDSmartieUpdateCheckBox: TCheckBox
         Left = 2
-        Top = 328
+        Top = 320
         Width = 177
         Height = 17
         Caption = 'Check for LCD Smartie updates'
@@ -375,7 +376,7 @@ object SetupForm: TSetupForm
       ImageIndex = 7
       object Label41: TLabel
         Left = 3
-        Top = 312
+        Top = 304
         Width = 171
         Height = 13
         Caption = 'Email address used with Seti@home'
@@ -402,7 +403,7 @@ object SetupForm: TSetupForm
       end
       object SetiAtHomeEmailEdit: TEdit
         Left = 0
-        Top = 328
+        Top = 320
         Width = 177
         Height = 21
         TabOrder = 1
@@ -413,14 +414,14 @@ object SetupForm: TSetupForm
       ImageIndex = 9
       object Label23: TLabel
         Left = 8
-        Top = 312
+        Top = 304
         Width = 143
         Height = 13
         Caption = 'Username for Folding@Home:'
       end
       object FoldingAtHomeEmailEdit: TEdit
         Left = 8
-        Top = 328
+        Top = 320
         Width = 169
         Height = 21
         TabOrder = 1
@@ -471,7 +472,7 @@ object SetupForm: TSetupForm
       end
       object Label48: TLabel
         Left = 8
-        Top = 332
+        Top = 324
         Width = 113
         Height = 13
         Caption = 'Email check time (mins):'
@@ -531,7 +532,7 @@ object SetupForm: TSetupForm
       end
       object EmailCheckTimeSpinEdit: TSpinEdit
         Left = 120
-        Top = 328
+        Top = 320
         Width = 55
         Height = 22
         Font.Charset = ANSI_CHARSET
@@ -563,7 +564,7 @@ object SetupForm: TSetupForm
         Height = 21
         Style = csDropDownList
         DropDownCount = 10
-        ItemHeight = 13
+        ItemHeight = 0
         TabOrder = 1
         OnChange = EmailAccountComboBoxChange
       end
@@ -586,7 +587,7 @@ object SetupForm: TSetupForm
         Left = 0
         Top = 0
         Width = 180
-        Height = 353
+        Height = 345
         ItemHeight = 13
         TabOrder = 0
         OnClick = NetworkStatsListBoxClick
@@ -696,6 +697,473 @@ object SetupForm: TSetupForm
         TabOrder = 1
       end
     end
+    object PluginsTabSheet: TTabSheet
+      Caption = 'Plugins'
+      ImageIndex = 11
+      object PluginListBox: TFileListBox
+        Left = 0
+        Top = 0
+        Width = 177
+        Height = 281
+        ItemHeight = 13
+        Mask = '*.dll'
+        TabOrder = 0
+        OnClick = PluginListBoxClick
+        OnDblClick = PluginListBoxDblClick
+      end
+      object Btn_PluginRefresh: TButton
+        Left = 0
+        Top = 288
+        Width = 75
+        Height = 25
+        Caption = 'Refresh'
+        TabOrder = 1
+        OnClick = Btn_PluginRefreshClick
+      end
+    end
+    object CCharTabSheet: TTabSheet
+      Caption = 'Char editor'
+      ImageIndex = 12
+      object Label20: TLabel
+        Left = 32
+        Top = 8
+        Width = 115
+        Height = 13
+        Caption = 'Create Character in slot'
+      end
+      object Label21: TLabel
+        Left = 32
+        Top = 193
+        Width = 98
+        Height = 13
+        Caption = 'Use character in slot'
+      end
+      object Panel2: TPanel
+        Left = 40
+        Top = 32
+        Width = 105
+        Height = 145
+        Caption = 'Panel2'
+        TabOrder = 0
+        object CCharCheckBox1: TCheckBox
+          Left = 16
+          Top = 8
+          Width = 17
+          Height = 17
+          Caption = 'CCharCheckBox1'
+          TabOrder = 0
+          OnClick = CCharEditGridChange
+        end
+        object CCharCheckBox2: TCheckBox
+          Left = 32
+          Top = 8
+          Width = 17
+          Height = 17
+          Caption = 'CCharCheckBox1'
+          TabOrder = 1
+          OnClick = CCharEditGridChange
+        end
+        object CCharCheckBox3: TCheckBox
+          Left = 48
+          Top = 8
+          Width = 17
+          Height = 17
+          Caption = 'CCharCheckBox1'
+          TabOrder = 2
+          OnClick = CCharEditGridChange
+        end
+        object CCharCheckBox4: TCheckBox
+          Left = 64
+          Top = 8
+          Width = 17
+          Height = 17
+          Caption = 'CCharCheckBox1'
+          TabOrder = 3
+          OnClick = CCharEditGridChange
+        end
+        object CCharCheckBox5: TCheckBox
+          Left = 80
+          Top = 8
+          Width = 17
+          Height = 17
+          Caption = 'CCharCheckBox1'
+          TabOrder = 4
+          OnClick = CCharEditGridChange
+        end
+        object CCharCheckBox6: TCheckBox
+          Left = 16
+          Top = 24
+          Width = 17
+          Height = 17
+          Caption = 'CCharCheckBox1'
+          TabOrder = 5
+          OnClick = CCharEditGridChange
+        end
+        object CCharCheckBox7: TCheckBox
+          Left = 32
+          Top = 24
+          Width = 17
+          Height = 17
+          Caption = 'CCharCheckBox1'
+          TabOrder = 6
+          OnClick = CCharEditGridChange
+        end
+        object CCharCheckBox8: TCheckBox
+          Left = 48
+          Top = 24
+          Width = 17
+          Height = 17
+          Caption = 'CCharCheckBox1'
+          TabOrder = 7
+          OnClick = CCharEditGridChange
+        end
+        object CCharCheckBox9: TCheckBox
+          Left = 64
+          Top = 24
+          Width = 17
+          Height = 17
+          Caption = 'CCharCheckBox1'
+          TabOrder = 8
+          OnClick = CCharEditGridChange
+        end
+        object CCharCheckBox10: TCheckBox
+          Left = 80
+          Top = 24
+          Width = 17
+          Height = 17
+          Caption = 'CCharCheckBox1'
+          TabOrder = 9
+          OnClick = CCharEditGridChange
+        end
+        object CCharCheckBox11: TCheckBox
+          Left = 16
+          Top = 40
+          Width = 17
+          Height = 17
+          Caption = 'CCharCheckBox1'
+          TabOrder = 10
+          OnClick = CCharEditGridChange
+        end
+        object CCharCheckBox12: TCheckBox
+          Left = 32
+          Top = 40
+          Width = 17
+          Height = 17
+          Caption = 'CCharCheckBox1'
+          TabOrder = 11
+          OnClick = CCharEditGridChange
+        end
+        object CCharCheckBox13: TCheckBox
+          Left = 48
+          Top = 40
+          Width = 17
+          Height = 17
+          Caption = 'CCharCheckBox1'
+          TabOrder = 12
+          OnClick = CCharEditGridChange
+        end
+        object CCharCheckBox14: TCheckBox
+          Left = 64
+          Top = 40
+          Width = 17
+          Height = 17
+          Caption = 'CCharCheckBox1'
+          TabOrder = 13
+          OnClick = CCharEditGridChange
+        end
+        object CCharCheckBox15: TCheckBox
+          Left = 80
+          Top = 40
+          Width = 17
+          Height = 17
+          Caption = 'CCharCheckBox1'
+          TabOrder = 14
+          OnClick = CCharEditGridChange
+        end
+        object CCharCheckBox16: TCheckBox
+          Left = 16
+          Top = 56
+          Width = 17
+          Height = 17
+          Caption = 'CCharCheckBox1'
+          TabOrder = 15
+          OnClick = CCharEditGridChange
+        end
+        object CCharCheckBox17: TCheckBox
+          Left = 32
+          Top = 56
+          Width = 17
+          Height = 17
+          Caption = 'CCharCheckBox1'
+          TabOrder = 16
+          OnClick = CCharEditGridChange
+        end
+        object CCharCheckBox18: TCheckBox
+          Left = 48
+          Top = 56
+          Width = 17
+          Height = 17
+          Caption = 'CCharCheckBox1'
+          TabOrder = 17
+          OnClick = CCharEditGridChange
+        end
+        object CCharCheckBox19: TCheckBox
+          Left = 64
+          Top = 56
+          Width = 17
+          Height = 17
+          Caption = 'CCharCheckBox1'
+          TabOrder = 18
+          OnClick = CCharEditGridChange
+        end
+        object CCharCheckBox20: TCheckBox
+          Left = 80
+          Top = 56
+          Width = 17
+          Height = 17
+          Caption = 'CCharCheckBox1'
+          TabOrder = 19
+          OnClick = CCharEditGridChange
+        end
+        object CCharCheckBox21: TCheckBox
+          Left = 16
+          Top = 72
+          Width = 17
+          Height = 17
+          Caption = 'CCharCheckBox1'
+          TabOrder = 20
+          OnClick = CCharEditGridChange
+        end
+        object CCharCheckBox22: TCheckBox
+          Left = 32
+          Top = 72
+          Width = 17
+          Height = 17
+          Caption = 'CCharCheckBox1'
+          TabOrder = 21
+          OnClick = CCharEditGridChange
+        end
+        object CCharCheckBox23: TCheckBox
+          Left = 48
+          Top = 72
+          Width = 17
+          Height = 17
+          Caption = 'CCharCheckBox1'
+          TabOrder = 22
+          OnClick = CCharEditGridChange
+        end
+        object CCharCheckBox24: TCheckBox
+          Left = 64
+          Top = 72
+          Width = 17
+          Height = 17
+          Caption = 'CCharCheckBox1'
+          TabOrder = 23
+          OnClick = CCharEditGridChange
+        end
+        object CCharCheckBox25: TCheckBox
+          Left = 80
+          Top = 72
+          Width = 17
+          Height = 17
+          Caption = 'CCharCheckBox1'
+          TabOrder = 24
+          OnClick = CCharEditGridChange
+        end
+        object CCharCheckBox26: TCheckBox
+          Left = 16
+          Top = 88
+          Width = 17
+          Height = 17
+          Caption = 'CCharCheckBox1'
+          TabOrder = 25
+          OnClick = CCharEditGridChange
+        end
+        object CCharCheckBox27: TCheckBox
+          Left = 32
+          Top = 88
+          Width = 17
+          Height = 17
+          Caption = 'CCharCheckBox1'
+          TabOrder = 26
+          OnClick = CCharEditGridChange
+        end
+        object CCharCheckBox28: TCheckBox
+          Left = 48
+          Top = 88
+          Width = 17
+          Height = 17
+          Caption = 'CCharCheckBox1'
+          TabOrder = 27
+          OnClick = CCharEditGridChange
+        end
+        object CCharCheckBox29: TCheckBox
+          Left = 64
+          Top = 88
+          Width = 17
+          Height = 17
+          Caption = 'CCharCheckBox1'
+          TabOrder = 28
+          OnClick = CCharEditGridChange
+        end
+        object CCharCheckBox30: TCheckBox
+          Left = 80
+          Top = 88
+          Width = 17
+          Height = 17
+          Caption = 'CCharCheckBox1'
+          TabOrder = 29
+          OnClick = CCharEditGridChange
+        end
+        object CCharCheckBox31: TCheckBox
+          Left = 16
+          Top = 104
+          Width = 17
+          Height = 17
+          Caption = 'CCharCheckBox1'
+          TabOrder = 30
+          OnClick = CCharEditGridChange
+        end
+        object CCharCheckBox32: TCheckBox
+          Left = 32
+          Top = 104
+          Width = 17
+          Height = 17
+          Caption = 'CCharCheckBox1'
+          TabOrder = 31
+          OnClick = CCharEditGridChange
+        end
+        object CCharCheckBox33: TCheckBox
+          Left = 48
+          Top = 104
+          Width = 17
+          Height = 17
+          Caption = 'CCharCheckBox1'
+          TabOrder = 32
+          OnClick = CCharEditGridChange
+        end
+        object CCharCheckBox34: TCheckBox
+          Left = 64
+          Top = 104
+          Width = 17
+          Height = 17
+          Caption = 'CCharCheckBox1'
+          TabOrder = 33
+          OnClick = CCharEditGridChange
+        end
+        object CCharCheckBox35: TCheckBox
+          Left = 80
+          Top = 104
+          Width = 17
+          Height = 17
+          Caption = 'CCharCheckBox1'
+          TabOrder = 34
+          OnClick = CCharEditGridChange
+        end
+        object CCharCheckBox36: TCheckBox
+          Left = 16
+          Top = 120
+          Width = 17
+          Height = 17
+          Caption = 'CCharCheckBox1'
+          TabOrder = 35
+          OnClick = CCharEditGridChange
+        end
+        object CCharCheckBox37: TCheckBox
+          Left = 32
+          Top = 120
+          Width = 17
+          Height = 17
+          Caption = 'CCharCheckBox1'
+          TabOrder = 36
+          OnClick = CCharEditGridChange
+        end
+        object CCharCheckBox38: TCheckBox
+          Left = 48
+          Top = 120
+          Width = 17
+          Height = 17
+          Caption = 'CCharCheckBox1'
+          TabOrder = 37
+          OnClick = CCharEditGridChange
+        end
+        object CCharCheckBox39: TCheckBox
+          Left = 64
+          Top = 120
+          Width = 17
+          Height = 17
+          Caption = 'CCharCheckBox1'
+          TabOrder = 38
+          OnClick = CCharEditGridChange
+        end
+        object CCharCheckBox40: TCheckBox
+          Left = 80
+          Top = 120
+          Width = 17
+          Height = 17
+          Caption = 'CCharCheckBox1'
+          TabOrder = 39
+          OnClick = CCharEditGridChange
+        end
+      end
+      object CreateCCharLocSpinEdit: TSpinEdit
+        Left = 152
+        Top = 6
+        Width = 31
+        Height = 22
+        Font.Charset = ANSI_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -11
+        Font.Name = 'Tahoma'
+        Font.Style = []
+        MaxLength = 5
+        MaxValue = 8
+        MinValue = 1
+        ParentFont = False
+        TabOrder = 1
+        Value = 1
+        OnChange = CCharEditGridChange
+      end
+      object CreateCCharRadioButton: TRadioButton
+        Left = 8
+        Top = 8
+        Width = 17
+        Height = 17
+        Caption = 'CreateCCharRadioButton'
+        Checked = True
+        TabOrder = 2
+        TabStop = True
+        OnClick = CCharEditGridChange
+      end
+      object UseCCharRadioButton2: TRadioButton
+        Left = 8
+        Top = 192
+        Width = 17
+        Height = 17
+        Caption = 'UseCCharRadioButton2'
+        TabOrder = 3
+        OnClick = CCharEditGridChange
+      end
+      object UseCCharLocSpinEdit: TSpinEdit
+        Left = 152
+        Top = 191
+        Width = 31
+        Height = 22
+        Enabled = False
+        Font.Charset = ANSI_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -11
+        Font.Name = 'Tahoma'
+        Font.Style = []
+        MaxLength = 5
+        MaxValue = 8
+        MinValue = 1
+        ParentFont = False
+        TabOrder = 4
+        Value = 1
+        OnChange = CCharEditGridChange
+      end
+    end
   end
   object OKButton: TButton
     Left = 572
@@ -732,8 +1200,8 @@ object SetupForm: TSetupForm
   end
   object VariableEdit: TEdit
     Left = 8
-    Top = 372
-    Width = 121
+    Top = 356
+    Width = 185
     Height = 17
     TabStop = False
     BorderStyle = bsNone
@@ -751,8 +1219,8 @@ object SetupForm: TSetupForm
     Text = '[Variable]'
   end
   object InsertButton: TButton
-    Left = 128
-    Top = 368
+    Left = 72
+    Top = 376
     Width = 59
     Height = 25
     Hint = 
@@ -774,11 +1242,11 @@ object SetupForm: TSetupForm
     OnClick = ApplyButtonClick
   end
   object MainPageControl: TPageControl
-    Left = 232
+    Left = 264
     Top = 0
     Width = 581
     Height = 381
-    ActivePage = ScreensTabSheet
+    ActivePage = StartupTabSheet
     TabOrder = 0
     TabStop = False
     OnChange = MainPageControlChange
@@ -1708,7 +2176,7 @@ object SetupForm: TSetupForm
                 Font.Height = -11
                 Font.Name = 'Tahoma'
                 Font.Style = []
-                ItemHeight = 13
+                ItemHeight = 0
                 ParentFont = False
                 ParentShowHint = False
                 ShowHint = True

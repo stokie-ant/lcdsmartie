@@ -27,8 +27,7 @@ interface
 uses
   Commctrl, ShlObj,
   Dialogs, Grids, StdCtrls, Controls, Spin, Buttons, ComCtrls, Classes,
-  Forms, ExtCtrls,
-  {$IFDEF VCORP} FileCtrl, JvDriveCtrls, {$ENDIF}
+  Forms, ExtCtrls, FileCtrl,
   ExtDlgs, Mask, JvExMask, JvToolEdit;
 
 const
@@ -36,6 +35,7 @@ const
 
 
 type
+    TCheckBoxArray = array of TCheckBox;
   TSetupForm = class(TForm)
     OKButton: TButton;
     CancelButton: TButton;
@@ -222,9 +222,58 @@ type
     Label34: TLabel;
     DLLCheckIntervalSpinEdit: TSpinEdit;
     Label58: TLabel;
-//    pluginListBox: TFileListBox;
-//    pluginDotNetVer: TLabel;
-//    PluginDotNetRequired: TLabel;
+    PluginsTabSheet: TTabSheet;
+    PluginListBox: TFileListBox;
+    Btn_PluginRefresh: TButton;
+    CCharTabSheet: TTabSheet;
+    CreateCCharLocSpinEdit: TSpinEdit;
+    CreateCCharRadioButton: TRadioButton;
+    Label20: TLabel;
+    Panel2: TPanel;
+    CCharCheckBox1: TCheckBox;
+    CCharCheckBox2: TCheckBox;
+    CCharCheckBox3: TCheckBox;
+    CCharCheckBox4: TCheckBox;
+    CCharCheckBox5: TCheckBox;
+    CCharCheckBox6: TCheckBox;
+    CCharCheckBox7: TCheckBox;
+    CCharCheckBox8: TCheckBox;
+    CCharCheckBox9: TCheckBox;
+    CCharCheckBox10: TCheckBox;
+    CCharCheckBox11: TCheckBox;
+    CCharCheckBox12: TCheckBox;
+    CCharCheckBox13: TCheckBox;
+    CCharCheckBox14: TCheckBox;
+    CCharCheckBox15: TCheckBox;
+    CCharCheckBox16: TCheckBox;
+    CCharCheckBox17: TCheckBox;
+    CCharCheckBox18: TCheckBox;
+    CCharCheckBox19: TCheckBox;
+    CCharCheckBox20: TCheckBox;
+    CCharCheckBox21: TCheckBox;
+    CCharCheckBox22: TCheckBox;
+    CCharCheckBox23: TCheckBox;
+    CCharCheckBox24: TCheckBox;
+    CCharCheckBox25: TCheckBox;
+    CCharCheckBox26: TCheckBox;
+    CCharCheckBox27: TCheckBox;
+    CCharCheckBox28: TCheckBox;
+    CCharCheckBox29: TCheckBox;
+    CCharCheckBox30: TCheckBox;
+    CCharCheckBox31: TCheckBox;
+    CCharCheckBox32: TCheckBox;
+    CCharCheckBox33: TCheckBox;
+    CCharCheckBox34: TCheckBox;
+    CCharCheckBox35: TCheckBox;
+    CCharCheckBox36: TCheckBox;
+    CCharCheckBox37: TCheckBox;
+    CCharCheckBox38: TCheckBox;
+    CCharCheckBox39: TCheckBox;
+    CCharCheckBox40: TCheckBox;
+    UseCCharRadioButton2: TRadioButton;
+    Label21: TLabel;
+    UseCCharLocSpinEdit: TSpinEdit;
+
     procedure FormShow(Sender: TObject);
     procedure LCDSizeComboBoxChange(Sender: TObject);
     procedure ScreenSpinEditChange(Sender: TObject);
@@ -277,11 +326,9 @@ type
     procedure DisplayPluginListChange(Sender: TObject);
     procedure ContrastTrackBarChange(Sender: TObject);
     procedure BrightnessTrackBarChange(Sender: TObject);
-{$IFDEF VCORP}
     procedure Btn_PluginRefreshClick(Sender: TObject);
     procedure PluginListBoxDblClick(Sender: TObject);
     procedure PluginListBoxClick(Sender: TObject);
-{$ENDIF}
   procedure ShutdownEditEnter(Sender: TObject);
 
   procedure ShutdownEdit1KeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
@@ -295,7 +342,8 @@ type
 
   procedure SkinPathBrowseButtonClick(Sender: TObject);
   procedure LineEditClick(Sender: TObject);
-    procedure OpeIcoFolderChange(Sender: TObject);
+  procedure OpeIcoFolderChange(Sender: TObject);
+  procedure CCharEditGridChange(Sender: TObject);
 
   private
     DLLPath : string;
@@ -317,7 +365,7 @@ implementation
 uses
   Math, Windows, ShellApi, graphics, sysutils, Registry, StrUtils,
   UMain, UInteract, UConfig, UDataEmail, UDataNetwork, UDataWinamp,
-  UDataMBM, UIconUtils, FileCtrl, UEditLine, UFormPos;
+  UDataMBM, UIconUtils, UEditLine, UFormPos;
 
 {$R *.DFM}
 
@@ -1050,7 +1098,7 @@ begin
     3 : VariableEdit.Text := '$UpTime';
     4 : VariableEdit.Text := '$UpTims';
     5 : VariableEdit.Text := '°';
-    6 : VariableEdit.Text := 'ž';
+    6 : VariableEdit.Text := '|';
     7 : VariableEdit.Text := '$Chr(20)';
     8 : VariableEdit.Text := '$File(C:\file.txt,1)';
     9 : VariableEdit.Text := '$LogFile(C:\file.log,0)';
@@ -1407,8 +1455,8 @@ begin
 
   // Check if Com settings have changed.
 
-  // if (config.DisplayDLLParameters <> ParametersEdit.Text) then ReinitLCD := true;
-  // if (config.DisplayDLLName <> DisplayPluginList.Text) then ReinitLCD := true;
+   if (config.DisplayDLLParameters <> ParametersEdit.Text) then ReinitLCD := true;
+   if (config.DisplayDLLName <> DisplayPluginList.Text) then ReinitLCD := true;
 
   LCDSmartieDisplayForm.WinampCtrl1.WinampLocation := WinampLocationEdit.text;
   config.winampLocation := WinampLocationEdit.text;
@@ -1493,9 +1541,6 @@ end;
 procedure TSetupForm.FormCreate(Sender: TObject);
 var
   pathssl :string;
-{$IFDEF VCORP}
-  RG : Tregistry;
-{$ENDIF}
 begin
   pathssl := ExtractFilePath(ParamStr(0));
 // setup table column widths
@@ -1513,29 +1558,8 @@ begin
   begin
 
   end;
-
-
-{$IFDEF VCORP}
-  //point ListBox to the plugin dirs
+  //point PluginListBox to the plugin dirs
   PluginListBox.Directory := pathssl+'plugins\';
-
-  //.net check (if installed
-  RG := Tregistry.Create;
-  RG.RootKey := HKEY_LOCAL_MACHINE;
-  if RG.OpenKey('SOFTWARE\Microsoft\NET Framework Setup\NDP\v1.0.3705\', FALSE) then begin
-    if RG.ReadInteger('install') = 1 then
-      pluginDotNetVer.Caption:='v1.0.3705';
-  end else if RG.OpenKey('SOFTWARE\Microsoft\NET Framework Setup\NDP\v1.1.4322\', FALSE) then begin
-    if RG.ReadInteger('install') = 1 then
-      pluginDotNetVer.Caption:='v1.1.4322';
-  end else if RG.OpenKey('SOFTWARE\Microsoft\NET Framework Setup\NDP\v2.0.50727\', FALSE) then begin
-    if RG.ReadInteger('install') = 1 then
-      pluginDotNetVer.Caption:='v2.0.50727';
-  end else
-    pluginDotNetVer.Caption:='none';
-  RG.CloseKey;
-  RG.Destroy;
-{$ENDIF}
 end;
 
 procedure TSetupForm.OutputListBoxClick(Sender: TObject);
@@ -1881,10 +1905,17 @@ begin
 end;
 
 
-
-{$IFDEF VCORP}
+// unfortunately this isn't very flexible but it'll do for now
+// VCORP doesn't seem to be developing it any further
+// So I'll suit it to my needs
 procedure TSetupForm.Btn_PluginRefreshClick(Sender: TObject);
+var
+  sCurrentDir : string;
 begin
+  // awkward shi as refresh doesnt just refresh the list
+  sCurrentDir := PluginListBox.Directory;
+  PluginListBox.Directory := '.';
+  PluginListBox.Directory := sCurrentDir;
   PluginListBox.Refresh;
 end;
 
@@ -1903,45 +1934,8 @@ end;
 
 procedure TSetupForm.PluginListBoxClick(Sender: TObject);
 begin
-  if Lowercase(ExtractFileName(PluginListBox.FileName)) = 'escalate.dll' then begin
-    PluginDotNetRequired.Caption := 'yes';
-    if pluginDotNetVer.Caption = 'none' then
-      ShowMessage('.NET Framework is required')
-  end;
-
-  if Lowercase(ExtractFileName(PluginListBox.FileName)) = 'nvtemp.dll' then begin
-    PluginDotNetRequired.Caption := 'yes';
-    if pluginDotNetVer.Caption = 'none' then
-      ShowMessage('.NET Framework is required')
-  end;
-
-  if Lowercase(ExtractFileName(PLuginListBox.FileName)) = 'sandr.dll' then begin
-    PluginDotNetRequired.Caption := 'yes';
-    if pluginDotNetVer.Caption = 'none' then
-      ShowMessage('.NET Framework is required')
-  end;
-
-  if Lowercase(ExtractFileName(PluginListBox.FileName)) = 'mem.dll' then begin
-    VariableEdit.Text := '$dll(mem.dll,1,0,0)';
-    exit;
-  end else VariableEdit.text := NoVariable;
-
-  if Lowercase(ExtractFileName(PluginListBox.FileName)) = 'nvtemp.dll' then begin
-    VariableEdit.Text := '$dll(nvtemp.dll,1,0,1)';
-    exit;
-  end else VariableEdit.text := NoVariable;
-
-  if Lowercase(ExtractFileName(PluginListBox.FileName)) = 'wanip.dll' then begin
-    VariableEdit.Text := '$dll(wanip.dll,1,0,0)';
-    exit;
-  end else VariableEdit.text := NoVariable;
-
-  if (Lowercase(ExtractFileName(PluginListBox.FileName)) <> 'escalate.dll') and
-     (Lowercase(ExtractFileName(PluginListBox.FileName)) <> 'sandr.dll') and
-     (Lowercase(ExtractFileName(PluginListBox.FileName)) <> 'nvtemp.dll') then
-    PluginDotNetRequired.Caption := 'no';
+  VariableEdit.text := '$dll('+Lowercase(ExtractFileName(PluginListBox.FileName))+',1,0,0)';
 end;
-{$ENDIF}
 
 procedure TSetupForm.TrayIconBrowseButtonClick(Sender: TObject);
 var
@@ -2037,7 +2031,6 @@ begin
     end;
 end;
 
-
 procedure TSetupForm.LineEditClick(Sender: TObject);
 var
   oEdit : TEdit;
@@ -2074,6 +2067,101 @@ begin
   end;
   oEditForm := nil;
 end;
+
+/////////////////////////////////////////////////////////////////
+////////////// CUSTOM CHAR EDIT TAB /////////////////////////////
+/////////////////////////////////////////////////////////////////
+
+function GetAllCheckboxes(_frm: TForm): TCheckBoxArray;
+var
+  i: Integer;
+  cmp: TComponent;
+begin
+  SetLength(Result, _frm.ComponentCount);
+  i := 1;
+  repeat
+    cmp := _frm.FindComponent('CCharCheckBox' + IntToStr(i));
+    if cmp <> nil then begin
+      Result[i - 1] := cmp as TCheckBox;
+      Inc(i);
+    end;
+  until cmp = nil;
+  SetLength(Result, i - 1);
+end;
+
+procedure TSetupForm.CCharEditGridChange(Sender: TObject);
+type
+  TLineArray = array [1..8] of integer;
+var
+  CheckBoxes: TCheckBoxArray;
+  i: integer;
+  box: integer;
+  CCharLine: TLineArray;
+const
+  CCharLocation: TLineArray = (176, 158, 131, 132, 133, 134, 135, 136);
+begin
+  box := 0;
+  CheckBoxes := GetAllCheckboxes(SetupForm);
+
+  if CreateCCharRadioButton.Checked then
+  begin
+    CreateCCharLocSpinEdit.enabled := true;
+    UseCCharLocSpinEdit.enabled := false;
+
+    for i:=0 to 39 do
+    begin
+      CheckBoxes[i].Enabled := true;
+    end;
+
+    i := 1;
+    while box<40 do
+    begin
+      CCharLine[i] := 0 ;
+      if CheckBoxes[box].Checked then
+      begin
+        CCharLine[i] := CCharLine[i]+16;
+      end;
+      Inc(box);
+      if CheckBoxes[box].Checked then
+      begin
+        CCharLine[i] := CCharLine[i]+8;
+      end;
+      Inc(box);
+      if CheckBoxes[box].Checked then
+      begin
+        CCharLine[i] := CCharLine[i]+4;
+      end;
+      Inc(box);
+      if CheckBoxes[box].Checked then
+      begin
+        CCharLine[i] := CCharLine[i]+2;
+      end;
+      Inc(box);
+      if CheckBoxes[box].Checked then
+      begin
+        CCharLine[i] := CCharLine[i]+1;
+      end;
+      Inc(box);
+      Inc(i);
+    end;
+
+    VariableEdit.Text := '$CustomChar('+IntToStr(CreateCCharLocSpinEdit.Value)
+    +','+IntToStr(CCharLine[1])+','+IntToStr(CCharLine[2])+','+IntToStr(CCharLine[3])
+    +','+IntToStr(CCharLine[4])+','+IntToStr(CCharLine[5])+','+IntToStr(CCharLine[6])
+    +','+IntToStr(CCharLine[7])+','+IntToStr(CCharLine[8])+')';
+    end
+    else
+    begin
+      CreateCCharLocSpinEdit.enabled := false;
+      UseCCharLocSpinEdit.enabled := true;
+
+      for i:=0 to 39 do
+      begin
+        CheckBoxes[i].Enabled := false;
+      end;
+      VariableEdit.Text := '$Chr('+inttostr(CCharLocation[UseCCharLocSpinEdit.value])+')'
+    end;
+  end;
 
 
 end.
