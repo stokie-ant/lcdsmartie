@@ -1040,43 +1040,24 @@ begin
 end;
 
 procedure TSetupForm.InternetListBoxClick(Sender: TObject);
-{Stock Indexes
-Tom's Hardware headlines
-Tweakers.net headlines (in dutch)
-Weather (Holland)
-Weather.com(locationcode)
-
-   if InternetListBox.itemindex = 1 then VariableEdit.Text := '$Stocks';
-    if InternetListBox.itemindex = 2 then VariableEdit.Text := '$TomsHW';
-    if InternetListBox.itemindex = 3 then VariableEdit.Text := '$T.netHL';
-    if InternetListBox.itemindex = 4 then VariableEdit.Text := '$DutchWeather';
-    if InternetListBox.itemindex = 5 then VariableEdit.Text := '$Weather.com(CAXX0504)';
-    }
 begin
   case InternetListBox.itemindex of
-    0: VariableEdit.Text := '$Rss(http://news.bbc.co.uk/rss/newsonline_uk_edition/world/rss091.xml,b)';
-    1: VariableEdit.Text := '$Rss(http://news.bbc.co.uk/rss/newsonline_uk_edition/uk/rss091.xml,b)';
-    2: VariableEdit.Text := '$Rss(http://www.tweakers.net/feeds/mixed.xml,b)';
-    3: VariableEdit.Text := '$Rss(http://www.theregister.co.uk/headlines.rss,b)';
-    4: VariableEdit.Text := '$Rss(http://slashdot.org/index.rss,b)';
-    5: VariableEdit.Text := '$Rss(http://www.wired.com/news_drop/netcenter/netcenter.rdf,b)';
-    6: VariableEdit.Text := '$Rss(http://www.fool.com/xml/foolnews_rss091.xml,b,1)';
-    7: VariableEdit.Text := '$Rss(http://www.fool.com/xml/foolnews_rss091.xml,b)';
-    8: VariableEdit.Text := '$Rss(http://sourceforge.net/export/rss2_projnews.php?group_id=122330&rss_fulltext=1,b,1)';
-    9: VariableEdit.Text := '$Rss(http://sourceforge.net/export/rss2_projnews.php?group_id=2987&rss_fulltext=1,b,1)';
-    10: VariableEdit.Text := '$Rss(http://www.weatherclicks.com/xml/fort+lauderdale,t,2): $Rss(http://www.weatherclicks.com/xml/fort+lauderdale,d,2) | ';
-    11: VariableEdit.Text := '$Rss(http://news.bbc.co.uk/rss/newsonline_world_edition/business/rss091.xml,b)';
-    12: VariableEdit.Text := '$Rss(http://www.washingtonpost.com/wp-srv/business/rssheadlines.xml,b)';
-    13: VariableEdit.Text := '$Rss(http://rss.news.yahoo.com/rss/entertainment,b)';
-    14: VariableEdit.Text := '$Rss(http://partners.userland.com/nytRss/health.xml,b)';
-    15: VariableEdit.Text := '$Rss(http://partners.userland.com/nytRss/sports.xml,b)';
-    16: VariableEdit.Text := '$Rss(http://www.securityfocus.com/rss/news.xml,b)';
-    17: VariableEdit.Text := '$Rss(http://volkskrant.nl/rss/economie.rss,b)';
-    18: VariableEdit.Text := '$Rss(http://www.vpro.nl/3voor12/rss/index.jsp?images=false,b)';
-    19: VariableEdit.Text := '$Rss(http://www.ad.nl/index.xml,b)';
-    20: VariableEdit.Text := '$Rss(http://www.atletiek.nl/rss.xml,b)';
-    21: VariableEdit.Text := '$Rss(http://www.rtl.fr/referencement/rtl.asp,b)';
-    22: VariableEdit.Text := '$Rss(http://www.tagesschau.de/xml/tagesschau-meldungen/,b)';
+    0: VariableEdit.Text := '$Rss(https://news.bbc.co.uk/rss/newsonline_uk_edition/world/rss091.xml,b)';
+    1: VariableEdit.Text := '$Rss(https://news.bbc.co.uk/rss/newsonline_uk_edition/uk/rss091.xml,b)';
+    2: VariableEdit.Text := '$Rss(https://feeds.feedburner.com/tweakers/mixed,b)';
+    3: VariableEdit.Text := '$Rss(https://www.theregister.com/headlines.rss,b)';
+    4: VariableEdit.Text := '$Rss(http://rss.slashdot.org/Slashdot/slashdot,b)'; // only http
+    5: VariableEdit.Text := '$Rss(https://www.wired.com/feed/rss,b)';
+    6: VariableEdit.Text := '$Rss(https://sourceforge.net/p/lcdsmartie/news/feed,b,1)';
+    7: VariableEdit.Text := '$Rss(https://sourceforge.net/p/palmorb/news/feed,b,1)';
+    8: VariableEdit.Text := '$Rss(https://news.bbc.co.uk/rss/newsonline_world_edition/business/rss091.xml,b)';
+    9: VariableEdit.Text := '$Rss(https://www.washingtonpost.com/wp-srv/business/rssheadlines.xml,b)';
+    10: VariableEdit.Text := '$Rss(https://news.yahoo.com/rss/entertainment,b)';
+    11: VariableEdit.Text := '$Rss(https://www.nytimes.com/services/xml/rss/nyt/Health.xml,b)';
+    12: VariableEdit.Text := '$Rss(https://rss.nytimes.com/services/xml/rss/nyt/Sports.xml,b)';
+    13: VariableEdit.Text := '$Rss(https://www.volkskrant.nl/economie/rss.xml,b)';
+    14: VariableEdit.Text := '$Rss(https://rs.vpro.nl/v3/api/feeds/3voor12/section/3voor12%20Landelijk,b)';
+    15: VariableEdit.Text := '$Rss(https://www.ad.nl/home/rss.xml,b)';
     else VariableEdit.Text := NoVariable;
   end; // case
 

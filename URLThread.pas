@@ -3,7 +3,7 @@ unit URLThread;
 interface
 
 uses
-  DataThread,IdHTTP;
+  DataThread,IdHTTP,IdSSLOpenSSL;
 
 type
   PHttp = ^TIdHttp;
@@ -44,6 +44,7 @@ end;
 function TURLThread.GetUrl(Url: String; maxfreq: Cardinal = 0): String;
 var
   HTTP: TIdHTTP;
+  Id_HandlerSocket : TIdSSLIOHandlerSocketOpenSSL;
   sl: TStringList;
   Filename: String;
   lasttime: TDateTime;
@@ -58,6 +59,7 @@ begin
   sRest := copy(LowerCase(Url),30,length(Url)-30);
 
   Filename := StringReplace(Filename, 'http://', '_', [rfReplaceAll]);
+  Filename := StringReplace(Filename, 'https://', '_', [rfReplaceAll]);
   Filename := StringReplace(Filename, '\', '_', [rfReplaceAll]);
   Filename := StringReplace(Filename, ':', '_', [rfReplaceAll]);
   Filename := StringReplace(Filename, '/', '_', [rfReplaceAll]);
@@ -82,6 +84,12 @@ begin
     toonew := false;
     sl := TStringList.create;
     HTTP := TIdHTTP.Create(nil);
+
+    HTTP.Request.UserAgent := 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:12.0) Gecko/20100101 Firefox/12.0';
+    Id_HandlerSocket := TIdSSLIOHandlerSocketOpenSSL.Create( HTTP );
+    Id_HandlerSocket.SSLOptions.Mode := sslmClient;
+    Id_HandlerSocket.SSLOptions.Method := sslvSSLv23;
+    HTTP.IOHandler := Id_HandlerSocket;
 
     try
       // Only fetch new data if it's newer than the cache files' date.

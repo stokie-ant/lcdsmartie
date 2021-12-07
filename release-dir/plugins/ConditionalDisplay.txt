@@ -1,9 +1,0 @@
-A conditional text display plugin to LCD Smartie by Alex Vallat (AlexV@ComPorts.com)
-Released under the GPL.
-Provided As Is, with no warranties of any kind.
-
-Functions:
-
-1:
-Display the contents of the second parameter, if the first parameter is not "0" or blank
-		

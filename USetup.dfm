@@ -323,23 +323,16 @@ object SetupForm: TSetupForm
           'The Register headlines'
           'Slashdot'
           'Wired News'
-          'The Monty Fool (top item)'
-          'The Monty Fool (all items)'
           'Latest LCD Smartie News'
           'Latest PalmOrb News'
-          'Latest Weather: FL (US)'
           'BBC News business'
           'The Washington Post business'
           'Yahoo! entertainment'
           'New York Times health'
           'New York Times sports'
-          'SecurityFocus news'
           'Volkskrant economie (Dutch)'
           '3voor12 (Dutch)'
-          'Algemeen Dagblad (Dutch)'
-          'Atletiek nieuws (Dutch)'
-          'RTL (French)'
-          'Tagesschau (German)')
+          'Algemeen Dagblad (Dutch)')
         TabOrder = 0
         OnClick = InternetListBoxClick
         OnDblClick = InsertButtonClick
