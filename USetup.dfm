@@ -1,6 +1,6 @@
 object SetupForm: TSetupForm
-  Left = 1003
-  Top = 490
+  Left = 689
+  Top = 369
   ActiveControl = LeftPageControl
   Anchors = []
   BiDiMode = bdLeftToRight
@@ -28,7 +28,7 @@ object SetupForm: TSetupForm
     Top = 0
     Width = 265
     Height = 409
-    ActivePage = CCharTabSheet
+    ActivePage = SysInfoTabSheet
     Font.Charset = ANSI_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
@@ -42,57 +42,13 @@ object SetupForm: TSetupForm
     TabPosition = tpRight
     TabStop = False
     OnChange = LeftPageControlChange
-    object WinampTabSheet: TTabSheet
-      Caption = 'Winamp'
-      object WinampLocationBrowseButton: TSpeedButton
-        Left = 160
-        Top = 320
-        Width = 23
-        Height = 22
-        Glyph.Data = {
-          F6000000424DF600000000000000760000002800000010000000100000000100
-          0400000000008000000000000000000000001000000000000000000000000000
-          8000008000000080800080000000800080008080000080808000C0C0C0000000
-          FF0000FF000000FFFF00FF000000FF00FF00FFFF0000FFFFFF00888888888888
-          88888888888888888888000000000008888800333333333088880B0333333333
-          08880FB03333333330880BFB0333333333080FBFB000000000000BFBFBFBFB08
-          88880FBFBFBFBF0888880BFB0000000888888000888888880008888888888888
-          8008888888880888080888888888800088888888888888888888}
-        OnClick = WinampLocationBrowseButtonClick
-      end
-      object WinampLocationLabel: TLabel
-        Left = 8
-        Top = 304
-        Width = 104
-        Height = 13
-        Caption = 'Winamp.exe location:'
-      end
-      object WinampListBox: TListBox
-        Left = 0
-        Top = 0
-        Width = 180
-        Height = 265
-        ItemHeight = 13
-        TabOrder = 0
-        OnClick = WinampListBoxClick
-        OnDblClick = InsertButtonClick
-      end
-      object WinampLocationEdit: TEdit
-        Left = 8
-        Top = 320
-        Width = 153
-        Height = 21
-        TabOrder = 1
-        Text = 'WinampLocationEdit'
-      end
-    end
     object SysInfoTabSheet: TTabSheet
       Caption = 'Sysinfo'
       ImageIndex = 1
       object SysInfoListBox: TListBox
         Left = 0
         Top = 0
-        Width = 185
+        Width = 209
         Height = 329
         ItemHeight = 13
         Items.Strings = (
@@ -132,6 +88,50 @@ object SetupForm: TSetupForm
         OnDblClick = InsertButtonClick
       end
     end
+    object WinampTabSheet: TTabSheet
+      Caption = 'Winamp'
+      object WinampLocationBrowseButton: TSpeedButton
+        Left = 160
+        Top = 320
+        Width = 23
+        Height = 22
+        Glyph.Data = {
+          F6000000424DF600000000000000760000002800000010000000100000000100
+          0400000000008000000000000000000000001000000000000000000000000000
+          8000008000000080800080000000800080008080000080808000C0C0C0000000
+          FF0000FF000000FFFF00FF000000FF00FF00FFFF0000FFFFFF00888888888888
+          88888888888888888888000000000008888800333333333088880B0333333333
+          08880FB03333333330880BFB0333333333080FBFB000000000000BFBFBFBFB08
+          88880FBFBFBFBF0888880BFB0000000888888000888888880008888888888888
+          8008888888880888080888888888800088888888888888888888}
+        OnClick = WinampLocationBrowseButtonClick
+      end
+      object WinampLocationLabel: TLabel
+        Left = 8
+        Top = 304
+        Width = 104
+        Height = 13
+        Caption = 'Winamp.exe location:'
+      end
+      object WinampListBox: TListBox
+        Left = 0
+        Top = 0
+        Width = 209
+        Height = 265
+        ItemHeight = 13
+        TabOrder = 0
+        OnClick = WinampListBoxClick
+        OnDblClick = InsertButtonClick
+      end
+      object WinampLocationEdit: TEdit
+        Left = 8
+        Top = 320
+        Width = 153
+        Height = 21
+        TabOrder = 1
+        Text = 'WinampLocationEdit'
+      end
+    end
     object MBMTabSheet: TTabSheet
       Caption = 'MBM'
       ImageIndex = 2
@@ -147,7 +147,7 @@ object SetupForm: TSetupForm
       object MBMListBox: TListBox
         Left = 0
         Top = 0
-        Width = 181
+        Width = 209
         Height = 313
         ItemHeight = 13
         TabOrder = 0
@@ -172,6 +172,70 @@ object SetupForm: TSetupForm
         ShowHint = False
         TabOrder = 1
         Value = 10
+      end
+    end
+    object InternetTabSheet: TTabSheet
+      Caption = 'RSS'
+      ImageIndex = 5
+      object Label36: TLabel
+        Left = 8
+        Top = 284
+        Width = 97
+        Height = 13
+        Caption = 'Refresh time (mins):'
+      end
+      object InternetListBox: TListBox
+        Left = 0
+        Top = 0
+        Width = 209
+        Height = 265
+        ItemHeight = 13
+        Items.Strings = (
+          'BBC World News'
+          'BBC UK News'
+          'Tweakers.net headlines (Dutch)'
+          'The Register headlines'
+          'Slashdot'
+          'Wired News'
+          'Latest LCD Smartie News'
+          'Latest PalmOrb News'
+          'BBC News business'
+          'The Washington Post business'
+          'Yahoo! entertainment'
+          'New York Times health'
+          'New York Times sports'
+          'Volkskrant economie (Dutch)'
+          '3voor12 (Dutch)'
+          'Algemeen Dagblad (Dutch)')
+        TabOrder = 0
+        OnClick = InternetListBoxClick
+        OnDblClick = InsertButtonClick
+      end
+      object InternetRefreshTimeSpinEdit: TSpinEdit
+        Left = 120
+        Top = 280
+        Width = 55
+        Height = 22
+        Font.Charset = ANSI_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -11
+        Font.Name = 'Tahoma'
+        Font.Style = []
+        MaxLength = 5
+        MaxValue = 10080
+        MinValue = 1
+        ParentFont = False
+        TabOrder = 1
+        Value = 3
+      end
+      object LCDSmartieUpdateCheckBox: TCheckBox
+        Left = 2
+        Top = 320
+        Width = 177
+        Height = 17
+        Caption = 'Check for LCD Smartie updates'
+        TabOrder = 2
+        Visible = False
       end
     end
     object GameStatsTabSheet: TTabSheet
@@ -287,7 +351,7 @@ object SetupForm: TSetupForm
       object GamestatsListBox: TListBox
         Left = 0
         Top = 0
-        Width = 180
+        Width = 209
         Height = 57
         ItemHeight = 13
         Items.Strings = (
@@ -298,70 +362,6 @@ object SetupForm: TSetupForm
         TabOrder = 0
         OnClick = GamestatsListBoxClick
         OnDblClick = InsertButtonClick
-      end
-    end
-    object InternetTabSheet: TTabSheet
-      Caption = 'Internet'
-      ImageIndex = 5
-      object Label36: TLabel
-        Left = 8
-        Top = 284
-        Width = 97
-        Height = 13
-        Caption = 'Refresh time (mins):'
-      end
-      object InternetListBox: TListBox
-        Left = 0
-        Top = 0
-        Width = 180
-        Height = 265
-        ItemHeight = 13
-        Items.Strings = (
-          'BBC World News'
-          'BBC UK News'
-          'Tweakers.net headlines (Dutch)'
-          'The Register headlines'
-          'Slashdot'
-          'Wired News'
-          'Latest LCD Smartie News'
-          'Latest PalmOrb News'
-          'BBC News business'
-          'The Washington Post business'
-          'Yahoo! entertainment'
-          'New York Times health'
-          'New York Times sports'
-          'Volkskrant economie (Dutch)'
-          '3voor12 (Dutch)'
-          'Algemeen Dagblad (Dutch)')
-        TabOrder = 0
-        OnClick = InternetListBoxClick
-        OnDblClick = InsertButtonClick
-      end
-      object InternetRefreshTimeSpinEdit: TSpinEdit
-        Left = 120
-        Top = 280
-        Width = 55
-        Height = 22
-        Font.Charset = ANSI_CHARSET
-        Font.Color = clWindowText
-        Font.Height = -11
-        Font.Name = 'Tahoma'
-        Font.Style = []
-        MaxLength = 5
-        MaxValue = 10080
-        MinValue = 1
-        ParentFont = False
-        TabOrder = 1
-        Value = 3
-      end
-      object LCDSmartieUpdateCheckBox: TCheckBox
-        Left = 2
-        Top = 320
-        Width = 177
-        Height = 17
-        Caption = 'Check for LCD Smartie updates'
-        TabOrder = 2
-        Visible = False
       end
     end
     object SetiAtHomeTabSheet: TTabSheet
@@ -377,7 +377,7 @@ object SetupForm: TSetupForm
       object SetiAtHomeListBox: TListBox
         Left = 0
         Top = 0
-        Width = 180
+        Width = 209
         Height = 265
         ItemHeight = 13
         Items.Strings = (
@@ -397,7 +397,7 @@ object SetupForm: TSetupForm
       object SetiAtHomeEmailEdit: TEdit
         Left = 0
         Top = 320
-        Width = 177
+        Width = 209
         Height = 21
         TabOrder = 1
       end
@@ -415,7 +415,7 @@ object SetupForm: TSetupForm
       object FoldingAtHomeEmailEdit: TEdit
         Left = 8
         Top = 320
-        Width = 169
+        Width = 201
         Height = 21
         TabOrder = 1
         Text = 'BobC'
@@ -423,7 +423,7 @@ object SetupForm: TSetupForm
       object FoldingAtHomeListBox: TListBox
         Left = 0
         Top = 0
-        Width = 180
+        Width = 209
         Height = 265
         ItemHeight = 13
         Items.Strings = (
@@ -500,7 +500,7 @@ object SetupForm: TSetupForm
       object EmailPasswordEdit: TEdit
         Left = 64
         Top = 296
-        Width = 113
+        Width = 145
         Height = 21
         Color = 16706270
         PasswordChar = '*'
@@ -510,7 +510,7 @@ object SetupForm: TSetupForm
       object EmailLoginEdit: TEdit
         Left = 64
         Top = 272
-        Width = 113
+        Width = 145
         Height = 21
         TabOrder = 4
         Text = 'Ur loginname'
@@ -518,7 +518,7 @@ object SetupForm: TSetupForm
       object EmailServerEdit: TEdit
         Left = 64
         Top = 224
-        Width = 113
+        Width = 145
         Height = 21
         TabOrder = 2
         Text = 'Ur Server'
@@ -543,7 +543,7 @@ object SetupForm: TSetupForm
       object EmailListBox: TListBox
         Left = 0
         Top = 0
-        Width = 185
+        Width = 209
         Height = 177
         ItemHeight = 13
         TabOrder = 0
@@ -553,18 +553,18 @@ object SetupForm: TSetupForm
       object EmailAccountComboBox: TComboBox
         Left = 104
         Top = 200
-        Width = 73
+        Width = 49
         Height = 21
         Style = csDropDownList
         DropDownCount = 10
-        ItemHeight = 0
+        ItemHeight = 13
         TabOrder = 1
         OnChange = EmailAccountComboBoxChange
       end
       object EmailSSLEdit: TEdit
         Left = 64
         Top = 248
-        Width = 113
+        Width = 145
         Height = 21
         Hint = 'SSL addon for gmail (995)'
         Color = 16706270
@@ -574,17 +574,26 @@ object SetupForm: TSetupForm
       end
     end
     object NetworkStatsTabSheet: TTabSheet
-      Caption = 'Network Stats'
+      Caption = 'Net Stats'
       ImageIndex = 8
       object NetworkStatsListBox: TListBox
         Left = 0
         Top = 0
-        Width = 180
-        Height = 345
+        Width = 209
+        Height = 305
         ItemHeight = 13
         TabOrder = 0
         OnClick = NetworkStatsListBoxClick
         OnDblClick = InsertButtonClick
+      end
+      object NetworkStatsAdapterListButton: TButton
+        Left = 56
+        Top = 312
+        Width = 75
+        Height = 25
+        Caption = 'Adapter List'
+        TabOrder = 1
+        OnClick = NetworkStatsAdapterListButtonClick
       end
     end
     object MiscTabSheet: TTabSheet
@@ -593,7 +602,7 @@ object SetupForm: TSetupForm
       object MiscListBox: TListBox
         Left = 0
         Top = 0
-        Width = 180
+        Width = 209
         Height = 317
         Font.Charset = ANSI_CHARSET
         Font.Color = clWindowText
@@ -623,7 +632,6 @@ object SetupForm: TSetupForm
           '$Center(text here,width)'
           '$ScreenChanged')
         ParentFont = False
-        ScrollWidth = 250
         TabOrder = 0
         OnClick = MiscListBoxClick
         OnDblClick = InsertButtonClick
@@ -671,7 +679,7 @@ object SetupForm: TSetupForm
       object ButtonsListBox: TListBox
         Left = 0
         Top = 0
-        Width = 180
+        Width = 209
         Height = 177
         ItemHeight = 13
         Items.Strings = (
@@ -696,7 +704,7 @@ object SetupForm: TSetupForm
       object PluginListBox: TFileListBox
         Left = 0
         Top = 0
-        Width = 177
+        Width = 209
         Height = 281
         ItemHeight = 13
         Mask = '*.dll'
@@ -720,20 +728,20 @@ object SetupForm: TSetupForm
       object Label20: TLabel
         Left = 32
         Top = 8
-        Width = 115
+        Width = 119
         Height = 13
-        Caption = 'Create Character in slot'
+        Caption = 'Create Character in slot:'
       end
       object Label21: TLabel
         Left = 32
-        Top = 193
-        Width = 98
+        Top = 201
+        Width = 102
         Height = 13
-        Caption = 'Use character in slot'
+        Caption = 'Use character in slot:'
       end
       object Panel2: TPanel
-        Left = 40
-        Top = 32
+        Left = 56
+        Top = 40
         Width = 105
         Height = 145
         Caption = 'Panel2'
@@ -1100,7 +1108,7 @@ object SetupForm: TSetupForm
         end
       end
       object CreateCCharLocSpinEdit: TSpinEdit
-        Left = 152
+        Left = 160
         Top = 6
         Width = 31
         Height = 22
@@ -1130,7 +1138,7 @@ object SetupForm: TSetupForm
       end
       object UseCCharRadioButton2: TRadioButton
         Left = 8
-        Top = 192
+        Top = 200
         Width = 17
         Height = 17
         Caption = 'UseCCharRadioButton2'
@@ -1139,7 +1147,7 @@ object SetupForm: TSetupForm
       end
       object UseCCharLocSpinEdit: TSpinEdit
         Left = 152
-        Top = 191
+        Top = 199
         Width = 31
         Height = 22
         Enabled = False
@@ -1239,7 +1247,7 @@ object SetupForm: TSetupForm
     Top = 0
     Width = 581
     Height = 381
-    ActivePage = StartupTabSheet
+    ActivePage = ScreensTabSheet
     TabOrder = 0
     TabStop = False
     OnChange = MainPageControlChange
@@ -2124,7 +2132,7 @@ object SetupForm: TSetupForm
                 Height = 21
                 Style = csDropDownList
                 Anchors = [akLeft, akTop, akRight]
-                ItemHeight = 0
+                ItemHeight = 13
                 TabOrder = 0
                 OnChange = DisplayPluginListChange
               end
@@ -2169,7 +2177,7 @@ object SetupForm: TSetupForm
                 Font.Height = -11
                 Font.Name = 'Tahoma'
                 Font.Style = []
-                ItemHeight = 0
+                ItemHeight = 13
                 ParentFont = False
                 ParentShowHint = False
                 ShowHint = True

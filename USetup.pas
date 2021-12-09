@@ -28,7 +28,8 @@ uses
   Commctrl, ShlObj,
   Dialogs, Grids, StdCtrls, Controls, Spin, Buttons, ComCtrls, Classes,
   Forms, ExtCtrls, FileCtrl,
-  ExtDlgs, Mask, JvExMask, JvToolEdit;
+  ExtDlgs, Mask;
+  //, JvExMask, JvToolEdit;
 
 const
   NoVariable = 'Variable: ';
@@ -273,6 +274,7 @@ type
     UseCCharRadioButton2: TRadioButton;
     Label21: TLabel;
     UseCCharLocSpinEdit: TSpinEdit;
+    NetworkStatsAdapterListButton: TButton;
 
     procedure FormShow(Sender: TObject);
     procedure LCDSizeComboBoxChange(Sender: TObject);
@@ -344,6 +346,7 @@ type
   procedure LineEditClick(Sender: TObject);
   procedure OpeIcoFolderChange(Sender: TObject);
   procedure CCharEditGridChange(Sender: TObject);
+    procedure NetworkStatsAdapterListButtonClick(Sender: TObject);
 
   private
     DLLPath : string;
@@ -365,7 +368,7 @@ implementation
 uses
   Math, Windows, ShellApi, graphics, sysutils, Registry, StrUtils,
   UMain, UInteract, UConfig, UDataEmail, UDataNetwork, UDataWinamp,
-  UDataMBM, UIconUtils, UEditLine, UFormPos;
+  UDataMBM, UIconUtils, UEditLine, UFormPos, IpRtrMib, IpHlpApi;
 
 {$R *.DFM}
 
@@ -2144,6 +2147,32 @@ begin
     end;
   end;
 
+// some code taken from UDataNetwork.pas to list interface numbers
+// very handy as my machine has over 40 interfaces
+procedure TSetupForm.NetworkStatsAdapterListButtonClick(Sender: TObject);
+var
+  Size: ULONG;
+  IntfTable: PMibIfTable;
+  MibRow: TMibIfRow;
+  MaxEntries: Cardinal;
+  Names: String;
+  i: Integer;
+begin
+  Size := 0;
+  if GetIfTable(nil, Size, True) <> ERROR_INSUFFICIENT_BUFFER then  Exit;
+  if (Size < sizeof( TMibIftable)) then Exit;
+  IntfTable := AllocMem(Size);
+  if (IntfTable <> nil) and (GetIfTable(IntfTable, Size, True) = NO_ERROR) then
+  begin
+    MaxEntries := min(IntfTable^.dwNumEntries,MAXNETSTATS);
+    for i:=0 to MaxEntries-1 do
+    begin
+      {$R-}MibRow := IntfTable.Table[i];{$R+}
+      Names := Names+IntToStr(i)+' '+PChar(@MibRow.bDescr[0])+#13#10;
+    end;
+    ShowMessage(Names);
+  end;
+end;
 
 end.
 

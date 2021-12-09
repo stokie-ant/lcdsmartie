@@ -1,6 +1,6 @@
 [GeneralSettings]
 MesVersion=2
-AppendMapFileToBinary=0
+AppendMapFileToBinary=1
 HandleExceptions=1
 CheckForFrozenMainThread=1
 FreezeTimeout=60000
@@ -29,7 +29,7 @@ MailSuccessMsg=The mail was sent successfully.
 MailFailureMsg=Sorry, sending the mail didn't work.
 BugReportFile=bugreport.txt
 AppendBugReports=1
-BugReportFileSize=50000
+BugReportFileSize=100000
 VersionVariable=
 [ExceptionBox]
 TitleBar=%appname%
@@ -59,8 +59,8 @@ Disassembly=1
 HideUglyItems=0
 ShowRelativeAddrs=1
 ShowRelativeLines=1
-FormatDisassembly=0
-LimitDisassembly=5
+FormatDisassembly=1
+LimitDisassembly=10
 [UnitInitOrder]
 PatchUnitInitOrder=1
 UnitInitOrder=ShareMem, HPMM, MultiMM, nxllFastCpuDetect, nxllFastFillChar, nxllFastMove, nxllMemoryManagerImpl, nxllFastCpuDetect, nxllFastFillChar, nxllFastMove, nxllMemoryManagerImpl, nxllMemoryManager, nxReplacementMemoryManager
