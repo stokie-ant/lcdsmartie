@@ -83,7 +83,6 @@ type
     EmailServerEdit: TEdit;
     EmailCheckTimeSpinEdit: TSpinEdit;
     Label48: TLabel;
-    EmailListBox: TListBox;
     EmailAccountComboBox: TComboBox;
     Label50: TLabel;
     OpenDialog1: TOpenDialog;
@@ -275,6 +274,9 @@ type
     Label21: TLabel;
     UseCCharLocSpinEdit: TSpinEdit;
     NetworkStatsAdapterListButton: TButton;
+    EmailLastSubjectRadioButton: TRadioButton;
+    EmailLastFromRadioButton: TRadioButton;
+    EmailMessageCountRadioButton: TRadioButton;
 
     procedure FormShow(Sender: TObject);
     procedure LCDSizeComboBoxChange(Sender: TObject);
@@ -290,7 +292,6 @@ type
     procedure GameServerEditExit(Sender: TObject);
     procedure SetiAtHomeListBoxClick(Sender: TObject);
     procedure DistributedNetBrowseButtonClick(Sender: TObject);
-    procedure EmailListBoxClick(Sender: TObject);
     procedure EmailAccountComboBoxChange(Sender: TObject);
     procedure ContinueLine1CheckBoxClick(Sender: TObject);
     procedure ContinueLine2CheckBoxClick(Sender: TObject);
@@ -346,7 +347,7 @@ type
   procedure LineEditClick(Sender: TObject);
   procedure OpeIcoFolderChange(Sender: TObject);
   procedure CCharEditGridChange(Sender: TObject);
-    procedure NetworkStatsAdapterListButtonClick(Sender: TObject);
+  procedure NetworkStatsAdapterListButtonClick(Sender: TObject);
 
   private
     DLLPath : string;
@@ -512,12 +513,8 @@ begin
   WebProxyServerEdit.text := config.httpProxy;
   WebProxyPortEdit.text := IntToStr(config.httpProxyPort);
 
-  EmailListBox.Clear;
   EmailAccountComboBox.Clear;
   for i := 1 to MaxEmailAccounts do begin
-    EmailListBox.Items.Add('Email '+IntToStr(i)+': Message Count');
-    EmailListBox.Items.Add('Email '+IntToStr(i)+': Last Subject');
-    EmailListBox.Items.Add('Email '+IntToStr(i)+': Last From');
     EmailAccountComboBox.Items.Add(IntToStr(i));
   end;
   EmailAccountComboBox.itemindex := 0;
@@ -1143,7 +1140,7 @@ begin
   if LeftPageControl.ActivePage = FoldingAtHomeTabSheet then
     FoldingAtHomeListBoxClick(Sender);
   if LeftPageControl.ActivePage = EmailTabSheet then
-    EmailListBoxClick(Sender);
+    EmailAccountComboBoxChange(Sender);
   if LeftPageControl.ActivePage = NetworkStatsTabSheet then
     NetworkStatsListBoxClick(Sender);
 end;
@@ -1175,36 +1172,30 @@ begin
   if opendialog2.FileName <> '' then DistributedNetLogfileEdit.text := opendialog2.FileName;
 end;
 
-procedure TSetupForm.EmailListBoxClick(Sender: TObject);
-begin
-  if (EmailListBox.itemindex >= 0) and (EmailListBox.itemindex < MaxEmailAccounts*3) then begin
-    case EmailListBox.itemindex mod 3 of
-      0: VariableEdit.Text := EmailCountKey+IntToStr((EmailListBox.itemindex div 3+1))+EmailKeyPostfix;
-      1: VariableEdit.Text := EmailSubjectKey+IntToStr((EmailListBox.itemindex div 3+1))+EmailKeyPostfix;
-      2: VariableEdit.Text := EmailFromKey+IntToStr((EmailListBox.itemindex div 3+1))+EmailKeyPostfix;
-    end;
-  end else
-    VariableEdit.Text := NoVariable;
-
-  if not (VariableEdit.Text = NoVariable) then
-    FocusToInputField();
-end;
-
 procedure TSetupForm.EmailAccountComboBoxChange(Sender: TObject);
-
 begin
-  config.pop[(CurrentlyShownEmailAccount + 1) mod MaxEmailAccounts].server := EmailServerEdit.text;
-  config.pop[(CurrentlyShownEmailAccount + 1) mod MaxEmailAccounts].user := EmailLoginEdit.text;
-  config.pop[(CurrentlyShownEmailAccount + 1) mod MaxEmailAccounts].pword := EmailPasswordEdit.text;
-  config.pop[(CurrentlyShownEmailAccount + 1) mod MaxEmailAccounts].port_ssl := EmailSSLEdit.text;
+  config.pop[CurrentlyShownEmailAccount + 1].server := EmailServerEdit.text;
+  config.pop[CurrentlyShownEmailAccount + 1].user := EmailLoginEdit.text;
+  config.pop[CurrentlyShownEmailAccount + 1].pword := EmailPasswordEdit.text;
+  config.pop[CurrentlyShownEmailAccount + 1].port_ssl := EmailSSLEdit.text;
 
   if EmailAccountComboBox.itemIndex < 0 then EmailAccountComboBox.itemindex := 0;
 
   CurrentlyShownEmailAccount := EmailAccountComboBox.itemindex;
-  EmailServerEdit.text := config.pop[(CurrentlyShownEmailAccount + 1) mod MaxEmailAccounts].server;
-  EmailLoginEdit.text := config.pop[(CurrentlyShownEmailAccount + 1) mod MaxEmailAccounts].user;
-  EmailPasswordEdit.text := config.pop[(CurrentlyShownEmailAccount + 1) mod MaxEmailAccounts].pword;
-  EmailSSLEdit.text := config.pop[(CurrentlyShownEmailAccount + 1) mod MaxEmailAccounts].port_ssl;
+  EmailServerEdit.text := config.pop[CurrentlyShownEmailAccount + 1].server;
+  EmailLoginEdit.text := config.pop[CurrentlyShownEmailAccount + 1].user;
+  EmailPasswordEdit.text := config.pop[CurrentlyShownEmailAccount + 1].pword;
+  EmailSSLEdit.text := config.pop[CurrentlyShownEmailAccount + 1].port_ssl;
+
+  if EmailMessageCountRadioButton.Checked then
+  VariableEdit.Text := EmailCountKey+IntToStr(CurrentlyShownEmailAccount+1)+EmailKeyPostfix
+  else if EmailLastSubjectRadioButton.Checked then
+  VariableEdit.Text := EmailSubjectKey+IntToStr(CurrentlyShownEmailAccount+1)+EmailKeyPostfix
+  else if EmailLastFromRadioButton.Checked then
+  VariableEdit.Text := EmailFromKey+IntToStr(CurrentlyShownEmailAccount+1)+EmailKeyPostfix;
+
+  if not (VariableEdit.Text = NoVariable) then
+    FocusToInputField();
 end;
 
 procedure TSetupForm.ContinueLine1CheckBoxClick(Sender: TObject);

@@ -1,6 +1,6 @@
 object SetupForm: TSetupForm
-  Left = 689
-  Top = 369
+  Left = 902
+  Top = 372
   ActiveControl = LeftPageControl
   Anchors = []
   BiDiMode = bdLeftToRight
@@ -28,7 +28,7 @@ object SetupForm: TSetupForm
     Top = 0
     Width = 265
     Height = 409
-    ActivePage = SysInfoTabSheet
+    ActivePage = EmailTabSheet
     Font.Charset = ANSI_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
@@ -444,42 +444,42 @@ object SetupForm: TSetupForm
       ImageIndex = 7
       object Label31: TLabel
         Left = 26
-        Top = 228
+        Top = 62
         Width = 36
-        Height = 13
+        Height = 17
         Caption = 'Server:'
       end
       object Label32: TLabel
         Left = 7
-        Top = 276
+        Top = 111
         Width = 55
-        Height = 13
+        Height = 16
         Caption = 'Loginname:'
       end
       object Label33: TLabel
         Left = 12
-        Top = 300
+        Top = 136
         Width = 50
         Height = 13
         Caption = 'Password:'
       end
       object Label48: TLabel
         Left = 8
-        Top = 324
+        Top = 306
         Width = 113
         Height = 13
         Caption = 'Email check time (mins):'
       end
       object Label50: TLabel
         Left = 8
-        Top = 204
+        Top = 36
         Width = 69
         Height = 13
         Caption = 'Email account:'
       end
       object Label28: TLabel
-        Left = 56
-        Top = 179
+        Left = 72
+        Top = 3
         Width = 56
         Height = 13
         Caption = 'POP3 only'
@@ -491,41 +491,41 @@ object SetupForm: TSetupForm
         ParentFont = False
       end
       object Label2: TLabel
-        Left = 41
-        Top = 253
-        Width = 21
-        Height = 13
-        Caption = 'SSL:'
+        Left = 18
+        Top = 87
+        Width = 44
+        Height = 16
+        Caption = 'SSL port:'
       end
       object EmailPasswordEdit: TEdit
         Left = 64
-        Top = 296
+        Top = 128
         Width = 145
         Height = 21
         Color = 16706270
         PasswordChar = '*'
-        TabOrder = 5
+        TabOrder = 4
         Text = 'Ur passw'
       end
       object EmailLoginEdit: TEdit
         Left = 64
-        Top = 272
+        Top = 104
         Width = 145
         Height = 21
-        TabOrder = 4
+        TabOrder = 3
         Text = 'Ur loginname'
       end
       object EmailServerEdit: TEdit
         Left = 64
-        Top = 224
+        Top = 56
         Width = 145
         Height = 21
-        TabOrder = 2
+        TabOrder = 1
         Text = 'Ur Server'
       end
       object EmailCheckTimeSpinEdit: TSpinEdit
-        Left = 120
-        Top = 320
+        Left = 128
+        Top = 304
         Width = 55
         Height = 22
         Font.Charset = ANSI_CHARSET
@@ -537,40 +537,57 @@ object SetupForm: TSetupForm
         MaxValue = 10080
         MinValue = 1
         ParentFont = False
-        TabOrder = 6
-        Value = 3
-      end
-      object EmailListBox: TListBox
-        Left = 0
-        Top = 0
-        Width = 209
-        Height = 177
-        ItemHeight = 13
-        TabOrder = 0
-        OnClick = EmailListBoxClick
-        OnDblClick = InsertButtonClick
+        TabOrder = 5
+        Value = 10
       end
       object EmailAccountComboBox: TComboBox
-        Left = 104
-        Top = 200
+        Left = 80
+        Top = 32
         Width = 49
         Height = 21
         Style = csDropDownList
         DropDownCount = 10
         ItemHeight = 13
-        TabOrder = 1
+        TabOrder = 0
         OnChange = EmailAccountComboBoxChange
       end
       object EmailSSLEdit: TEdit
         Left = 64
-        Top = 248
+        Top = 80
         Width = 145
         Height = 21
         Hint = 'SSL addon for gmail (995)'
         Color = 16706270
         ParentShowHint = False
         ShowHint = True
-        TabOrder = 3
+        TabOrder = 2
+      end
+      object EmailLastSubjectRadioButton: TRadioButton
+        Left = 64
+        Top = 200
+        Width = 113
+        Height = 17
+        Caption = 'Last subject'
+        TabOrder = 6
+        OnClick = EmailAccountComboBoxChange
+      end
+      object EmailLastFromRadioButton: TRadioButton
+        Left = 64
+        Top = 224
+        Width = 113
+        Height = 17
+        Caption = 'Last from'
+        TabOrder = 7
+        OnClick = EmailAccountComboBoxChange
+      end
+      object EmailMessageCountRadioButton: TRadioButton
+        Left = 64
+        Top = 176
+        Width = 113
+        Height = 17
+        Caption = 'Message count'
+        TabOrder = 8
+        OnClick = EmailAccountComboBoxChange
       end
     end
     object NetworkStatsTabSheet: TTabSheet
