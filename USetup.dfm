@@ -28,7 +28,7 @@ object SetupForm: TSetupForm
     Top = 0
     Width = 265
     Height = 409
-    ActivePage = EmailTabSheet
+    ActivePage = NetworkStatsTabSheet
     Font.Charset = ANSI_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
@@ -446,14 +446,14 @@ object SetupForm: TSetupForm
         Left = 26
         Top = 62
         Width = 36
-        Height = 17
+        Height = 13
         Caption = 'Server:'
       end
       object Label32: TLabel
         Left = 7
         Top = 111
         Width = 55
-        Height = 16
+        Height = 13
         Caption = 'Loginname:'
       end
       object Label33: TLabel
@@ -494,7 +494,7 @@ object SetupForm: TSetupForm
         Left = 18
         Top = 87
         Width = 44
-        Height = 16
+        Height = 13
         Caption = 'SSL port:'
       end
       object EmailPasswordEdit: TEdit
@@ -2149,7 +2149,7 @@ object SetupForm: TSetupForm
                 Height = 21
                 Style = csDropDownList
                 Anchors = [akLeft, akTop, akRight]
-                ItemHeight = 13
+                ItemHeight = 0
                 TabOrder = 0
                 OnChange = DisplayPluginListChange
               end

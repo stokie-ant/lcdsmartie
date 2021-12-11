@@ -1363,9 +1363,7 @@ var
 begin
   NetStat := TNetworkStatistics(NetworkStatsListBox.itemindex);
   if (NetStat >= FirstNetworkStat) and (NetStat <= LastNetworkStat) then begin
-    VariableEdit.Text := NetworkStatisticsKeys[NetStat];
-    if not (NetStat = nsNetIPAddress) then  // special case, should be resolved elsewhere
-      VariableEdit.Text := VariableEdit.Text + '(1)';
+    VariableEdit.Text := NetworkStatisticsKeys[NetStat]+ '(1)';
   end else
     VariableEdit.Text := NoVariable;
 

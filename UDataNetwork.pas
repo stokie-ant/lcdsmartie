@@ -83,6 +83,7 @@ const
 
 type
   TNetworkAdapterStats = record
+    netadapterip: String;
     netadaptername: String;
     iNetTotalDown, iNetTotalUp,
     iNetTotalDownOld, iPrevSysNetTotalDown,
@@ -98,7 +99,6 @@ type
   private
     // network stats
     NetworkAdapterStats : Array[0..MAXNETSTATS-1] of TNetworkAdapterStats;
-    ipaddress: String;                     //Guarded by dataCs, cpu + main thread
     procedure ResolveNetVariable(Variable : TNetworkStatistics; var Line : string);
   protected
     function AllowRefresh : boolean; override;
@@ -112,7 +112,7 @@ type
 implementation
 
 uses
-  Math, Windows, WinSock, IpRtrMib, IpHlpApi, UUtils;
+  Math, Windows, WinSock, IpRtrMib, IpTypes, IpHlpApi, UUtils;
 
 constructor TNetworkDataThread.Create;
 begin
@@ -135,24 +135,25 @@ var
   IntfTable: PMibIfTable;
   AdapterNumber: Integer;
   MibRow: TMibIfRow;
-  phoste: PHostEnt;
-  Buffer: Array [0..100] of char;
   maxEntries: Cardinal;
-
+  Ret: DWORD;
+  BufLen: ULONG;
+  Adapter, Adapters: PIP_ADAPTER_INFO;
+  IPAddr: PIP_ADDR_STRING;
 begin
 
   if (Active) then
   begin
-
-    GetHostName(Buffer, Sizeof(Buffer));
-    phoste := GetHostByName(buffer);
-    fDataLock.Enter();
-    try
-      if phoste = nil then ipaddress := '127.0.0.1'
-      else ipaddress := StrPas(inet_ntoa(PInAddr(phoste^.h_addr_list^)^));
-    finally
-      fDataLock.Leave();
-    end;
+ 
+ //   GetHostName(Buffer, Sizeof(Buffer));
+ //   phoste := GetHostByName(buffer);
+ //   fDataLock.Enter();
+ //   try
+ //     if phoste = nil then ipaddress := '127.0.0.1'
+ //     else ipaddress := StrPas(inet_ntoa(PInAddr(phoste^.h_addr_list^)^));
+ //   finally
+ //     fDataLock.Leave();
+ //   end;
 
     Size := 0;
     if GetIfTable(nil, Size, True) <> ERROR_INSUFFICIENT_BUFFER then  Exit;
@@ -226,6 +227,42 @@ begin
     finally
       if (IntfTable <> nil) then FreeMem(IntfTable);
     end;
+
+    BufLen := 1024*15;
+    GetMem(Adapters, BufLen);
+	
+    try
+      repeat
+        Ret := GetAdaptersInfo(Adapters, BufLen);
+        case Ret of
+          ERROR_SUCCESS:
+          begin
+            if BufLen = 0 then begin
+              Exit;
+            end;
+            Break;
+          end;
+          ERROR_NOT_SUPPORTED,
+          ERROR_NO_DATA:
+            Exit;
+          ERROR_BUFFER_OVERFLOW:
+            ReallocMem(Adapters, BufLen);
+        end;
+      until False;
+
+      if Ret = ERROR_SUCCESS then
+      begin
+        Adapter := Adapters;
+        repeat
+          IPAddr := @(Adapter^.IpAddressList);
+		     	NetworkAdapterStats[Adapter^.index - 1].netadapterip := IPAddr.IpAddress.S;
+          Adapter := Adapter^.Next;
+        until Adapter = nil;
+      end;
+    finally
+      FreeMem(Adapters);
+    end;
+
   end;
 end;
 
@@ -247,7 +284,8 @@ begin
       with NetworkAdapterStats[adapterNum] do begin
         try
           case Variable of
-            nsNetAdapter : Line := Line + netadaptername;
+            nsNetIPAddress : Line := Line + netadapterip;
+			nsNetAdapter : Line := Line + netadaptername;
             nsNetDownK : Line := Line + FloatToStrF(Round(iNetTotalDown/1024*10)/10,ffFixed, 18, 1, localeFormat);
             nsNetUpK : Line := Line + FloatToStrF(Round(iNetTotalUp/1024*10)/10,ffFixed, 18, 1, localeFormat);
             nsNetDownM : Line := Line + FloatToStrF(Round((iNetTotalDown div 1024)/1024*10)/10,ffFixed, 18, 1, localeFormat);
@@ -289,17 +327,7 @@ var
   NetStatLoop : TNetworkStatistics;
 begin
   if (pos(NetKeyPrefix, Line) = 0) then exit;
-
   Active := true;
-  if (pos(NetIPAddressKey, Line) <> 0) then begin
-    fDataLock.Enter();
-    try
-      Line := StringReplace(Line, NetIPAddressKey, IPAddress, [rfReplaceAll]);
-    finally
-      fDataLock.Leave();
-    end;
-  end;
-
   for NetStatLoop := FirstNetworkStat to LastNetworkStat do begin
     ResolveNetVariable(NetStatLoop,Line);
   end;
