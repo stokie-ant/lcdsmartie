@@ -6,6 +6,7 @@ uses
   System2,DataThread;
 
 const
+  ScreensaverActiveKey = '$ScreensaverActive';
   UserNameKey = '$Username';
   ComputerNameKey = '$Computername';
   MemKey = '$Mem';
@@ -90,6 +91,7 @@ var
 begin
   Line := StringReplace(line, UserNameKey, STUsername, [rfReplaceAll]);
   Line := StringReplace(line, ComputerNameKey, STcomputername, [rfReplaceAll]);
+  Line := StringReplace(line, ScreensaverActiveKey, inttostr(system1.isscreensaveractive), [rfReplaceAll]);
 
   if (pos(MemKey,Line) > 0) then begin
     fDataLock.Enter;

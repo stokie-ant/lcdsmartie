@@ -1015,6 +1015,7 @@ begin
     28 : VariableEdit.Text := '$Bar($HDFree(C),$HDTotal(C),10)';
     29 : VariableEdit.Text := '$Bar($HDUsed(C),$HDTotal(C),10)';
     30 : VariableEdit.Text := '$ScreenReso';
+    31 : VariableEdit.Text := '$ScreensaverActive';
     else VariableEdit.Text := NoVariable;
   end; // case
 

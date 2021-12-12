@@ -24,7 +24,7 @@ unit System2;
 
 interface
 
-uses Windows, SysUtils, Classes;
+uses Windows, SysUtils, Classes, Registry, TlHelp32;
 
 type
 
@@ -54,6 +54,7 @@ type
     function disknamelength(lw: char): Integer;
     function diskfreespace(lw: char): int64;
     function disktotalspace(lw: char): int64;
+    function isscreensaveractive: integer;
   end;
 
 implementation
@@ -369,6 +370,46 @@ begin
   result := disksize(la);
   if (result = -1) then result := 0;
   SetErrorMode(uiOldMode);
+end;
+
+//// crap to detect if screensaver is active
+function processExists(exeFileName: string): Boolean;
+var
+  ContinueLoop: BOOL;
+  FSnapshotHandle: THandle;
+  FProcessEntry32: TProcessEntry32;
+begin
+  FSnapshotHandle := CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+  FProcessEntry32.dwSize := SizeOf(FProcessEntry32);
+  ContinueLoop := Process32First(FSnapshotHandle, FProcessEntry32);
+  Result := False;
+  while Integer(ContinueLoop) <> 0 do
+  begin
+    if ((UpperCase(ExtractFileName(FProcessEntry32.szExeFile)) =
+      UpperCase(ExeFileName)) or (UpperCase(FProcessEntry32.szExeFile) =
+      UpperCase(ExeFileName))) then
+    begin
+      Result := True;
+    end;
+    ContinueLoop := Process32Next(FSnapshotHandle, FProcessEntry32);
+  end;
+  CloseHandle(FSnapshotHandle);
+end;
+
+function TSystem.isscreensaveractive: integer;
+var
+  Reg: Tregistry;
+  SSStr: String;
+begin
+  reg := TRegistry.Create ;
+  Reg.RootKey := HKEY_CURRENT_USER;
+  Reg.OpenKey('Control Panel\Desktop',False);
+  SSStr := ExtractFileName(Reg.ReadString('SCRNSAVE.EXE'));
+  If processExists(SSStr) then
+    result:= 1
+  else
+    result := 0;
+  Reg.Free;
 end;
 
 end.

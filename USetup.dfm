@@ -82,7 +82,8 @@ object SetupForm: TSetupForm
           'Used space on drive(X) (%)'
           'Free space Bar drive(X,Length)'
           'Used space Bar drive(X,Length)'
-          'Screen Resolution')
+          'Screen Resolution'
+		  'Screen Saver Active')
         TabOrder = 0
         OnClick = SysInfoListBoxClick
         OnDblClick = InsertButtonClick
