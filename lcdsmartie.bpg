@@ -1,0 +1,80 @@
+#------------------------------------------------------------------------------
+VERSION = BWS.01
+#------------------------------------------------------------------------------
+!ifndef ROOT
+ROOT = $(MAKEDIR)\..
+!endif
+#------------------------------------------------------------------------------
+MAKE = $(ROOT)\bin\make.exe -$(MAKEFLAGS) -f$**
+DCC = $(ROOT)\bin\dcc32.exe $**
+BRCC = $(ROOT)\bin\brcc32.exe $**
+#------------------------------------------------------------------------------
+PROJECTS = LCDSmartie.exe crystal.dll desktop.dll FutabaVFD_LCD.dll HD44780.dll \
+  HD44780P.dll HD44780S.dll imon.dll imond.dll irtrans.dll lisvfd.dll matrix.dll \
+  pertelian.dll seetron.dll testdriver.dll demo.dll speedfan.dll theatertek.dll \
+  wanip.dll wmpblog.dll
+#------------------------------------------------------------------------------
+default: $(PROJECTS)
+#------------------------------------------------------------------------------
+
+LCDSmartie.exe: LCDSmartie.DPR
+  $(DCC)
+
+pertelian.dll: display_dll_source\pertelian.dpr
+  $(DCC)
+
+crystal.dll: display_dll_source\crystal.dpr
+  $(DCC)
+
+desktop.dll: display_dll_source\desktop.dpr
+  $(DCC)
+
+FutabaVFD_LCD.dll: display_dll_source\FutabaVFD_LCD.dpr
+  $(DCC)
+
+HD44780.dll: display_dll_source\HD44780.dpr
+  $(DCC)
+
+HD44780P.dll: display_dll_source\HD44780P.dpr
+  $(DCC)
+
+HD44780S.dll: display_dll_source\HD44780S.dpr
+  $(DCC)
+
+imon.dll: display_dll_source\imon.dpr
+  $(DCC)
+
+imond.dll: display_dll_source\imond.dpr
+  $(DCC)
+
+irtrans.dll: display_dll_source\irtrans.dpr
+  $(DCC)
+
+lisvfd.dll: display_dll_source\lisvfd.dpr
+  $(DCC)
+
+matrix.dll: display_dll_source\matrix.dpr
+  $(DCC)
+
+seetron.dll: display_dll_source\seetron.dpr
+  $(DCC)
+
+testdriver.dll: display_dll_source\testdriver.dpr
+  $(DCC)
+
+demo.dll: DLL example\Delphi demo plugin\demo.dpr
+  $(DCC)
+
+speedfan.dll: contrib\speedfan\speedfan.dpr
+  $(DCC)
+
+theatertek.dll: contrib\theatertek\theatertek.dpr
+  $(DCC)
+
+wanip.dll: contrib\wanip\wanip.dpr
+  $(DCC)
+
+wmpblog.dll: contrib\wmpblog\wmpblog.dpr
+  $(DCC)
+
+

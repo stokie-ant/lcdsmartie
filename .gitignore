@@ -1,10 +1,18 @@
+# ignore these in all dirs
 *.dcu
 *.~*
 *.swp
 *.ddp
-LCDSmartie.map
-LCDSmartie.drc
-LCDSmartie.exe
-LCDSmartie.dsk
-LCDSmartie.mad
-dcu
+*.res
+*.map
+*.drc
+*.exe
+*.dsk
+*.mad
+# ignore dll's only in these dirs as to not wipe out the openssl dll's in the release-dir 
+release-dir/displays/*.dll
+release-dir/plugins/*.dll
+# dont keep anything in the cache that may be created during testing
+release-dir/cache
+# this will be re-created when running the program
+release-dir/forms.ini

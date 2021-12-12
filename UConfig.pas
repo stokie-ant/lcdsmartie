@@ -555,7 +555,7 @@ begin
   sScreenTextSyntaxVersion := initfile.ReadString('Versions',
     'ScreenTextSyntax', '1.0');
 
-  sSkinPath := initfile.ReadString('General Settings', 'SkinPath', 'images\');
+  sSkinPath := initfile.ReadString('General Settings', 'SkinPath', 'images\default\');
   sSkinPath := IncludeTrailingPathDelimiter(sSkinPath);
 
   sTrayIcon := initfile.ReadString('General Settings', 'TrayIcon', 'smartie.ico');

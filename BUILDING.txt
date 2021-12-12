@@ -1,0 +1,63 @@
+
+https://github.com/multiplay/qstat
+Delphi Version
+==============
+This project is built using Delphi Version 7.
+
+NB: This project can not be built by trial versions of Delphi Studio;
+trail versions do not allow binary only components to be installed and
+will fail stating that they can't find the xxxx.pas file.
+[This restriction could be removed if we were to use different code for
+handling the serial port.]
+
+Required Components
+===================
+This project requires the following components to be installed and in
+the projects path:
+ - CoolTrayIcon from: http://subsimple.com/delphi.asp
+ - WinampCtrl.
+ - Indy v10.5.1
+ - indy SSL library
+ - MadExcepts
+
+All of these components can be found in the components sub-directory
+
+Install all components before loading the LCD Smartie project.
+
+Optional Software
+=================
+We also use madExcept (Optional), this is used for reporting errors
+back to us from the user (also provides a great stack trace).
+[This can also be found in the components sub-directory - or downloaded
+from http://www.madexcept.com/]
+
+Setting up the environment
+==========================
+Copy all the files (but not the CVS subdirectory!) from release-dir to the top
+level directory - these are required for running the build.
+
+Structure:
+LCDSmartieDir	->
+		->imagesDir  ->here comes the skin images
+		->pluginsDir ->here comes the plugins
+		->cacheDir
+		->displays   ->here comes the dll display plugin
+		->LcdSmartie.exe
+		->config.ini
+		->inpout32.dll
+		->libeay32.dll
+		->ssleay32.dll
+
+
+---------------------------------------------------------------
+Creating a release
+==================
+[This should be handled by a script or something - but is manual for the
+moment]
+- Copy the files (but not the subdirectories) from the images directory, into
+  an images subdirectory of releases-dir.
+- Copy qstat.exe and dlportio.dll to the releases-dir.
+- Copy a freshly built LCDSmartie.exe to the releases-dir.
+- Update the README.txt.
+- zip it all up.
+

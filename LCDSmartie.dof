@@ -115,7 +115,7 @@ AutoIncBuild=1
 MajorVer=5
 MinorVer=4
 Release=2
-Build=96
+Build=102
 Debug=1
 PreRelease=1
 Special=0
@@ -126,28 +126,26 @@ CodePage=1252
 [Version Info Keys]
 CompanyName=SourceForge.net
 FileDescription=LCD Smartie
-FileVersion=5.4.2.96
+FileVersion=5.4.2.102
 InternalName=LCD Smartie
 LegalCopyright=GPL
 LegalTrademarks=
 OriginalFilename=Smartie.exe
 ProductName=LCD Smartie
 ProductVersion=5.4.1
-[Excluded Packages]
-C:\Program Files (x86)\Borland\Delphi7\Projects\indy10\dclIndyCore70.bpl=Indy 10 Core Design Time
-C:\Program Files (x86)\Borland\Delphi7\Projects\indy10\dclIndyProtocols70.bpl=Indy 10 Protocols Design Time
-[HistoryLists\hlConditionals]
-Count=1
-Item0=madExcept
+[HistoryLists\hlDebugSourcePath]
+Count=2
+Item0=Y:\HTPC\lcdsmartie\
+Item1=Y:\wmpblog
 [HistoryLists\hlUnitAliases]
 Count=1
 Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
 [HistoryLists\hlSearchPath]
-Count=1
-Item0=components\CoolTrayIcon;components\WinampCtrl;
-[HistoryLists\hlUnitOutputDirectory]
-Count=1
-Item0=dcu
+Count=2
+Item0=Y:\HTPC\lcdsmartie\plugin_source
+Item1=Y:\wmpblog
 [HistoryLists\hlOutputDirectorry]
-Count=1
-Item0=release-dir
+Count=3
+Item0=..\..\release-dir\plugins
+Item1=y:\lcdsmartie\plugins\
+Item2=Y:\HTPC\lcdsmartie\release-dir\plugins

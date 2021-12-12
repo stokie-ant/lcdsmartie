@@ -1,62 +1,14 @@
+From wikipedia.org/wiki/LCD_Smartie
+LCD Smartie is open-source software for Microsoft Windows which allows a character LCD to be used as an auxiliary display device for a PC.
+Supported devices include displays based on the Hitachi HD44780 Controller, the Matrix Orbital Serial/USB LCD, and Palm OS devices (when used in conjunction with PalmOrb).
+The program has built in support for many systems statistics (i.e. cpu load, network utilization, free disk space...), downloading RSS feeds, Winamp integration and support for several other popular applications.
+To support less common applications LCD Smartie uses a powerful plugin system.
 
-Delphi Version
-==============
-This project is built using Delphi Version 7.
+After having no updates for 10 years and very little activity on the lcd smartie forums I have decided that the original project has been abandoned by its developers.
+I have therefore forked from the original project and have added some fixes and improvements.
+While there is much information on the lcd smartie forums any issues with this fork should be reported here. It's high likely you wouldn't get a reply there anyway.
 
-NB: This project can not be built by trial versions of Delphi Studio;
-trail versions do not allow binary only components to be installed and
-will fail stating that they can't find the xxxx.pas file.
-[This restriction could be removed if we were to use different code for
-handling the serial port.]
+gamestats require qstat
+https://github.com/multiplay/qstat
 
-Required Components
-===================
-This project requires the following components to be installed and in
-the projects path:
- - CoolTrayIcon from: http://subsimple.com/delphi.asp
- - WinampCtrl.
- - Indy v10.5.1
- - indy SSL library
- - MadExcepts
-
-All of these components can be found in the components sub-directory
-
-Install all components before loading the LCD Smartie project.
-
-Optional Software
-=================
-We also use madExcept (Optional), this is used for reporting errors
-back to us from the user (also provides a great stack trace).
-[This can also be found in the components sub-directory - or downloaded
-from http://www.madexcept.com/]
-
-Setting up the environment
-==========================
-Copy all the files (but not the CVS subdirectory!) from release-dir to the top
-level directory - these are required for running the build.
-
-Structure:
-LCDSmartieDir	->
-		->imagesDir  ->here comes the skin images
-		->pluginsDir ->here comes the plugins
-		->cacheDir
-		->displays   ->here comes the dll display plugin
-		->LcdSmartie.exe
-		->config.ini
-		->inpout32.dll
-		->libeay32.dll
-		->ssleay32.dll
-
-
----------------------------------------------------------------
-Creating a release
-==================
-[This should be handled by a script or something - but is manual for the
-moment]
-- Copy the files (but not the subdirectories) from the images directory, into
-  an images subdirectory of releases-dir.
-- Copy qstat.exe and dlportio.dll to the releases-dir.
-- Copy a freshly built LCDSmartie.exe to the releases-dir.
-- Update the README.txt.
-- zip it all up.
-
+To build this project see BUILDING.txt
