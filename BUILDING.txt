@@ -1,5 +1,3 @@
-
-https://github.com/multiplay/qstat
 Delphi Version
 ==============
 This project is built using Delphi Version 7.
@@ -31,22 +29,22 @@ back to us from the user (also provides a great stack trace).
 [This can also be found in the components sub-directory - or downloaded
 from http://www.madexcept.com/]
 
-Setting up the environment
-==========================
-Copy all the files (but not the CVS subdirectory!) from release-dir to the top
-level directory - these are required for running the build.
+Building
+========
+All delphi parts of the project can be built seperately using the corresponding .dpr file 
+or all together at the same time by using the group project lcdsmartie.bpg
+Built binaries are built into their proper places in the release-dir directory
 
-Structure:
-LCDSmartieDir	->
-		->imagesDir  ->here comes the skin images
-		->pluginsDir ->here comes the plugins
-		->cacheDir
-		->displays   ->here comes the dll display plugin
-		->LcdSmartie.exe
-		->config.ini
-		->inpout32.dll
-		->libeay32.dll
-		->ssleay32.dll
+Directory structure:
+lcdsmartie	->
+		->components ->3rd party stuff required to build
+		->contrib ->3rd party plugin source
+		->display_dll_source ->display dll source
+		->DLL example ->demo.dll plugin source in a few different programming languages
+		->DNBridge -> .net bridge dll source
+		->graphics -> image files for the program to use internally
+		->images -> skin images
+		->release-dir -> after compiling, program and plugins can be found here. This whole folder would be zipped up for a release
 
 
 ---------------------------------------------------------------
@@ -54,10 +52,7 @@ Creating a release
 ==================
 [This should be handled by a script or something - but is manual for the
 moment]
-- Copy the files (but not the subdirectories) from the images directory, into
-  an images subdirectory of releases-dir.
 - Copy qstat.exe and dlportio.dll to the releases-dir.
-- Copy a freshly built LCDSmartie.exe to the releases-dir.
 - Update the README.txt.
 - zip it all up.
 
