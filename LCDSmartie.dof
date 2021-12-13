@@ -113,9 +113,9 @@ RootDir=
 IncludeVerInfo=1
 AutoIncBuild=1
 MajorVer=5
-MinorVer=4
-Release=2
-Build=102
+MinorVer=5
+Release=0
+Build=0
 Debug=1
 PreRelease=1
 Special=0
@@ -124,15 +124,15 @@ DLL=0
 Locale=2057
 CodePage=1252
 [Version Info Keys]
-CompanyName=SourceForge.net
+CompanyName=LCDSmartie
 FileDescription=LCD Smartie
-FileVersion=5.4.2.102
+FileVersion=5.5.0.0
 InternalName=LCD Smartie
 LegalCopyright=GPL
 LegalTrademarks=
 OriginalFilename=Smartie.exe
 ProductName=LCD Smartie
-ProductVersion=5.4.1
+ProductVersion=5.5.0
 [HistoryLists\hlDebugSourcePath]
 Count=2
 Item0=Y:\HTPC\lcdsmartie\
@@ -141,11 +141,13 @@ Item1=Y:\wmpblog
 Count=1
 Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
 [HistoryLists\hlSearchPath]
-Count=2
-Item0=Y:\HTPC\lcdsmartie\plugin_source
-Item1=Y:\wmpblog
-[HistoryLists\hlOutputDirectorry]
 Count=3
-Item0=..\..\release-dir\plugins
-Item1=y:\lcdsmartie\plugins\
-Item2=Y:\HTPC\lcdsmartie\release-dir\plugins
+Item0=components\CoolTrayIcon;components\WinampCtrl;
+Item1=Y:\HTPC\lcdsmartie\plugin_source
+Item2=Y:\wmpblog
+[HistoryLists\hlOutputDirectorry]
+Count=4
+Item0=release-dir
+Item1=..\..\release-dir\plugins
+Item2=y:\lcdsmartie\plugins\
+Item3=Y:\HTPC\lcdsmartie\release-dir\plugins

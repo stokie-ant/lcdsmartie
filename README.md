@@ -24,12 +24,13 @@ While there is much information on the lcd smartie forums, any issues with this 
 - Detect if screen saver is active - Can be used with actions to turn off the display or show another screen or theme
 - Detect if a full screen app is running - Again as above can be used with actions to set another screen
 - Detect if a full screen 3D game is running - maybe use actions to set a screen or theme showing temperatures
+- Many more under the hood fixes
 
 ### Roadmap
 As I'm only one man that does this in my spare time I probably will not get to work on it as much as I'd like but, I will try to bring fixes and updates as often as i can
 
 ### Get LCDSmartie
-download here - no download yet -
+download here - [lcdsmartie.zip](/stokie-ant/lcd-smartie/releases/latest/download/lcdsmartie.zip)
 
 ### Building
 see the file [BUILDING.txt](BUILDING.txt)
