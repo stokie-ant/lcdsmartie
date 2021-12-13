@@ -24,7 +24,7 @@ unit System2;
 
 interface
 
-uses Windows, SysUtils, Classes, Registry, TlHelp32;
+uses Windows, SysUtils, Classes, Registry, TlHelp32, shellapi;
 
 type
 
@@ -55,6 +55,8 @@ type
     function diskfreespace(lw: char): int64;
     function disktotalspace(lw: char): int64;
     function isscreensaveractive: integer;
+    function isfullscreengameactive: integer;
+    function isfullscreenappactive: integer;
   end;
 
 implementation
@@ -85,6 +87,8 @@ type
   {$EXTERNALSYM MEMORYSTATUSEX}
 
 //---
+
+function SHQueryUserNotificationState( p : Pointer ) : HRESULT; stdcall; external shell32 name 'SHQueryUserNotificationState';
 
 function GlobalMemoryStatusEx(var lpBuffer: TMemoryStatusEx): BOOL; stdcall;
 type
@@ -410,6 +414,41 @@ begin
   else
     result := 0;
   Reg.Free;
+end;
+
+// crap for detecting fulscreen applications
+// just leave this here should it be needed
+//typedef enum  {
+//  QUNS_NOT_PRESENT              = 1,
+//  QUNS_BUSY                     = 2,
+//  QUNS_RUNNING_D3D_FULL_SCREEN  = 3,
+//  QUNS_PRESENTATION_MODE        = 4,
+//  QUNS_ACCEPTS_NOTIFICATIONS    = 5,
+//  QUNS_QUIET_TIME               = 6,
+//  QUNS_APP                      = 7
+//} QUERY_USER_NOTIFICATION_STATE;
+function TSystem.isfullscreengameactive: integer;
+var
+ i : LongInt;
+begin
+ result := -1;
+ if (SHQueryUserNotificationState(@i) = S_OK) then
+   if (i = 3)  then // d3d full screen
+     result := 1
+   else
+     result := 0;
+end;
+
+function TSystem.isfullscreenappactive: integer;
+var
+ i : LongInt;
+begin
+  result := -1;
+  if (SHQueryUserNotificationState(@i) = S_OK) then
+    if (i = 2)  then // non d3d full screen
+      result := 1
+    else
+      result := 0;
 end;
 
 end.

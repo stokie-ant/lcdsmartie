@@ -6,7 +6,6 @@ uses
   System2,DataThread;
 
 const
-  ScreensaverActiveKey = '$ScreensaverActive';
   UserNameKey = '$Username';
   ComputerNameKey = '$Computername';
   MemKey = '$Mem';
@@ -21,7 +20,10 @@ const
   PageTotalKey = PageKey + 'Total';
   PageFreePercentKey = PageKey + 'F%';
   PageUsedPercentKey = PageKey + 'U%';
-
+  ScreensaverActiveKey = '$ScreenSaverActive';
+  FullScreenGameActive = '$FullScreenGameActive';
+  FullScreenAppActive = '$FullScreenAppActive';
+  
 type
   TMemoryDataThread = class(TDataThread)
   private
@@ -29,6 +31,8 @@ type
     STUsername, STComputername : String;
     STPageFree, STPageTotal: Int64;
     STMemFree, STMemTotal: Int64;
+	STSSActive, STFSGActive, STFSAActive: integer;
+	
   protected
     function AllowRefresh : boolean; override;
     procedure  DoUpdate; override;
@@ -48,6 +52,7 @@ begin
   System1 := TSystem.Create(nil);
   STComputername := System1.Computername;
   STUsername := System1.Username;
+  
   inherited Create(1000);
 end;
 
@@ -73,7 +78,11 @@ begin
       fDataLock.Leave;
     end;
   end;
-
+  
+  STSSActive := system1.isscreensaveractive;
+  STFSGActive := system1.isfullscreengameactive;
+  STFSAActive := system1.isfullscreenappactive;
+  
   if (not Terminated) then begin
     fDataLock.Enter;
     try
@@ -91,7 +100,9 @@ var
 begin
   Line := StringReplace(line, UserNameKey, STUsername, [rfReplaceAll]);
   Line := StringReplace(line, ComputerNameKey, STcomputername, [rfReplaceAll]);
-  Line := StringReplace(line, ScreensaverActiveKey, inttostr(system1.isscreensaveractive), [rfReplaceAll]);
+  Line := StringReplace(line, ScreensaverActiveKey, inttostr(STSSActive), [rfReplaceAll]);
+  Line := StringReplace(line, FullScreenGameActive, inttostr(STFSGActive), [rfReplaceAll]);
+  Line := StringReplace(line, FullScreenAppActive, inttostr(STFSAActive), [rfReplaceAll]);
 
   if (pos(MemKey,Line) > 0) then begin
     fDataLock.Enter;

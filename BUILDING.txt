@@ -3,7 +3,7 @@ Delphi Version
 This project is built using Delphi Version 7.
 
 NB: This project can not be built by trial versions of Delphi Studio;
-trail versions do not allow binary only components to be installed and
+trial versions do not allow binary only components to be installed and
 will fail stating that they can't find the xxxx.pas file.
 [This restriction could be removed if we were to use different code for
 handling the serial port.]
@@ -45,7 +45,7 @@ lcdsmartie	->
 		->graphics -> image files for the program to use internally
 		->images -> skin images
 		->release-dir -> after compiling, program and plugins can be found here. This whole folder would be zipped up for a release
-
+        ->extras -> schematics, info, data sheets, etc.
 
 ---------------------------------------------------------------
 Creating a release

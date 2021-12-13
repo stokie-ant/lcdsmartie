@@ -1,13 +1,13 @@
 object SetupForm: TSetupForm
-  Left = 902
-  Top = 372
+  Left = 648
+  Top = 263
   ActiveControl = LeftPageControl
   Anchors = []
   BiDiMode = bdLeftToRight
   BorderIcons = []
   BorderStyle = bsToolWindow
   Caption = 'LCD Smartie 5.x Setup'
-  ClientHeight = 411
+  ClientHeight = 447
   ClientWidth = 849
   Color = clBtnFace
   Font.Charset = ANSI_CHARSET
@@ -27,8 +27,8 @@ object SetupForm: TSetupForm
     Left = 0
     Top = 0
     Width = 265
-    Height = 409
-    ActivePage = NetworkStatsTabSheet
+    Height = 449
+    ActivePage = PluginsTabSheet
     Font.Charset = ANSI_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
@@ -83,7 +83,9 @@ object SetupForm: TSetupForm
           'Free space Bar drive(X,Length)'
           'Used space Bar drive(X,Length)'
           'Screen Resolution'
-		  'Screen Saver Active')
+          'Screen Saver Active'
+          'Full Screen Game Active'
+          'Full Screen App Active')
         TabOrder = 0
         OnClick = SysInfoListBoxClick
         OnDblClick = InsertButtonClick
@@ -1186,7 +1188,7 @@ object SetupForm: TSetupForm
   end
   object OKButton: TButton
     Left = 572
-    Top = 384
+    Top = 416
     Width = 75
     Height = 25
     Caption = '&OK'
@@ -1203,7 +1205,7 @@ object SetupForm: TSetupForm
   end
   object CancelButton: TButton
     Left = 652
-    Top = 384
+    Top = 416
     Width = 75
     Height = 25
     Cancel = True
@@ -1253,7 +1255,7 @@ object SetupForm: TSetupForm
   end
   object ApplyButton: TButton
     Left = 732
-    Top = 384
+    Top = 416
     Width = 75
     Height = 25
     Caption = '&Apply'
@@ -1264,7 +1266,7 @@ object SetupForm: TSetupForm
     Left = 264
     Top = 0
     Width = 581
-    Height = 381
+    Height = 409
     ActivePage = ScreensTabSheet
     TabOrder = 0
     TabStop = False
@@ -1275,7 +1277,7 @@ object SetupForm: TSetupForm
         Left = 3
         Top = 168
         Width = 561
-        Height = 177
+        Height = 209
         BiDiMode = bdLeftToRight
         Caption = 'Screens settings'
         Font.Charset = ANSI_CHARSET
@@ -1327,7 +1329,7 @@ object SetupForm: TSetupForm
         end
         object Label44: TLabel
           Left = 432
-          Top = 8
+          Top = 16
           Width = 25
           Height = 13
           Caption = 'Don'#39't'
@@ -1340,7 +1342,7 @@ object SetupForm: TSetupForm
         end
         object Label45: TLabel
           Left = 432
-          Top = 24
+          Top = 32
           Width = 24
           Height = 13
           Caption = 'scroll'
@@ -1353,7 +1355,7 @@ object SetupForm: TSetupForm
         end
         object Label47: TLabel
           Left = 436
-          Top = 56
+          Top = 64
           Width = 20
           Height = 13
           Caption = 'line:'
@@ -1366,7 +1368,7 @@ object SetupForm: TSetupForm
         end
         object Label46: TLabel
           Left = 436
-          Top = 40
+          Top = 48
           Width = 17
           Height = 13
           Caption = 'this'
@@ -1379,7 +1381,7 @@ object SetupForm: TSetupForm
         end
         object Label51: TLabel
           Left = 467
-          Top = 8
+          Top = 16
           Width = 43
           Height = 13
           Caption = 'Continue'
@@ -1392,7 +1394,7 @@ object SetupForm: TSetupForm
         end
         object Label52: TLabel
           Left = 482
-          Top = 24
+          Top = 32
           Width = 12
           Height = 13
           Caption = 'on'
@@ -1405,7 +1407,7 @@ object SetupForm: TSetupForm
         end
         object Label53: TLabel
           Left = 477
-          Top = 40
+          Top = 48
           Width = 22
           Height = 13
           Caption = 'next'
@@ -1418,7 +1420,7 @@ object SetupForm: TSetupForm
         end
         object Label54: TLabel
           Left = 480
-          Top = 56
+          Top = 64
           Width = 20
           Height = 13
           Caption = 'line:'
@@ -1431,7 +1433,7 @@ object SetupForm: TSetupForm
         end
         object Label4: TLabel
           Left = 520
-          Top = 8
+          Top = 16
           Width = 33
           Height = 13
           Caption = 'Center'
@@ -1444,7 +1446,7 @@ object SetupForm: TSetupForm
         end
         object Label17: TLabel
           Left = 526
-          Top = 24
+          Top = 32
           Width = 24
           Height = 13
           Caption = 'text:'
@@ -1529,7 +1531,7 @@ object SetupForm: TSetupForm
           Left = 464
           Top = 8
           Width = 2
-          Height = 161
+          Height = 185
           Enabled = False
           TabOrder = 22
         end
@@ -1573,7 +1575,7 @@ object SetupForm: TSetupForm
           Left = 512
           Top = 8
           Width = 2
-          Height = 161
+          Height = 185
           Enabled = False
           TabOrder = 23
         end
@@ -1847,6 +1849,126 @@ object SetupForm: TSetupForm
           MinValue = 1
           ParentFont = False
           TabOrder = 0
+          Value = 1
+          OnChange = ScreenSpinEditChange
+        end
+        object CopyToScreenButton: TButton
+          Left = 16
+          Top = 176
+          Width = 75
+          Height = 25
+          Hint = 
+            'Copy this screen to another screen leaving this screen intact. C' +
+            'AUTION: Changes remain in  memory until Apply or Close is clicke' +
+            'd. If you make a mistake, cancel the settings window and close s' +
+            'martie to prevent changes being written to disk'
+          Caption = 'Copy to'
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
+          TabOrder = 25
+          OnClick = CopyToScreenButtonClick
+        end
+        object MoveToScreenButton: TButton
+          Left = 152
+          Top = 176
+          Width = 75
+          Height = 25
+          Hint = 
+            'Move this screen to another screen leaving this one blank. CAUTI' +
+            'ON: Changes remain in  memory until Apply or Close is clicked. I' +
+            'f you make a mistake, cancel the settings window and close smart' +
+            'ie to prevent changes being written to disk'
+          Caption = 'Move to'
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
+          TabOrder = 26
+          OnClick = MoveToScreenButtonClick
+        end
+        object SwapWithScreenButton: TButton
+          Left = 288
+          Top = 176
+          Width = 75
+          Height = 25
+          Hint = 
+            'Swap this screen with another screen. CAUTION: Changes remain in' +
+            ' memory until Apply or Close is clicked. If you make a mistake, ' +
+            'cancel the settings window and close smartie to prevent changes ' +
+            'being written to disk'
+          Caption = 'Swap with'
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
+          TabOrder = 27
+          OnClick = SwapWithScreenButtonClick
+        end
+        object CopyToScreenSpinEdit: TSpinEdit
+          Left = 92
+          Top = 178
+          Width = 49
+          Height = 22
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          MaxLength = 2
+          MaxValue = 20
+          MinValue = 1
+          ParentFont = False
+          TabOrder = 28
+          Value = 1
+          OnChange = ScreenSpinEditChange
+        end
+        object MoveToScreenSpinEdit: TSpinEdit
+          Left = 228
+          Top = 178
+          Width = 49
+          Height = 22
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          MaxLength = 2
+          MaxValue = 20
+          MinValue = 1
+          ParentFont = False
+          TabOrder = 29
+          Value = 1
+          OnChange = ScreenSpinEditChange
+        end
+        object SwapWithScreenSpinEdit: TSpinEdit
+          Left = 364
+          Top = 178
+          Width = 49
+          Height = 22
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          MaxLength = 2
+          MaxValue = 20
+          MinValue = 1
+          ParentFont = False
+          TabOrder = 30
           Value = 1
           OnChange = ScreenSpinEditChange
         end
@@ -2421,7 +2543,7 @@ object SetupForm: TSetupForm
       ImageIndex = 2
       DesignSize = (
         573
-        353)
+        381)
       object GroupBox7: TGroupBox
         Left = 8
         Top = 16
@@ -2604,7 +2726,7 @@ object SetupForm: TSetupForm
       ImageIndex = 3
       DesignSize = (
         573
-        353)
+        381)
       object Label9: TLabel
         Left = 16
         Top = 83
@@ -2640,7 +2762,7 @@ object SetupForm: TSetupForm
       end
       object TrayIconPreview16: TImage
         Left = 312
-        Top = 112
+        Top = 140
         Width = 16
         Height = 16
         Anchors = [akLeft, akBottom]
@@ -2805,7 +2927,7 @@ object SetupForm: TSetupForm
     InitialDir = 'C:\'
     Title = 'Open distributed.net logfile'
     Left = 512
-    Top = 384
+    Top = 416
   end
   object OpenDialog1: TOpenDialog
     DefaultExt = '.exe'
@@ -2813,7 +2935,7 @@ object SetupForm: TSetupForm
     Filter = 'Executables (*.exe)|*.exe|All Files (*.*)|*.*'
     InitialDir = 'C:\program files\winamp'
     Left = 540
-    Top = 384
+    Top = 416
   end
   object OpenIco: TOpenPictureDialog
     DefaultExt = 'ico'
@@ -2823,6 +2945,6 @@ object SetupForm: TSetupForm
     Title = 'Choose Icon for Tray Area'
     OnFolderChange = OpeIcoFolderChange
     Left = 480
-    Top = 384
+    Top = 416
   end
 end

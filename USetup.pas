@@ -277,6 +277,12 @@ type
     EmailLastSubjectRadioButton: TRadioButton;
     EmailLastFromRadioButton: TRadioButton;
     EmailMessageCountRadioButton: TRadioButton;
+    CopyToScreenButton: TButton;
+    MoveToScreenButton: TButton;
+    SwapWithScreenButton: TButton;
+    CopyToScreenSpinEdit: TSpinEdit;
+    MoveToScreenSpinEdit: TSpinEdit;
+    SwapWithScreenSpinEdit: TSpinEdit;
 
     procedure FormShow(Sender: TObject);
     procedure LCDSizeComboBoxChange(Sender: TObject);
@@ -348,6 +354,9 @@ type
   procedure OpeIcoFolderChange(Sender: TObject);
   procedure CCharEditGridChange(Sender: TObject);
   procedure NetworkStatsAdapterListButtonClick(Sender: TObject);
+    procedure CopyToScreenButtonClick(Sender: TObject);
+    procedure MoveToScreenButtonClick(Sender: TObject);
+    procedure SwapWithScreenButtonClick(Sender: TObject);
 
   private
     DLLPath : string;
@@ -477,6 +486,10 @@ begin
   ScreenSpinEdit.MaxValue := MaxScreens;
   CurrentScreen :=  0;
   ScreenSpinEdit.Value := activeScreen;
+
+  CopyToScreenSpinEdit.MaxValue := MaxScreens;
+  MoveToScreenSpinEdit.MaxValue := MaxScreens;
+  SwapWithScreenSpinEdit.MaxValue := MaxScreens;
 
   LoadScreen(activeScreen);   // setup screen in setup form
   LCDSmartieDisplayForm.ChangeScreen(activeScreen);   // setup screen in main form
@@ -1015,7 +1028,9 @@ begin
     28 : VariableEdit.Text := '$Bar($HDFree(C),$HDTotal(C),10)';
     29 : VariableEdit.Text := '$Bar($HDUsed(C),$HDTotal(C),10)';
     30 : VariableEdit.Text := '$ScreenReso';
-    31 : VariableEdit.Text := '$ScreensaverActive';
+    31 : VariableEdit.Text := '$ScreenSaverActive';
+    32 : VariableEdit.Text := '$FullScreenGameActive';
+    33 : VariableEdit.Text := '$FullScreenAppActive';	
     else VariableEdit.Text := NoVariable;
   end; // case
 
@@ -2162,6 +2177,52 @@ begin
     end;
     ShowMessage(Names);
   end;
+end;
+
+//////////////// re-arranging screens
+procedure TSetupForm.CopyToScreenButtonClick(Sender: TObject);
+var
+  i: integer;
+begin
+  for i := 1 to MaxLines do
+  begin
+    config.screen[CopyToScreenSpinEdit.value][i].text := config.screen[screenspinedit.value][i].text;
+  end;
+end;
+
+procedure TSetupForm.MoveToScreenButtonClick(Sender: TObject);
+var
+  i: integer;
+begin
+  for i := 1 to MaxLines do
+  begin
+    config.screen[MoveToScreenSpinEdit.value][i].text := config.screen[ScreenSpinEdit.value][i].text;
+    config.screen[ScreenSpinEdit.value][i].text := '';
+  end;
+  Line1Edit.text := '';
+  Line2Edit.text := '';
+  Line3Edit.text := '';
+  Line4Edit.text := '';
+end;
+
+procedure TSetupForm.SwapWithScreenButtonClick(Sender: TObject);
+var
+  i: integer;
+  TempScreenLine: string;
+begin
+  for i := 1 to MaxLines do
+  begin
+    TempScreenLine := config.screen[ScreenSpinEdit.value][i].text;
+    config.screen[ScreenSpinEdit.value][i].text := config.screen[SwapWithScreenSpinEdit.value][i].text;
+    config.screen[SwapWithScreenSpinEdit.value][i].text :=  TempScreenLine;
+  end;
+  Line1Edit.text := config.screen[ScreenSpinEdit.value][1].text;
+  if (MaxLines >1) then
+  Line2Edit.text := config.screen[ScreenSpinEdit.value][2].text;
+  if (MaxLines >2) then
+  Line3Edit.text := config.screen[ScreenSpinEdit.value][3].text;
+  if (MaxLines >3) then
+  Line4Edit.text := config.screen[ScreenSpinEdit.value][4].text;
 end;
 
 end.
