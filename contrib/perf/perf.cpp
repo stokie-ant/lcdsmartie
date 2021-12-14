@@ -107,7 +107,7 @@ findOrCreateGraph(const char *param1, const char *param2)
 	    
 		// handle HeightxWidth
 		unsigned int height = atoi(param1); 
-		char *x = strchr(param1, 'x');
+		const char *x = strchr(param1, 'x');
         if (x == NULL)
            throw "[HEIGHTxWIDTH required]";
 		unsigned int width = atoi(x+1);
@@ -118,7 +118,7 @@ findOrCreateGraph(const char *param1, const char *param2)
 
 		// handle Direction
 		Graph::Direction direction;
-		char *hash = strchr(x, '#');
+		const char *hash = strchr(x, '#');
 		if (hash != NULL)
 		{
 			hash ++;
@@ -142,7 +142,7 @@ findOrCreateGraph(const char *param1, const char *param2)
 		if (hash != NULL)
 		{
 			hash ++;
-			if (!JustDigits(hash))
+			if (!JustDigits(const_cast<char*>(hash)))
 				throw "[perf: bad bar style]";
 			barStyle = atoi(hash);
 		}
@@ -158,7 +158,7 @@ findOrCreateGraph(const char *param1, const char *param2)
 		if (hash != NULL)
 		{
 			hash ++;
-			if (!JustDigits(hash))
+			if (!JustDigits(const_cast<char*>(hash)))
 				throw "[perf: bad sample time]";
 			sampleTime = atoi(hash) * 100; // convert to mSec
 
@@ -178,7 +178,7 @@ findOrCreateGraph(const char *param1, const char *param2)
 		if (hash != NULL)
 		{
 			hash ++;
-			if (!JustDigits(hash))
+			if (!JustDigits(const_cast<char*>(hash)))
 				throw "[perf: bad min]";
 			min = atoi(hash);
 		}
@@ -193,7 +193,7 @@ findOrCreateGraph(const char *param1, const char *param2)
 		if (hash != NULL)
 		{
 			hash ++;
-			if (!JustDigits(hash))
+			if (!JustDigits(const_cast<char*>(hash)))
 				throw "[perf: bad max]";
 			max = atoi(hash);
 		}
@@ -208,7 +208,7 @@ findOrCreateGraph(const char *param1, const char *param2)
 		if (hash != NULL)
 		{
 			hash ++;
-			counterName = hash;
+			counterName = const_cast<char*>(hash);
 		}
 		else
 			counterName = "\\Processor(0)\\% Processor Time";

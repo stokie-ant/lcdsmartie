@@ -281,7 +281,7 @@ namespace { void parseParameters(const char *param1, const char *param2)
 	    
 		// handle HeightxWidth
 		height = atoi(param1); 
-		char *x = strchr(param1, 'x');
+		const char *x = strchr(param1, 'x');
         if (x == NULL)
            throw "[HEIGHTxWIDTH required]";
 		width = atoi(x+1);
@@ -308,12 +308,12 @@ namespace { void parseParameters(const char *param1, const char *param2)
 
 		// handle BarStyle
 		unsigned int barStyle;
-		char *hash = strchr(param2, '#');
+		const char *hash = strchr(param2, '#');
 	
 		if (hash != NULL)
 		{
 			hash ++;
-			if (!JustDigits(hash))
+			if (!JustDigits(const_cast<char*>(hash)))
 				throw "[perf: bad bar style]";
 			barStyle = atoi(hash);
 		}
@@ -366,7 +366,7 @@ namespace { void parseParameters(const char *param1, const char *param2)
 		if (hash != NULL)
 		{
 			hash ++;
-			if (!JustDigits(hash))
+			if (!JustDigits(const_cast<char*>(hash)))
 				throw "[winamp: bad max]";
 			max = atoi(hash);
 		}
@@ -381,7 +381,7 @@ namespace { void parseParameters(const char *param1, const char *param2)
 		if (hash != NULL)
 		{
 			hash ++;
-			if (!JustDigits(hash))
+			if (!JustDigits(const_cast<char*>(hash)))
 				throw "[winamp: bad fallspeed]";
 			fallSpeed = atoi(hash);
 		}
