@@ -28,7 +28,10 @@ uses
   Messages, CoolTrayIcon, Menus, Graphics,
   WinampCtrl, ExtCtrls, Controls, StdCtrls, Buttons, Classes,
   Forms,
-  UConfig, ULCD, UData, lcdline;
+  UConfig, ULCD, UData, lcdline,
+  IdBaseComponent, IdComponent, IdCustomTCPServer, IdTCPServer, IdContext,
+  IdServerIOHandler, IdSSL, IdSSLOpenSSL, SysUtils, IdGlobal,
+  IdIOHandler, IdIOHandlerSocket, IdIOHandlerStack, IdSSLOpenSSLHeaders;
 
 const
   WM_ICONTRAY = WM_USER + 1;   // User-defined message
@@ -111,6 +114,8 @@ type
     Line4LCDPanel: TLCDLineFrame;
     Line3LCDPanel: TLCDLineFrame;
     CheckforUpdates1: TMenuItem;
+    IdTCPServer1: TIdTCPServer;
+    IdServerIOHandlerSSLOpenSSL1: TIdServerIOHandlerSSLOpenSSL;
 
 
     procedure FormCreate(Sender: TObject);
@@ -192,6 +197,8 @@ type
     procedure CheckforUpdates1Click(Sender: TObject);
     procedure LoadSkin;
     procedure LoadColors;
+    procedure ServerConnect(AContext: TIdContext);
+    procedure ServerExecute(AContext: TIdContext);
 
   private
 //    InitialWindowState: TInitialWindowState;
@@ -280,7 +287,7 @@ implementation
 {$R *.DFM}
 
 uses
-  Windows, SysUtils, Dialogs, ShellAPI, mmsystem, StrUtils,
+  Windows,  Dialogs, ShellAPI, mmsystem, StrUtils,
   UCredits, ULCD_DLL, ExtActns, UUtils,
   UDataSmartie, FONTMGR, UIconUtils, USetup, UFormPos;
 
@@ -389,6 +396,8 @@ procedure TLCDSmartieDisplayForm.FormCreate(Sender: TObject);
 var
   oPos : TFormPos;
 begin
+  // keep all ssl related stuff in a sub dir
+  IdOpenSSLSetLibPath('.\openssl\');
 
   LCDSmartieDisplayForm.Caption := 'LCD Smartie ' + GetFmtFileVersion();
   CoolTrayIcon1.Hint := LCDSmartieDisplayForm.Caption;
@@ -402,7 +411,7 @@ begin
   CreateDirectory('plugins', nil);
   CreateDirectory('displays', nil);
 
-  AddPluginsToPath();
+  //AddPluginsToPath();  // dont think we need to do this for this program
 
   ConfigFileName := 'config.ini';
   ProcessCommandLineParams;  // can change config file name
@@ -416,15 +425,10 @@ begin
 
   ShowTrueLCD := Config.EmulateLCD;
 
-//SetWindowLong(Application.Handle, GWL_EXSTYLE, GetWindowLong(Application.Handle, GWL_EXSTYLE) or WS_EX_TOOLWINDOW and not W
-//S_EX_APPWINDOW );
   LoadSkin;
   LCDSmartieDisplayForm.color := $00BFBFBF;
   NumberOfScreensToShift := 1;
   LoadColors;
-
-  //if (config.bHideOnStartup) then
-  //  InitialWindowState := HideMainForm;
 
   // delete/create startup shortcut as required.
   SetupAutoStart();
@@ -451,6 +455,37 @@ begin
   end;
   if not (config.bHideOnStartup) and (ShowWindowFlag) then
     LCDSmartieDisplayForm.Show;
+
+// start sender server
+  if config.EnableRemoteSend then
+  begin
+    try
+      if fileExists(ExtractFilePath(ParamStr(0))+'openssl\cert.pem') and
+        fileExists(ExtractFilePath(ParamStr(0))+'openssl\key.pem')  and
+        config.RemoteSendUseSSL then
+      begin
+        IdServerIOHandlerSSLOpenSSL1.SSLOptions.CertFile := ExtractFilePath(ParamStr(0))+'openssl\cert.pem';
+        IdServerIOHandlerSSLOpenSSL1.SSLOptions.KeyFile := ExtractFilePath(ParamStr(0))+'openssl\key.pem';
+        IdServerIOHandlerSSLOpenSSL1.SSLOptions.VerifyMode := [];
+        IdServerIOHandlerSSLOpenSSL1.SSLOptions.VerifyDepth  := 0;
+        IdServerIOHandlerSSLOpenSSL1.SSLOptions.SSLVersions := [sslvTLSv1_2];
+        IdTCPServer1.IOHandler := IdServerIOHandlerSSLOpenSSL1;
+      end;
+
+      IdTCPServer1.DefaultPort := strtoint(config.RemoteSendPort);
+      if not (config.RemoteSendBindIP = '0.0.0.0') and
+       not (config.RemoteSendBindIP = '') then
+      IdTCPServer1.Bindings.Add.IP := config.RemoteSendBindIP;
+
+      IdTCPServer1.Bindings.Add.Port := strtoint(config.RemoteSendPort);
+      IdTCPServer1.OnConnect := ServerConnect;
+      IdTCPServer1.OnExecute := ServerExecute;
+      IdTCPServer1.Active := True;
+    except
+      on E : Exception do
+        ShowMessage(E.Message);
+    end;
+  end;
 end;
 
 procedure TLCDSmartieDisplayForm.LoadSkin;
@@ -704,13 +739,6 @@ begin
 
   iDelta := 321 - ((321 * iTempWidth) div 40);
 
-{  if (config.width = 40) then
-    iDelta := 0
-  else if (config.width = 24) then
-    iDelta := 128
-  else
-    iDelta := 158;}
-
   Width := 389 - iDelta;
   LogoImage.left := 356 - iDelta;
   NextScreenImage.left := 368 - iDelta;
@@ -725,7 +753,6 @@ begin
     ScreenLCD[h].LineWidth := iTempWidth;
   end;
   BarMiddleImage.width := 220 - iDelta;
-
 
   if (config.width = 40) then
   begin
@@ -799,32 +826,6 @@ end;
 ////                                                                       ////
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-
-{
-
-// DO NOT UNCOMMENT THIS!  IT WILL HAMMER THE SOURCEFORGE WEBSITE
-
-var
-  DidUpdateWarning : boolean = false;
-
-procedure TLCDSmartieDisplayForm.LCDSmartieCheckUpdateTimerTimer(Sender: TObject);
-begin
-  if (data.LCDSmartieUpdate and not DidUpdateWarning) then
-  begin
-    DidUpdateWarning := true;
-
-    if MessageDlg('A new version of LCD Smartie is detected. ' + chr(13) +
-      data.LCDSmartieUpdateText + chr(13) + 'Go to LCD Smartie website?',
-      mtConfirmation, [mbYes, mbNo], 0) = mrYes then
-    begin
-      ShellExecute(0, Nil, pchar('http://lcdsmartie.sourceforge.net/'), Nil,
-        Nil, SW_NORMAL);
-    end;
-
-    if (bTerminating) then Exit;
-  end;
-end;
-}
 
 procedure TLCDSmartieDisplayForm.CheckforUpdates1Click(Sender: TObject);
 var
@@ -1053,20 +1054,7 @@ begin
     end;
 
     ascreen := config.screen[tmpScreen][1];
-
-    case ascreen.skip of
-      1 : FindAnotherScreen := (winampctrl1.GetSongInfo(1) = 0);
-      2 : FindAnotherScreen := (winampctrl1.GetSongInfo(1) <> 0);
-      3 : FindAnotherScreen := (not Data.mbmactive);
-      4 : FindAnotherScreen := (Data.mbmactive);
-      5 : FindAnotherScreen := (not Data.gotEmail);
-      6 : FindAnotherScreen := (Data.gotEmail);
-{
-      7 : FindAnotherScreen := (not Data.isconnected);
-      8 : FindAnotherScreen := (Data.isconnected);
-}
-      else FindAnotherScreen := false;
-    end;
+    FindAnotherScreen := false;
     if (ascreen.theme <> activetheme) then FindAnotherScreen := true;
     if (not ascreen.enabled) then FindAnotherScreen := true;
   end;
@@ -1089,17 +1077,6 @@ var
 begin
   //timerRefresh.Interval := 0;
   timerRefresh.Interval := config.refreshRate;
-
-  // This code can't go in FormCreate or FormShow because it either
-  // doesn't work (FormCreate) or causes an exception (FormShow).
-//  if (InitialWindowState <> NoChange) then
-//  begin
-//    case InitialWindowState of
-//      HideMainForm : Application.Minimize;
-//      TotalHideMainForm : CoolTrayIcon1.HideMainForm;
-//    end;
-//    InitialWindowState := NoChange;
-//  end;
 
   if ((gotnewlines = false) OR (TransitionTimer.enabled = false))then
   begin
@@ -2607,6 +2584,31 @@ begin
   end;
 end;
 
+
+procedure TLCDSmartieDisplayForm.ServerConnect(AContext: TIdContext);
+begin
+ if (AContext.Connection.IOHandler is TIdSSLIOHandlerSocketBase) then
+      TIdSSLIOHandlerSocketBase(AContext.Connection.IOHandler).PassThrough := false;
+end;
+
+procedure TLCDSmartieDisplayForm.ServerExecute(AContext: TIdContext);
+var
+  Loop: integer;
+  password: string;
+begin
+  password := config.RemoteSendPassword;
+  AContext.Connection.IOHandler.DefStringEncoding := IndyTextEncoding_UTF8;
+  while true do
+  begin
+    if ( AContext.Connection.IOHandler.ReadLn = password) then
+    begin
+      for Loop := 1 to MaxLines do begin
+         AContext.Connection.IOHandler.write(inttostr(Loop)+ScreenLCD[Loop].Caption+#13#10);
+      end;
+      sleep(250); // slow down execution
+    end;
+  end;
+end;
 
 end.
 

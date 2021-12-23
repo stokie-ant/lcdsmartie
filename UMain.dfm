@@ -1,12 +1,12 @@
 object LCDSmartieDisplayForm: TLCDSmartieDisplayForm
-  Left = 1580
-  Top = 323
+  Left = 1020
+  Top = 58
   HorzScrollBar.Visible = False
   VertScrollBar.Visible = False
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsToolWindow
   Caption = 'LCD Smartie x.x.x.x'
-  ClientHeight = 177
+  ClientHeight = 174
   ClientWidth = 231
   Color = clBtnFace
   TransparentColorValue = clBtnFace
@@ -519,5 +519,18 @@ object LCDSmartieDisplayForm: TLCDSmartieDisplayForm
     OnTimer = ScrollFlashTimerTimer
     Left = 36
     Top = 144
+  end
+  object IdTCPServer1: TIdTCPServer
+    Bindings = <>
+    DefaultPort = 8080
+    Left = 168
+    Top = 112
+  end
+  object IdServerIOHandlerSSLOpenSSL1: TIdServerIOHandlerSSLOpenSSL
+    SSLOptions.Mode = sslmUnassigned
+    SSLOptions.VerifyMode = []
+    SSLOptions.VerifyDepth = 0
+    Left = 200
+    Top = 112
   end
 end

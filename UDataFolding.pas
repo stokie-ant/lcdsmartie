@@ -8,8 +8,9 @@ uses
 type
   TFoldingDataThread = class(TURLThread)
   private
-    foldMemSince, foldLastWU, foldActProcsWeek, foldTeam, foldScore,
-    foldRank, foldWU: String;
+     foldLastWU, foldActClientsWeek, foldActClientsFiftyMin,
+     foldTeamName, foldTeamScore, foldTeamWU, foldTeamLastWU,
+     foldScore, foldRank, foldWU, foldUser: String;
     procedure DoFoldingHTTPUpdate;
   protected
     procedure  DoUpdate; override;
@@ -22,7 +23,7 @@ type
 implementation
 
 uses
-  UConfig,UUtils;
+  UConfig, UUtils, UJSON;
 
 constructor TFoldingDataThread.Create;
 begin
@@ -40,13 +41,17 @@ begin
   begin
     fDataLock.Enter();
     try
-      line := StringReplace(line, '$FOLDmemsince', foldMemSince, [rfReplaceAll]);
       line := StringReplace(line, '$FOLDlastwu', foldLastWU, [rfReplaceAll]);
-      line := StringReplace(line, '$FOLDactproc', foldActProcsWeek, [rfReplaceAll]);
-      line := StringReplace(line, '$FOLDteam', foldTeam, [rfReplaceAll]);
+      line := StringReplace(line, '$FOLDact50min', foldActClientsFiftyMin, [rfReplaceAll]);
+      line := StringReplace(line, '$FOLDactweek', foldActClientsWeek, [rfReplaceAll]);
+      line := StringReplace(line, '$FOLDteamname', foldTeamName, [rfReplaceAll]);
+      line := StringReplace(line, '$FOLDteamscore', foldTeamScore, [rfReplaceAll]);
+      line := StringReplace(line, '$FOLDteamwu', foldTeamWU, [rfReplaceAll]);
+      line := StringReplace(line, '$FOLDteamlastwu', foldTeamLastWU, [rfReplaceAll]);
       line := StringReplace(line, '$FOLDscore', foldScore, [rfReplaceAll]);
       line := StringReplace(line, '$FOLDrank', foldRank, [rfReplaceAll]);
       line := StringReplace(line, '$FOLDwu', foldWU, [rfReplaceAll]);
+      line := StringReplace(line, '$FOLDUser', foldUser, [rfReplaceAll]);
     finally
       fDataLock.Leave();
     end;
@@ -55,69 +60,53 @@ end;
 
 procedure TFoldingDataThread.DoFoldingHTTPUpdate;
 var
-  tempstr,tempstr2 : string;
   sFilename: String;
+  JsonStats: myJSONItem;
+  JsonString: string;
+  JsonTeam: myJSONItem;
+  iRank: integer;
+  i: integer;
 begin
   try
-    sFilename := getUrl(
-      'http://vspx27.stanford.edu/cgi-bin/main.py?qtype=userpage&username='
-      + config.foldUsername, config.newsRefresh);
-    tempstr := FileToString(sFilename);
+    JsonStats := myJSONItem.Create;
+    if TryStrToInt(config.foldUserid, i) then
+    begin
+      if ( strtoint(config.foldUserid) > 0 )then
+        sFilename := getUrl('https://api2.foldingathome.org/uid/'+config.foldUserid)
+    end
+    else
+      Raise Exception.Create('User ID must be a number');
 
-    tempstr := StringReplace(tempstr,'&deg;',#176{'°'},[rfIgnoreCase,rfReplaceAll]);//LMB
-    tempstr := StringReplace(tempstr, '&amp;', '&', [rfReplaceAll]);
-    tempstr := StringReplace(tempstr, chr(10), '', [rfReplaceAll]);
-    tempstr := StringReplace(tempstr, chr(13), '', [rfReplaceAll]);
+    JsonStats.LoadFromFile(sFilename);
 
     fDataLock.Enter();
-    foldMemSince := '[FOLDmemsince: not supported]';
-    fDataLock.Leave();
+    foldUser := JsonStats.Value[0].getstr; // name
+    foldScore := JsonStats.Value[2].getstr; // Score
+    foldWU := JsonStats.Value[3].getstr; // work units
 
-    tempstr2 := copy(tempstr, pos('Date of last work unit', tempstr) + 22,
-      500);
-    tempstr2 := copy(tempstr2, 1, pos('</TR>', tempstr2)-1);
-    tempstr2 := stripspaces(stripHtml(tempstr2));
-    fDataLock.Enter();
-    foldLastWU := tempstr2;
-    fDataLock.Leave();
+    iRank :=4;
+    if JsonStats.Has['rank'] then     // if rank exists
+    begin
+      foldRank := JsonStats.Value[iRank].getstr;
+      iRank := iRank + 1; // for wu that could be 4 or 5 depending on rank being available
+    end
+    else
+      foldRank := 'No rank';
 
-    tempstr2 := copy(tempstr, pos('Total score', tempstr) + 11, 100);
-    tempstr2 := copy(tempstr2, 1, pos('</TR>', tempstr2)-1);
-    tempstr2 := stripspaces(stripHtml(tempstr2));
-    fDataLock.Enter();
-    foldScore := tempstr2;
-    fDataLock.Leave();
+    foldActClientsFiftyMin := JsonStats.Value[iRank].getstr; // Clients 50 min
+    foldActClientsWeek := JsonStats.Value[iRank+1].getstr; // Clients week
+    foldLastWU := JsonStats.Value[iRank+2].getstr; // last wu
 
-    tempstr2 := copy(tempstr, pos('Overall rank (if points are combined)',
-      tempstr) + 37, 100);
-    tempstr2 := copy(tempstr2, 1, pos('of', tempstr2)-1);
-    tempstr2 := stripspaces(stripHtml(tempstr2));
-    fDataLock.Enter();
-    foldRank := tempstr2;
-    fDataLock.Leave();
-
-    tempstr2 := copy(tempstr, pos('Active processors (within 7 days)',
-      tempstr) + 33, 100);
-    tempstr2 := copy(tempstr2, 1, pos('</TR>', tempstr2)-1);
-    tempstr2 := stripspaces(stripHtml(tempstr2));
-    fDataLock.Enter();
-    foldActProcsWeek := tempstr2;
-    fDataLock.Leave();
-
-    tempstr2 := copy(tempstr, pos('Team', tempstr) + 4, 500);
-    tempstr2 := copy(tempstr2, 1, pos('</TR>', tempstr2)-1);
-    tempstr2 := stripspaces(stripHtml(tempstr2));
-    fDataLock.Enter();
-    foldTeam := tempstr2;
-    fDataLock.Leave();
-
-    tempstr2 := copy(tempstr, pos('WU', tempstr) + 2, 500);
-    tempstr2 := copy(tempstr2, 1, pos('</TR>', tempstr2)-1);
-    if (pos('(', tempstr2) <> 0) then tempstr2 := copy(tempstr2, 1, pos('(',
-      tempstr2)-1);
-    tempstr2 := stripspaces(stripHtml(tempstr2));
-    fDataLock.Enter();
-    foldWU := tempstr2;
+    /// Team Stuff
+    JsonTeam := myJSONItem.Create;
+    JsonString := JsonStats.Value[iRank+4].getJSON;
+    delete(JsonString, 1, 1);
+    JsonString := Copy(JsonString,1,length(JsonString)-1);
+    JsonTeam.Code := JsonString;
+    foldTeamName := JsonTeam.Value[1].getstr;
+    foldTeamScore := JsonTeam.Value[2].getstr;
+    foldTeamWU := JsonTeam.Value[3].getstr;
+    foldTeamLastWU := JsonTeam.Value[4].getstr;
     fDataLock.Leave();
 
   except
@@ -126,10 +115,13 @@ begin
     begin
       fDataLock.Enter();
       try
-        foldMemSince := '[fold: ' + E.Message + ']';
         foldLastWU := '[fold: ' + E.Message + ']';
-        foldActProcsWeek := '[fold: ' + E.Message + ']';
-        foldTeam := '[fold: ' + E.Message + ']';
+        foldActClientsWeek := '[fold: ' + E.Message + ']';
+        foldActClientsFiftyMin := '[fold: ' + E.Message + ']';
+        foldTeamName := '[fold: ' + E.Message + ']';
+        foldTeamScore := '[fold: ' + E.Message + ']';
+        foldTeamWU := '[fold: ' + E.Message + ']';
+        foldTeamLastWU := '[fold: ' + E.Message + ']';
         foldScore := '[fold: ' + E.Message + ']';
         foldRank := '[fold: ' + E.Message + ']';
         foldWU := '[fold: ' + E.Message + ']';
@@ -155,8 +147,9 @@ begin
       if (pos('$FOLD', screenline) <> 0) then MyDoUpdate := true;
     end;
   end;
-  if MyDoUpdate then
-    DoFoldingHTTPUpdate;
+  if config.foldEnabled then
+    if MyDoUpdate then
+      DoFoldingHTTPUpdate;
 end;
 
 end.

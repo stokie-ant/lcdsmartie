@@ -1,6 +1,6 @@
 object SetupForm: TSetupForm
-  Left = 648
-  Top = 263
+  Left = 869
+  Top = 183
   ActiveControl = LeftPageControl
   Anchors = []
   BiDiMode = bdLeftToRight
@@ -28,7 +28,7 @@ object SetupForm: TSetupForm
     Top = 0
     Width = 265
     Height = 449
-    ActivePage = PluginsTabSheet
+    ActivePage = FoldingAtHomeTabSheet
     Font.Charset = ANSI_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
@@ -133,48 +133,6 @@ object SetupForm: TSetupForm
         Height = 21
         TabOrder = 1
         Text = 'WinampLocationEdit'
-      end
-    end
-    object MBMTabSheet: TTabSheet
-      Caption = 'MBM'
-      ImageIndex = 2
-      ParentShowHint = False
-      ShowHint = True
-      object RefreshTimeLabel: TLabel
-        Left = 8
-        Top = 324
-        Width = 97
-        Height = 13
-        Caption = 'Refresh time (secs):'
-      end
-      object MBMListBox: TListBox
-        Left = 0
-        Top = 0
-        Width = 209
-        Height = 313
-        ItemHeight = 13
-        TabOrder = 0
-        OnClick = MBMListBoxClick
-        OnDblClick = InsertButtonClick
-      end
-      object MBMRefreshTimeSpinEdit: TSpinEdit
-        Left = 120
-        Top = 320
-        Width = 55
-        Height = 22
-        Font.Charset = ANSI_CHARSET
-        Font.Color = clWindowText
-        Font.Height = -11
-        Font.Name = 'Tahoma'
-        Font.Style = []
-        MaxLength = 3
-        MaxValue = 360
-        MinValue = 10
-        ParentFont = False
-        ParentShowHint = False
-        ShowHint = False
-        TabOrder = 1
-        Value = 10
       end
     end
     object InternetTabSheet: TTabSheet
@@ -404,24 +362,40 @@ object SetupForm: TSetupForm
         Height = 21
         TabOrder = 1
       end
+      object SetiEnableCheckBox: TCheckBox
+        Left = 0
+        Top = 280
+        Width = 97
+        Height = 17
+        Hint = 
+          'S@H is currently in hibernation(whatever that means) plus this i' +
+          's probably broken so it can be disabled for now so it'#39's not send' +
+          'ing requests for no reason'
+        Caption = 'Enable'
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 2
+        OnClick = SetiEnableCheckBoxClick
+      end
     end
     object FoldingAtHomeTabSheet: TTabSheet
       Caption = 'Folding@Home'
       ImageIndex = 9
       object Label23: TLabel
-        Left = 8
+        Left = 0
         Top = 304
-        Width = 143
+        Width = 131
         Height = 13
-        Caption = 'Username for Folding@Home:'
+        Caption = 'User ID for Folding@Home:'
       end
       object FoldingAtHomeEmailEdit: TEdit
-        Left = 8
+        Left = 0
         Top = 320
-        Width = 201
+        Width = 209
         Height = 21
+        MaxLength = 16
         TabOrder = 1
-        Text = 'BobC'
+        Text = '                '
       end
       object FoldingAtHomeListBox: TListBox
         Left = 0
@@ -430,16 +404,33 @@ object SetupForm: TSetupForm
         Height = 265
         ItemHeight = 13
         Items.Strings = (
+          'User Name'
           'WU'
           'Date of last work unit'
-          'Active processors (within a week)'
-          'Team'
+          'Active clients (within 50 minutes)'
+          'Active clients (within a week)'
           'Score'
           'User Rank'
+          'Team name'
+          'Team score'
+          'Team WU'
+          'Team Date of last work unit'
           '')
         TabOrder = 0
         OnClick = FoldingAtHomeListBoxClick
         OnDblClick = InsertButtonClick
+      end
+      object FoldEnableCheckBox: TCheckBox
+        Left = 0
+        Top = 280
+        Width = 97
+        Height = 17
+        Hint = 'This can be disabled so it'#39's not sending requests for no reason'
+        Caption = 'Enable'
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 2
+        OnClick = FoldEnableCheckBoxClick
       end
     end
     object EmailTabSheet: TTabSheet
@@ -550,7 +541,7 @@ object SetupForm: TSetupForm
         Height = 21
         Style = csDropDownList
         DropDownCount = 10
-        ItemHeight = 13
+        ItemHeight = 0
         TabOrder = 0
         OnChange = EmailAccountComboBoxChange
       end
@@ -650,7 +641,8 @@ object SetupForm: TSetupForm
           '$CustomChar(1,31,31,31,31,31,31,31,31)'
           '$Rss(URL,t|d|b,ITEM#,MAXFREQHRS)'
           '$Center(text here,width)'
-          '$ScreenChanged')
+          '$ScreenChanged'
+          '$Sender(IP,Port,password,SSL 0/1,Line 1-4)')
         ParentFont = False
         TabOrder = 0
         OnClick = MiscListBoxClick
@@ -1301,19 +1293,6 @@ object SetupForm: TSetupForm
           Font.Style = []
           ParentFont = False
         end
-        object Label42: TLabel
-          Left = 200
-          Top = 52
-          Width = 90
-          Height = 13
-          Caption = 'Skip this screen if: '
-          Font.Charset = ANSI_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -11
-          Font.Name = 'Tahoma'
-          Font.Style = []
-          ParentFont = False
-        end
         object Label43: TLabel
           Left = 19
           Top = 57
@@ -1492,7 +1471,7 @@ object SetupForm: TSetupForm
           Caption = ' '
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 8
+          TabOrder = 7
         end
         object DontScrollLine2CheckBox: TCheckBox
           Left = 436
@@ -1503,7 +1482,7 @@ object SetupForm: TSetupForm
           Caption = ' '
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 12
+          TabOrder = 11
         end
         object DontScrollLine3CheckBox: TCheckBox
           Left = 436
@@ -1514,7 +1493,7 @@ object SetupForm: TSetupForm
           Caption = ' '
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 16
+          TabOrder = 15
         end
         object DontScrollLine4CheckBox: TCheckBox
           Left = 436
@@ -1525,7 +1504,7 @@ object SetupForm: TSetupForm
           Caption = ' '
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 20
+          TabOrder = 19
         end
         object GroupBox4: TGroupBox
           Left = 464
@@ -1533,7 +1512,7 @@ object SetupForm: TSetupForm
           Width = 2
           Height = 185
           Enabled = False
-          TabOrder = 22
+          TabOrder = 21
         end
         object ContinueLine1CheckBox: TCheckBox
           Left = 480
@@ -1544,7 +1523,7 @@ object SetupForm: TSetupForm
           Caption = ' '
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 9
+          TabOrder = 8
           OnClick = ContinueLine1CheckBoxClick
         end
         object ContinueLine2CheckBox: TCheckBox
@@ -1556,7 +1535,7 @@ object SetupForm: TSetupForm
           Caption = ' '
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 13
+          TabOrder = 12
           OnClick = ContinueLine2CheckBoxClick
         end
         object ContinueLine3CheckBox: TCheckBox
@@ -1568,7 +1547,7 @@ object SetupForm: TSetupForm
           Caption = ' '
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 17
+          TabOrder = 16
           OnClick = ContinueLine3CheckBoxClick
         end
         object GroupBox5: TGroupBox
@@ -1577,7 +1556,7 @@ object SetupForm: TSetupForm
           Width = 2
           Height = 185
           Enabled = False
-          TabOrder = 23
+          TabOrder = 22
         end
         object CenterLine1CheckBox: TCheckBox
           Left = 528
@@ -1588,7 +1567,7 @@ object SetupForm: TSetupForm
           Caption = ' '
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 10
+          TabOrder = 9
         end
         object CenterLine2CheckBox: TCheckBox
           Left = 528
@@ -1599,7 +1578,7 @@ object SetupForm: TSetupForm
           Caption = ' '
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 14
+          TabOrder = 13
         end
         object CenterLine3CheckBox: TCheckBox
           Left = 528
@@ -1610,7 +1589,7 @@ object SetupForm: TSetupForm
           Caption = ' '
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 18
+          TabOrder = 17
         end
         object CenterLine4CheckBox: TCheckBox
           Left = 528
@@ -1621,7 +1600,7 @@ object SetupForm: TSetupForm
           Caption = ' '
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 21
+          TabOrder = 20
         end
         object GroupBox6: TGroupBox
           Left = 424
@@ -1629,7 +1608,7 @@ object SetupForm: TSetupForm
           Width = 2
           Height = 57
           Enabled = False
-          TabOrder = 24
+          TabOrder = 23
         end
         object ThemeNumberSpinEdit: TSpinEdit
           Left = 256
@@ -1683,35 +1662,6 @@ object SetupForm: TSetupForm
           ShowHint = True
           TabOrder = 5
           OnClick = StickyCheckboxClick
-        end
-        object SkipScreenComboBox: TComboBox
-          Left = 292
-          Top = 49
-          Width = 129
-          Height = 21
-          Hint = 
-            'Skip this screen for automatic selection if the condition is tru' +
-            'e.'
-          Style = csDropDownList
-          Font.Charset = ANSI_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -11
-          Font.Name = 'Tahoma'
-          Font.Style = []
-          ItemHeight = 13
-          ParentFont = False
-          ParentShowHint = False
-          ShowHint = True
-          TabOrder = 6
-          OnChange = SkipScreenComboBoxChange
-          Items.Strings = (
-            'Don'#39't skip'
-            'Winamp is inactive'
-            'Winamp is active'
-            'MBM is inactive'
-            'MBM is active'
-            'There is no new E-Mail'
-            'There is new E-Mail')
         end
         object ScreenEnabledCheckBox: TCheckBox
           Left = 128
@@ -1768,7 +1718,7 @@ object SetupForm: TSetupForm
           ParentFont = False
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 7
+          TabOrder = 6
           OnDblClick = LineEditClick
           OnEnter = Line1EditEnter
           OnKeyDown = Line1EditKeyDown
@@ -1789,7 +1739,7 @@ object SetupForm: TSetupForm
           ParentFont = False
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 11
+          TabOrder = 10
           OnDblClick = LineEditClick
           OnEnter = Line2EditEnter
           OnKeyDown = Line2EditKeyDown
@@ -1809,7 +1759,7 @@ object SetupForm: TSetupForm
           ParentFont = False
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 15
+          TabOrder = 14
           OnDblClick = LineEditClick
           OnEnter = Line3EditEnter
           OnKeyDown = Line3EditKeyDown
@@ -1829,7 +1779,7 @@ object SetupForm: TSetupForm
           ParentFont = False
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 19
+          TabOrder = 18
           OnDblClick = LineEditClick
           OnEnter = Line4EditEnter
           OnKeyDown = Line4EditKeyDown
@@ -1871,7 +1821,7 @@ object SetupForm: TSetupForm
           ParentFont = False
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 25
+          TabOrder = 24
           OnClick = CopyToScreenButtonClick
         end
         object MoveToScreenButton: TButton
@@ -1893,7 +1843,7 @@ object SetupForm: TSetupForm
           ParentFont = False
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 26
+          TabOrder = 25
           OnClick = MoveToScreenButtonClick
         end
         object SwapWithScreenButton: TButton
@@ -1915,7 +1865,7 @@ object SetupForm: TSetupForm
           ParentFont = False
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 27
+          TabOrder = 26
           OnClick = SwapWithScreenButtonClick
         end
         object CopyToScreenSpinEdit: TSpinEdit
@@ -1932,7 +1882,7 @@ object SetupForm: TSetupForm
           MaxValue = 20
           MinValue = 1
           ParentFont = False
-          TabOrder = 28
+          TabOrder = 27
           Value = 1
           OnChange = ScreenSpinEditChange
         end
@@ -1950,7 +1900,7 @@ object SetupForm: TSetupForm
           MaxValue = 20
           MinValue = 1
           ParentFont = False
-          TabOrder = 29
+          TabOrder = 28
           Value = 1
           OnChange = ScreenSpinEditChange
         end
@@ -1968,7 +1918,7 @@ object SetupForm: TSetupForm
           MaxValue = 20
           MinValue = 1
           ParentFont = False
-          TabOrder = 30
+          TabOrder = 29
           Value = 1
           OnChange = ScreenSpinEditChange
         end
@@ -2916,6 +2866,166 @@ object SetupForm: TSetupForm
         ParentFont = False
         TabOrder = 4
         Value = 200
+      end
+      object SmartieSendCheckBox: TCheckBox
+        Left = 16
+        Top = 304
+        Width = 97
+        Height = 17
+        Hint = 
+          'Listens for incoming smartie and sends screens to be displayed r' +
+          'emotely'
+        Caption = 'Smartie Sender'
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 6
+      end
+    end
+    object TabSheet1: TTabSheet
+      Caption = 'Remote Display'
+      ImageIndex = 4
+      object Label16: TLabel
+        Left = 20
+        Top = 80
+        Width = 68
+        Height = 13
+        Caption = 'Bind Listen IP:'
+      end
+      object Label19: TLabel
+        Left = 32
+        Top = 112
+        Width = 55
+        Height = 13
+        Caption = 'Listen port:'
+      end
+      object Label22: TLabel
+        Left = 32
+        Top = 208
+        Width = 89
+        Height = 13
+        Caption = 'Generate SSL key:'
+      end
+      object Label38: TLabel
+        Left = 8
+        Top = 8
+        Width = 219
+        Height = 13
+        Caption = 'Restart Smartie after changing these settings'
+      end
+      object Label39: TLabel
+        Left = 38
+        Top = 144
+        Width = 50
+        Height = 13
+        Caption = 'password:'
+      end
+      object Label42: TLabel
+        Left = 216
+        Top = 144
+        Width = 268
+        Height = 13
+        Caption = 'This will be sent plain text if Use SSL below isn'#39't checked'
+      end
+      object Label49: TLabel
+        Left = 72
+        Top = 240
+        Width = 298
+        Height = 39
+        Caption = 
+          'There is no guarantee on the security of the server. Use at your' +
+          ' own risk and beware of transmitting personal information in scr' +
+          'een data'
+        WordWrap = True
+      end
+      object Label55: TLabel
+        Left = 8
+        Top = 240
+        Width = 59
+        Height = 16
+        Caption = 'Warning:'
+        Font.Charset = ANSI_CHARSET
+        Font.Color = clBlack
+        Font.Height = -13
+        Font.Name = 'Tahoma'
+        Font.Style = [fsBold]
+        ParentFont = False
+      end
+      object EnableRemoteSendCheckBox: TCheckBox
+        Left = 16
+        Top = 40
+        Width = 217
+        Height = 17
+        Hint = 
+          'You can make this smartie send screens to another smartie instan' +
+          'ce to show on its screen. Use the $Sender variable in the misc. ' +
+          'tab on the remote smartie'
+        Caption = 'Listen for incoming Smartie connections'
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 0
+        OnClick = EnableRemoteSendCheckBoxClick
+      end
+      object RemoteSendBindIPEdit: TEdit
+        Left = 88
+        Top = 80
+        Width = 121
+        Height = 21
+        Hint = 
+          'Listen on only this IP address. Leave blank to listen on all int' +
+          'erfaces on this machine'
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 1
+        OnChange = RemoteSendBindIPEditChange
+      end
+      object RemoteSendPortEdit: TEdit
+        Left = 88
+        Top = 112
+        Width = 121
+        Height = 21
+        Hint = 
+          'Port to listen on. Default 6088. Make sure This is the same at t' +
+          'he remote end'
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 2
+        OnChange = RemoteSendPortEditChange
+      end
+      object RemoteSendUseSSLCheckBox: TCheckBox
+        Left = 32
+        Top = 176
+        Width = 65
+        Height = 17
+        Hint = 'Encrypt screen data sent by smartie'
+        Caption = 'Use SSL'
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 3
+        OnClick = RemoteSendUseSSLCheckBoxClick
+      end
+      object RemoteSendGenerateCertKeyButton: TButton
+        Left = 122
+        Top = 200
+        Width = 81
+        Height = 25
+        Caption = 'Generate'
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 4
+        OnClick = RemoteSendGenerateCertKeyButtonClick
+      end
+      object RemoteSendPasswordEdit: TEdit
+        Left = 88
+        Top = 144
+        Width = 121
+        Height = 21
+        Hint = 
+          'Not so secure password. While it'#39's not super spy level security ' +
+          'it will slow down any nasties trying to get in'
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 5
+        OnChange = RemoteSendPasswordEditChange
       end
     end
   end

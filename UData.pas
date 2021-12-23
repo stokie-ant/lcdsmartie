@@ -26,7 +26,7 @@ unit UData;
 interface
 
 uses
-  Classes, SysUtils, SyncObjs, UDataEmail, UDataMBM, UDataSmartie;
+  Classes, SysUtils, SyncObjs, UDataEmail, UDataSmartie;
 
 const
   iMaxPluginFuncs = 20;
@@ -64,7 +64,6 @@ type
 
     // email thread
     EmailThread : TEmailDataThread;  // keep a copy for mainline "GotMail"
-    MBMThread : TMBMDataThread;  // for finding MBM cpu speed
     DataThreads : TList;  // of TDataThread
 
     // other variables
@@ -84,8 +83,6 @@ type
 }
     function  GetLCDSmartieUpdate : boolean;
     function  GetLCDSmartieUpdateText : string;
-    // MBM stats
-    function  GetMBMActive : boolean;
     // e-mail stuff
     function  GetGotEmail : boolean;
   public
@@ -105,7 +102,6 @@ type
     procedure RefreshDataThreads;
     //
     property GotEmail : boolean read GetGotEmail;
-    property MBMActive : boolean read GetMBMActive;
 {
     property IsConnected : boolean read GetIsConnected;
 }
@@ -122,7 +118,7 @@ uses
   UMain, UUtils, UConfig,
   DataThread, UDataNetwork, UDataDisk, UDataGame, UDataMemory,
   UDataCPU, UDataSeti, UDataFolding, UDataRSS, UDataDNet,
-  UDataWinamp;
+  UDataWinamp, UDataSender;
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -154,10 +150,6 @@ begin
   EmailThread.Resume;
   DataThreads.Add(EmailThread);
 
-  MBMThread :=  TMBMDataThread.Create;  // keep a copy for finding MBM cpu speed
-  MBMThread.Resume;
-  DataThreads.Add(MBMThread);
-
   DataThread := TGameDataThread.Create;
   DataThread.Resume;
   DataThreads.Add(DataThread);
@@ -174,7 +166,7 @@ begin
   DataThread.Resume;
   DataThreads.Add(DataThread);
 
-  DataThread := TCPUDataThread.Create(MBMThread);
+  DataThread := TCPUDataThread.Create;
   DataThread.Resume;
   DataThreads.Add(DataThread);
 
@@ -195,6 +187,10 @@ begin
   DataThreads.Add(DataThread);
 
   DataThread := TDNetDataThread.Create;
+  DataThread.Resume;
+  DataThreads.Add(DataThread);
+  
+  DataThread := TSenderDataThread.Create;
   DataThread.Resume;
   DataThreads.Add(DataThread);
 end;
@@ -336,24 +332,6 @@ begin
   if assigned(EmailThread) then
     Result := EmailThread.GotEmail;
 end;
-
-
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-////                                                                       ////
-////      M O T H E R B O A R D     S T A T S      P R O C E D U R E S     ////
-////                                                                       ////
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-
-function TData.GetMBMActive : boolean;
-begin
-  Result := false;
-  if assigned(MBMThread) then
-    Result := MBMThread.MBMActive;
-end;
-
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////

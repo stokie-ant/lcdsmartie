@@ -38,7 +38,7 @@ type
   end;
 
 Function CenterText(const sLine: String; iWidth: Integer): String;
-procedure AddPluginsToPath;
+//procedure AddPluginsToPath;
 procedure CreateShortcut(const sName, FileName,Args: string; uninstall: Boolean = False);
 function errMsg(uError: Cardinal): String;
 function decodeArgs(const str: String; const funcName: String; maxargs: Cardinal; var
@@ -282,6 +282,7 @@ begin
   end;
 end;
 
+{ // not sure this is neccesary. plus it excepts when not admin 
 procedure AddPluginsToPath;
 var
   Reg: TRegistry;
@@ -307,6 +308,7 @@ begin
   except
   end;
 end;
+}
 
 Function CenterText(const sLine: String; iWidth: Integer): String;
 var

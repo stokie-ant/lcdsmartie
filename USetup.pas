@@ -43,13 +43,11 @@ type
     LeftPageControl: TPageControl;
     WinampTabSheet: TTabSheet;
     SysInfoTabSheet: TTabSheet;
-    MBMTabSheet: TTabSheet;
     GameStatsTabSheet: TTabSheet;
     InternetTabSheet: TTabSheet;
     MiscTabSheet: TTabSheet;
     MiscListBox: TListBox;
     InternetListBox: TListBox;
-    MBMListBox: TListBox;
     SysInfoListBox: TListBox;
     WinampListBox: TListBox;
     VariableEdit: TEdit;
@@ -66,8 +64,6 @@ type
     Label36: TLabel;
     GamestatsRefreshTimeSpinEdit: TSpinEdit;
     Label37: TLabel;
-    RefreshTimeLabel: TLabel;
-    MBMRefreshTimeSpinEdit: TSpinEdit;
     Label35: TLabel;
     Label40: TLabel;
     SetiAtHomeTabSheet: TTabSheet;
@@ -102,7 +98,6 @@ type
     ActionsTabSheet: TTabSheet;
     ScreenSettingsGroupBox: TGroupBox;
     Label5: TLabel;
-    Label42: TLabel;
     Label43: TLabel;
     Label44: TLabel;
     Label45: TLabel;
@@ -178,7 +173,6 @@ type
     GroupBox8: TGroupBox;
     HideOnStartup: TCheckBox;
     ColorSchemeComboBox: TComboBox;
-    SkipScreenComboBox: TComboBox;
     ScreenLabel: TLabel;
     ScreenSpinEdit: TSpinEdit;
     DisplayGroup2: TGroupBox;
@@ -283,6 +277,24 @@ type
     CopyToScreenSpinEdit: TSpinEdit;
     MoveToScreenSpinEdit: TSpinEdit;
     SwapWithScreenSpinEdit: TSpinEdit;
+    SmartieSendCheckBox: TCheckBox;
+    TabSheet1: TTabSheet;
+    EnableRemoteSendCheckBox: TCheckBox;
+    Label16: TLabel;
+    RemoteSendBindIPEdit: TEdit;
+    RemoteSendPortEdit: TEdit;
+    RemoteSendUseSSLCheckBox: TCheckBox;
+    RemoteSendGenerateCertKeyButton: TButton;
+    Label19: TLabel;
+    Label22: TLabel;
+    Label38: TLabel;
+    RemoteSendPasswordEdit: TEdit;
+    Label39: TLabel;
+    Label42: TLabel;
+    Label49: TLabel;
+    Label55: TLabel;
+    FoldEnableCheckBox: TCheckBox;
+    SetiEnableCheckBox: TCheckBox;
 
     procedure FormShow(Sender: TObject);
     procedure LCDSizeComboBoxChange(Sender: TObject);
@@ -290,7 +302,6 @@ type
     procedure WinampListBoxClick(Sender: TObject);
     procedure InsertButtonClick(Sender: TObject);
     procedure SysInfoListBoxClick(Sender: TObject);
-    procedure MBMListBoxClick(Sender: TObject);
     procedure InternetListBoxClick(Sender: TObject);
     procedure QStatLabelClick(Sender: TObject);
     procedure MiscListBoxClick(Sender: TObject);
@@ -329,7 +340,6 @@ type
       TShiftState);
     procedure StickyCheckboxClick(Sender: TObject);
     procedure ActionsStringGridClick(Sender: TObject);
-    procedure SkipScreenComboBoxChange(Sender: TObject);
     procedure OperatorComboBoxChange(Sender: TObject);
     procedure ColorSchemeComboBoxChange(Sender: TObject);
     procedure DisplayPluginListChange(Sender: TObject);
@@ -357,6 +367,14 @@ type
     procedure CopyToScreenButtonClick(Sender: TObject);
     procedure MoveToScreenButtonClick(Sender: TObject);
     procedure SwapWithScreenButtonClick(Sender: TObject);
+    procedure RemoteSendGenerateCertKeyButtonClick(Sender: TObject);
+    procedure EnableRemoteSendCheckBoxClick(Sender: TObject);
+    procedure RemoteSendBindIPEditChange(Sender: TObject);
+    procedure RemoteSendPortEditChange(Sender: TObject);
+    procedure RemoteSendUseSSLCheckBoxClick(Sender: TObject);
+    procedure RemoteSendPasswordEditChange(Sender: TObject);
+    procedure FoldEnableCheckBoxClick(Sender: TObject);
+    procedure SetiEnableCheckBoxClick(Sender: TObject);
 
   private
     DLLPath : string;
@@ -378,7 +396,7 @@ implementation
 uses
   Math, Windows, ShellApi, graphics, sysutils, Registry, StrUtils,
   UMain, UInteract, UConfig, UDataEmail, UDataNetwork, UDataWinamp,
-  UDataMBM, UIconUtils, UEditLine, UFormPos, IpRtrMib, IpHlpApi;
+  UIconUtils, UEditLine, UFormPos, IpRtrMib, IpHlpApi;
 
 {$R *.DFM}
 
@@ -390,12 +408,6 @@ function DoSetupForm : boolean;
 begin
   SetupForm := TSetupForm.Create(nil);
   with SetupForm do begin
-    if not config.bShowMBM then
-    begin
-      SkipScreenComboBox.Items[3] := '(reserved)';
-      SkipScreenComboBox.Items[4] := '(reserved)';
-    end;
-
     ShowModal;
     Result := (ModalResult = mrOK);
     LCDSmartieDisplayForm.NextScreenTimer.interval := 0;
@@ -445,14 +457,9 @@ var
   Loop,FindResult : integer;
   NetStat : TNetworkStatistics;
   WinampStat : TWinampStat;
-  MBMStat : TMBMStat;
 begin
   MainPageControl.ActivePage := ScreensTabSheet;
   LeftPageControl.ActivePageIndex := config.LastTabIndex;
-
-  //if pagecontrol1.activepage = tabsheet13 then pagecontrol1.ActivePage :=
-   // tabsheet1;
-  //tabsheet13.Enabled := false;
 
   LCDFeaturesTabSheet.Enabled := true;
 
@@ -546,14 +553,6 @@ begin
     WinampListBox.Items.Add(WinampHints[WinampStat]);
   end;
 
-  MBMListBox.Clear;
-  for Loop := 1 to MaxMBMStat-1 do begin
-    for MBMStat := FirstMBMStat to LastMBMStat do begin
-      MBMListBox.Items.Add(MBMHints[MBMStat] + ' ' + IntToStr(Loop));
-    end;
-  end;
-
-
   LCDSizeComboBox.Items.Clear;
   for i := 1 to MaxScreenSizes do
     LCDSizeComboBox.Items.Add(ScreenSizes[i].SizeName);
@@ -586,13 +585,22 @@ begin
   InternetRefreshTimeSpinEdit.Value := config.newsRefresh;
   RandomizeScreensCheckBox.checked := config.randomScreens;
   GamestatsRefreshTimeSpinEdit.Value := config.gameRefresh;
-  FoldingAtHomeEmailEdit.text := config.foldUsername;
-  MBMRefreshTimeSpinEdit.Value := config.mbmRefresh;
+  FoldingAtHomeEmailEdit.text := config.foldUserid;
   LCDSmartieUpdateCheckBox.checked := config.checkUpdates;
 
-  MBMTabSheet.TabVisible := config.bShowMBM;
+  EnableRemoteSendCheckBox.Checked := config.EnableRemoteSend;
+  RemoteSendBindIPEdit.Text := config.RemoteSendBindIP;
+  RemoteSendPortEdit.Text := config.RemoteSendPort;
+  RemoteSendPasswordEdit.Text := config.RemoteSendPassword;
+  
+  if fileExists(ExtractFilePath(ParamStr(0))+'openssl\cert.pem') and
+     fileExists(ExtractFilePath(ParamStr(0))+'openssl\key.pem') then
+     RemoteSendUseSSLCheckBox.Checked := config.RemoteSendUseSSL
+  else
+     RemoteSendUseSSLCheckBox.Checked := false;
 
-
+     FoldEnableCheckBox.Checked := config.foldEnabled;
+     SetiEnableCheckBox.Checked := config.setiEnabled;
 
   for i := 1 to 24 do ButtonsListBox.Items.Delete(1);
   //LCDFeaturesTabSheet.Enabled := true;
@@ -729,7 +737,6 @@ begin
   for y := 1 to MaxLines do
   begin
     config.screen[scr][y].enabled := ScreenEnabledCheckBox.checked;
-    config.screen[scr][y].skip := SkipScreenComboBox.itemindex;
     try
       config.screen[scr][y].theme := ThemeNumberSpinEdit.value-1;
     except
@@ -770,7 +777,6 @@ var
 begin
   ascreen := config.screen[scr][1];
   ScreenEnabledCheckBox.checked := ascreen.enabled;
-  SkipScreenComboBox.itemindex := ascreen.skip;
   ThemeNumberSpinEdit.value := ascreen.theme + 1;
   TimeToShowSpinEdit.value := ascreen.showTime;
   StickyCheckbox.checked := ascreen.bSticky;
@@ -1038,23 +1044,6 @@ begin
     FocusToInputField();
 end;
 
-procedure TSetupForm.MBMListBoxClick(Sender: TObject);
-var
-  MBMStat : TMBMStat;
-  Index : integer;
-begin
-  MBMStat := TMBMStat(MBMListBox.itemindex mod (ord(LastMBMStat)+1));
-  Index := MBMListBox.itemindex div (ord(LastMBMStat)+1) + 1;
-
-  if (MBMStat >= FirstMBMStat) and (MBMStat <= LastMBMStat) then begin
-    VariableEdit.Text := MBMStatKey[MBMStat]+IntToStr(Index);
-  end else
-    VariableEdit.Text := NoVariable;
-
-  if not (VariableEdit.Text = NoVariable) then
-    FocusToInputField();
-end;
-
 procedure TSetupForm.InternetListBoxClick(Sender: TObject);
 begin
   case InternetListBox.itemindex of
@@ -1094,8 +1083,8 @@ begin
     2 : VariableEdit.Text := '$Time(d mmmm yyyy hh: nn: ss)';
     3 : VariableEdit.Text := '$UpTime';
     4 : VariableEdit.Text := '$UpTims';
-    5 : VariableEdit.Text := '°';
-    6 : VariableEdit.Text := '|';
+    5 : VariableEdit.Text := #176;
+    6 : VariableEdit.Text := #382;
     7 : VariableEdit.Text := '$Chr(20)';
     8 : VariableEdit.Text := '$File(C:\file.txt,1)';
     9 : VariableEdit.Text := '$LogFile(C:\file.log,0)';
@@ -1109,6 +1098,7 @@ begin
     17 : VariableEdit.Text := '$Rss(URL,t|d|b,ITEM#,MAXFREQHRS)';
     18 : VariableEdit.Text := '$Center(text here,15)';
     19 : VariableEdit.Text := '$ScreenChanged';
+    20 : VariableEdit.Text := '$Sender(127.0.0.10,6088,password1234,1,1';
     else VariableEdit.Text := NoVariable;
   end; // case
 
@@ -1141,8 +1131,6 @@ begin
     WinampListBoxClick(Sender);
   if LeftPageControl.ActivePage = SysInfoTabSheet then
     SysInfoListBoxClick(Sender);
-  if LeftPageControl.ActivePage = MBMTabSheet then
-    MBMListBoxClick(Sender);
   if LeftPageControl.ActivePage = LCDFeaturesTabSheet then
     ButtonsListBoxClick(Sender);
   if LeftPageControl.ActivePage = GameStatsTabSheet then
@@ -1390,12 +1378,17 @@ end;
 procedure TSetupForm.FoldingAtHomeListBoxClick(Sender: TObject);
 begin
   case FoldingAtHomeListBox.itemindex of
-    0 : VariableEdit.Text := '$FOLDwu';
-    1 : VariableEdit.Text := '$FOLDlastwu';
-    2 : VariableEdit.Text := '$FOLDactproc';
-    3 : VariableEdit.Text := '$FOLDteam';
-    4 : VariableEdit.Text := '$FOLDscore';
-    5 : VariableEdit.Text := '$FOLDrank';
+    0 : VariableEdit.Text := '$FOLDUser';
+    1 : VariableEdit.Text := '$FOLDwu';
+    2 : VariableEdit.Text := '$FOLDlastwu';
+    3 : VariableEdit.Text := '$FOLDact50min';
+    4 : VariableEdit.Text := '$FOLDactweek';
+    5 : VariableEdit.Text := '$FOLDscore';
+    6 : VariableEdit.Text := '$FOLDrank';
+    7 : VariableEdit.Text := '$FOLDteamname';
+    8 : VariableEdit.Text := '$FOLDteamscore';
+    9 : VariableEdit.Text := '$FOLDteamwu';
+    10 : VariableEdit.Text := '$FOLDteamlastwu';
     else VariableEdit.Text := NoVariable;
   end; // case
 
@@ -1455,10 +1448,9 @@ begin
   config.ScreenSize := LCDSizeComboBox.itemindex + 1;
   config.randomScreens := RandomizeScreensCheckBox.checked;
   config.newsRefresh := InternetRefreshTimeSpinEdit.Value;
-  config.foldUsername := FoldingAtHomeEmailEdit.text;
+  config.foldUserid := FoldingAtHomeEmailEdit.text;
   config.gameRefresh := GamestatsRefreshTimeSpinEdit.Value;
   config.checkUpdates := LCDSmartieUpdateCheckBox.checked;
-  config.mbmRefresh := MBMRefreshTimeSpinEdit.Value;
   config.colorOption := ColorSchemeComboBox.itemindex;
   config.distLog := DistributedNetLogfileEdit.text;
   config.dllPeriod := DLLCheckIntervalSpinEdit.value;
@@ -1531,7 +1523,7 @@ procedure TSetupForm.FormCreate(Sender: TObject);
 var
   pathssl :string;
 begin
-  pathssl := ExtractFilePath(ParamStr(0));
+  pathssl := ExtractFilePath(ParamStr(0))+'openssl\';
 // setup table column widths
   ActionsStringGrid.RowCount := 0;
   ActionsStringGrid.ColWidths[0] := 116;
@@ -1543,12 +1535,8 @@ begin
   if not fileExists(pathssl+'libeay32.dll') or
      not fileExists(pathssl+'ssleay32.dll') then EmailSSLEdit.Enabled :=False ;
 
-  if config.bShowMBM then
-  begin
-
-  end;
   //point PluginListBox to the plugin dirs
-  PluginListBox.Directory := pathssl+'plugins\';
+  PluginListBox.Directory := ExtractFilePath(ParamStr(0))+'plugins\';
 end;
 
 procedure TSetupForm.OutputListBoxClick(Sender: TObject);
@@ -1779,11 +1767,6 @@ begin
   StatementEdit.text := ActionsStringGrid.Cells[4, selected];
 end;
 
-procedure TSetupForm.SkipScreenComboBoxChange(Sender: TObject);
-begin
-  if (SkipScreenComboBox.ItemIndex < 0) then SkipScreenComboBox.ItemIndex := 0;
-end;
-
 procedure TSetupForm.OperatorComboBoxChange(Sender: TObject);
 begin
   if OperatorComboBox.ItemIndex < 0 then OperatorComboBox.itemIndex := 0;
@@ -1803,6 +1786,7 @@ end;
 function PerformingSetup : boolean;
 begin
   Result := assigned(SetupForm);
+
 end;
 
 procedure TSetupForm.ContrastTrackBarChange(Sender: TObject);
@@ -2223,6 +2207,62 @@ begin
   Line3Edit.text := config.screen[ScreenSpinEdit.value][3].text;
   if (MaxLines >3) then
   Line4Edit.text := config.screen[ScreenSpinEdit.value][4].text;
+end;
+
+///// Remote smartie sender
+procedure TSetupForm.EnableRemoteSendCheckBoxClick(Sender: TObject);
+begin
+  if EnableRemoteSendCheckBox.Checked then
+    config.EnableRemoteSend := true
+  else
+    config.EnableRemoteSend := false;
+end;
+
+procedure TSetupForm.RemoteSendBindIPEditChange(Sender: TObject);
+begin
+ config.RemoteSendBindIP := RemoteSendBindIPEdit.Text;
+end;
+
+procedure TSetupForm.RemoteSendPortEditChange(Sender: TObject);
+begin
+ config.RemoteSendPort := RemoteSendPortEdit.Text;
+end;
+
+procedure TSetupForm.RemoteSendUseSSLCheckBoxClick(Sender: TObject);
+begin
+  if fileExists(ExtractFilePath(ParamStr(0))+'openssl\cert.pem') and
+     fileExists(ExtractFilePath(ParamStr(0))+'openssl\key.pem') and
+	 RemoteSendUseSSLCheckBox.Checked then
+     config.RemoteSendUseSSL := true
+  else
+    begin
+      config.RemoteSendUseSSL := false;
+      RemoteSendUseSSLCheckBox.Checked := false;
+    end;
+end;
+
+procedure TSetupForm.RemoteSendGenerateCertKeyButtonClick(Sender: TObject);
+var
+  basedirname: string;
+begin
+  basedirname := ExtractFilePath(application.exename);
+  ShellExecute(Handle, 'open', pchar(basedirname+'openssl\openssl.exe'), 'req -x509 -nodes -days 365 -newkey rsa:1024 -keyout key.pem -out cert.pem -subj "/C=LC/ST=DSM/L=ART/O=Mon organisation/CN=IE" -config openssl.cfg',
+  pchar(basedirname+'openssl'), SW_SHOWNORMAL) ;
+end;
+
+procedure TSetupForm.RemoteSendPasswordEditChange(Sender: TObject);
+begin
+  config.RemoteSendPassword := RemoteSendPasswordEdit.Text;
+end;
+
+procedure TSetupForm.FoldEnableCheckBoxClick(Sender: TObject);
+begin
+config.foldEnabled := FoldEnableCheckBox.Checked;
+end;
+
+procedure TSetupForm.SetiEnableCheckBoxClick(Sender: TObject);
+begin
+config.setiEnabled := SetiEnableCheckBox.Checked;
 end;
 
 end.

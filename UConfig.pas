@@ -109,16 +109,12 @@ type
     uiActionsLoaded: Cardinal;
     sFileName: String;
     function loadINI: Boolean;
-    function loadCCFG: Boolean;
-    function loadACFG: Boolean;
     procedure saveINI;
     procedure SetScreenSize(con: Integer);
-    procedure ConvertToDisplayDLL;
   public
     sSkinPath: String;
     sTrayIcon: String;
     LastTabIndex: Integer; // last config tab index
-    bShowMBM: Boolean;
 
     localeFormat: TFormatSettings;
     bHideOnStartup: Boolean;
@@ -141,14 +137,15 @@ type
     newsRefresh: Integer;
     randomScreens: Boolean;
     gameRefresh: Integer;
-    mbmRefresh: Integer;
-    foldUsername: String;
+    foldUserid: String;
+    foldEnabled: Boolean;
     checkUpdates: Boolean;
     distLog: String;
     screen: Array[1..MaxScreens] of Array[1..MaxLines] of TScreenLine;
     ShutdownMessage: Array[1..MaxLines] of string;
     winampLocation: String;
     setiEmail: String;
+    setiEnabled: Boolean;
     actionsArray: Array[1..MaxActions, 1..4] of String;
     totalactions: Integer;
     // screen settings
@@ -176,6 +173,12 @@ type
     DLL_Contrast: integer;
     DLL_Brightness: integer;
     EmulateLCD : boolean;
+	  EnableRemoteSend: boolean;
+    RemoteSendBindIP: string;
+    RemoteSendPort: string;
+    RemoteSendPassword: string;
+    RemoteSendUseSSL: boolean;
+
     function load: Boolean;
     procedure save;
     property ScreenSize: Integer read fScreenSize write SetScreenSize;
@@ -207,329 +210,23 @@ begin
   P_height := ScreenSizes[fScreenSize].YSize;
 end;
 
-function TConfig.loadACFG: Boolean;
-var
-  initfile: textfile;
-  counter: Integer;
-  configline: String;
-begin
-  // Load Actions
-  counter := 0;
-  try
-    assignfile(initfile, extractfilepath(application.exename) +
-      'actions.cfg');
-    try
-      reset (initfile);
-      while not eof(initfile) do
-      begin
-        readln(initfile, configline);
-        counter := counter + 1;
-        actionsArray[counter, 1] := copy(configline, 1,
-          pos('¿', configline)-1);
-        actionsArray[counter, 2] := copy(configline, pos('¿',
-          configline) + 1, 1);
-        actionsArray[counter, 3] := copy(configline, pos('¿¿',
-          configline) + 2, pos('¿¿¿', configline)-pos('¿¿', configline)-2);
-        actionsArray[counter, 4] := copy(configline, pos('¿¿¿',
-          configline) + 3, length(configline));
-      end;
-    finally
-      closefile(initfile);
-    end;
-  except
-  end;
-  totalactions := counter;
-  uiActionsLoaded := counter;
-
-  result := true;
-
-end;
-
-function TConfig.loadCCFG: Boolean;
-var
-  initfile: textfile;
-  ConfigLineCount, ScreenCount, LineCount: Integer;
-  configline: String;
-  configArray: Array[1..101] of String;
-begin
-  // Load Game server list.
-  try
-    assignfile(initfile, extractfilepath(application.exename) +
-      'servers.cfg');
-    try
-      reset(initfile);
-      for ScreenCount := 1 to MaxScreens do
-        for LineCount := 1 to MaxLines do readln(initfile, gameServer[ScreenCount, LineCount]);
-    finally
-      closefile (initfile);
-    end;
-  except
-    result := false;
-    Exit;
-  end;
-
-  try
-    assignfile(initfile, extractfilepath(application.exename) + 'config.cfg');
-    reset(initfile);
-  except
-    result := false;
-    Exit;
-  end;
-
-  for ConfigLineCount := 1 to 100 do readln(initfile, configArray[ConfigLineCount]);
-
-  closefile(initfile);
-
-
-
-  refreshRate := StrToInt(copy(configArray[1], 1, pos('¿',
-    configArray[1])-1));
-  winampLocation := copy(configArray[1], pos('¿', configArray[1]) + 1,
-    length(configArray[1]));
-
-  bootDriverDelay := StrToInt(copy(configArray[2], 1, pos('¿',
-    configArray[2])-1));
-  setiEmail := copy(configArray[2], pos('¿', configArray[2]) + 1,
-    length(configArray[2]));
-
-  SetScreenSize(strtoInt(copy(configArray[3], 1, pos('¿1',
-    configArray[3])-1)));
-
-  xcontrast := strtoint(copy(configArray[3], pos('¿1', configArray[3]) + 2,
-    pos('¿2', configArray[3])-pos('¿1', configArray[3])-2));
-  xbrightness := strtoint(copy(configArray[3], pos('¿2', configArray[3]) + 2,
-    pos('¿3', configArray[3])-pos('¿2', configArray[3])-2));
-
-  xCF_contrast := strtoint(copy(configArray[3], pos('¿3', configArray[3]) + 2,
-    pos('¿4', configArray[3])-pos('¿3', configArray[3])-2));
-  xCF_brightness := strtoint(copy(configArray[3], pos('¿4', configArray[3]) +
-    2, 3));
-
-
-  // Lines 4..83
-  for ScreenCount := 1 to MaxScreens do
-  begin
-    for LineCount := 1 to MaxLines do
-    begin
-      configline := configArray[ScreenCount*4 + (LineCount-1)];
-      screen[ScreenCount][LineCount].enabled := copy(configline, pos('¿', configline) + 1,
-        1)='1';
-      screen[ScreenCount][LineCount].theme := StrToInt(copy(configline, pos('¿', configline) +
-        5, 1));
-      screen[ScreenCount][LineCount].showTime := StrToInt(copy(configline, pos('¿', configline)
-        + 9, length(configline)));
-      screen[ScreenCount][LineCount].skip := StrToInt(copy(configline, pos('¿', configline) + 2,
-        1));
-      screen[ScreenCount][LineCount].TransitionTime := StrToInt(copy(configline, pos('¿',
-        configline) + 7, 2));
-      screen[ScreenCount][LineCount].TransitionStyle := TTransitionStyle(StrToInt(copy(configline, pos('¿',
-        configline) + 6, 1)));
-      screen[ScreenCount][LineCount].noscroll := copy(configline, pos('¿', configline) + 3,
-        1)='1';
-      screen[ScreenCount][LineCount].contNextLine := copy(configline, pos('¿', configline) + 4,
-        1)='1';
-      screen[ScreenCount][LineCount].center := copy(configline, 1, 3)='%c%';
-      if (screen[ScreenCount][LineCount].center) then screen[ScreenCount][LineCount].text := copy(configline, 4,
-        pos('¿', configline)-4)
-      else screen[ScreenCount][LineCount].text := copy(configline, 1, pos('¿', configline)-1);
-
-    end;
-  end;
-
-  newsRefresh := StrToInt(copy(configArray[84], 2, length(configArray[84])));
-  randomScreens := copy(configArray[84], 1, 1)='1';
-
-  foldUsername := copy(configArray[85], 1, pos('¿', configArray[85])-1);
-  gameRefresh := StrToInt(copy(configArray[85], pos('¿', configArray[85]) + 1,
-    length(configArray[85])));
-
-  mbmRefresh := StrToInt(copy(configArray[86], 2, length(configArray[86])));
-  checkUpdates := copy(configArray[86], 1, 1)='1';
-
-  colorOption := StrToInt(configArray[87]);
-
-
-  distLog := configArray[88];
-
-  emailPeriod := StrToInt(copy(configArray[89], 1, pos('¿',
-    configArray[89])-1));
-  dllPeriod := StrToInt(copy(configArray[89], pos('¿', configArray[89]) + 1,
-    pos('¿¿', configArray[89])-pos('¿', configArray[89])-1));
-  scrollPeriod := StrToInt(copy(configArray[89], pos('¿¿', configArray[89]) +
-    2, length(configArray[89])));
-
-  xparallelPort := StrToInt(configArray[91]);
-
-  if (copy(configArray[92], 2, 1)='1') then xmx3Usb := true
-  else xmx3Usb := false;
-
-  if (copy(configArray[92], 1, 1)='1') then alwaysOnTop := true
-  else alwaysOnTop := false;
-
-  httpProxy := configArray[93];
-  httpProxyPort := StrToInt(configArray[94]);
-// dont think we need this any more and it conflicts with the new email code
-{  // Pop accounts + ssl
-  pop[1].server := copy(configArray[95], 1, pos('¿0', configArray[95])-1);
-  pop[1].user := copy(configArray[96], 1, pos('¿0', configArray[96])-1);
-  pop[1].pword := copy(configArray[97], 1, pos('¿0', configArray[97])-1);
-  pop[1].port_ssl := copy(configArray[101], 1, pos('¿0', configArray[101])-1);
-
-  pop[2].server := copy(configArray[95], pos('¿0', configArray[95]) + 2,
-    pos('¿1', configArray[95])-pos('¿0', configArray[95])-2);
-  pop[2].user := copy(configArray[96], pos('¿0', configArray[96]) + 2,
-    pos('¿1', configArray[96])-pos('¿0', configArray[96])-2);
-  pop[2].pword := copy(configArray[97], pos('¿0', configArray[97]) + 2,
-    pos('¿1', configArray[97])-pos('¿0', configArray[97])-2);
-  pop[2].port_ssl := copy(configArray[101], pos('¿0', configArray[101]) + 2,
-    pos('¿1', configArray[101])-pos('¿0', configArray[101])-2);
-
-  pop[3].server := copy(configArray[95], pos('¿1', configArray[95]) + 2,
-    pos('¿2', configArray[95])-pos('¿1', configArray[95])-2);
-  pop[3].user := copy(configArray[96], pos('¿1', configArray[96]) + 2,
-    pos('¿2', configArray[96])-pos('¿1', configArray[96])-2);
-  pop[3].pword := copy(configArray[97], pos('¿1', configArray[97]) + 2,
-    pos('¿2', configArray[97])-pos('¿1', configArray[97])-2);
-  pop[3].port_ssl := copy(configArray[101], pos('¿1', configArray[101]) + 2,
-    pos('¿2', configArray[101])-pos('¿1', configArray[101])-2);
-
-  pop[4].server := copy(configArray[95], pos('¿2', configArray[95]) + 2,
-    pos('¿3', configArray[95])-pos('¿2', configArray[95])-2);
-  pop[4].user := copy(configArray[96], pos('¿2', configArray[96]) + 2,
-    pos('¿3', configArray[96])-pos('¿2', configArray[96])-2);
-  pop[4].pword := copy(configArray[97], pos('¿2', configArray[97]) + 2,
-    pos('¿3', configArray[97])-pos('¿2', configArray[97])-2);
-  pop[4].port_ssl := copy(configArray[101], pos('¿2', configArray[101]) + 2,
-    pos('¿3', configArray[101])-pos('¿2', configArray[101])-2);
-
-  pop[5].server := copy(configArray[95], pos('¿3', configArray[95]) + 2,
-    pos('¿4', configArray[95])-pos('¿3', configArray[95])-2);
-  pop[5].user := copy(configArray[96], pos('¿3', configArray[96]) + 2,
-    pos('¿4', configArray[96])-pos('¿3', configArray[96])-2);
-  pop[5].pword := copy(configArray[97], pos('¿3', configArray[97]) + 2,
-    pos('¿4', configArray[97])-pos('¿3', configArray[97])-2);
-  pop[5].port_ssl := copy(configArray[101], pos('¿3', configArray[101]) + 2,
-    pos('¿4', configArray[101])-pos('¿3', configArray[101])-2);
-
-  pop[6].server := copy(configArray[95], pos('¿4', configArray[95]) + 2,
-    pos('¿5', configArray[95])-pos('¿4', configArray[95])-2);
-  pop[6].user := copy(configArray[96], pos('¿4', configArray[96]) + 2,
-    pos('¿5', configArray[96])-pos('¿4', configArray[96])-2);
-  pop[6].pword := copy(configArray[97], pos('¿4', configArray[97]) + 2,
-    pos('¿5', configArray[97])-pos('¿4', configArray[97])-2);
-  pop[6].port_ssl := copy(configArray[101], pos('¿4', configArray[101]) + 2,
-    pos('¿5', configArray[101])-pos('¿4', configArray[101])-2);
-
-  pop[7].server := copy(configArray[95], pos('¿5', configArray[95]) + 2,
-    pos('¿6', configArray[95])-pos('¿5', configArray[95])-2);
-  pop[7].user := copy(configArray[96], pos('¿5', configArray[96]) + 2,
-    pos('¿6', configArray[96])-pos('¿5', configArray[96])-2);
-  pop[7].pword := copy(configArray[97], pos('¿5', configArray[97]) + 2,
-    pos('¿6', configArray[97])-pos('¿5', configArray[97])-2);
-  pop[7].port_ssl := copy(configArray[101], pos('¿5', configArray[101]) + 2,
-    pos('¿6', configArray[101])-pos('¿5', configArray[101])-2);
-
-  pop[8].server := copy(configArray[95], pos('¿6', configArray[95]) + 2,
-    pos('¿7', configArray[95])-pos('¿6', configArray[95])-2);
-  pop[8].user := copy(configArray[96], pos('¿6', configArray[96]) + 2,
-    pos('¿7', configArray[96])-pos('¿6', configArray[96])-2);
-  pop[8].pword := copy(configArray[97], pos('¿6', configArray[97]) + 2,
-    pos('¿7', configArray[97])-pos('¿6', configArray[97])-2);
-  pop[8].port_ssl := copy(configArray[101], pos('¿6', configArray[101]) + 2,
-    pos('¿7', configArray[101])-pos('¿6', configArray[101])-2);
-
-  pop[9].server := copy(configArray[95], pos('¿7', configArray[95]) + 2,
-    pos('¿8', configArray[95])-pos('¿7', configArray[95])-2);
-  pop[9].user := copy(configArray[96], pos('¿7', configArray[96]) + 2,
-    pos('¿8', configArray[96])-pos('¿7', configArray[96])-2);
-  pop[9].pword := copy(configArray[97], pos('¿7', configArray[97]) + 2,
-    pos('¿8', configArray[97])-pos('¿7', configArray[97])-2);
-  pop[9].port_ssl := copy(configArray[101], pos('¿7', configArray[101]) + 2,
-    pos('¿8', configArray[101])-pos('¿7', configArray[101])-2);
-
-  pop[0].server := copy(configArray[95], pos('¿8', configArray[95]) + 2,
-    pos('¿9', configArray[95])-pos('¿8', configArray[95])-2);
-  pop[0].user := copy(configArray[96], pos('¿8', configArray[96]) + 2,
-    pos('¿9', configArray[96])-pos('¿8', configArray[96])-2);
-  pop[0].pword := copy(configArray[97], pos('¿8', configArray[97]) + 2,
-    pos('¿9', configArray[97])-pos('¿8', configArray[97])-2);
-  pop[0].port_ssl := copy(configArray[101], pos('¿8', configArray[101]) + 2,
-    pos('¿9', configArray[101])-pos('¿8', configArray[101])-2);    
-}
-  xScreenType := TScreenType(StrToInt(configArray[98]));
-  comPort := StrToInt(configArray[99]);
-  baudrate := StrToInt(configArray[100]);
-
-  result := true;
-end;
-
 const
   BoolStr : array[false..true] of string = ('0','1');
 
-procedure TConfig.ConvertToDisplayDLL;
-begin
-  case xScreenType of
-    xxHD2,
-    xxHD : begin
-      DisplayDLLName := 'HD44780.dll';
-      DisplayDLLParameters := '$'+IntToHex(xParallelPort,3) + ',' +
-                              IntToStr(xiHDTimingMultiplier)+ ',' +
-                              BoolStr[xbHDAltAddressing]+ ',' +
-                              BoolStr[xbHDKS0073Addressing];
-    end;
-    xxMO : begin
-      DisplayDLLName := 'matrix.dll';
-      DisplayDLLParameters := 'COM'+IntToStr(COMPort)+','+IntToStr(BaudRates[BAUDRate]);
-      DLL_Contrast := xcontrast;
-      DLL_Brightness := xbrightness;
-    end;
-    xxCF : begin
-      DisplayDLLName := 'crystal.dll';
-      DisplayDLLParameters := 'COM'+IntToStr(COMPort)+','+IntToStr(BaudRates[BAUDRate]);
-      DLL_Contrast := xCF_contrast*255 div 100;
-      DLL_Brightness := xCF_brightness*255 div 100;
-    end;
-    xxIR : begin
-      DisplayDLLName := 'irtrans.dll';
-      DisplayDLLParameters := xremotehost;
-      DLL_Brightness := xIR_brightness * 64;
-    end;
-  end;
-  xScreenType := xxDLL;
-end;
-
 function TConfig.load: Boolean;
 var
-  bResult1, bResult2: Boolean;
+  bResult1: Boolean;
 begin
-  if (FileExists(ExtractFilePath(Application.EXEName) + sFileName)) or (not
-    FileExists(ExtractFilePath(Application.EXEName) + 'config.cfg')) then
-  begin
+  bResult1 := false;
+  if (FileExists(ExtractFilePath(Application.EXEName) + sFileName)) then
     bResult1 := loadINI;
-  end
-  else
-  begin
-    bResult1 := loadCCFG;
-  end;
-  if (FileExists(ExtractFilePath(Application.EXEName) + 'actions.cfg')) then
-    bResult2 := loadACFG
-  else
-    bResult2 := true;
-
-  ConvertToDisplayDLL;
-
-  result := bResult1 and bResult2;
+  result := bResult1;
 end;
 
 procedure TConfig.save;
 begin
   saveINI;
-  if FileExists(ExtractFilePath(Application.EXEName) + 'config.cfg') then
-    DeleteFile(PChar(ExtractFilePath(Application.EXEName) + 'config.cfg'));
-  if FileExists(ExtractFilePath(Application.EXEName) + 'actions.cfg') then
-    DeleteFile(PChar(ExtractFilePath(Application.EXEName) + 'actions.cfg'))
 end;
-
 
 function TConfig.loadINI: Boolean;
 var
@@ -561,7 +258,6 @@ begin
   sTrayIcon := initfile.ReadString('General Settings', 'TrayIcon', 'smartie.ico');
 
   LastTabIndex := initfile.ReadInteger('General Settings', 'LastTab',0);
-  bShowMBM := initfile.ReadBool('General Settings','ShowMBM',false);
 
 
   baudrate := initfile.ReadInteger('Communication Settings', 'Baudrate', 8);
@@ -599,6 +295,7 @@ begin
     'BootDriverDelay', 3);
   setiEmail := initfile.ReadString('General Settings', 'SETIEmail',
     'test@test.com');
+  setiEnabled := initfile.ReadBool('General Settings', 'SETIEnabled', false);
 
   for ScreenCount := 1 to MaxScreens do
   begin
@@ -691,11 +388,12 @@ begin
   randomScreens := initFile.ReadBool('General Settings', 'RandomScreens',
     false);
 
-  foldUsername := initFile.ReadString('General Settings', 'FoldUsername',
-    'Test');
+  foldUserid := initFile.ReadString('General Settings', 'FoldUserid',
+    '1437');
+  foldEnabled := initFile.ReadBool('General Settings', 'FoldEnabled',
+    false);
   gameRefresh := initFile.ReadInteger('General Settings', 'GameRefresh', 1);
 
-  mbmRefresh := initFile.ReadInteger('General Settings', 'MBMRefresh', 30);
   checkUpdates := initFile.ReadBool('General Settings', 'CheckUpdates', true);
 
   colorOption := initFile.ReadInteger('General Settings', 'ColorOption', 4);
@@ -752,6 +450,12 @@ begin
   totalactions := ActionsCount - 1;
   uiActionsLoaded := totalactions;
 
+  EnableRemoteSend := initFile.ReadBool('General Settings', 'EnableRemoteSend', false);
+  RemoteSendBindIP := initFile.ReadString('General Settings', 'RemoteSendBindIP', '0.0.0.0');
+  RemoteSendPort := initFile.ReadString('General Settings', 'RemoteSendPort', '6088');
+  RemoteSendPassword := initFile.ReadString('General Settings', 'RemoteSendPassword', 'password1234');
+  RemoteSendUseSSL := initFile.ReadBool('General Settings', 'RemoteSendUseSSL', false);
+
   result := true;
 
   initfile.Free;
@@ -777,7 +481,6 @@ begin
   initfile.WriteString('General Settings', 'SkinPath', sSkinPath);
   initfile.WriteInteger('General Settings', 'LastTab',LastTabIndex);
   initfile.WriteString('General Settings', 'TrayIcon', sTrayIcon);
-  initfile.WriteBool('General Settings', 'ShowMBM', bShowMBM);
 
   initfile.WriteInteger('Communication Settings', 'Baudrate', baudrate);
   initfile.WriteInteger('Communication Settings', 'COMPort', comPort);
@@ -803,6 +506,7 @@ begin
     bootDriverDelay);
 
   initfile.WriteString('General Settings', 'SETIEmail', setiEmail);
+  initfile.WriteBool('General Settings', 'SETIEnabled', setiEnabled);
 
   for ScreenCount := 1 to MaxScreens do
   begin
@@ -866,10 +570,10 @@ begin
   initFile.WriteInteger('General Settings', 'NewsRefresh', newsRefresh);
   initFile.WriteBool('General Settings', 'RandomScreens', randomScreens);
 
-  initFile.WriteString('General Settings', 'FoldUsername', foldUsername);
+  initFile.WriteString('General Settings', 'FoldUserid', foldUserid);
+  initFile.WriteBool('General Settings', 'FoldEnabled', foldEnabled);
   initFile.WriteInteger('General Settings', 'GameRefresh', gameRefresh);
 
-  initFile.WriteInteger('General Settings', 'MBMRefresh', mbmRefresh);
   initFile.WriteBool('General Settings', 'CheckUpdates', checkUpdates);
 
   initFile.WriteInteger('General Settings', 'ColorOption', colorOption);
@@ -930,6 +634,12 @@ begin
       initfile.DeleteKey('Actions', sPrefix + 'Action');
     end;
   end;
+  
+  initFile.WriteBool('General Settings', 'EnableRemoteSend', EnableRemoteSend);
+  initFile.WriteString('General Settings', 'RemoteSendBindIP', RemoteSendBindIP);
+  initFile.WriteString('General Settings', 'RemoteSendPort', RemoteSendPort);
+  initFile.WriteString('General Settings', 'RemoteSendPassword', RemoteSendPassword);
+  initFile.WriteBool('General Settings', 'RemoteSendUseSSL', RemoteSendUseSSL);
 
   initfile.UpdateFile;
   initfile.Free;

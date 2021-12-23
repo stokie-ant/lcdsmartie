@@ -15,3 +15,11 @@ release-dir/plugins/*.dll
 release-dir/cache
 # this will be re-created when running the program
 release-dir/forms.ini
+# private ssl stuff should never go in git
+release-dir/openssl/.rnd
+release-dir/openssl/cert.pem
+release-dir/openssl/key.pem
+# ignore extracted components
+components/indy 10
+components/CoolTrayIcon
+components/WinampCtrl

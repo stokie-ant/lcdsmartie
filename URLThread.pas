@@ -3,7 +3,7 @@ unit URLThread;
 interface
 
 uses
-  DataThread,IdHTTP,IdSSLOpenSSL;
+  DataThread,IdHTTP,IdSSLOpenSSL,Classes;
 
 type
   PHttp = ^TIdHttp;
@@ -15,14 +15,14 @@ type
   public
     constructor Create(AInterval : longint);
     destructor Destroy; override;
-    function GetUrl(Url: String; maxfreq: Cardinal = 0): String; virtual;
+    function GetUrl(Url: String; maxfreq: Cardinal = 0; PostParameters: TStringList = nil): String; virtual;
   end;
 
 
 implementation
 
 uses
-  DateUtils,SysUtils,Classes,UConfig,UUtils;
+  DateUtils,SysUtils,UConfig,UUtils;
 
 constructor TURLThread.Create(AInterval : longint);
 begin
@@ -41,7 +41,7 @@ end;
 
 // Download URL and return file location.
 // Just return cached file if newer than maxfreq minutes.
-function TURLThread.GetUrl(Url: String; maxfreq: Cardinal = 0): String;
+function TURLThread.GetUrl(Url: String; maxfreq: Cardinal = 0; PostParameters: TStringList = nil): String;
 var
   HTTP: TIdHTTP;
   Id_HandlerSocket : TIdSSLIOHandlerSocketOpenSSL;
@@ -116,6 +116,12 @@ begin
         fDataLock.Enter();
         httpCopy := @HTTP;
         fDataLock.Leave();
+
+        {
+        if (PostParameters.Count > 0) then
+        sl.Text := HTTP.Post(Url, Parameters)
+        else
+        }
         sl.Text := HTTP.Get(Url);
         // the get call can block for a long time so check if smartie is exiting
         if (Terminated) then raise EExiting.Create('');

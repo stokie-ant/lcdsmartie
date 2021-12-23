@@ -3,12 +3,11 @@ unit UDataCPU;
 interface
 
 uses
-  SysUtils,UDataMBM,DataThread;
+  SysUtils, DataThread;
 
 type
   TCPUDataThread = class(TDataThread)
   private
-    fMBMThread : TMBMDataThread;
     //cpu usage
     STCPUType : string;
     bDoCpuSpeed: Boolean; // cpu + main threads.
@@ -27,7 +26,7 @@ type
     procedure  DoUpdate; override;
     procedure SetActive(Value : boolean); override;
   public
-    constructor Create(MBMThread : TMBMDataThread);
+    constructor Create;
     destructor Destroy; override;
     procedure  ResolveVariables(var Line : string); override;
   end;
@@ -37,7 +36,7 @@ implementation
 uses
   UUtils, StrUtils, Windows, cxCpu40, adCpuUsage;
 
-constructor TCPUDataThread.Create(MBMThread : TMBMDataThread);
+constructor TCPUDataThread.Create;
 begin
   // Get CPU speed first time:
   try
@@ -49,7 +48,6 @@ begin
   end;
 
   Active := false;  // set the defaults
-  fMBMThread := MBMThread;
   inherited Create(250);
 end;
 
@@ -136,13 +134,6 @@ begin
       rawcpu := adCpuUsage.GetCPUUsage(0);
       rawcpu := abs(rawcpu) * 100;
     except
-
-      // The above (CollectCPUData/GetCPUUsage) can fail if the processor
-      // Usage performance counter doesn't exist.
-      // Use the MBM Usage counter instead... It will most likely to 0.
-      if assigned(fMBMThread) then
-        rawcpu := fMBMThread.MBMCpuUsage
-      else
         rawcpu := 0;
     end;
 
@@ -261,9 +252,6 @@ begin
   fDataLock.Enter();
   uptimeregs := MidStr(sTempUptime, 1, Length(sTempUptime)-1);
   fDataLock.Leave();
-
-//except
-//end;
 
 end;
 
