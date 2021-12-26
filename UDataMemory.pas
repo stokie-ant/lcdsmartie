@@ -23,6 +23,7 @@ const
   ScreensaverActiveKey = '$ScreenSaverActive';
   FullScreenGameActive = '$FullScreenGameActive';
   FullScreenAppActive = '$FullScreenAppActive';
+  ApplicationActive = '$ApplicationActive';
   
 type
   TMemoryDataThread = class(TDataThread)
@@ -45,7 +46,7 @@ type
 implementation
 
 uses
-  SysUtils;
+  SysUtils, UUtils;
 
 constructor TMemoryDataThread.Create;
 begin
@@ -97,7 +98,20 @@ end;
 procedure TMemoryDataThread.ResolveVariables(var Line : string);
 var
   mem: Int64;
+  args: Array [1..maxArgs] of String;
+  prefix, postfix: String;
+  numArgs: Cardinal;
 begin
+
+  if (pos(ApplicationActive,Line) > 0) then begin
+    while decodeArgs(line, ApplicationActive, maxArgs, args, prefix, postfix, numargs) do
+    begin
+      Line := prefix;
+      Line := Line + inttostr(system1.isapplicationactive(args[1])) + postfix;
+    end;
+  end;
+
+
   Line := StringReplace(line, UserNameKey, STUsername, [rfReplaceAll]);
   Line := StringReplace(line, ComputerNameKey, STcomputername, [rfReplaceAll]);
   Line := StringReplace(line, ScreensaverActiveKey, inttostr(STSSActive), [rfReplaceAll]);

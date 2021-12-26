@@ -160,7 +160,6 @@ type
     Operand2Edit: TEdit;
     Label6: TLabel;
     StayOnTopCheckBox: TCheckBox;
-    TransitionButton: TButton;
     ProgramScrollIntervalSpinEdit: TSpinEdit;
     Label59: TLabel;
     Label28: TLabel;
@@ -295,6 +294,11 @@ type
     Label55: TLabel;
     FoldEnableCheckBox: TCheckBox;
     SetiEnableCheckBox: TCheckBox;
+    TransitionStyleComboBox: TComboBox;
+    TransitionTimeSpinEdit: TSpinEdit;
+    Label60: TLabel;
+    Label61: TLabel;
+    Label62: TLabel;
 
     procedure FormShow(Sender: TObject);
     procedure LCDSizeComboBoxChange(Sender: TObject);
@@ -329,7 +333,6 @@ type
     procedure ActionAddButtonClick(Sender: TObject);
     procedure ActionDeleteButtonClick(Sender: TObject);
     procedure ButtonsListBoxClick(Sender: TObject);
-    procedure TransitionButtonClick(Sender: TObject);
     procedure Line4EditKeyDown(Sender: TObject; var Key: Word; Shift:
       TShiftState);
     procedure Line1EditKeyDown(Sender: TObject; var Key: Word; Shift:
@@ -375,6 +378,8 @@ type
     procedure RemoteSendPasswordEditChange(Sender: TObject);
     procedure FoldEnableCheckBoxClick(Sender: TObject);
     procedure SetiEnableCheckBoxClick(Sender: TObject);
+    procedure TransitionStyleComboBoxChange(Sender: TObject);
+    procedure TransitionTimeSpinEditChange(Sender: TObject);
 
   private
     DLLPath : string;
@@ -392,10 +397,9 @@ type
   function PerformingSetup : boolean;
 
 implementation
-
 uses
   Math, Windows, ShellApi, graphics, sysutils, Registry, StrUtils,
-  UMain, UInteract, UConfig, UDataEmail, UDataNetwork, UDataWinamp,
+  UMain, UConfig, UDataEmail, UDataNetwork, UDataWinamp,
   UIconUtils, UEditLine, UFormPos, IpRtrMib, IpHlpApi;
 
 {$R *.DFM}
@@ -781,6 +785,8 @@ begin
   TimeToShowSpinEdit.value := ascreen.showTime;
   StickyCheckbox.checked := ascreen.bSticky;
   TimeToShowSpinEdit.enabled := not ascreen.bSticky;
+  TransitionStyleComboBox.ItemIndex := ord(config.screen[ActiveScreen][1].TransitionStyle);
+  TransitionTimeSpinEdit.Value := config.screen[ActiveScreen][1].TransitionTime;
 
   DontScrollLine1CheckBox.checked := false;
   DontScrollLine2CheckBox.checked := false;
@@ -1098,7 +1104,8 @@ begin
     17 : VariableEdit.Text := '$Rss(URL,t|d|b,ITEM#,MAXFREQHRS)';
     18 : VariableEdit.Text := '$Center(text here,15)';
     19 : VariableEdit.Text := '$ScreenChanged';
-    20 : VariableEdit.Text := '$Sender(127.0.0.10,6088,password1234,1,1';
+    20 : VariableEdit.Text := '$ApplicationActive(LCDSmartie.exe)';
+    21 : VariableEdit.Text := '$Sender(127.0.0.10,6088,password1234,1,1)';
     else VariableEdit.Text := NoVariable;
   end; // case
 
@@ -1670,23 +1677,6 @@ begin
   if not (VariableEdit.Text = NoVariable) then
     FocusToInputField();
 end;
-
-procedure TSetupForm.TransitionButtonClick(Sender: TObject);
-var
-  Style : TTransitionStyle;
-  Time : byte;
-  Loop : byte;
-begin
-  Style := config.screen[ActiveScreen][1].TransitionStyle;
-  Time := config.screen[ActiveScreen][1].TransitionTime;
-  if DoTransitionConfigForm(Style,Time) then begin
-    for Loop := 1 to MaxLines do begin
-      config.screen[ActiveScreen][Loop].TransitionStyle := Style;
-      config.screen[ActiveScreen][Loop].TransitionTime := Time;
-    end;
-  end;
-end;
-
 
 procedure TSetupForm.Line1EditKeyDown(Sender: TObject; var Key: Word; Shift:
   TShiftState);
@@ -2265,7 +2255,24 @@ begin
 config.setiEnabled := SetiEnableCheckBox.Checked;
 end;
 
-end.
+procedure TSetupForm.TransitionStyleComboBoxChange(Sender: TObject);
+var
+  Loop : byte;
+begin
+  for Loop := 1 to MaxLines do begin
+    config.screen[ActiveScreen][Loop].TransitionStyle := TTransitionStyle(TransitionStyleComboBox.ItemIndex);
+  end
+end;
 
+procedure TSetupForm.TransitionTimeSpinEditChange(Sender: TObject);
+var
+  Loop : byte;
+begin
+  for Loop := 1 to MaxLines do begin
+    config.screen[ActiveScreen][Loop].TransitionTime := TransitionTimeSpinEdit.Value;
+  end;
+end;
+
+end.
 
 

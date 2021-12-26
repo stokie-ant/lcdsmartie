@@ -57,6 +57,7 @@ type
     function isscreensaveractive: integer;
     function isfullscreengameactive: integer;
     function isfullscreenappactive: integer;
+	function isapplicationactive(application: string): integer;
   end;
 
 implementation
@@ -449,6 +450,14 @@ begin
       result := 1
     else
       result := 0;
+end;
+
+function TSystem.isapplicationactive(application: string): integer;
+begin
+  if processExists(application) then
+    result :=1
+  else
+    result :=0;
 end;
 
 end.

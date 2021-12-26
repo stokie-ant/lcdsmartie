@@ -7,7 +7,7 @@ object SetupForm: TSetupForm
   BorderIcons = []
   BorderStyle = bsToolWindow
   Caption = 'LCD Smartie 5.x Setup'
-  ClientHeight = 447
+  ClientHeight = 453
   ClientWidth = 849
   Color = clBtnFace
   Font.Charset = ANSI_CHARSET
@@ -28,7 +28,7 @@ object SetupForm: TSetupForm
     Top = 0
     Width = 265
     Height = 449
-    ActivePage = FoldingAtHomeTabSheet
+    ActivePage = MiscTabSheet
     Font.Charset = ANSI_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
@@ -541,7 +541,7 @@ object SetupForm: TSetupForm
         Height = 21
         Style = csDropDownList
         DropDownCount = 10
-        ItemHeight = 0
+        ItemHeight = 13
         TabOrder = 0
         OnChange = EmailAccountComboBoxChange
       end
@@ -642,6 +642,7 @@ object SetupForm: TSetupForm
           '$Rss(URL,t|d|b,ITEM#,MAXFREQHRS)'
           '$Center(text here,width)'
           '$ScreenChanged'
+          '$ApplicationActive(application.exe)'
           '$Sender(IP,Port,password,SSL 0/1,Line 1-4)')
         ParentFont = False
         TabOrder = 0
@@ -1180,7 +1181,7 @@ object SetupForm: TSetupForm
   end
   object OKButton: TButton
     Left = 572
-    Top = 416
+    Top = 424
     Width = 75
     Height = 25
     Caption = '&OK'
@@ -1197,7 +1198,7 @@ object SetupForm: TSetupForm
   end
   object CancelButton: TButton
     Left = 652
-    Top = 416
+    Top = 424
     Width = 75
     Height = 25
     Cancel = True
@@ -1247,7 +1248,7 @@ object SetupForm: TSetupForm
   end
   object ApplyButton: TButton
     Left = 732
-    Top = 416
+    Top = 424
     Width = 75
     Height = 25
     Caption = '&Apply'
@@ -1258,7 +1259,7 @@ object SetupForm: TSetupForm
     Left = 264
     Top = 0
     Width = 581
-    Height = 409
+    Height = 417
     ActivePage = ScreensTabSheet
     TabOrder = 0
     TabStop = False
@@ -1269,7 +1270,7 @@ object SetupForm: TSetupForm
         Left = 3
         Top = 168
         Width = 561
-        Height = 209
+        Height = 217
         BiDiMode = bdLeftToRight
         Caption = 'Screens settings'
         Font.Charset = ANSI_CHARSET
@@ -1281,8 +1282,8 @@ object SetupForm: TSetupForm
         ParentFont = False
         TabOrder = 2
         object Label5: TLabel
-          Left = 9
-          Top = 46
+          Left = 56
+          Top = 16
           Width = 67
           Height = 13
           Caption = 'Time to show:'
@@ -1294,11 +1295,11 @@ object SetupForm: TSetupForm
           ParentFont = False
         end
         object Label43: TLabel
-          Left = 19
-          Top = 57
-          Width = 47
+          Left = 115
+          Top = 33
+          Width = 24
           Height = 13
-          Caption = '(seconds)'
+          Caption = '(sec)'
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
           Font.Height = -11
@@ -1308,7 +1309,7 @@ object SetupForm: TSetupForm
         end
         object Label44: TLabel
           Left = 432
-          Top = 16
+          Top = 24
           Width = 25
           Height = 13
           Caption = 'Don'#39't'
@@ -1321,7 +1322,7 @@ object SetupForm: TSetupForm
         end
         object Label45: TLabel
           Left = 432
-          Top = 32
+          Top = 40
           Width = 24
           Height = 13
           Caption = 'scroll'
@@ -1334,7 +1335,7 @@ object SetupForm: TSetupForm
         end
         object Label47: TLabel
           Left = 436
-          Top = 64
+          Top = 72
           Width = 20
           Height = 13
           Caption = 'line:'
@@ -1347,7 +1348,7 @@ object SetupForm: TSetupForm
         end
         object Label46: TLabel
           Left = 436
-          Top = 48
+          Top = 56
           Width = 17
           Height = 13
           Caption = 'this'
@@ -1360,7 +1361,7 @@ object SetupForm: TSetupForm
         end
         object Label51: TLabel
           Left = 467
-          Top = 16
+          Top = 24
           Width = 43
           Height = 13
           Caption = 'Continue'
@@ -1373,7 +1374,7 @@ object SetupForm: TSetupForm
         end
         object Label52: TLabel
           Left = 482
-          Top = 32
+          Top = 40
           Width = 12
           Height = 13
           Caption = 'on'
@@ -1386,7 +1387,7 @@ object SetupForm: TSetupForm
         end
         object Label53: TLabel
           Left = 477
-          Top = 48
+          Top = 56
           Width = 22
           Height = 13
           Caption = 'next'
@@ -1399,7 +1400,7 @@ object SetupForm: TSetupForm
         end
         object Label54: TLabel
           Left = 480
-          Top = 64
+          Top = 72
           Width = 20
           Height = 13
           Caption = 'line:'
@@ -1412,7 +1413,7 @@ object SetupForm: TSetupForm
         end
         object Label4: TLabel
           Left = 520
-          Top = 16
+          Top = 24
           Width = 33
           Height = 13
           Caption = 'Center'
@@ -1425,7 +1426,7 @@ object SetupForm: TSetupForm
         end
         object Label17: TLabel
           Left = 526
-          Top = 32
+          Top = 40
           Width = 24
           Height = 13
           Caption = 'text:'
@@ -1437,11 +1438,11 @@ object SetupForm: TSetupForm
           ParentFont = False
         end
         object Label18: TLabel
-          Left = 200
-          Top = 19
-          Width = 49
+          Left = 152
+          Top = 16
+          Width = 36
           Height = 13
-          Caption = 'Theme nr.'
+          Caption = 'Theme:'
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
           Font.Height = -11
@@ -1451,7 +1452,7 @@ object SetupForm: TSetupForm
         end
         object ScreenLabel: TLabel
           Left = 8
-          Top = 19
+          Top = 16
           Width = 37
           Height = 13
           Caption = 'Screen:'
@@ -1462,157 +1463,196 @@ object SetupForm: TSetupForm
           Font.Style = []
           ParentFont = False
         end
+        object Label60: TLabel
+          Left = 208
+          Top = 32
+          Width = 77
+          Height = 13
+          Caption = 'Transition &style:'
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          ParentFont = False
+        end
+        object Label61: TLabel
+          Left = 208
+          Top = 64
+          Width = 74
+          Height = 13
+          Caption = 'Transition time:'
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          ParentFont = False
+        end
+        object Label62: TLabel
+          Left = 344
+          Top = 64
+          Width = 64
+          Height = 13
+          Caption = '(1/10th secs)'
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          ParentFont = False
+        end
         object DontScrollLine1CheckBox: TCheckBox
           Left = 436
-          Top = 80
+          Top = 88
           Width = 17
           Height = 17
           Hint = 'Don'#39't scroll this line.'
           Caption = ' '
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 7
+          TabOrder = 6
         end
         object DontScrollLine2CheckBox: TCheckBox
           Left = 436
-          Top = 104
+          Top = 112
           Width = 17
           Height = 17
           Hint = 'Don'#39't scroll this line.'
           Caption = ' '
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 11
+          TabOrder = 10
         end
         object DontScrollLine3CheckBox: TCheckBox
           Left = 436
-          Top = 128
+          Top = 136
           Width = 17
           Height = 17
           Hint = 'Don'#39't scroll this line.'
           Caption = ' '
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 15
+          TabOrder = 14
         end
         object DontScrollLine4CheckBox: TCheckBox
           Left = 436
-          Top = 152
+          Top = 160
           Width = 17
           Height = 17
           Hint = 'Don'#39't scroll this line.'
           Caption = ' '
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 19
+          TabOrder = 18
         end
         object GroupBox4: TGroupBox
           Left = 464
           Top = 8
           Width = 2
-          Height = 185
+          Height = 201
           Enabled = False
-          TabOrder = 21
+          TabOrder = 20
         end
         object ContinueLine1CheckBox: TCheckBox
           Left = 480
-          Top = 80
+          Top = 88
           Width = 17
           Height = 17
           Hint = 'Continue text that doesn'#39't fit on line 1 onto line 2.'
           Caption = ' '
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 8
+          TabOrder = 7
           OnClick = ContinueLine1CheckBoxClick
         end
         object ContinueLine2CheckBox: TCheckBox
           Left = 480
-          Top = 104
+          Top = 112
           Width = 17
           Height = 17
           Hint = 'Continue text that doesn'#39't fit on line 2 onto line 3.'
           Caption = ' '
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 12
+          TabOrder = 11
           OnClick = ContinueLine2CheckBoxClick
         end
         object ContinueLine3CheckBox: TCheckBox
           Left = 480
-          Top = 128
+          Top = 136
           Width = 17
           Height = 17
           Hint = 'Continue text that doesn'#39't fit on line 3 onto line 4.'
           Caption = ' '
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 16
+          TabOrder = 15
           OnClick = ContinueLine3CheckBoxClick
         end
         object GroupBox5: TGroupBox
           Left = 512
           Top = 8
           Width = 2
-          Height = 185
+          Height = 201
           Enabled = False
-          TabOrder = 22
+          TabOrder = 21
         end
         object CenterLine1CheckBox: TCheckBox
           Left = 528
-          Top = 80
+          Top = 88
           Width = 17
           Height = 17
           Hint = 'Center the text in this line (if it'#39's shorter than a full line).'
           Caption = ' '
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 9
+          TabOrder = 8
         end
         object CenterLine2CheckBox: TCheckBox
           Left = 528
-          Top = 104
+          Top = 112
           Width = 17
           Height = 17
           Hint = 'Center the text in this line (if it'#39's shorter than a full line).'
           Caption = ' '
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 13
+          TabOrder = 12
         end
         object CenterLine3CheckBox: TCheckBox
           Left = 528
-          Top = 128
+          Top = 136
           Width = 17
           Height = 17
           Hint = 'Center the text in this line (if it'#39's shorter than a full line).'
           Caption = ' '
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 17
+          TabOrder = 16
         end
         object CenterLine4CheckBox: TCheckBox
           Left = 528
-          Top = 152
+          Top = 160
           Width = 17
           Height = 17
           Hint = 'Center the text in this line (if it'#39's shorter than a full line).'
           Caption = ' '
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 20
+          TabOrder = 19
         end
         object GroupBox6: TGroupBox
           Left = 424
           Top = 8
           Width = 2
-          Height = 57
+          Height = 65
           Enabled = False
-          TabOrder = 23
+          TabOrder = 22
         end
         object ThemeNumberSpinEdit: TSpinEdit
-          Left = 256
-          Top = 15
+          Left = 152
+          Top = 31
           Width = 41
           Height = 22
           Font.Charset = ANSI_CHARSET
@@ -1627,27 +1667,9 @@ object SetupForm: TSetupForm
           TabOrder = 2
           Value = 1
         end
-        object TransitionButton: TButton
-          Left = 336
-          Top = 16
-          Width = 83
-          Height = 25
-          Hint = 'Choose an effect to display when changing from this screen.'
-          Caption = 'Transition'
-          Font.Charset = ANSI_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -11
-          Font.Name = 'Tahoma'
-          Font.Style = []
-          ParentFont = False
-          ParentShowHint = False
-          ShowHint = True
-          TabOrder = 3
-          OnClick = TransitionButtonClick
-        end
         object StickyCheckbox: TCheckBox
-          Left = 128
-          Top = 53
+          Left = 72
+          Top = 56
           Width = 49
           Height = 17
           Hint = 'Don'#39't automatically change from this screen.'
@@ -1660,14 +1682,14 @@ object SetupForm: TSetupForm
           ParentFont = False
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 5
+          TabOrder = 4
           OnClick = StickyCheckboxClick
         end
         object ScreenEnabledCheckBox: TCheckBox
-          Left = 128
-          Top = 14
+          Left = 8
+          Top = 56
           Width = 65
-          Height = 25
+          Height = 17
           Hint = 'Show this screen automatically'
           Caption = 'Enabled'
           Font.Charset = ANSI_CHARSET
@@ -1681,8 +1703,8 @@ object SetupForm: TSetupForm
           TabOrder = 1
         end
         object TimeToShowSpinEdit: TSpinEdit
-          Left = 77
-          Top = 48
+          Left = 69
+          Top = 31
           Width = 41
           Height = 22
           Hint = 
@@ -1699,12 +1721,12 @@ object SetupForm: TSetupForm
           ParentFont = False
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 4
+          TabOrder = 3
           Value = 3
         end
         object Line1Edit: TEdit
           Left = 4
-          Top = 74
+          Top = 82
           Width = 417
           Height = 23
           Hint = 'double click to open edit window'
@@ -1718,14 +1740,14 @@ object SetupForm: TSetupForm
           ParentFont = False
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 6
+          TabOrder = 5
           OnDblClick = LineEditClick
           OnEnter = Line1EditEnter
           OnKeyDown = Line1EditKeyDown
         end
         object Line2Edit: TEdit
           Left = 4
-          Top = 98
+          Top = 106
           Width = 417
           Height = 23
           Hint = 'double click to open edit window'
@@ -1739,14 +1761,14 @@ object SetupForm: TSetupForm
           ParentFont = False
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 10
+          TabOrder = 9
           OnDblClick = LineEditClick
           OnEnter = Line2EditEnter
           OnKeyDown = Line2EditKeyDown
         end
         object Line3Edit: TEdit
           Left = 4
-          Top = 122
+          Top = 130
           Width = 417
           Height = 23
           Hint = 'double click to open edit window'
@@ -1759,14 +1781,14 @@ object SetupForm: TSetupForm
           ParentFont = False
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 14
+          TabOrder = 13
           OnDblClick = LineEditClick
           OnEnter = Line3EditEnter
           OnKeyDown = Line3EditKeyDown
         end
         object Line4Edit: TEdit
           Left = 4
-          Top = 146
+          Top = 154
           Width = 417
           Height = 23
           Hint = 'double click to open edit window'
@@ -1779,14 +1801,14 @@ object SetupForm: TSetupForm
           ParentFont = False
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 18
+          TabOrder = 17
           OnDblClick = LineEditClick
           OnEnter = Line4EditEnter
           OnKeyDown = Line4EditKeyDown
         end
         object ScreenSpinEdit: TSpinEdit
-          Left = 52
-          Top = 15
+          Left = 4
+          Top = 31
           Width = 49
           Height = 22
           Font.Charset = ANSI_CHARSET
@@ -1804,7 +1826,7 @@ object SetupForm: TSetupForm
         end
         object CopyToScreenButton: TButton
           Left = 16
-          Top = 176
+          Top = 184
           Width = 75
           Height = 25
           Hint = 
@@ -1821,12 +1843,12 @@ object SetupForm: TSetupForm
           ParentFont = False
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 24
+          TabOrder = 23
           OnClick = CopyToScreenButtonClick
         end
         object MoveToScreenButton: TButton
           Left = 152
-          Top = 176
+          Top = 184
           Width = 75
           Height = 25
           Hint = 
@@ -1843,12 +1865,12 @@ object SetupForm: TSetupForm
           ParentFont = False
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 25
+          TabOrder = 24
           OnClick = MoveToScreenButtonClick
         end
         object SwapWithScreenButton: TButton
           Left = 288
-          Top = 176
+          Top = 184
           Width = 75
           Height = 25
           Hint = 
@@ -1865,12 +1887,30 @@ object SetupForm: TSetupForm
           ParentFont = False
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 26
+          TabOrder = 25
           OnClick = SwapWithScreenButtonClick
         end
         object CopyToScreenSpinEdit: TSpinEdit
           Left = 92
-          Top = 178
+          Top = 186
+          Width = 49
+          Height = 22
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          MaxLength = 2
+          MaxValue = 20
+          MinValue = 1
+          ParentFont = False
+          TabOrder = 26
+          Value = 1
+          OnChange = ScreenSpinEditChange
+        end
+        object MoveToScreenSpinEdit: TSpinEdit
+          Left = 228
+          Top = 186
           Width = 49
           Height = 22
           Font.Charset = ANSI_CHARSET
@@ -1886,9 +1926,9 @@ object SetupForm: TSetupForm
           Value = 1
           OnChange = ScreenSpinEditChange
         end
-        object MoveToScreenSpinEdit: TSpinEdit
-          Left = 228
-          Top = 178
+        object SwapWithScreenSpinEdit: TSpinEdit
+          Left = 364
+          Top = 186
           Width = 49
           Height = 22
           Font.Charset = ANSI_CHARSET
@@ -1904,10 +1944,34 @@ object SetupForm: TSetupForm
           Value = 1
           OnChange = ScreenSpinEditChange
         end
-        object SwapWithScreenSpinEdit: TSpinEdit
-          Left = 364
-          Top = 178
-          Width = 49
+        object TransitionStyleComboBox: TComboBox
+          Left = 289
+          Top = 24
+          Width = 123
+          Height = 21
+          Style = csDropDownList
+          Font.Charset = ANSI_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          ItemHeight = 13
+          ParentFont = False
+          TabOrder = 29
+          OnChange = TransitionStyleComboBoxChange
+          Items.Strings = (
+            'None'
+            'Left->Right'
+            'Right->Left'
+            'Top->Bottom'
+            'Bottom->Top'
+            'Random chars'
+            'Contrast fade light')
+        end
+        object TransitionTimeSpinEdit: TSpinEdit
+          Left = 289
+          Top = 56
+          Width = 45
           Height = 22
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
@@ -1915,12 +1979,12 @@ object SetupForm: TSetupForm
           Font.Name = 'Tahoma'
           Font.Style = []
           MaxLength = 2
-          MaxValue = 20
+          MaxValue = 99
           MinValue = 1
           ParentFont = False
-          TabOrder = 29
+          TabOrder = 30
           Value = 1
-          OnChange = ScreenSpinEditChange
+          OnChange = TransitionTimeSpinEditChange
         end
       end
       object ProgramSettingsGroupBox: TGroupBox
@@ -2222,7 +2286,7 @@ object SetupForm: TSetupForm
                 Height = 21
                 Style = csDropDownList
                 Anchors = [akLeft, akTop, akRight]
-                ItemHeight = 0
+                ItemHeight = 13
                 TabOrder = 0
                 OnChange = DisplayPluginListChange
               end
@@ -2493,7 +2557,7 @@ object SetupForm: TSetupForm
       ImageIndex = 2
       DesignSize = (
         573
-        381)
+        389)
       object GroupBox7: TGroupBox
         Left = 8
         Top = 16
@@ -2676,7 +2740,7 @@ object SetupForm: TSetupForm
       ImageIndex = 3
       DesignSize = (
         573
-        381)
+        389)
       object Label9: TLabel
         Left = 16
         Top = 83
@@ -2712,7 +2776,7 @@ object SetupForm: TSetupForm
       end
       object TrayIconPreview16: TImage
         Left = 312
-        Top = 140
+        Top = 148
         Width = 16
         Height = 16
         Anchors = [akLeft, akBottom]
@@ -3037,7 +3101,7 @@ object SetupForm: TSetupForm
     InitialDir = 'C:\'
     Title = 'Open distributed.net logfile'
     Left = 512
-    Top = 416
+    Top = 424
   end
   object OpenDialog1: TOpenDialog
     DefaultExt = '.exe'
@@ -3045,7 +3109,7 @@ object SetupForm: TSetupForm
     Filter = 'Executables (*.exe)|*.exe|All Files (*.*)|*.*'
     InitialDir = 'C:\program files\winamp'
     Left = 540
-    Top = 416
+    Top = 424
   end
   object OpenIco: TOpenPictureDialog
     DefaultExt = 'ico'
@@ -3055,6 +3119,6 @@ object SetupForm: TSetupForm
     Title = 'Choose Icon for Tray Area'
     OnFolderChange = OpeIcoFolderChange
     Left = 480
-    Top = 416
+    Top = 424
   end
 end

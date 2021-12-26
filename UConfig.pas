@@ -73,16 +73,25 @@ type
 
   TScreenLine = Record
     text: String;
-    enabled: Boolean;
-    skip: Integer;
+    enabled: Boolean;  // doesn't need to be per screen
+    skip: Integer; // obsolete
     noscroll: Boolean;
     contNextLine: Boolean;
+    theme: Integer;   // doesn't need to be per screen
+    TransitionStyle : TTransitionStyle;    // doesn't need to be per screen
+    TransitionTime : Integer;     // doesn't need to be per screen
+    showTime: Integer;   // doesn't need to be per screen
+    bSticky: Boolean;     // doesn't need to be per screen
+    center: Boolean;
+  end;
+
+  TScreenSettings = Record
+    enabled: Boolean;
     theme: Integer;
     TransitionStyle : TTransitionStyle;
     TransitionTime : Integer;
     showTime: Integer;
     bSticky: Boolean;
-    center: Boolean;
   end;
 
   TPopAccount = Record
@@ -141,7 +150,9 @@ type
     foldEnabled: Boolean;
     checkUpdates: Boolean;
     distLog: String;
+
     screen: Array[1..MaxScreens] of Array[1..MaxLines] of TScreenLine;
+
     ShutdownMessage: Array[1..MaxLines] of string;
     winampLocation: String;
     setiEmail: String;

@@ -1800,7 +1800,7 @@ begin
       if (iTemp >= 1) and (iTemp <= MaxScreens) then
       begin
         if (bDoAction) then
-          ChangeScreen(iTemp);
+          //ChangeScreen(iTemp); // dont jump to screens just because we enable them
         config.Screen[iTemp][1].Enabled := bDoAction;
       end;
     except
