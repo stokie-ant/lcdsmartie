@@ -378,8 +378,6 @@ type
     procedure RemoteSendPasswordEditChange(Sender: TObject);
     procedure FoldEnableCheckBoxClick(Sender: TObject);
     procedure SetiEnableCheckBoxClick(Sender: TObject);
-    procedure TransitionStyleComboBoxChange(Sender: TObject);
-    procedure TransitionTimeSpinEditChange(Sender: TObject);
 
   private
     DLLPath : string;
@@ -773,6 +771,9 @@ begin
   config.screen[scr].line[2].contNextLine := ContinueLine2CheckBox.checked;
   config.screen[scr].line[3].contNextLine := ContinueLine3CheckBox.checked;
   config.screen[scr].line[4].contNextLine := False;
+
+  config.screen[scr].settings.TransitionStyle := TTransitionStyle(TransitionStyleComboBox.ItemIndex);
+  config.screen[scr].settings.TransitionTime := TransitionTimeSpinEdit.Value;
 end;
 
 procedure TSetupForm.LoadScreen(scr: Integer);
@@ -785,8 +786,6 @@ begin
   TimeToShowSpinEdit.value := ascreen.settings.showTime;
   StickyCheckbox.checked := ascreen.settings.bSticky;
   TimeToShowSpinEdit.enabled := not ascreen.settings.bSticky;
-  TransitionStyleComboBox.ItemIndex := ord(config.screen[ActiveScreen].settings.TransitionStyle);
-  TransitionTimeSpinEdit.Value := config.screen[ActiveScreen].settings.TransitionTime;
 
   DontScrollLine1CheckBox.checked := false;
   DontScrollLine2CheckBox.checked := false;
@@ -855,6 +854,9 @@ begin
   DontScrollLine4CheckBox.checked := ascreen.line[4].noscroll;
   Line4Edit.text := ascreen.line[4].text;
   CenterLine4CheckBox.Checked := ascreen.line[4].center;
+
+  TransitionStyleComboBox.ItemIndex := ord(ascreen.settings.TransitionStyle);
+  TransitionTimeSpinEdit.Value := ascreen.settings.TransitionTime;
 end;
 
 procedure TSetupForm.ScreenSpinEditChange(Sender: TObject);
@@ -2247,24 +2249,12 @@ end;
 
 procedure TSetupForm.FoldEnableCheckBoxClick(Sender: TObject);
 begin
-config.foldEnabled := FoldEnableCheckBox.Checked;
+  config.foldEnabled := FoldEnableCheckBox.Checked;
 end;
 
 procedure TSetupForm.SetiEnableCheckBoxClick(Sender: TObject);
 begin
-config.setiEnabled := SetiEnableCheckBox.Checked;
-end;
-
-procedure TSetupForm.TransitionStyleComboBoxChange(Sender: TObject);
-begin
-    config.screen[ActiveScreen].settings.TransitionStyle := TTransitionStyle(TransitionStyleComboBox.ItemIndex);
-end;
-
-procedure TSetupForm.TransitionTimeSpinEditChange(Sender: TObject);
-begin
-    config.screen[ActiveScreen].settings.TransitionTime := TransitionTimeSpinEdit.Value;
+  config.setiEnabled := SetiEnableCheckBox.Checked;
 end;
 
 end.
-
-

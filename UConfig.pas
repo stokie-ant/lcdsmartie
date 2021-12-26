@@ -313,7 +313,7 @@ begin
     screen[ScreenCount].settings.theme := initFile.ReadInteger(sScreen, 'Theme', 1)-1;
     screen[ScreenCount].settings.showTime := initFile.ReadInteger(sScreen, 'ShowTime', 10);
     screen[ScreenCount].settings.bSticky := initFile.ReadBool(sScreen, 'Sticky', false);
-    screen[ScreenCount].settings.TransitionTime := initFile.ReadInteger(sScreen, 'TransitionTime', 7);
+    screen[ScreenCount].settings.TransitionTime := initFile.ReadInteger(sScreen, 'TransitionTime', 20);
     screen[ScreenCount].settings.TransitionStyle := TTransitionStyle(initFile.ReadInteger(sScreen, 'TransitionStyle',1));
 
     for LineCount := 1 to MaxLines do

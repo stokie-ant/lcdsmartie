@@ -14,7 +14,7 @@ I have therefore forked from the original project and have added some fixes and 
 ### Issues
 While there is much information on the lcd smartie forums, any issues with this fork should be reported here. It's high likely you wouldn't get a reply over there anyway.
 
-### New in this Version
+### Coming In Next Version
 - Remote screen function - Network receive screen data from another smartie
 - Folding@home stats working again - Added some new stats too
 - Detect if a certain app is running

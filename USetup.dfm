@@ -1958,7 +1958,6 @@ object SetupForm: TSetupForm
           ItemHeight = 13
           ParentFont = False
           TabOrder = 29
-          OnChange = TransitionStyleComboBoxChange
           Items.Strings = (
             'None'
             'Left->Right'
@@ -1984,7 +1983,6 @@ object SetupForm: TSetupForm
           ParentFont = False
           TabOrder = 30
           Value = 1
-          OnChange = TransitionTimeSpinEditChange
         end
       end
       object ProgramSettingsGroupBox: TGroupBox
