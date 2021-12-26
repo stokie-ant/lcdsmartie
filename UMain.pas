@@ -201,7 +201,6 @@ type
     procedure ServerExecute(AContext: TIdContext);
 
   private
-//    InitialWindowState: TInitialWindowState;
     ScreenLCD: Array[1..MaxLines] of TOnScreenLineWrapper;
     parsedLine: Array[1..MaxLines] of String;
     scrollPos: Array[1..MaxLines] of Integer;
@@ -1003,8 +1002,7 @@ procedure TLCDSmartieDisplayForm.NextScreenTimerTimer(Sender: TObject);
 //NEXT SCREEN!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 var
   ScreenCount, TotalScreenCount: Integer;
-  y: Integer;
-  ascreen: TScreenLine;
+  ascreen: TScreen;
   tmpscreen: Integer;
   FindAnotherScreen : boolean;
 
@@ -1042,21 +1040,21 @@ begin
       // displayed.  Force screen 1 to be displayed.
       TotalScreenCount := 0;
 
-      for y := 1 to MaxLines do
-      begin
-        config.screen[1][y].enabled := True;
-        config.screen[1][y].skip := 0;
+      //for y := 1 to MaxLines do
+     // begin
+        config.screen[1].settings.enabled := True;
+//        config.screen[1].settings.skip := 0;
         //config.screen[1][y].noscroll := False;
-      end;
+     // end;
 
       tmpScreen := 1;
       activetheme := 0;
     end;
 
-    ascreen := config.screen[tmpScreen][1];
+    ascreen := config.screen[tmpScreen];
     FindAnotherScreen := false;
-    if (ascreen.theme <> activetheme) then FindAnotherScreen := true;
-    if (not ascreen.enabled) then FindAnotherScreen := true;
+    if (ascreen.settings.theme <> activetheme) then FindAnotherScreen := true;
+    if (not ascreen.settings.enabled) then FindAnotherScreen := true;
   end;
 
   NumberOfScreensToShift := 1;
@@ -1132,11 +1130,11 @@ begin
     for counter := 1 to config.height do
     begin
       //Application.ProcessMessages;
-      line := config.screen[activeScreen][counter].text;
+      line := config.screen[activeScreen].line[counter].text;
       line := Data.change(line, counter, true);
 
       // Center the line if requested.
-      if config.screen[activeScreen][counter].center then
+      if config.screen[activeScreen].line[counter].center then
         line := CenterText(line, config.width);
 
       parsedLine[counter] := line;
@@ -1148,7 +1146,7 @@ begin
     for h := 1 to MaxLines do
     begin
       // handle continuing on the next line (if req)
-      if (h < MaxLines) and (config.screen[activeScreen][h].contNextLine) then
+      if (h < MaxLines) and (config.screen[activeScreen].line[h].contNextLine) then
       begin
         parsedLine[h + 1] := copy(parsedLine[h], 1 + config.width,
           length(parsedLine[h]));
@@ -1189,7 +1187,7 @@ begin
     // calculate scroll positions
     for counter := 1 to config.height do
     begin
-      if (not config.screen[activeScreen][counter].noscroll) then
+      if (not config.screen[activeScreen].line[counter].noscroll) then
         ScreenLCD[counter].Caption := EscapeAmp(scroll(parsedLine[counter], counter, scrollcount))
       else
         if (scrollPos[counter]>1) then     // maintain manual scroll postion
@@ -1801,7 +1799,7 @@ begin
       begin
         if (bDoAction) then
           //ChangeScreen(iTemp); // dont jump to screens just because we enable them
-        config.Screen[iTemp][1].Enabled := bDoAction;
+        config.Screen[iTemp].settings.Enabled := bDoAction;
       end;
     except
       on EConvertError do begin {ignore} end;
@@ -1816,7 +1814,7 @@ begin
         pos(')', sAction)-pos('DisableScreen(', sAction)-14));
       if (iTemp >= 1) and (iTemp <= MaxScreens) then
       begin
-        config.Screen[iTemp][1].Enabled := not bDoAction;
+        config.Screen[iTemp].settings.Enabled := not bDoAction;
       end;
     except
       on EConvertError do begin {ignore} end;
@@ -2207,7 +2205,7 @@ end;
 procedure TLCDSmartieDisplayForm.ChangeScreen(scr: Integer);
 var
   y: Integer;
-  ascreen: TScreenLine;
+  ascreen: TScreenSettings;
 begin
 
   if TempTransitionTimerInterval <> 0 then
@@ -2217,14 +2215,14 @@ begin
   end;
   NextScreenTimer.Interval := 0; // reset timer
 
-  if (not config.screen[scr][1].bSticky) then
-    NextScreenTimer.Interval := config.screen[scr][1].showTime*1000 + TempTransitionTimerInterval;
+  if (not config.screen[scr].settings.bSticky) then
+    NextScreenTimer.Interval := config.screen[scr].settings.showTime*1000 + TempTransitionTimerInterval;
 
   if (activeScreen = scr) then
     Exit;
 
   activeScreen := scr;
-  ascreen := config.screen[activeScreen][1];
+  ascreen := config.screen[activeScreen].settings;
 
   for y := 1 to MaxLines do
   begin

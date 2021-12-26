@@ -292,7 +292,7 @@ begin
   begin
     for LineCount := 1 to config.height do
     begin
-      screenline := config.screen[ScreenCount][LineCount].text;
+      screenline := config.screen[ScreenCount].line[LineCount].text;
       while decodeArgs(screenline, '$Rss', maxArgs, args, prefix, postfix,
         numargs) do
       begin

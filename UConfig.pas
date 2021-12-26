@@ -71,20 +71,6 @@ type
 
   TScreenType = (xxNone,xxHD,xxMO,xxCF,xxHD2,xxTestDriver,xxIR,xxDLL);
 
-  TScreenLine = Record
-    text: String;
-    enabled: Boolean;  // doesn't need to be per screen
-    skip: Integer; // obsolete
-    noscroll: Boolean;
-    contNextLine: Boolean;
-    theme: Integer;   // doesn't need to be per screen
-    TransitionStyle : TTransitionStyle;    // doesn't need to be per screen
-    TransitionTime : Integer;     // doesn't need to be per screen
-    showTime: Integer;   // doesn't need to be per screen
-    bSticky: Boolean;     // doesn't need to be per screen
-    center: Boolean;
-  end;
-
   TScreenSettings = Record
     enabled: Boolean;
     theme: Integer;
@@ -93,6 +79,20 @@ type
     showTime: Integer;
     bSticky: Boolean;
   end;
+
+  TScreenLine = Record
+    text: String;
+    noscroll: Boolean;
+    contNextLine: Boolean;
+    center: Boolean;
+    settings: TScreenSettings;
+  end;
+
+  TScreen = Record
+    line: array [1..MaxLines] of TScreenLine;
+    settings: TScreenSettings;
+  end;
+
 
   TPopAccount = Record
     server: String;
@@ -150,9 +150,7 @@ type
     foldEnabled: Boolean;
     checkUpdates: Boolean;
     distLog: String;
-
-    screen: Array[1..MaxScreens] of Array[1..MaxLines] of TScreenLine;
-
+    screen: Array[1..MaxScreens] of Tscreen;
     ShutdownMessage: Array[1..MaxLines] of string;
     winampLocation: String;
     setiEmail: String;
@@ -311,37 +309,23 @@ begin
   for ScreenCount := 1 to MaxScreens do
   begin
     sScreen := 'Screen ' + Format('%.2u', [ScreenCount], localeFormat);
-    screen[ScreenCount][1].enabled := initFile.ReadBool(sScreen, 'Enabled', false);
-    screen[ScreenCount][1].theme := initFile.ReadInteger(sScreen, 'Theme', 1)-1;
-    screen[ScreenCount][1].showTime := initFile.ReadInteger(sScreen, 'ShowTime', 10);
-    screen[ScreenCount][1].bSticky := initFile.ReadBool(sScreen, 'Sticky', false);
-    screen[ScreenCount][1].skip := initFile.ReadInteger(sScreen, 'Skip', 0);
-    screen[ScreenCount][1].TransitionTime := initFile.ReadInteger(sScreen,
-      'InteractionTime', 7);
-    screen[ScreenCount][1].TransitionStyle := TTransitionStyle(initFile.ReadInteger(sScreen, 'Interaction',1));
+    screen[ScreenCount].settings.enabled  := initFile.ReadBool(sScreen, 'Enabled', false);
+    screen[ScreenCount].settings.theme := initFile.ReadInteger(sScreen, 'Theme', 1)-1;
+    screen[ScreenCount].settings.showTime := initFile.ReadInteger(sScreen, 'ShowTime', 10);
+    screen[ScreenCount].settings.bSticky := initFile.ReadBool(sScreen, 'Sticky', false);
+    screen[ScreenCount].settings.TransitionTime := initFile.ReadInteger(sScreen, 'TransitionTime', 7);
+    screen[ScreenCount].settings.TransitionStyle := TTransitionStyle(initFile.ReadInteger(sScreen, 'TransitionStyle',1));
 
     for LineCount := 1 to MaxLines do
     begin
       sLine := Format('%.2u', [LineCount], localeFormat);
-      screen[ScreenCount][LineCount].text := initFile.ReadString(sScreen, 'Text' + sLine, '');
-      screen[ScreenCount][LineCount].noscroll := initFile.ReadBool(sScreen, 'NoScroll' + sLine,
+      screen[ScreenCount].line[LineCount].text := initFile.ReadString(sScreen, 'Text' + sLine, '');
+      screen[ScreenCount].line[LineCount].noscroll := initFile.ReadBool(sScreen, 'NoScroll' + sLine,
         true);
-      screen[ScreenCount][LineCount].contNextLine := initFile.ReadBool(sScreen,
+      screen[ScreenCount].line[LineCount].contNextLine := initFile.ReadBool(sScreen,
         'ContinueNextLine' + sLine, false);
-      screen[ScreenCount][LineCount].center := initFile.ReadBool(sScreen, 'Center' + sLine,
+      screen[ScreenCount].line[LineCount].center := initFile.ReadBool(sScreen, 'Center' + sLine,
         false);
-    end;
-
-    // BUGBUG: Remove me - once the data organisation is corrected.
-    // Currently these values are stored per line rather than per screen.
-    for LineCount := 2 to MaxLines do
-    begin
-      screen[ScreenCount][LineCount].enabled := screen[ScreenCount][1].enabled;
-      screen[ScreenCount][LineCount].theme := screen[ScreenCount][1].theme;
-      screen[ScreenCount][LineCount].showTime := screen[ScreenCount][1].showTime;
-      screen[ScreenCount][LineCount].skip := screen[ScreenCount][1].skip;
-      screen[ScreenCount][LineCount].TransitionTime := screen[ScreenCount][1].TransitionTime;
-      screen[ScreenCount][LineCount].TransitionStyle := screen[ScreenCount][1].TransitionStyle
     end;
   end;
 
@@ -522,29 +506,35 @@ begin
   for ScreenCount := 1 to MaxScreens do
   begin
     sScreen := 'Screen ' + Format('%.2u', [ScreenCount], localeFormat);
-    initfile.WriteBool(sScreen, 'Enabled', screen[ScreenCount][1].enabled);
-    initFile.WriteInteger(sScreen, 'Theme', screen[ScreenCount][1].theme + 1);
-    initFile.WriteInteger(sScreen, 'ShowTime', screen[ScreenCount][1].showTime);
-    initfile.WriteBool(sScreen, 'Sticky', screen[ScreenCount][1].bSticky);
-    initFile.WriteInteger(sScreen, 'Skip', screen[ScreenCount][1].skip);
-    initFile.WriteInteger(sScreen, 'InteractionTime',
-      screen[ScreenCount][1].TransitionTime);
-    initFile.WriteInteger(sScreen, 'Interaction', ord(screen[ScreenCount][1].TransitionStyle));
+    initfile.WriteBool(sScreen, 'Enabled', screen[ScreenCount].settings.enabled);
+    initFile.WriteInteger(sScreen, 'Theme', screen[ScreenCount].settings.theme + 1);
+    initFile.WriteInteger(sScreen, 'ShowTime', screen[ScreenCount].settings.showTime);
+    initfile.WriteBool(sScreen, 'Sticky', screen[ScreenCount].settings.bSticky);
+    initFile.WriteInteger(sScreen, 'TransitionTime', screen[ScreenCount].settings.TransitionTime);
+    initFile.WriteInteger(sScreen, 'TransitionStyle', ord(screen[ScreenCount].settings.TransitionStyle));
 
     for LineCount := 1 to MaxLines do
     begin
       sLine := Format('%.2u', [LineCount], localeFormat);
-      initFile.WriteString(sScreen, 'Text' + sLine, '"' + screen[ScreenCount][LineCount].text + '"');
+      initFile.WriteString(sScreen, 'Text' + sLine, '"' + screen[ScreenCount].line[LineCount].text + '"');
+    end;
 
+    for LineCount := 1 to MaxLines do
+    begin
       sLine := Format('%.2u', [LineCount], localeFormat);
-      initFile.WriteBool(sScreen, 'NoScroll' + sLine, screen[ScreenCount][LineCount].noscroll);
+      initFile.WriteBool(sScreen, 'NoScroll' + sLine, screen[ScreenCount].line[LineCount].noscroll);
+    end;
 
+    for LineCount := 1 to MaxLines do
+    begin
       sLine := Format('%.2u', [LineCount], localeFormat);
-      initFile.WriteBool(sScreen, 'ContinueNextLine' + sLine,
-        screen[ScreenCount][LineCount].contNextLine);
+      initFile.WriteBool(sScreen, 'ContinueNextLine' + sLine, screen[ScreenCount].line[LineCount].contNextLine);
+    end;
 
+    for LineCount := 1 to MaxLines do
+    begin
       sLine := Format('%.2u', [LineCount], localeFormat);
-      initFile.WriteBool(sScreen, 'Center' + sLine, screen[ScreenCount][LineCount].center);
+      initFile.WriteBool(sScreen, 'Center' + sLine, screen[ScreenCount].line[LineCount].center);
     end;
 
   end;

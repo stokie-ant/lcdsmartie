@@ -75,7 +75,7 @@ begin
   begin
     for LineLoop := 1 to config.height do
     begin
-      screenline := config.screen[ScreenLoop][LineLoop].text;
+      screenline := config.screen[ScreenLoop].line[LineLoop].text;
       for AccountLoop := 1 to MaxEmailAccounts do
       begin
         if (pos(EmailCountKey + IntToStr(AccountLoop) + EmailKeyPostfix, screenline) <> 0)

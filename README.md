@@ -5,12 +5,20 @@ Supported devices include displays based on the Hitachi HD44780 Controller, the 
 The program has built in support for many systems statistics (i.e. cpu load, network utilization, free disk space...), downloading RSS feeds, Winamp integration and support for several other popular applications.
 To support less common applications LCD Smartie uses a powerful plugin system.
 
+### LCDSmartie can also be used as a desktop ticker even if you don't have an lcd display
+
 ### About This Repo
 After having no updates for a little over 10 years and very little activity on the lcd smartie forums it seems that the original project has been abandoned by its developers.
 I have therefore forked from the original project and have added some fixes and improvements.
 
 ### Issues
 While there is much information on the lcd smartie forums, any issues with this fork should be reported here. It's high likely you wouldn't get a reply over there anyway.
+
+### New in this Version
+- Remote screen function - Network receive screen data from another smartie
+- Folding@home stats working again - Added some new stats too
+- Detect if a certain app is running
+- Minor setup UI changes
 
 ### New Features and Fixes
 - More screens - You can now have up to 99 - It was annoying getting an idea for another screen then realising that an old one had to go
@@ -25,8 +33,6 @@ While there is much information on the lcd smartie forums, any issues with this 
 - Detect if a full screen app is running - Again as above can be used with actions to set another screen
 - Detect if a full screen 3D game is running - maybe use actions to set a screen or theme showing temperatures
 - Buttons to rearrange screens - Copy to/move to/swap with another screen
-- Remote screen function - Network receive screen data from another smartie
-- Folding@home stats fixed - Added some new stats too
 - Many more under the hood fixes
 
 ### Roadmap
@@ -35,7 +41,7 @@ Seti@home is currently in hibernation. I don't know if it will ever return but I
 The URL fetch code is limited to just HTTP GET. I will be looking to add support for POST requests too.
 
 ### Get LCDSmartie
-download here - [latest](https://github.com/stokie-ant/lcdsmartie/releases/tag/v5.5.0.0-alpha)
+download here - [latest](https://github.com/stokie-ant/lcdsmartie/releases/latest)
 
 ### Building
 see the file [BUILDING.txt](BUILDING.txt)

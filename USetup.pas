@@ -415,8 +415,8 @@ begin
     ShowModal;
     Result := (ModalResult = mrOK);
     LCDSmartieDisplayForm.NextScreenTimer.interval := 0;
-    if (not config.screen[activeScreen][1].bSticky) then
-      LCDSmartieDisplayForm.NextScreenTimer.interval := config.screen[activeScreen][1].showTime*1000;
+    if (not config.screen[activeScreen].settings.bSticky) then
+      LCDSmartieDisplayForm.NextScreenTimer.interval := config.screen[activeScreen].settings.showTime*1000;
     Free;
   end;
   SetupForm := nil;
@@ -733,60 +733,60 @@ var
 
 begin
   if scr = 0 then Exit;
-  config.screen[scr][1].text := Line1Edit.text;
-  config.screen[scr][2].text := Line2Edit.text;
-  config.screen[scr][3].text := Line3Edit.text;
-  config.screen[scr][4].text := Line4Edit.text;
+  config.screen[scr].line[1].text := Line1Edit.text;
+  config.screen[scr].line[2].text := Line2Edit.text;
+  config.screen[scr].line[3].text := Line3Edit.text;
+  config.screen[scr].line[4].text := Line4Edit.text;
+
+  config.screen[scr].settings.enabled := ScreenEnabledCheckBox.checked;
+  try
+    config.screen[scr].settings.theme := ThemeNumberSpinEdit.value-1;
+  except
+    config.screen[scr].settings.theme := 0;
+  end;
+  try
+    config.screen[scr].settings.showTime := TimeToShowSpinEdit.value;
+  except
+    config.screen[scr].settings.showTime := 10;
+  end;
+    config.screen[scr].settings.bSticky := StickyCheckbox.Checked;
 
   for y := 1 to MaxLines do
   begin
-    config.screen[scr][y].enabled := ScreenEnabledCheckBox.checked;
-    try
-      config.screen[scr][y].theme := ThemeNumberSpinEdit.value-1;
-    except
-      config.screen[scr][y].theme := 0;
-    end;
-    try
-      config.screen[scr][y].showTime := TimeToShowSpinEdit.value;
-    except
-      config.screen[scr][y].showTime := 10;
-    end;
-    config.screen[scr][y].bSticky := StickyCheckbox.Checked;
-
     // ensure no ¿s occur in the text.
-    config.screen[scr][y].text := StringReplace(config.screen[scr][y].text,
+    config.screen[scr].line[y].text := StringReplace(config.screen[scr].line[y].text,
       '¿', '?', [rfReplaceAll]);
   end;
 
-  config.screen[scr][1].center := CenterLine1CheckBox.checked;
-  config.screen[scr][2].center := CenterLine2CheckBox.checked;
-  config.screen[scr][3].center := CenterLine3CheckBox.checked;
-  config.screen[scr][4].center := CenterLine4CheckBox.checked;
+  config.screen[scr].line[1].center := CenterLine1CheckBox.checked;
+  config.screen[scr].line[2].center := CenterLine2CheckBox.checked;
+  config.screen[scr].line[3].center := CenterLine3CheckBox.checked;
+  config.screen[scr].line[4].center := CenterLine4CheckBox.checked;
 
-  config.screen[scr][1].noscroll := DontScrollLine1CheckBox.checked;
-  config.screen[scr][2].noscroll := DontScrollLine2CheckBox.checked;
-  config.screen[scr][3].noscroll := DontScrollLine3CheckBox.checked;
-  config.screen[scr][4].noscroll := DontScrollLine4CheckBox.checked;
+  config.screen[scr].line[1].noscroll := DontScrollLine1CheckBox.checked;
+  config.screen[scr].line[2].noscroll := DontScrollLine2CheckBox.checked;
+  config.screen[scr].line[3].noscroll := DontScrollLine3CheckBox.checked;
+  config.screen[scr].line[4].noscroll := DontScrollLine4CheckBox.checked;
   LCDSmartieDisplayForm.ResetScrollPositions();
 
-  config.screen[scr][1].contNextLine := ContinueLine1CheckBox.checked;
-  config.screen[scr][2].contNextLine := ContinueLine2CheckBox.checked;
-  config.screen[scr][3].contNextLine := ContinueLine3CheckBox.checked;
-  config.screen[scr][4].contNextLine := False;
+  config.screen[scr].line[1].contNextLine := ContinueLine1CheckBox.checked;
+  config.screen[scr].line[2].contNextLine := ContinueLine2CheckBox.checked;
+  config.screen[scr].line[3].contNextLine := ContinueLine3CheckBox.checked;
+  config.screen[scr].line[4].contNextLine := False;
 end;
 
 procedure TSetupForm.LoadScreen(scr: Integer);
 var
-  ascreen: TScreenLine;
+  ascreen: TScreen;
 begin
-  ascreen := config.screen[scr][1];
-  ScreenEnabledCheckBox.checked := ascreen.enabled;
-  ThemeNumberSpinEdit.value := ascreen.theme + 1;
-  TimeToShowSpinEdit.value := ascreen.showTime;
-  StickyCheckbox.checked := ascreen.bSticky;
-  TimeToShowSpinEdit.enabled := not ascreen.bSticky;
-  TransitionStyleComboBox.ItemIndex := ord(config.screen[ActiveScreen][1].TransitionStyle);
-  TransitionTimeSpinEdit.Value := config.screen[ActiveScreen][1].TransitionTime;
+  ascreen := config.screen[scr];
+  ScreenEnabledCheckBox.checked := ascreen.settings.enabled;
+  ThemeNumberSpinEdit.value := ascreen.settings.theme + 1;
+  TimeToShowSpinEdit.value := ascreen.settings.showTime;
+  StickyCheckbox.checked := ascreen.settings.bSticky;
+  TimeToShowSpinEdit.enabled := not ascreen.settings.bSticky;
+  TransitionStyleComboBox.ItemIndex := ord(config.screen[ActiveScreen].settings.TransitionStyle);
+  TransitionTimeSpinEdit.Value := config.screen[ActiveScreen].settings.TransitionTime;
 
   DontScrollLine1CheckBox.checked := false;
   DontScrollLine2CheckBox.checked := false;
@@ -812,9 +812,9 @@ begin
   setupbutton := 1;
   GameServerEdit.text := config.gameServer[scr, 1];
 
-  ascreen := config.screen[scr][1];
-  DontScrollLine1CheckBox.checked := ascreen.noscroll;
-  if ascreen.contNextLine then
+  ascreen := config.screen[scr];
+  DontScrollLine1CheckBox.checked := ascreen.line[1].noscroll;
+  if ascreen.line[1].contNextLine then
   begin
     ContinueLine1CheckBox.checked := true;
     DontScrollLine1CheckBox.Checked := true;
@@ -822,12 +822,12 @@ begin
     Line2Edit.enabled := false;
     Line2Edit.color := $00BBBBFF;
   end;
-  Line1Edit.text := ascreen.text;
-  CenterLine1CheckBox.Checked := ascreen.center;
+  Line1Edit.text := ascreen.line[1].text;
+  CenterLine1CheckBox.Checked := ascreen.line[1].center;
 
-  ascreen := config.screen[scr][2];
-  DontScrollLine2CheckBox.checked := ascreen.noscroll;
-  if ascreen.contNextLine then
+  //ascreen := config.screen[scr];
+  DontScrollLine2CheckBox.checked := ascreen.line[2].noscroll;
+  if ascreen.line[2].contNextLine then
   begin
     ContinueLine2CheckBox.checked := true;
     DontScrollLine2CheckBox.Checked := true;
@@ -835,12 +835,12 @@ begin
     Line3Edit.enabled := false;
     Line3Edit.color := $00BBBBFF;
   end;
-  Line2Edit.text := ascreen.text;
-  CenterLine2CheckBox.Checked := ascreen.center;
+  Line2Edit.text := ascreen.line[2].text;
+  CenterLine2CheckBox.Checked := ascreen.line[2].center;
 
-  ascreen := config.screen[scr][3];
-  DontScrollLine3CheckBox.checked := ascreen.noscroll;
-  if ascreen.contNextLine then
+//  ascreen := config.screen[scr][3];
+  DontScrollLine3CheckBox.checked := ascreen.line[3].noscroll;
+  if ascreen.line[3].contNextLine then
   begin
     ContinueLine3CheckBox.checked := true;
     DontScrollLine3CheckBox.Checked := true;
@@ -848,13 +848,13 @@ begin
     Line4Edit.enabled := false;
     Line4Edit.color := $00BBBBFF;
   end;
-  Line3Edit.text := ascreen.text;
-  CenterLine3CheckBox.Checked := ascreen.center;
+  Line3Edit.text := ascreen.line[3].text;
+  CenterLine3CheckBox.Checked := ascreen.line[3].center;
 
-  ascreen := config.screen[scr][4];
-  DontScrollLine4CheckBox.checked := ascreen.noscroll;
-  Line4Edit.text := ascreen.text;
-  CenterLine4CheckBox.Checked := ascreen.center;
+//  ascreen := config.screen[scr][4];
+  DontScrollLine4CheckBox.checked := ascreen.line[4].noscroll;
+  Line4Edit.text := ascreen.line[4].text;
+  CenterLine4CheckBox.Checked := ascreen.line[4].center;
 end;
 
 procedure TSetupForm.ScreenSpinEditChange(Sender: TObject);
@@ -2160,7 +2160,7 @@ var
 begin
   for i := 1 to MaxLines do
   begin
-    config.screen[CopyToScreenSpinEdit.value][i].text := config.screen[screenspinedit.value][i].text;
+    config.screen[CopyToScreenSpinEdit.value].line[i].text := config.screen[screenspinedit.value].line[i].text;
   end;
 end;
 
@@ -2170,8 +2170,8 @@ var
 begin
   for i := 1 to MaxLines do
   begin
-    config.screen[MoveToScreenSpinEdit.value][i].text := config.screen[ScreenSpinEdit.value][i].text;
-    config.screen[ScreenSpinEdit.value][i].text := '';
+    config.screen[MoveToScreenSpinEdit.value].line[i].text := config.screen[ScreenSpinEdit.value].line[i].text;
+    config.screen[ScreenSpinEdit.value].line[i].text := '';
   end;
   Line1Edit.text := '';
   Line2Edit.text := '';
@@ -2186,17 +2186,17 @@ var
 begin
   for i := 1 to MaxLines do
   begin
-    TempScreenLine := config.screen[ScreenSpinEdit.value][i].text;
-    config.screen[ScreenSpinEdit.value][i].text := config.screen[SwapWithScreenSpinEdit.value][i].text;
-    config.screen[SwapWithScreenSpinEdit.value][i].text :=  TempScreenLine;
+    TempScreenLine := config.screen[ScreenSpinEdit.value].line[i].text;
+    config.screen[ScreenSpinEdit.value].line[i].text := config.screen[SwapWithScreenSpinEdit.value].line[i].text;
+    config.screen[SwapWithScreenSpinEdit.value].line[i].text :=  TempScreenLine;
   end;
-  Line1Edit.text := config.screen[ScreenSpinEdit.value][1].text;
+  Line1Edit.text := config.screen[ScreenSpinEdit.value].line[1].text;
   if (MaxLines >1) then
-  Line2Edit.text := config.screen[ScreenSpinEdit.value][2].text;
+  Line2Edit.text := config.screen[ScreenSpinEdit.value].line[2].text;
   if (MaxLines >2) then
-  Line3Edit.text := config.screen[ScreenSpinEdit.value][3].text;
+  Line3Edit.text := config.screen[ScreenSpinEdit.value].line[3].text;
   if (MaxLines >3) then
-  Line4Edit.text := config.screen[ScreenSpinEdit.value][4].text;
+  Line4Edit.text := config.screen[ScreenSpinEdit.value].line[4].text;
 end;
 
 ///// Remote smartie sender
@@ -2256,21 +2256,13 @@ config.setiEnabled := SetiEnableCheckBox.Checked;
 end;
 
 procedure TSetupForm.TransitionStyleComboBoxChange(Sender: TObject);
-var
-  Loop : byte;
 begin
-  for Loop := 1 to MaxLines do begin
-    config.screen[ActiveScreen][Loop].TransitionStyle := TTransitionStyle(TransitionStyleComboBox.ItemIndex);
-  end
+    config.screen[ActiveScreen].settings.TransitionStyle := TTransitionStyle(TransitionStyleComboBox.ItemIndex);
 end;
 
 procedure TSetupForm.TransitionTimeSpinEditChange(Sender: TObject);
-var
-  Loop : byte;
 begin
-  for Loop := 1 to MaxLines do begin
-    config.screen[ActiveScreen][Loop].TransitionTime := TransitionTimeSpinEdit.Value;
-  end;
+    config.screen[ActiveScreen].settings.TransitionTime := TransitionTimeSpinEdit.Value;
 end;
 
 end.

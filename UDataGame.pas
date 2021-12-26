@@ -69,7 +69,7 @@ begin
     for LineCount := 1 to config.height do
     begin
       try
-        screenline := config.screen[ScreenCount][LineCount].text;
+        screenline := config.screen[ScreenCount].line[LineCount].text;
         for GameCount := MinGame to MaxGame do begin
           if (pos(GameKeys[GameCount], screenline) <> 0) then begin
             if (Terminated) then raise EExiting.Create('');
