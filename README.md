@@ -1,4 +1,7 @@
 # LCD Smartie
+
+I will not be updating this anymore. Latest fixes and improvements will be to https://github.com/stokie-ant/lcdsmartie-laz
+
 ### From [wikipedia.org/wiki/LCD_Smartie](https://wikipedia.org/wiki/LCD_Smartie)
 >LCD Smartie is open-source software for Microsoft Windows which allows a character LCD to be used as an auxiliary display device for a PC.
 Supported devices include displays based on the Hitachi HD44780 Controller, the Matrix Orbital Serial/USB LCD, and Palm OS devices (when used in conjunction with PalmOrb).
